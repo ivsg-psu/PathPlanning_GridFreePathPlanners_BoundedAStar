@@ -32,68 +32,41 @@ function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts
 %
 % Examples:
 %
-%      Example 1:
-%      cur_path = pwd;
-%      main_folder = '!Voronoi Tiling Obstacles - Organized';
-%      parent_dir = cur_path(1:strfind(cur_path,main_folder)-2);
-%      addpath([parent_dir '\' main_folder '\Plotting'])
-%      addpath([parent_dir '\' main_folder '\Map_Generation\polytope_generation'])
-%      addpath([parent_dir '\' main_folder '\Map_Generation\polytope_editing'])
-%      addpath([parent_dir '\' main_folder '\Path_Planning\algorithm'])
-%      polytopes=fcn_polytope_generation_halton_voronoi_tiling(1,100,[100,100]);
-%      trim_polytopes=fcn_polytope_editing_remove_edge_polytopes(polytopes,0,100,0,100);
-%      shrunk_polytopes=fcn_polytope_editing_shrink_evenly(trim_polytopes,2.5);
-%
-%      % HAVING ISSUES WITH TILED OBSTACLES
-% %      % trim_polytopes path planning
-% %      xv = [trim_polytopes.xv];
-% %      yv = [trim_polytopes.yv];
-% %      point_tot = length(xv);
-% %      start = [0 50 point_tot+1 0 0];
-% %      finish = [100 50 point_tot+2 -1 0];
-% %      beg_end = zeros(point_tot,1);
-% %      obs_id = zeros(point_tot,1);
-% %      curpt = 0;
-% %      for poly = 1:size(trim_polytopes,2) % check each polytope
-% %          verts = length(trim_polytopes(poly).xv);
-% %          obs_id(curpt+1:curpt+verts) = ones(verts,1)*poly; % obs_id is the same for every vertex on a single polytope
-% %          beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-% %          curpt = curpt+verts;
-% %      end
-% %      all_pts = [xv' yv' [1:length(xv)]' obs_id beg_end];
-% %      bound_pts = all_pts;
-% %      ellipse_polytopes = fcn_polytope_editing_tiling_loop_polytopes(trim_polytopes);
-% %      [cost,route]=fcn_algorithm_bound_Astar(start,finish,trim_polytopes,all_pts,bound_pts,ellipse_polytopes);
-% %      disp(['Path Cost: ' num2str(cost)])
-% %      fcn_plot_polytopes(trim_polytopes,99,'b-',2,[0 100 0 100],'square');
-% %      plot(route(:,1),route(:,2),'k-','linewidth',2)
-% %      plot([start(1) finish(1)],[start(2) finish(2)],'kx','linewidth',2)
-%
+%      addpath([pwd '\Example_Map_Generation_Code'])
+% 
+%      map_name = "HST 1 100 SQT 0 1 0 1 SMV 0.04 0.008 1e-6 1111"; 
+%      plot_flag = 0; disp_name = 0; fig_num = 654654; 
+%      [polytopes,fig]=fcn_Map_Generation_map_name_to_map(map_name,plot_flag,disp_name);
+% 
 %      % shrunk_polytopes path planning
-%      xv = [shrunk_polytopes.xv];
-%      yv = [shrunk_polytopes.yv];
+%      xv = [polytopes.xv];
+%      yv = [polytopes.yv];
 %      point_tot = length(xv);
-%      start = [0 50 point_tot+1 0 0];
-%      finish = [100 50 point_tot+2 -1 0];
+%      start = [0 0.5 point_tot+1 0 0];
+%      finish = [1 0.5 point_tot+2 -1 0];
 %      beg_end = zeros(point_tot,1);
 %      obs_id = zeros(point_tot,1);
 %      curpt = 0;
-%      for poly = 1:size(shrunk_polytopes,2) % check each polytope
-%          verts = length(shrunk_polytopes(poly).xv);
+%      for poly = 1:size(polytopes,2) % check each polytope
+%          verts = length(polytopes(poly).xv);
 %          obs_id(curpt+1:curpt+verts) = ones(verts,1)*poly; % obs_id is the same for every vertex on a single polytope
 %          beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
 %          curpt = curpt+verts;
 %      end
 %      all_pts = [xv' yv' [1:length(xv)]' obs_id beg_end];
 %      bound_pts = all_pts;
-%      [cost,route]=fcn_algorithm_bound_Astar(start,finish,shrunk_polytopes,all_pts,bound_pts);
+%      [cost,route]=fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,bound_pts);
 %      disp(['Path Cost: ' num2str(cost)])
-%      fcn_plot_polytopes(shrunk_polytopes,100,'b-',2,[0 100 0 100],'square')
+%      fcn_plot_polytopes(polytopes,100,'b-',2,[0 1 0 1],'square')
 %      plot(route(:,1),route(:,2),'k-','linewidth',2)
 %      plot([start(1) finish(1)],[start(2) finish(2)],'kx','linewidth',2)
+%      box on
+%      xlabel('X Position')
+%      ylabel('Y Position')
 %
 %
 % This function was written on 2020_02_05 by Seth Tau
+% Cleaned code for Git and rewrote example on 2021_04_28 by Seth Tau
 % Questions or comments? sat5340@psu.edu 
 %
 
@@ -161,7 +134,6 @@ while ~isempty(open_set) % continue until open set is empty
     if ~isempty(close_polytopes) % if there's close obstacles
         [~,blocked_pts,D,di,~,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP] = fcn_visibility_clear_and_blocked_points(close_polytopes,cur_pt,finish);
         xings = fcn_visibility_line_polytope_intersections(xiP,yiP,xiQ,yiQ,xjP,yjP,D,di,num_int,close_polytopes);
-%         blocked_pts = finish;
     else % no close obstacles
         blocked_pts = []; % no blocked points
     end
@@ -191,14 +163,6 @@ while ~isempty(open_set) % continue until open set is empty
         straight = fcn_general_calculation_euclidean_point_to_point_distance(cur_pt(1:2),finish(1:2)); % straight distance start to finish
         perp_offset = ones(1,2)*sqrt((max_dist/2)^2 - (straight/2)^2); % split large triangle from start to mid point to end in half and calculate height
         para_offset = ones(1,2)*(max_dist - straight)/2; % extra distance traveled if moved directly away from the end point and then directly to it
-%         pts = [[close_polytopes.xv]' [close_polytopes.yv]'; cur_pt(1:2); finish(1:2)];
-%         [dist_sq,cross_sign] = fcn_general_calculation_point_to_line_distances_squared(pts,cur_pt(1:2),finish(1:2));
-%         signed_dist_sq = dist_sq.*cross_sign(:,3);
-%         perp_offset = [sqrt(abs(min(signed_dist_sq))) sqrt(abs(max(signed_dist_sq)))];
-%         
-%         ref_vec = ones(size(pts,1),1)*(finish(1:2) - cur_pt(1:2));
-%         para_dists = (dot(ref_vec,(pts-cur_pt(1:2)),2))/straight;
-%         para_offset = [abs(min(para_dists)) abs(max(para_dists)-straight)];
         
         if min(para_offset)==0 % sometimes happens when the pependicular offset reaches the computing limit, but isn't actually zero
             % make it look like CASE 1
@@ -231,25 +195,6 @@ while ~isempty(open_set) % continue until open set is empty
             %%% Step 4: For all bound points, find points visible to cur_pt and calculate their costs
             neighbor_pts = fcn_visibility_clear_and_blocked_points(bound_polytopes,cur_pt,[bound_pts; finish]);
         end
-        
-        %%% testing
-%         test_pts = [bound_pts; finish];
-%         
-%         
-%         xtest = test_pts(:,1) - cur_pt(1);
-%         ytest = test_pts(:,2) - cur_pt(2);
-%         [theta,rho] = cart2pol(xtest,ytest);
-%         vis_test = [theta rho test_pts(:,3:end)];
-%         [min_rho,irho] = min(rho); % start finding the closest point
-%         vis_pt = nan(size(test_pts));
-%         vis_pt(1,:) = test_pts(irho,:);
-%         min_theta = theta(irho);
-%         while something...
-%             
-%         
-%         end
-%         vis_pt(isnan(vis_pt(:,1)),:) = []; % remove extra entries
-        %%%%%%
         
         if ~isempty(neighbor_pts) % bound and visible points from this point exist
             for neighbor = neighbor_pts(:,3)'
