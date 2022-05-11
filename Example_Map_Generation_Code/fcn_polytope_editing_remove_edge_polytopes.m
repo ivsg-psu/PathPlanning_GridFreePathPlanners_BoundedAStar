@@ -1,10 +1,10 @@
 function [trim_polytopes] = fcn_polytope_editing_remove_edge_polytopes(polytopes,xlow,xhigh,ylow,yhigh)
-% FCN_POLYTOPE_EDITING_REMOVE_EDGE_POLYTOPES removes polytopes that extend 
+% FCN_POLYTOPE_EDITING_REMOVE_EDGE_POLYTOPES removes polytopes that extend
 % beyond the rectangular boundaries specified
 %
 % [TRIM_POLYTOPES]=FCN_POLYTOPE_EDITING_REMOVE_EDGE_POLYTOPES(POLYTOPES,XLOW,XHIGH,YLOW,YHIGH)
 % returns:
-% TRIM_POLYTOPES: a 1-by-n seven field structure of polytopes within the 
+% TRIM_POLYTOPES: a 1-by-n seven field structure of polytopes within the
 % boundaries, where n <= number of polytopes with fields:
 %   vertices: a m+1-by-2 matrix of xy points with row1 = rowm+1, where m is
 %     the number of the individual polytope vertices
@@ -31,18 +31,18 @@ function [trim_polytopes] = fcn_polytope_editing_remove_edge_polytopes(polytopes
 % This function was written on 2019_06_13 by Seth Tau
 % Comments added on 2021_02_23 by Seth Tau
 % Removed old add path info from example on 2021_03_02 by Seth Tau
-% Questions or comments? sat5340@psu.edu 
+% Questions or comments? sat5340@psu.edu
 %
 
 keep = 0; % number of polytopes to keep
-trim_polytopes(1) = struct('vertices',[],'xv',[],'yv',[],'distances',[],'mean',[],'area',[],'max_radius',[]);
+trim_polytopes(1) = struct('vertices',[],'xv',[],'yv',[],'distances',[],'mean',[],'area',[],'max_radius',[],'cost',[]);
 for poly = 1:size(polytopes,2) % check each polytope within polytopes
     xv = polytopes(poly).xv;
     yv = polytopes(poly).yv;
     if sum((xv<xlow)+(xv>xhigh)+(yv<ylow)+(yv>yhigh))==0 % if the x and y coordinates are all inside of the bounds
         keep = keep + 1; % keep this polytope
         trim_polytopes(keep) = polytopes(poly);
-    %else one or more of the vertices are outside the rectangular boundary 
+    %else one or more of the vertices are outside the rectangular boundary
         %the polytope is not added to trim_polytopes
     end
 end

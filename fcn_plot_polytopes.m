@@ -47,7 +47,7 @@ function [fig] = fcn_plot_polytopes(polytopes,fig_num,line_spec,line_width,varar
 % order after LINE_WIDTH
 %
 % Examples:
-%      
+%
 %      mapx = 1;
 %      mapy = 1;
 %      low_pt = 1;
@@ -59,11 +59,11 @@ function [fig] = fcn_plot_polytopes(polytopes,fig_num,line_spec,line_width,varar
 %      fig4 = fcn_plot_polytopes(polytopes,1000,'-',2,[0 0 0],[0 mapx 0 mapy],'square',[1 0 0 0 0.5]);
 %      fig5 = fcn_plot_polytopes(polytopes([7 10 35]),123,'m--',2,[0 mapx 0 mapy],'square');
 %      fig5 = fcn_plot_polytopes(polytopes([5 20 83]),fig5,'k-',2,[1 0.5 0.5 0.5 0.5]);
-% 
+%
 % This function was written on 2018_12_10 by Seth Tau
 % Added comments on 2021_02_23 by Seth Tau
 % Removed old add path stuff and adjusted example on 2021_03_05 by Seth Tau
-% Questions or comments? sat5340@psu.edu 
+% Questions or comments? sat5340@psu.edu
 %
 
 %% chec input arguments
@@ -81,7 +81,7 @@ hold on % allow multiple plot calls
 
 %% determine color and axis values
 plots = 1; % basic plot with only polytopes, figure, line_spec, and line_width
-color = []; axis_limits = []; axis_style = []; fill_info = [0 0 0 0 0]; % initialize empty values    
+color = []; axis_limits = []; axis_style = []; fill_info = [0 0 0 0 0]; % initialize empty values
 if nargin > 4 % variable arguments used
     for arg = 1:nargin-4 % check each variable argument
         argument = varargin{arg};
@@ -100,13 +100,18 @@ if nargin > 4 % variable arguments used
         end
     end
 end
-            
+
 
 %% plot polytopes
-if fill_info(1) == 1 % if fill is specified 
+if fill_info(1) == 1 % if fill is specified
     for polys = 1:size(polytopes,2) % fill each polytope with the specified color and transparence
         filler = fill(polytopes(polys).vertices(:,1)',polytopes(polys).vertices(:,2)',fill_info(2:4));
-        filler.FaceAlpha = fill_info(5);
+        filler.FaceAlpha = polytopes(polys).cost;
+        % Uncomment the following to write polytope cost on polytopes.
+        % This is useful for debugging but cluttered
+        % txt = sprintf('%.2f',round(polytopes(polys).cost,2));
+        % plot the
+        % text(polytopes(polys).mean(1),polytopes(polys).mean(2),txt,'clipping', 'off');
     end
 end
 if plots == 1 % basic plot with only polytopes, figure, line_spec, and line_width

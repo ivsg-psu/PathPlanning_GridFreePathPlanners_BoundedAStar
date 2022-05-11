@@ -6,9 +6,9 @@ function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]
 % returns:
 % CLEAR_PTS: finish points that are not blocked by any obstacle with the
 %   same information as FINISH
-% BLOCKED_PTS: finish points that are blocked by any obstacle with the same 
-%   information as FINISH 
-% D: m-by-n intersection array, where m = number of finish points 
+% BLOCKED_PTS: finish points that are blocked by any obstacle with the same
+%   information as FINISH
+% D: m-by-n intersection array, where m = number of finish points
 %   and n = number of polytope edges, where 1 indicates that an
 %   intersection occures between the START and FINISH point on the
 %   corresponding polytope edge and 0 indicates no intersection
@@ -17,14 +17,14 @@ function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]
 % DI: m-by-n intersection array, where each value gives the percentage of
 %   how far along the polytope edge the intersection occurs
 % NUM_INT: m-by-1 vector of the number of intersections between the START
-%   and each point in FINISH 
-% XIP: m-by-1 vector of the x-coordinates of the starting point of 
+%   and each point in FINISH
+% XIP: m-by-1 vector of the x-coordinates of the starting point of
 %   potential paths
-% YIP: m-by-1 vector of the y-coordinates of the starting point of 
+% YIP: m-by-1 vector of the y-coordinates of the starting point of
 %   potential paths
-% XIQ: m-by-1 vector of the x-coordinates of the finishing points of 
+% XIQ: m-by-1 vector of the x-coordinates of the finishing points of
 %   potential paths
-% YIQ: m-by-1 vector of the y-coordinates of the finishing points of 
+% YIQ: m-by-1 vector of the y-coordinates of the finishing points of
 %   potential paths
 % XJP: 1-by-n vector of the x-coordinates of the starting point of the
 %   polytope edge
@@ -36,7 +36,7 @@ function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]
 %   polytope edge
 %
 % with inputs:
-% POLYTOPES: a 1-by-p seven field structure of polytopes, where  
+% POLYTOPES: a 1-by-p seven field structure of polytopes, where
 %   p = number of polytopes, with fields:
 % vertices: a v+1-by-2 matrix of xy points with row1 = rowv+1, where v is
 %   the number of the individual polytope vertices
@@ -51,15 +51,15 @@ function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]
 %   x-coordinate
 %   y-coordinate
 %   point id number
-%   obstacle id number 
+%   obstacle id number
 %   beginning/ending indication (1 if the point is a beginning or ending
-%   point and 0 otherwise) 
+%   point and 0 otherwise)
 %   Ex: [x y point_id obs_id beg_end]
 % FINISH: a m-by-5 vector of ending points information, including the same
 %   information as START
 %
 % Examples:
-%      
+%
 %      % BASIC example
 %      cur_path = pwd;
 %      main_folder = '!Voronoi Tiling Obstacles - Organized';
@@ -82,9 +82,9 @@ function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]
 %      plot(clear_pts(:,1),clear_pts(:,2),'go','linewidth',1)
 %      plot(blocked_pts(:,1),blocked_pts(:,2),'rx','linewidth',1)
 %
-% 
+%
 % This function was written on 2018_11_17 by Seth Tau
-% Questions or comments? sat5340@psu.edu 
+% Questions or comments? sat5340@psu.edu
 %
 
 %% check input arguments
@@ -97,7 +97,7 @@ end
 if row == 5
     if col == 1 % oriented sideways
         start = start';
-    else 
+    else
         error('Incorrect number of coordinates in start')
     end
 elseif row == 1
@@ -112,7 +112,7 @@ end
 if col ~= 5
     if row == 5 % oriented sideways
         finish = finish';
-    else 
+    else
         error('Incorrect number of coordinates in finish')
     end
 end
@@ -123,12 +123,12 @@ end
 
 %% calculate intersection check matrices
 [D,di,dj] = fcn_calculate_intersection_matrices(xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ,start,finish);
- 
+
 %% find indices of clear and blocked paths
 num_int = sum(D,2); % 0s should corespond with a clear path to a vertex
 clear_pts = finish(num_int==0,:);
 blocked_pts = finish(num_int~=0,:);
-  
+
 %% create combination variables to pass to the intersection function
 % ivectors = [xiP yiP xiQ yiQ];
 % jvectors = [xjP; yjP; xjQ; yjQ];
@@ -161,7 +161,7 @@ function [xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = fcn_convert_to_vector_points(polyto
 % YJQ: a 1-by-n vector of ending point y positions
 %
 % with inputs:
-% POLYTOPES: a 1-by-p seven field structure of polytopes, where  
+% POLYTOPES: a 1-by-p seven field structure of polytopes, where
 %   p = number of polytopes, with fields:
 % vertices: a m+1-by-2 matrix of xy points with row1 = rowm+1, where m is
 %   the number of the individual polytope vertices
@@ -176,15 +176,15 @@ function [xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = fcn_convert_to_vector_points(polyto
 %   x-coordinate
 %   y-coordinate
 %   point id number
-%   obstacle id number 
+%   obstacle id number
 %   beginning/ending indication (1 if the point is a beginning or ending
-%   point and 0 otherwise) 
+%   point and 0 otherwise)
 %   Ex: [x y point_id obs_id beg_end]
 % FINISH: a 1-by-5 vector of ending point information, including the same
 %   information as START
 %
 % Examples:
-%      
+%
 %      % BASIC example
 %      cur_path = pwd;
 %      main_folder = '!Voronoi Tiling Obstacles - Organized';
@@ -209,9 +209,9 @@ function [xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = fcn_convert_to_vector_points(polyto
 %      fcn_plot_polytopes(polytopes,[],'b-',1,[0 8 0 8],'square')
 %      plot([start(1) finish(1)],[start(2) finish(2)],'kx','linewidth',1)
 %
-% 
+%
 % This function was written on 2018_11_17 by Seth Tau
-% Questions or comments? sat5340@psu.edu 
+% Questions or comments? sat5340@psu.edu
 %
 
 xjP = [polytopes.xv];
@@ -245,12 +245,12 @@ function [D,di,dj] = fcn_calculate_intersection_matrices(xiP,yiP,xiQ,yiQ,xjP,yjP
 %
 % [D,DI,DJ]=FCN_CALCULATE_INTERSECTION_MATRICES(XIP,YIP,XIQ,YIQ,XJP,YJP,XJQ,YJQ)
 % returns:
-% D: m-by-n intersection matrix, where m = number of finish points and 
-%   n = number of polytope edges, indicating whether a line intersects 
+% D: m-by-n intersection matrix, where m = number of finish points and
+%   n = number of polytope edges, indicating whether a line intersects
 %   another line with a 0 (not intersecting) or 1 (intersecting)
-% DI: m-by-n matrix indicating how far along the i line the j line would 
-%   intersect it as a ratio of the length of line i   
-% DJ: m-by-n matrix indicating how far along the j line the i line would 
+% DI: m-by-n matrix indicating how far along the i line the j line would
+%   intersect it as a ratio of the length of line i
+% DJ: m-by-n matrix indicating how far along the j line the i line would
 %   intersect it as a ratio of the length of line j
 %
 % with inputs:
@@ -266,7 +266,7 @@ function [D,di,dj] = fcn_calculate_intersection_matrices(xiP,yiP,xiQ,yiQ,xjP,yjP
 %
 %
 % Examples:
-%      
+%
 %      % BASIC example
 %      cur_path = pwd;
 %      main_folder = '!Voronoi Tiling Obstacles - Organized';
@@ -300,7 +300,7 @@ function [D,di,dj] = fcn_calculate_intersection_matrices(xiP,yiP,xiQ,yiQ,xjP,yjP
 %
 %
 % This function was written on 2018_11_17 by Seth Tau
-% Questions or comments? sat5340@psu.edu 
+% Questions or comments? sat5340@psu.edu
 %
 
 dxi = xiQ-xiP;
@@ -336,8 +336,19 @@ midpoints = (isnan(di).*isnan(dj)+(di>=0).*(di<=1).*(dj==0)) .* ((xiP~=xjP).*(yi
 %remove if both on same obstacle and not adjacent points
 exceptions = ((start_obs==finish_obs).*((abs(start_ind-finish_ind)~=1)-(start_be.*finish_be))).*1;
 acc = 1e-10;
+% removing "exceptions" could allow for self-blocked points to be visible...
+% but if a distinction is necessary between self-blocked points and points...
+% visible through free space then "fcn_visibility_self_blocked_pts" is better
 D = ((di<1-acc).*(di>acc)).*((dj<=1).*(dj>=0))+exceptions+midpoints;
-
+% see page 8 of notes 10_04 here:
+% https://www.me.psu.edu/sommer/me581/
+% ((di<1-acc).*(di>acc)).*((dj<1-acc).*(dj>acc))
+% from Seth:
+% The first part is the actual "visibility" portion of identifying which points
+% can be connected by a straight line without intersecting any other points.
+% The exceptions part is where I make an exception for adjacent points
+% that are on the same obstacle.
+% The midpoints part is where I tried to handle situations where the starting
+% point is on the line between two points.
 end
 
-            
