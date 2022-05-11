@@ -3,15 +3,7 @@ clc
 close all
 
 %% add necessary directories
-addpath([pwd '\General_Calculation'])
-addpath([pwd '\Plotting'])
-addpath([pwd '\Map_Generation\polytope_generation'])
-addpath([pwd '\Map_Generation\polytope_editing'])
-addpath([pwd '\Map_Generation\polytope_calculation'])
-addpath([pwd '\Path_Planning\algorithm'])
-addpath([pwd '\Path_Planning\algorithm_setup'])
-addpath([pwd '\Path_Planning\bounding_ellipse'])
-addpath([pwd '\Path_Planning\visibility'])
+addpath([pwd '\Example_Map_Generation_Code'])
 
 %% map generation control
 % repetition controls and storage
@@ -40,9 +32,9 @@ for rep = 1:repetitions
     %% generate map
     % generate Voronoi tiling from Halton points
     low_pt = low_pts(rep); high_pt = high_pts(rep); % range of Halton points to use to generate the tiling
-    tiled_polytopes = fcn_polytope_generation_halton_voronoi_tiling(low_pt,high_pt); 
+    tiled_polytopes = fcn_polytope_generation_halton_voronoi_tiling(low_pt,high_pt);
     % remove the edge polytope that extend past the high and low points
-    trim_polytopes = fcn_polytope_editing_remove_edge_polytopes(tiled_polytopes,xlow,xhigh,ylow,yhigh); 
+    trim_polytopes = fcn_polytope_editing_remove_edge_polytopes(tiled_polytopes,xlow,xhigh,ylow,yhigh);
     % shink the polytopes so that they are no longer tiled
     rng(shrink_seed) % set the random number generator with the shrink seed
     shrunk_polytopes = fcn_polytope_editing_shrink_to_average_max_radius_with_variance(trim_polytopes,des_radius,sigma_radius,min_rad);
@@ -94,7 +86,7 @@ for rep = 1:repetitions
             obstacle = pt(4);
             other_beg_end_pt = all_pts(((all_pts(:,4)==obstacle).*(all_pts(:,5)==1).*(all_pts(:,3)~=pt(3)))==1,:);
             if other_beg_end_pt(3) > pt(3)
-                other_pt = all_pts(pt(3)+1,1:2);       
+                other_pt = all_pts(pt(3)+1,1:2);
             else % pt(3) > other_beg_end_pt(3)
                 other_pt = all_pts(pt(3)-1,1:2);
             end
@@ -120,7 +112,7 @@ for rep = 1:repetitions
         end
         prev_pt = pt(1:2);
     end
-    % appex_x = [appex_x1 closer_x1 farther_x1; appex_x2 closer_x2 farther_x2; .... appex_xn closer_xn farther_xn] 
+    % appex_x = [appex_x1 closer_x1 farther_x1; appex_x2 closer_x2 farther_x2; .... appex_xn closer_xn farther_xn]
     % appex_y = [appex_y1 closer_y1 farther_y1; appex_y2 closer_y2 farther_y2; .... appex_yn closer_yn farther_yn]
 
     if plotting == 1

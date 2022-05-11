@@ -3,15 +3,7 @@ clc
 close all
 
 %% add necessary directories
-addpath([pwd '\General_Calculation'])
-addpath([pwd '\Plotting'])
-addpath([pwd '\Map_Generation\polytope_generation'])
-addpath([pwd '\Map_Generation\polytope_editing'])
-addpath([pwd '\Map_Generation\polytope_calculation'])
-addpath([pwd '\Path_Planning\algorithm'])
-addpath([pwd '\Path_Planning\algorithm_setup'])
-addpath([pwd '\Path_Planning\bounding_ellipse'])
-addpath([pwd '\Path_Planning\visibility'])
+addpath([pwd '\Example_Map_Generation_Code'])
 addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
 
 %% initialize loop params and storage arrays for plotting
