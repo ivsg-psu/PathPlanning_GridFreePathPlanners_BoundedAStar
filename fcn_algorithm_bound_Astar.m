@@ -191,29 +191,31 @@ while ~isempty(open_set) % continue until open set is empty
             [bound_polytopes,bound_box,bound_pts,~] = fcn_bounding_ellipse_polytope_bounding_box(cur_pt(1:2),finish(1:2),polytopes,all_pts,bound_pts,perp_offset,para_offset);
             bound_pts = bound_pts(bound_pts(:,3) ~= cur_pt(3),:); % remove current point if necessary
             bound_store(cur_pt(3)).bound_pts = bound_pts;
-%             %% plot for troubleshooting
-%             fig = fcn_plot_polytopes(polytopes,[],'b-',2);
-%             fcn_plot_polytopes(close_polytopes,fig,'g-',2);
-%             plot([bound_box(:,1); bound_box(1,1)],[bound_box(:,2); bound_box(1,2)],'k--','linewidth',2)
-%             plot(cur_pt(1),cur_pt(2),'kx','linewidth',2)
-%             plot(finish(1),finish(2),'kx','linewidth',2)
+            % %% plot for troubleshooting
+            % fig = fcn_plot_polytopes(polytopes,[],'b-',2);
+            % fcn_plot_polytopes(close_polytopes,fig,'g-',2);
+            % plot([bound_box(:,1); bound_box(1,1)],[bound_box(:,2); bound_box(1,2)],'k--','linewidth',2)
+            % plot(cur_pt(1),cur_pt(2),'kx','linewidth',2)
+            % plot(finish(1),finish(2),'kx','linewidth',2)
 
             %%% Step 4: For all bound points, find points visible to cur_pt and calculate their costs
             neighbor_pts = fcn_visibility_clear_and_blocked_points(bound_polytopes,cur_pt,[bound_pts; finish]);
         end
-        [cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...
-            fcn_visibility_self_blocked_pts(polytopes,cur_pt,all_pts);
-        % append a cost column of 0 to neighbor points in free space
-        neighbor_pts = [neighbor_pts, zeros(size(neighbor_pts,1),1)];
-        % append a cost column of the polytope's cost to points blocked by current polytope
-        pts_blocked_by_self = ...
-            [pts_blocked_by_self, ones(size(pts_blocked_by_self,1),1).*self_blocked_cost];
-        % merge self blocked points and free space points since a distinction between them is...
-        % no longer necessary
-        neighbor_pts = [neighbor_pts; pts_blocked_by_self];
-        %         pts_blocked_by_self_nx5 = [pts_blocked_by_self, nan, cur_obs_id, zeros, self_blocked_cost];
-%         neighbor_pts = [neighbor_pts, zeros(length(neighbor_pts,1))];
-%         neighbor_pts = [neighbor_pts; pts_blocked_by_self_nx5];
+        if planner_mode == "through at vertices"
+            [cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...
+                fcn_visibility_self_blocked_pts(polytopes,cur_pt,all_pts);
+            % append a cost column of 0 to neighbor points in free space
+            neighbor_pts = [neighbor_pts, zeros(size(neighbor_pts,1),1)];
+            % append a cost column of the polytope's cost to points blocked by current polytope
+            pts_blocked_by_self = ...
+                [pts_blocked_by_self, ones(size(pts_blocked_by_self,1),1).*self_blocked_cost];
+            % merge self blocked points and free space points since a distinction between them is...
+            % no longer necessary
+            neighbor_pts = [neighbor_pts; pts_blocked_by_self];
+        end
+        % pts_blocked_by_self_nx5 = [pts_blocked_by_self, nan, cur_obs_id, zeros, self_blocked_cost];
+        % neighbor_pts = [neighbor_pts, zeros(length(neighbor_pts,1))];
+        % neighbor_pts = [neighbor_pts; pts_blocked_by_self_nx5];
         % figure
         % hold on
         % plot([5,1],[5,1])
@@ -249,10 +251,14 @@ while ~isempty(open_set) % continue until open set is empty
                     % cost to reach current + cost to reach neighbor scaled by cost of traversing
                     % that distance (which is only >1 for points that require crossing a polytope)
                     % need to scale cost based on cost of polytopes traversed (neightbor_pts(i,6))
-                    % tentative_cost = cost_in(cur_pt(3)) + fcn_general_calculation_euclidean_point_to_point_distance(cur_pt(1:2),all_pts(neighbor,1:2)); % cost to reach current + cost to reach neighbor
-                    tentative_cost = cost_in(cur_pt(3)) + ...
-                    (1+neighbor_pts(i,6))*fcn_general_calculation_euclidean_point_to_point_distance(...
-                        cur_pt(1:2),all_pts(neighbor,1:2));
+                    if planner_mode = "legacy"
+                        tentative_cost = cost_in(cur_pt(3)) + fcn_general_calculation_euclidean_point_to_point_distance(cur_pt(1:2),all_pts(neighbor,1:2)); % cost to reach current + cost to reach neighbor
+                    end
+                    elseif planner_mode = "through at vertices"
+                        tentative_cost = cost_in(cur_pt(3)) + ...
+                            (1+neighbor_pts(i,6))*fcn_general_calculation_euclidean_point_to_point_distance(...
+                            cur_pt(1:2),all_pts(neighbor,1:2));
+                    end
 
                     if isempty(find(open_set==neighbor,1)) % not already in the open set
                         open_set = [open_set; neighbor]; % put into open set
@@ -272,4 +278,12 @@ while ~isempty(open_set) % continue until open set is empty
 
     end
 
+end
+
+if planner_mode = "through or around"
+    through_cost = fcn_algorithm_straight_planner(start,finish,all_pts,polytopes);
+    if through_cost >= cost
+        cost = through_cost;
+        path = [start, finish];
+    end
 end
