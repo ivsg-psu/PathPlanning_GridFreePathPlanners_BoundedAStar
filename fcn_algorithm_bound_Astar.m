@@ -1,4 +1,4 @@
-function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,bound_pts,varargin)
+function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,bound_pts,planner_mode,varargin)
 % FCN_ALGORITHM_BOUND_ASTAR performs Astar path planning algorithm from
 % start to finish around polytopes while constantly reducing boundaries
 %
@@ -24,6 +24,12 @@ function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts
 %   area: area of the polytope
 % ALL_PTS: p-by-5 matrix of all the points except start and finish
 % BOUND_PTS: subset of valid points that are usable
+% PLANNER_MODE: string containing "legacy","through at vertices","through or around"
+% indicates the planner mode
+% "legacy" only goes around obstacles
+% "through at vertices" allows the planner to go through or around each obstacle
+% but only entering or exiting at vertices
+% "through or around" allows the planner to go through all obstacles or around all
 %
 % [COST,ROUTE]=FCN_ALGORITHM_BOUND_ASTAR(START,FINISH,POLYTOPES,ALL_PTS,BOUND_PTS,ELLIPSE_POLYTOPES)
 % with input:
