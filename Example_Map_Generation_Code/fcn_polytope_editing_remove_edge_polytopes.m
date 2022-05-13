@@ -35,7 +35,7 @@ function [trim_polytopes] = fcn_polytope_editing_remove_edge_polytopes(polytopes
 %
 
 keep = 0; % number of polytopes to keep
-trim_polytopes(1) = struct('vertices',[],'xv',[],'yv',[],'distances',[],'mean',[],'area',[],'max_radius',[],'cost',[]);
+trim_polytopes(1) = struct('vertices',[],'xv',[],'yv',[],'distances',[],'mean',[],'area',[],'max_radius',[],'cost',[],'min_radius',[]);
 for poly = 1:size(polytopes,2) % check each polytope within polytopes
     xv = polytopes(poly).xv;
     yv = polytopes(poly).yv;

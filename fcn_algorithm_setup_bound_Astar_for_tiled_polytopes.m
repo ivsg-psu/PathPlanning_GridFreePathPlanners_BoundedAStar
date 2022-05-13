@@ -156,7 +156,7 @@ if err == 0 % A and B outside the polytopes
     ellipse_polytopes = polytopes;
    
     %% calculate path
-    [cost,path] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,valid_pts,ellipse_polytopes);
+    [cost,path] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,valid_pts,"through or around",ellipse_polytopes);
 
 else % A or B are in the polytopes
    path = [];

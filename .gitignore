@@ -31,3 +31,4 @@ codegen/
 # Octave session info
 octave-workspace
 PathPlanning_MapTools_MapGenClassLibrary/
+PathPlanning_GeomTools_GeomClassLibrary/

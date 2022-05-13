@@ -77,9 +77,9 @@ function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts
 %
 
 % check variable argument
-if nargin == 6
+if nargin == 7
     ellipse_polytopes = varargin{1};
-elseif nargin == 5
+elseif nargin == 6
     ellipse_polytopes = polytopes;
 else
     error('incorrect number of iputs')
@@ -251,10 +251,10 @@ while ~isempty(open_set) % continue until open set is empty
                     % cost to reach current + cost to reach neighbor scaled by cost of traversing
                     % that distance (which is only >1 for points that require crossing a polytope)
                     % need to scale cost based on cost of polytopes traversed (neightbor_pts(i,6))
-                    if planner_mode = "legacy"
+                    if planner_mode == "legacy" || planner_mode == "through or around"
                         tentative_cost = cost_in(cur_pt(3)) + fcn_general_calculation_euclidean_point_to_point_distance(cur_pt(1:2),all_pts(neighbor,1:2)); % cost to reach current + cost to reach neighbor
                     end
-                    elseif planner_mode = "through at vertices"
+                    elseif planner_mode == "through at vertices"
                         tentative_cost = cost_in(cur_pt(3)) + ...
                             (1+neighbor_pts(i,6))*fcn_general_calculation_euclidean_point_to_point_distance(...
                             cur_pt(1:2),all_pts(neighbor,1:2));
@@ -276,14 +276,14 @@ while ~isempty(open_set) % continue until open set is empty
             end
         end
 
-    end
-
 end
-
-if planner_mode = "through or around"
+    if planner_mode == "through or around"
     through_cost = fcn_algorithm_straight_planner(start,finish,all_pts,polytopes);
     if through_cost >= cost
         cost = through_cost;
         path = [start, finish];
     end
 end
+end
+
+

@@ -5,12 +5,15 @@ close all
 %% add necessary directories
 addpath([pwd '\Example_Map_Generation_Code'])
 addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
+addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 
 %% initialize loop params and storage arrays for plotting
 des_radii = linspace(0.001,0.081,20);
 colors = [1 0 0; 0 1 0; 0 0 1; 0 1 1;1 0 1;1 1 0; 0 0 0;0 0.4470 0.7410; 0.8500 0.3250 0.0980; 0.9290 0.6940 0.1250; 0.4940 0.1840 0.5560; 0.4660 0.6740 0.1880; 0.3010 0.7450 0.9330; 0.6350 0.0780 0.1840; 1 0 0; 0 1 0; 0 0 1; 0 1 1;1 0 1;1 1 0];
 all_rd = [];
 fig = 99;
+
+flag_do_plot = 0;
 
 %% begin loop of departure ratios
 for radii_idx = 1:length(des_radii)
@@ -67,10 +70,9 @@ for radii_idx = 1:length(des_radii)
         shrunk_polytopes = fcn_polytope_editing_set_all_costs(shrunk_polytopes,des_cost);
 
         % run predictor, could run outside of cost loop except now depends on costs
-        [field_small_choice_angles,field_big_choice_angles,r_lc_max,r_lc_avg,r_lc_iterative,r_lc_max_effective,r_lc_avg_effective,r_lc_iterative_effective,r_lc_sparse_worst,r_lc_sparse_average,r_lc_sparse_std,r_lc_sparse_worst_new,r_lc_sparse_average_new,r_lc_sparse_std_new,r_lc_sparse_worst_actual,r_lc_sparse_average_actual,r_lc_sparse_std_actual,r_lc_sparse_worst_linear,r_lc_sparse_average_linear,r_lc_sparse_std_linear,num_predicted_obs_traversals] = ...
+        [field_small_choice_angles,field_big_choice_angles,r_lc_max,r_lc_avg,r_lc_iterative,r_lc_max_effective,r_lc_avg_effective,r_lc_iterative_effective,r_lc_sparse_worst,r_lc_sparse_average,r_lc_sparse_std,r_lc_sparse_worst_new,r_lc_sparse_average_new,r_lc_sparse_std_new,r_lc_sparse_worst_actual,r_lc_sparse_average_actual,r_lc_sparse_std_actual,r_lc_sparse_worst_linear,r_lc_sparse_average_linear,r_lc_sparse_std_linear] = ...
         fcn_MapGen_polytopesPredictLengthCostRatio(shrunk_polytopes,gap_size,...
             shrunk_distance,shrink_ang,R_bar_initial);
-
         % plot the map
         line_spec = 'b-'; % edge line plotting
         line_width = 2; % linewidth of the edge
@@ -115,7 +117,8 @@ for radii_idx = 1:length(des_radii)
         total_length = sum(sqrt(sum(d.*d,2)));
         total_lengths = [total_lengths, total_length];
         r_lc_sparse_average_actuals = [r_lc_sparse_average_actuals, r_lc_sparse_average_actual];
-        num_predicted_obs_traversals_this_rd = [num_predicted_obs_traversals_this_rd, num_predicted_obs_traversals];
+        % TODO (@sjharnett) add back num_predicted_obstacle_traversals
+        % num_predicted_obs_traversals_this_rd = [num_predicted_obs_traversals_this_rd, num_predicted_obs_traversals];
 
         %% info needed for further work
         % gather data on all the points
@@ -196,7 +199,7 @@ for radii_idx = 1:length(des_radii)
     figure(747475)
     hold on
     plot(des_costs,obs_through_all./(obs_through_all+obs_around_all), 'Color',colors(radii_idx,1:3))
-    plot(des_costs,num_predicted_obs_traversals_this_rd./length(field_small_choice_angles'),'x', 'Color',colors(radii_idx,1:3))
+    % plot(des_costs,num_predicted_obs_traversals_this_rd./length(field_small_choice_angles'),'x', 'Color',colors(radii_idx,1:3))
     figure(77577)
     hold on
     plot(des_costs,(obs_through_all+obs_around_all),'Color',colors(radii_idx,1:3));
