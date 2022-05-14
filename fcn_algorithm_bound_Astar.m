@@ -278,10 +278,14 @@ while ~isempty(open_set) % continue until open set is empty
 
 end
     if planner_mode == "through or around"
-    through_cost = fcn_algorithm_straight_planner(start,finish,all_pts,polytopes);
-    if through_cost >= cost
+    [through_cost,distance_in_polys,distance_outside_polys,num_polys_traversed] = fcn_algorithm_straight_planner(start,finish,all_pts,polytopes);
+    x = route(:,1);
+    y = route(:,2);
+    d = diff([x(:) y(:)]);
+    total_route_length = sum(sqrt(sum(d.*d,2)));
+    if through_cost <= total_route_length
         cost = through_cost;
-        path = [start, finish];
+        route = [start; finish];
     end
 end
 end

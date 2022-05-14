@@ -8,7 +8,7 @@ addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
 addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 
 %% initialize loop params and storage arrays for plotting
-des_radii = linspace(0.001,0.081,20);
+des_radii = 0.025;%linspace(0.001,0.081,20);
 colors = [1 0 0; 0 1 0; 0 0 1; 0 1 1;1 0 1;1 1 0; 0 0 0;0 0.4470 0.7410; 0.8500 0.3250 0.0980; 0.9290 0.6940 0.1250; 0.4940 0.1840 0.5560; 0.4660 0.6740 0.1880; 0.3010 0.7450 0.9330; 0.6350 0.0780 0.1840; 1 0 0; 0 1 0; 0 0 1; 0 1 1;1 0 1;1 1 0];
 all_rd = [];
 fig = 99;
@@ -53,7 +53,7 @@ for radii_idx = 1:length(des_radii)
     all_rd = [all_rd, rd];
 
     %% initialize loop params and storage arrays for plotting
-    des_costs = linspace(0,0.5,13);
+    des_costs = linspace(0,0.5,4)%13);
     total_lengths = [];
     obs_around_all = [];
     obs_through_all = [];
@@ -186,6 +186,7 @@ for radii_idx = 1:length(des_radii)
         title(title_string);
         xlim([0.02,0.27])
         ylim([0.5-0.25/2,0.625])
+        fig = fig + 1;
         % appex_x = [appex_x1 closer_x1 farther_x1; appex_x2 closer_x2 farther_x2; .... appex_xn closer_xn farther_xn]
         % appex_y = [appex_y1 closer_y1 farther_y1; appex_y2 closer_y2 farther_y2; .... appex_yn closer_yn farther_yn]
 
