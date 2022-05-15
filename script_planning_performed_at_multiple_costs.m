@@ -8,7 +8,7 @@ addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
 addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 
 %% initialize loop params and storage arrays for plotting
-des_radii = 0.025;%linspace(0.001,0.081,20);
+des_radii = linspace(0.007,0.028,4);%linspace(0.001,0.081,10);
 colors = [1 0 0; 0 1 0; 0 0 1; 0 1 1;1 0 1;1 1 0; 0 0 0;0 0.4470 0.7410; 0.8500 0.3250 0.0980; 0.9290 0.6940 0.1250; 0.4940 0.1840 0.5560; 0.4660 0.6740 0.1880; 0.3010 0.7450 0.9330; 0.6350 0.0780 0.1840; 1 0 0; 0 1 0; 0 0 1; 0 1 1;1 0 1;1 1 0];
 all_rd = [];
 fig = 99;
@@ -18,7 +18,7 @@ flag_do_plot = 0;
 %% begin loop of departure ratios
 for radii_idx = 1:length(des_radii)
     % generate Voronoi tiling from Halton points
-    low_pt = 1; high_pt = 100; % range of Halton points to use to generate the tiling
+    low_pt = 1; high_pt = 1000; % range of Halton points to use to generate the tiling
     tiled_polytopes = fcn_polytope_generation_halton_voronoi_tiling(low_pt,high_pt);
     % remove the edge polytope that extend past the high and low points
     xlow = 0; xhigh = 1; ylow = 0; yhigh = 1;
@@ -53,7 +53,7 @@ for radii_idx = 1:length(des_radii)
     all_rd = [all_rd, rd];
 
     %% initialize loop params and storage arrays for plotting
-    des_costs = linspace(0,0.5,4)%13);
+    des_costs = linspace(0,0.5,6);
     total_lengths = [];
     obs_around_all = [];
     obs_through_all = [];
@@ -79,7 +79,6 @@ for radii_idx = 1:length(des_radii)
         axes_limits = [0 1 0 1]; % x and y axes limits
         axis_style = 'square'; % plot axes style
         fcn_plot_polytopes(shrunk_polytopes,fig,line_spec,line_width,axes_limits,axis_style);
-        % fig = fig + 1;
 
 
         %% plan path
@@ -101,16 +100,19 @@ for radii_idx = 1:length(des_radii)
         portion_vert_through = predicted_vert_through/length(field_small_choice_angles');
         % if the cost is 0, we should assume that we pass through everything
         if des_cost == 0
-%             assert(portion_vert_through == 1);
+        % assert(portion_vert_through == 1);
         end
         % assume the percent of obstacles we pass through is the same as the percent of vertices...
         % where we would pass through, applied to the number of obstacles blocking the path
         predicted_obs_through = field_stats.linear_density_mean*portion_vert_through;
         predicted_obs_through_all = [predicted_obs_through_all, predicted_obs_through];
         % plot path
+        figure(fig)
+        hold on
         plot(path(:,1),path(:,2),'k-','linewidth',2)
         plot(A.x, A.y, 'gx','linewidth',2)
         plot(B.x, B.y, 'rx','linewidth',2)
+%         fig = fig + 1;
         x = path(:,1);
         y = path(:,2);
         d = diff([x(:) y(:)]);
@@ -186,7 +188,7 @@ for radii_idx = 1:length(des_radii)
         title(title_string);
         xlim([0.02,0.27])
         ylim([0.5-0.25/2,0.625])
-        fig = fig + 1;
+        % fig = fig + 1;
         % appex_x = [appex_x1 closer_x1 farther_x1; appex_x2 closer_x2 farther_x2; .... appex_xn closer_xn farther_xn]
         % appex_y = [appex_y1 closer_y1 farther_y1; appex_y2 closer_y2 farther_y2; .... appex_yn closer_yn farther_yn]
 

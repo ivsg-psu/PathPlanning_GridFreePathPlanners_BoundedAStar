@@ -6,17 +6,24 @@ function [cost,distance_in_polys,distance_outside_polys,num_polys_traversed] = f
     a_b = fcn_general_calculation_euclidean_point_to_point_distance(start(1:2),finish(1:2));
     % determine which polys are near the straight path
     close_polytopes = fcn_polytope_calculation_polytopes_near_the_line(start,finish,polytopes)
+    figure(5);
+    fig = 5;
+    line_spec = "b-";
+    line_width = 3; % linewidth of the edge
+    axes_limits = [0 1 0 1]; % x and y axes limits
+    axis_style = 'square';% plot axes style
+    hold on;
+    box on;
+    fcn_plot_polytopes(polytopes,fig,line_spec,line_width,axes_limits,axis_style);
     line_spec = "r-";
     line_width = 2; % linewidth of the edge
     axes_limits = [0 1 0 1]; % x and y axes limits
     axis_style = 'square';% plot axes style
-    fig = 99;
-    figure(fig);
     hold on;
     box on;
     fcn_plot_polytopes(close_polytopes,fig,line_spec,line_width,axes_limits,axis_style);
     plot(linspace(0,1,2),0.5*ones(2))
- 
+
     % obtain equation for line from a (start) to b (finish)
     % for each poly:
     %     if poly has at least one vertex above and at least one below the equation for a-b:

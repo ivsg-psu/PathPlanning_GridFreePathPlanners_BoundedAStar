@@ -81,7 +81,7 @@ hold on % allow multiple plot calls
 
 %% determine color and axis values
 plots = 1; % basic plot with only polytopes, figure, line_spec, and line_width
-color = []; axis_limits = []; axis_style = []; fill_info = [0 0 0 0 0]; % initialize empty values
+color = []; axis_limits = []; axis_style = []; fill_info = [1 0 0 0 0]; % initialize empty values
 if nargin > 4 % variable arguments used
     for arg = 1:nargin-4 % check each variable argument
         argument = varargin{arg};
