@@ -255,7 +255,6 @@ while ~isempty(open_set) % continue until open set is empty
                     % need to scale cost based on cost of polytopes traversed (neightbor_pts(i,6))
                     if planner_mode == "legacy" || planner_mode == "through or around"
                         tentative_cost = cost_in(cur_pt(3)) + fcn_general_calculation_euclidean_point_to_point_distance(cur_pt(1:2),all_pts(neighbor,1:2)); % cost to reach current + cost to reach neighbor
-                    end
                     elseif planner_mode == "through at vertices"
                         tentative_cost = cost_in(cur_pt(3)) + ...
                             (1+neighbor_pts(poly_cost_index,6))*fcn_general_calculation_euclidean_point_to_point_distance(...
@@ -278,18 +277,18 @@ while ~isempty(open_set) % continue until open set is empty
             end
         end
 
-end
-    if planner_mode == "through or around"
-    [through_cost,distance_in_polys,distance_outside_polys,num_polys_traversed] = fcn_algorithm_straight_planner(start,finish,all_pts,polytopes);
-    x = route(:,1);
-    y = route(:,2);
-    d = diff([x(:) y(:)]);
-    total_route_length = sum(sqrt(sum(d.*d,2)));
-    if through_cost <= total_route_length
-        cost = through_cost;
-        route = [start; finish];
     end
-end
+    if planner_mode == "through or around"
+        [through_cost,distance_in_polys,distance_outside_polys,num_polys_traversed] = fcn_algorithm_straight_planner(start,finish,all_pts,polytopes);
+        x = route(:,1);
+        y = route(:,2);
+        d = diff([x(:) y(:)]);
+        total_route_length = sum(sqrt(sum(d.*d,2)));
+        if through_cost <= total_route_length
+            cost = through_cost;
+            route = [start; finish];
+        end
+    end
 end
 
 
