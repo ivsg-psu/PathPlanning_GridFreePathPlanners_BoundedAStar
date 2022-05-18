@@ -1,4 +1,4 @@
-function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,bound_pts,planner_mode,varargin)
+function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,bound_pts,varargin)
 % FCN_ALGORITHM_BOUND_ASTAR performs Astar path planning algorithm from
 % start to finish around polytopes while constantly reducing boundaries
 %
@@ -77,9 +77,9 @@ function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts
 %
 
 % check variable argument
-if nargin == 7
+if nargin == 6
     ellipse_polytopes = varargin{1};
-elseif nargin == 6
+elseif nargin == 5
     ellipse_polytopes = polytopes;
 else
     error('incorrect number of iputs')
@@ -89,6 +89,8 @@ end
 % main code
 cost = inf;
 route = [];
+
+planner_mode = "legacy";
 
 closed_set = []; % no completed points
 open_set = start(3); % point id
@@ -245,7 +247,7 @@ while ~isempty(open_set) % continue until open set is empty
         % other sides until a second crossing is found
         % find distance between those crossings
         if ~isempty(neighbor_pts) % bound and visible points from this point exist
-            i = 1;
+            poly_cost_index = 1;
             for neighbor = neighbor_pts(:,3)'
                 if isempty(find(closed_set==neighbor,1)) % not already in the closed set
                     % cost to reach current + cost to reach neighbor scaled by cost of traversing
@@ -256,7 +258,7 @@ while ~isempty(open_set) % continue until open set is empty
                     end
                     elseif planner_mode == "through at vertices"
                         tentative_cost = cost_in(cur_pt(3)) + ...
-                            (1+neighbor_pts(i,6))*fcn_general_calculation_euclidean_point_to_point_distance(...
+                            (1+neighbor_pts(poly_cost_index,6))*fcn_general_calculation_euclidean_point_to_point_distance(...
                             cur_pt(1:2),all_pts(neighbor,1:2));
                     end
 
@@ -272,7 +274,7 @@ while ~isempty(open_set) % continue until open set is empty
                     end
 
                 end
-                i = i + 1;
+                poly_cost_index = poly_cost_index + 1;
             end
         end
 

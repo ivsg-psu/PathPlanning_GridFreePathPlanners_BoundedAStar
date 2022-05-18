@@ -7,7 +7,7 @@ addpath([pwd '\Example_Map_Generation_Code'])
 
 %% generate map
 % generate Voronoi tiling from Halton points
-low_pt = 1; high_pt = 50; % range of Halton points to use to generate the tiling
+low_pt = 1; high_pt = 100; % range of Halton points to use to generate the tiling
 tiled_polytopes = fcn_polytope_generation_halton_voronoi_tiling(low_pt,high_pt);
 % remove the edge polytope that extend past the high and low points
 xlow = 0; xhigh = 1; ylow = 0; yhigh = 1;

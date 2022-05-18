@@ -60,7 +60,7 @@ X = X.*stretch; % stretch the values if specified
 
 %% create tiling
 num_poly = size(X,1); % number of polytopes created is equal to the number of Halton set points
-polytopes(num_poly) = struct('vertices',[],'xv',[],'yv',[],'distances',[],'mean',[],'area',[],'max_radius',[]);
+polytopes(num_poly) = struct('vertices',[],'xv',[],'yv',[],'distances',[],'mean',[],'area',[],'max_radius',[],'cost',[],'min_radius',[]);
 
 %     %%%%%%%%%% trouble shooting
 %     figure
