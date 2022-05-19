@@ -99,7 +99,7 @@ for poly = 1:num_poly % pull each cell from the voronoi diagram
         % calculate the maximum distance from center to a vertex
         polytopes(poly-remove).max_radius = max(fcn_general_calculation_euclidean_point_to_point_distance(polytopes(poly-remove).vertices(1:end-1,:),ones(length(xv),1)*polytopes(poly-remove).mean));
         polytopes(poly-remove).min_radius = min(fcn_general_calculation_euclidean_point_to_point_distance(polytopes(poly-remove).vertices(1:end-1,:),ones(length(xv),1)*polytopes(poly-remove).mean));
-        polytopes(poly-remove).cost = rand*0.1;
+        polytopes(poly-remove).cost = rand;
 %         %%%%%%%%%% trouble shooting
 %         plot([xv xv(1)],[yv yv(1)],'linewidth',2)
 %         axis([0 1 0 1])

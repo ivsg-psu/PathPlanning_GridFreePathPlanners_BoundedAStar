@@ -4,21 +4,20 @@ close all
 
 %% add necessary directories
 addpath([pwd '\Example_Map_Generation_Code'])
+addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
+addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 
 %% generate map
 % generate Voronoi tiling from Halton points
 low_pt = 1; high_pt = 100; % range of Halton points to use to generate the tiling
-tiled_polytopes = fcn_polytope_generation_halton_voronoi_tiling(low_pt,high_pt);
+tiled_polytopes_legacy = fcn_polytope_generation_halton_voronoi_tiling(low_pt,high_pt);
+tiled_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
 % remove the edge polytope that extend past the high and low points
-xlow = 0; xhigh = 1; ylow = 0; yhigh = 1;
-trim_polytopes = fcn_polytope_editing_remove_edge_polytopes(tiled_polytopes,xlow,xhigh,ylow,yhigh);
 % shink the polytopes so that they are no longer tiled
 des_radius = 0.05; % desired average maximum radius
 sigma_radius = 0.002; % desired standard deviation in maximum radii
 min_rad = 0.0001; % minimum possible maximum radius for any obstacle
-shrink_seed = 1111; % seed used for randomizing the shrinking process
-rng(shrink_seed) % set the random number generator with the shrink seed
-shrunk_polytopes = fcn_polytope_editing_shrink_to_average_max_radius_with_variance(trim_polytopes,des_radius,sigma_radius,min_rad);
+[shrunk_polytopes,mu_final,sigma_final] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes,des_radius,sigma_radius,min_rad);
 
 % plot the map
 fig = 99; % figure to plot on
