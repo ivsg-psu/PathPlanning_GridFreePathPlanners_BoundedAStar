@@ -30,6 +30,7 @@ function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts
 % "through at vertices" allows the planner to go through or around each obstacle
 % but only entering or exiting at vertices
 % "through or around" allows the planner to go through all obstacles or around all
+% "straight through" the planner only goes straight from the start to the goal, calculating the cost
 %
 % [COST,ROUTE]=FCN_ALGORITHM_BOUND_ASTAR(START,FINISH,POLYTOPES,ALL_PTS,BOUND_PTS,ELLIPSE_POLYTOPES)
 % with input:
@@ -90,7 +91,14 @@ end
 cost = inf;
 route = [];
 
-planner_mode = "legacy";
+planner_mode = "straight through";
+
+if planner_mode == "straight through"
+    [through_cost,distance_in_polys,distance_outside_polys,num_polys_traversed] = fcn_algorithm_straight_planner(start,finish,all_pts,polytopes);
+    cost = through_cost;
+    route = [start; finish];
+    return
+end
 
 closed_set = []; % no completed points
 open_set = start(3); % point id
