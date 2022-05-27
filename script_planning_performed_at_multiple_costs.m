@@ -117,79 +117,80 @@ for gap_idx = 1:length(des_gap_size)
         r_lc_sparse_average_actuals = [r_lc_sparse_average_actuals, r_lc_sparse_average_actual];
         % TODO (@sjharnett) add back num_predicted_obstacle_traversals
         % num_predicted_obs_traversals_this_rd = [num_predicted_obs_traversals_this_rd, num_predicted_obs_traversals];
-
-        %% info needed for further work
-        % gather data on all the points
-        point_tot = length([shrunk_polytopes.xv]); % total number of vertices in the polytopes
-        beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-        curpt = 0;
-        for poly = 1:size(shrunk_polytopes,2) % check each polytope
-            verts = length(shrunk_polytopes(poly).xv);
-            shrunk_polytopes(poly).obs_id = ones(1,verts)*poly; % obs_id is the same for every vertex on a single polytope
-            beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-            curpt = curpt+verts;
-        end
-        obs_id = [shrunk_polytopes.obs_id];
-        all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
-
-        appex_x = zeros(size(path,1)-2,3);
-        appex_y = appex_x;
-        prev_pt = [A.x A.y];
-        for app = 1:size(appex_x,1)
-            pt = path(app+1,:);
-            appex_x(app,1) = pt(1);
-            appex_y(app,1) = pt(2);
-            if pt(5) == 1
-                obstacle = pt(4);
-                other_beg_end_pt = all_pts(((all_pts(:,4)==obstacle).*(all_pts(:,5)==1).*(all_pts(:,3)~=pt(3)))==1,:);
-                if other_beg_end_pt(3) > pt(3)
-                    other_pt = all_pts(pt(3)+1,1:2);
-                else % pt(3) > other_beg_end_pt(3)
-                    other_pt = all_pts(pt(3)-1,1:2);
-                end
-                dist = fcn_general_calculation_euclidean_point_to_point_distance(ones(2,1)*prev_pt,[other_beg_end_pt(1:2); other_pt]);
-                if dist(1) < dist(2) % other_pt farther
-                    appex_x(app,2:3) = [other_beg_end_pt(1), other_pt(1)];
-                    appex_y(app,2:3) = [other_beg_end_pt(2), other_pt(2)];
-                else % other_pt closer
-                    appex_x(app,2:3) = [other_pt(1), other_beg_end_pt(1)];
-                    appex_y(app,2:3) = [other_pt(2), other_beg_end_pt(2)];
-                end
-            else
-                pt1 = all_pts(pt(3)-1,1:2);
-                pt2 = all_pts(pt(3)+1,1:2);
-                dist = fcn_general_calculation_euclidean_point_to_point_distance(ones(2,1)*prev_pt,[pt1; pt2]);
-                if dist(1) < dist(2) % pt1 closer
-                    appex_x(app,2:3) = [pt1(1), pt2(1)];
-                    appex_y(app,2:3) = [pt1(2), pt2(2)];
-                else % pt1 farther
-                    appex_x(app,2:3) = [pt2(1), pt1(1)];
-                    appex_y(app,2:3) = [pt2(2), pt1(2)];
-                end
+        if flag__do_plot
+            %% info needed for further work
+            % gather data on all the points
+            point_tot = length([shrunk_polytopes.xv]); % total number of vertices in the polytopes
+            beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
+            curpt = 0;
+            for poly = 1:size(shrunk_polytopes,2) % check each polytope
+                verts = length(shrunk_polytopes(poly).xv);
+                shrunk_polytopes(poly).obs_id = ones(1,verts)*poly; % obs_id is the same for every vertex on a single polytope
+                beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
+                curpt = curpt+verts;
             end
-            prev_pt = pt(1:2);
+            obs_id = [shrunk_polytopes.obs_id];
+            all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
+
+            appex_x = zeros(size(path,1)-2,3);
+            appex_y = appex_x;
+            prev_pt = [A.x A.y];
+            for app = 1:size(appex_x,1)
+                pt = path(app+1,:);
+                appex_x(app,1) = pt(1);
+                appex_y(app,1) = pt(2);
+                if pt(5) == 1
+                    obstacle = pt(4);
+                    other_beg_end_pt = all_pts(((all_pts(:,4)==obstacle).*(all_pts(:,5)==1).*(all_pts(:,3)~=pt(3)))==1,:);
+                    if other_beg_end_pt(3) > pt(3)
+                        other_pt = all_pts(pt(3)+1,1:2);
+                    else % pt(3) > other_beg_end_pt(3)
+                        other_pt = all_pts(pt(3)-1,1:2);
+                    end
+                    dist = fcn_general_calculation_euclidean_point_to_point_distance(ones(2,1)*prev_pt,[other_beg_end_pt(1:2); other_pt]);
+                    if dist(1) < dist(2) % other_pt farther
+                        appex_x(app,2:3) = [other_beg_end_pt(1), other_pt(1)];
+                        appex_y(app,2:3) = [other_beg_end_pt(2), other_pt(2)];
+                    else % other_pt closer
+                        appex_x(app,2:3) = [other_pt(1), other_beg_end_pt(1)];
+                        appex_y(app,2:3) = [other_pt(2), other_beg_end_pt(2)];
+                    end
+                else
+                    pt1 = all_pts(pt(3)-1,1:2);
+                    pt2 = all_pts(pt(3)+1,1:2);
+                    dist = fcn_general_calculation_euclidean_point_to_point_distance(ones(2,1)*prev_pt,[pt1; pt2]);
+                    if dist(1) < dist(2) % pt1 closer
+                        appex_x(app,2:3) = [pt1(1), pt2(1)];
+                        appex_y(app,2:3) = [pt1(2), pt2(2)];
+                    else % pt1 farther
+                        appex_x(app,2:3) = [pt2(1), pt1(1)];
+                        appex_y(app,2:3) = [pt2(2), pt1(2)];
+                    end
+                end
+                prev_pt = pt(1:2);
+            end
+            figure(fig)
+            hold on
+            plot(appex_x,appex_y,'o','linewidth',2)
+            box on;
+            xlabel('x [km]');
+            ylabel('y [km]');
+            title_string = sprintf('Dep. rat %.2f, obs. cost %.2f, path length %.3f, \n obs. around %.0f, obs. through %.0f',...
+                field_avg_r_D, des_cost, total_length, obs_around, obs_through);
+            title(title_string);
+            xlim([0.02,0.27])
+            ylim([0.5-0.25/2,0.625])
+            % fig = fig + 1;
+            % appex_x = [appex_x1 closer_x1 farther_x1; appex_x2 closer_x2 farther_x2; .... appex_xn closer_xn farther_xn]
+            % appex_y = [appex_y1 closer_y1 farther_y1; appex_y2 closer_y2 farther_y2; .... appex_yn closer_yn farther_yn]
+            %% Final Info
+            % A, B, appex_x, appex_y
         end
         [obs_around, obs_through] =...
             fcn_general_calculation_count_obs_in_path(path);
         obs_around_all = [obs_around_all, obs_around];
         obs_through_all = [obs_through_all, obs_through];
-        figure(fig)
-        hold on
-        plot(appex_x,appex_y,'o','linewidth',2)
-        box on;
-        xlabel('x [km]');
-        ylabel('y [km]');
-        title_string = sprintf('Dep. rat %.2f, obs. cost %.2f, path length %.3f, \n obs. around %.0f, obs. through %.0f',...
-            field_avg_r_D, des_cost, total_length, obs_around, obs_through);
-        title(title_string);
-        xlim([0.02,0.27])
-        ylim([0.5-0.25/2,0.625])
-        % fig = fig + 1;
-        % appex_x = [appex_x1 closer_x1 farther_x1; appex_x2 closer_x2 farther_x2; .... appex_xn closer_xn farther_xn]
-        % appex_y = [appex_y1 closer_y1 farther_y1; appex_y2 closer_y2 farther_y2; .... appex_yn closer_yn farther_yn]
 
-        %% Final Info
-        % A, B, appex_x, appex_y
     end
     figure(747474)
     hold on
@@ -208,36 +209,37 @@ for gap_idx = 1:length(des_gap_size)
     plot(des_costs,straight_path_costs,'Color',colors(gap_idx,1:3));
     plot(des_costs,predicted_straight_path_costs,'x','Color', colors(gap_idx,1:3));
 end
-    figure(747474)
-    hold on
-    legends = {};
-    k = 1;
-    for i = 1:length(all_rd)
-        legends(k) = {sprintf('departure ratio = %.3f',all_rd(i))};
-        k = k + 1;
-        legends(k) = {sprintf('predicted for departure ratio = %.3f',all_rd(i))};
-        k = k + 1;
-    end
-    legend(legends);
-    box on
-    xlabel('Obstacle cost')
-    ylabel('Total planned path length [km]')
-    figure(747475)
-    hold on
-    box on
-    legend(legends);
-    xlabel('Obstacle cost')
-    ylabel('Ratio of obs. traversed to total obs.')
-    figure(77577)
-    hold on
-    box on
-    xlabel('Obstacle cost')
-    ylabel('Number of encountered obstacles, N_{int}')
-    legend(legends);
-    figure(77588)
-    hold on
-    box on
-    xlabel('Obstacle cost')
-    ylabel('Length Cost Ratio for Routing Straight Through')
-    legend(legends);
+
+figure(747474)
+hold on
+legends = {};
+k = 1;
+for i = 1:length(all_rd)
+    legends(k) = {sprintf('departure ratio = %.3f',all_rd(i))};
+    k = k + 1;
+    legends(k) = {sprintf('predicted for departure ratio = %.3f',all_rd(i))};
+    k = k + 1;
+end
+legend(legends);
+box on
+xlabel('Obstacle cost')
+ylabel('Total planned path length [km]')
+figure(747475)
+hold on
+box on
+legend(legends);
+xlabel('Obstacle cost')
+ylabel('Ratio of obs. traversed to total obs.')
+figure(77577)
+hold on
+box on
+xlabel('Obstacle cost')
+ylabel('Number of encountered obstacles, N_{int}')
+legend(legends);
+figure(77588)
+hold on
+box on
+xlabel('Obstacle cost')
+ylabel('Length Cost Ratio for Routing Straight Through')
+legend(legends);
 
