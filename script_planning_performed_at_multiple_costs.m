@@ -28,7 +28,6 @@ for gap_idx = 1:length(des_gap_size)
     field_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes);
     field_stats_pre_shrink = fcn_MapGen_polytopesStatistics(trim_polytopes);
     % extract parameters of interest
-    avg_gap_size = field_stats.average_gap_size_G_bar;
     field_avg_r_D = field_stats.avg_r_D;
     field_avg_r_D_pre_shrink = field_stats_pre_shrink.avg_r_D;
     shrunk_distance = field_stats_pre_shrink.average_max_radius - field_stats.average_max_radius;
@@ -62,7 +61,7 @@ for gap_idx = 1:length(des_gap_size)
 
         % run predictor, could run outside of cost loop except now depends on costs
         [field_small_choice_angles,field_big_choice_angles,r_lc_max,r_lc_avg,r_lc_iterative,r_lc_max_effective,r_lc_avg_effective,r_lc_iterative_effective,r_lc_sparse_worst,r_lc_sparse_average,r_lc_sparse_std,r_lc_sparse_worst_new,r_lc_sparse_average_new,r_lc_sparse_std_new,r_lc_sparse_worst_actual,r_lc_sparse_average_actual,r_lc_sparse_std_actual,r_lc_sparse_worst_linear,r_lc_sparse_average_linear,r_lc_sparse_std_linear] = ...
-        fcn_MapGen_polytopesPredictLengthCostRatio(shrunk_polytopes,gap_size,...
+        fcn_MapGen_polytopesPredictLengthCostRatio(trim_polytopes,shrunk_polytopes,gap_size,...
             shrunk_distance,shrink_ang,R_bar_initial);
         % plot the map
         line_spec = 'b-'; % edge line plotting
@@ -81,7 +80,7 @@ for gap_idx = 1:length(des_gap_size)
 
         % predict straight path cost
         r_lc_straight_through = ...
-            fcn_MapGen_polytopesPredictLengthCostRatioStraightPath(shrunk_polytopes,gap_size,A.x,A.y,B.x,B.y);
+            fcn_MapGen_polytopesPredictLengthCostRatioStraightPath(trim_polytopes,shrunk_polytopes,gap_size,A.x,A.y,B.x,B.y);
         predicted_straight_path_costs = [predicted_straight_path_costs, r_lc_straight_through];
         % path: series of points [x y point_id obs_id beg_end]
         % cost: path length

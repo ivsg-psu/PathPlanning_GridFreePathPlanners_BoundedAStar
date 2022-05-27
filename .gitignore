@@ -30,5 +30,7 @@ codegen/
 
 # Octave session info
 octave-workspace
+
+# Dependencies from other IVSG repos
 PathPlanning_MapTools_MapGenClassLibrary/
 PathPlanning_GeomTools_GeomClassLibrary/
