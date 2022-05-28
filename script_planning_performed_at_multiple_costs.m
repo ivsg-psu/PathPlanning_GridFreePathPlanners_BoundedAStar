@@ -8,17 +8,20 @@ addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
 addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 
 %% initialize loop params and storage arrays for plotting
-des_gap_size = linspace(0.001,0.028,10);%linspace(0.001,0.081,10);
+des_gap_size = linspace(0.001,0.038,10);%linspace(0.001,0.081,10);
 colors = [1 0 0; 0 1 0; 0 0 1; 0 1 1;1 0 1;1 1 0; 0 0 0;0 0.4470 0.7410; 0.8500 0.3250 0.0980; 0.9290 0.6940 0.1250; 0.4940 0.1840 0.5560; 0.4660 0.6740 0.1880; 0.3010 0.7450 0.9330; 0.6350 0.0780 0.1840; 1 0 0; 0 1 0; 0 0 1; 0 1 1;1 0 1;1 1 0];
 all_rd = [];
 fig = 99;
 
 flag_do_plot = 0;
 
+predicted_straight_path_costs = [];
+straight_path_costs = [];
+
 %% begin loop of departure ratios
 for gap_idx = 1:length(des_gap_size)
     % generate Voronoi tiling from Halton points
-    low_pt = 1; high_pt = 1000; % range of Halton points to use to generate the tiling
+    low_pt = 1; high_pt = 200; % range of Halton points to use to generate the tiling
     trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
     % shink the polytopes so that they are no longer tiled
     gap_size = des_gap_size(gap_idx); % desired average maximum radius
@@ -41,7 +44,7 @@ for gap_idx = 1:length(des_gap_size)
     all_rd = [all_rd, field_avg_r_D];
 
     %% initialize loop params and storage arrays for plotting
-    des_costs = linspace(0,0.5,6);
+    des_costs = linspace(0,0.5,4);
     total_lengths = [];
     obs_around_all = [];
     obs_through_all = [];
@@ -50,8 +53,6 @@ for gap_idx = 1:length(des_gap_size)
     num_predicted_obs_traversals_this_rd = [];
     predicted_N_int = [];
     actual_N_int = [];
-    straight_path_costs = [];
-    predicted_straight_path_costs = [];
 
     %% begin loop of costs
     for cost_idx=1:length(des_costs)
@@ -76,12 +77,14 @@ for gap_idx = 1:length(des_gap_size)
         A.x = 0; A.y = 0.5; B.x = 1; B.y = 0.5;
         % TODO fix this to not be the straight cost but just the planned cost
         [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes,A,B);
-        straight_path_costs = [straight_path_costs, cost];
+        % array is gap_idx, cost_idx, r_lc_straight_through_predicted
+        straight_path_costs = [straight_path_costs; gap_idx, cost_idx, cost];
 
         % predict straight path cost
         r_lc_straight_through = ...
             fcn_MapGen_polytopesPredictLengthCostRatioStraightPath(trim_polytopes,shrunk_polytopes,gap_size,A.x,A.y,B.x,B.y);
-        predicted_straight_path_costs = [predicted_straight_path_costs, r_lc_straight_through];
+        % array is gap_idx, cost_idx, r_lc_straight_through_predicted
+        predicted_straight_path_costs = [predicted_straight_path_costs; gap_idx, cost_idx, r_lc_straight_through];
         % path: series of points [x y point_id obs_id beg_end]
         % cost: path length
         % err: marker indicating if there was an error in setup (1) or not (0)
@@ -117,7 +120,7 @@ for gap_idx = 1:length(des_gap_size)
         r_lc_sparse_average_actuals = [r_lc_sparse_average_actuals, r_lc_sparse_average_actual];
         % TODO (@sjharnett) add back num_predicted_obstacle_traversals
         % num_predicted_obs_traversals_this_rd = [num_predicted_obs_traversals_this_rd, num_predicted_obs_traversals];
-        if flag__do_plot
+        if flag_do_plot
             %% info needed for further work
             % gather data on all the points
             point_tot = length([shrunk_polytopes.xv]); % total number of vertices in the polytopes
@@ -204,10 +207,6 @@ for gap_idx = 1:length(des_gap_size)
     hold on
     plot(des_costs,(obs_through_all+obs_around_all),'Color',colors(gap_idx,1:3));
     plot(des_costs,predicted_N_int,'x','Color', colors(gap_idx,1:3));
-    figure(77588)
-    hold on
-    plot(des_costs,straight_path_costs,'Color',colors(gap_idx,1:3));
-    plot(des_costs,predicted_straight_path_costs,'x','Color', colors(gap_idx,1:3));
 end
 
 figure(747474)
@@ -237,9 +236,24 @@ xlabel('Obstacle cost')
 ylabel('Number of encountered obstacles, N_{int}')
 legend(legends);
 figure(77588)
+clf
+hold on
+for point_idx = 1:1:size(straight_path_costs,1)
+    plot(all_rd(straight_path_costs(point_idx,1)),straight_path_costs(point_idx,3),'o','Color',colors(straight_path_costs(point_idx,2),1:3));
+    hold on;
+    plot(all_rd(predicted_straight_path_costs(point_idx,1)),predicted_straight_path_costs(point_idx,3),'x','Color',colors(predicted_straight_path_costs(point_idx,2),1:3));
+end
 hold on
 box on
-xlabel('Obstacle cost')
-ylabel('Length Cost Ratio for Routing Straight Through')
+xlabel('Departure ratio [r_D]')
+ylabel('Length Cost Ratio for Routing Straight Through [r_{LC}]')
+legends = {};
+k = 1;
+for i = 1:length(des_costs)
+    legends(k) = {sprintf('cost = %.3f',des_costs(i))};
+    k = k + 1;
+    legends(k) = {sprintf('predicted for cost = %.3f',des_costs(i))};
+    k = k + 1;
+end
 legend(legends);
 
