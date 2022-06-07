@@ -14,6 +14,7 @@ addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 % flag_do_plot = 0;
 
 % measured_unoccupancy = [];
+est_from_sqrt_area_ratio_all = [];
 est_from_gap_size_all = [];
 est_from_AABB_all = [];
 est_from_slant_AABB_all = [];
@@ -64,6 +65,7 @@ for gap_idx = 1:length(des_gap_size)
 
     %% find estimated values
     unocc_ests = fcn_MapGen_polytopesPredictUnoccupancyRatio(trim_polytopes,shrunk_polytopes,gap_size);
+    est_from_sqrt_area_ratio_all = [est_from_sqrt_area_ratio_all; (unocc_ests.A_unocc_meas).^0.5]
     est_from_gap_size_all = [est_from_gap_size_all, unocc_ests.L_unocc_est_gap_size];
     est_from_AABB_all = [est_from_AABB_all, unocc_ests.L_unocc_est_AABB_width];
     est_from_slant_AABB_all = [est_from_slant_AABB_all, unocc_ests.L_unocc_est_slant_AABB_width];
@@ -75,6 +77,7 @@ figure(2)
 box on
 % plot(all_rd,measured_unoccupancy)
 hold on
+plot(all_rd,est_from_sqrt_area_ratio_all)
 plot(all_rd,est_from_gap_size_all)
 plot(all_rd,est_from_gap_size_normal_all)
 plot(all_rd,est_from_AABB_all)
@@ -84,6 +87,7 @@ xlabel('departure ratio [r_D]');
 % measuring distance outside of polytopes for 1 km travel i.e. unoccupancy
 ylabel('linear unoccupancy ratio');
 legend('measured from planner',...
+    'square root of measured area unoccupancy'...
     'estimate from angled gap size',...
     'estimate from normal gap size',...
     'estimate from AABB width',...
@@ -94,6 +98,7 @@ figure(1)
 box on
 % plot(all_rd,1-measured_unoccupancy)
 hold on
+plot(all_rd,1-est_from_sqrt_area_ratio_all)
 plot(all_rd,1-est_from_gap_size_all)
 plot(all_rd,1-est_from_gap_size_normal_all)
 plot(all_rd,1-est_from_AABB_all)
@@ -103,6 +108,7 @@ xlabel('departure ratio [r_D]');
 % measuring distance outside of polytopes for 1 km travel i.e. unoccupancy
 ylabel('linear occupancy ratio');
 legend('measured from planner',...
+    'square root of measured area unoccupancy'...
     'estimate from angled gap size',...
     'estimate from normal gap size',...
     'estimate from AABB width',...

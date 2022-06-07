@@ -256,4 +256,3 @@ for i = 1:length(des_costs)
     k = k + 1;
 end
 legend(legends);
-
