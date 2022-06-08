@@ -16,10 +16,10 @@ addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 % measured_unoccupancy = [];
 est_from_sqrt_area_ratio_all = [];
 est_from_gap_size_all = [];
-est_from_AABB_all = [];
-est_from_slant_AABB_all = [];
-est_from_gap_size_normal_all = [];
-est_from_poly_fit_all = [];
+% est_from_AABB_all = [];
+% est_from_slant_AABB_all = [];
+% est_from_gap_size_normal_all = [];
+% est_from_poly_fit_all = [];
 
 % generate Voronoi tiling from Halton points
 % low_pt = 1; high_pt = 1000; % range of Halton points to use to generate the tiling
@@ -67,15 +67,50 @@ for gap_idx = 1:length(des_gap_size)
     unocc_ests = fcn_MapGen_polytopesPredictUnoccupancyRatio(trim_polytopes,shrunk_polytopes,gap_size);
     est_from_sqrt_area_ratio_all = [est_from_sqrt_area_ratio_all; (unocc_ests.A_unocc_meas).^0.5]
     est_from_gap_size_all = [est_from_gap_size_all, unocc_ests.L_unocc_est_gap_size];
-    est_from_AABB_all = [est_from_AABB_all, unocc_ests.L_unocc_est_AABB_width];
-    est_from_slant_AABB_all = [est_from_slant_AABB_all, unocc_ests.L_unocc_est_slant_AABB_width];
-    est_from_gap_size_normal_all = [est_from_gap_size_normal_all, unocc_ests.L_unocc_est_gap_size_normal];
-    est_from_poly_fit_all = [est_from_poly_fit_all, unocc_ests.L_unocc_est_poly_fit];
+    % est_from_AABB_all = [est_from_AABB_all, unocc_ests.L_unocc_est_AABB_width];
+    % est_from_slant_AABB_all = [est_from_slant_AABB_all, unocc_ests.L_unocc_est_slant_AABB_width];
+    % est_from_gap_size_normal_all = [est_from_gap_size_normal_all, unocc_ests.L_unocc_est_gap_size_normal];
+    % est_from_poly_fit_all = [est_from_poly_fit_all, unocc_ests.L_unocc_est_poly_fit];
 end
+% Defaults for this blog post
+width = 3;     % Width in inches
+height = 3;    % Height in inches
+alw = 0.75;    % AxesLineWidth
+fsz = 11;      % Fontsize
+lw = 1.5;      % LineWidth
+msz = 8;       % MarkerSize
+
+% The new defaults will not take effect if there are any open figures. To
+% use them, we close all figures, and then repeat the first example.
+close all;
+
+% The properties we've been using in the figures
+set(0,'defaultLineLineWidth',lw);   % set the default line width to lw
+set(0,'defaultLineMarkerSize',msz); % set the default line marker size to msz
+set(0,'defaultLineLineWidth',lw);   % set the default line width to lw
+set(0,'defaultLineMarkerSize',msz); % set the default line marker size to msz
+set(0,'defaultAxesFontSize',fsz);
+set(0,'defaultLegendFontSize',fsz);
+set(0,'defaultAxesLineWidth',alw);
+% Set the default Size for display
+defpos = get(0,'defaultFigurePosition');
+set(0,'defaultFigurePosition', [defpos(1) defpos(2) width*100, height*100]);
+
+% Set the defaults for saving/printing to a file
+set(0,'defaultFigureInvertHardcopy','on'); % This is the default anyway
+set(0,'defaultFigurePaperUnits','inches'); % This is the default anyway
+defsize = get(gcf, 'PaperSize');
+left = (defsize(1)- width)/2;
+bottom = (defsize(2)- height)/2;
+defsize = [left, bottom, width, height];
+set(0, 'defaultFigurePaperPosition', defsize);
+set(0,'defaultAxesXGrid','on')
+set(0,'defaultAxesYGrid','on')
+set(0,'defaultAxesBox','on')
 
 figure(2)
 box on
-% plot(all_rd,measured_unoccupancy)
+plot(all_rd,measured_unoccupancy)
 hold on
 plot(all_rd,est_from_sqrt_area_ratio_all)
 plot(all_rd,est_from_gap_size_all)
@@ -87,7 +122,7 @@ xlabel('departure ratio [r_D]');
 % measuring distance outside of polytopes for 1 km travel i.e. unoccupancy
 ylabel('linear unoccupancy ratio');
 legend('measured from planner',...
-    'square root of measured area unoccupancy'...
+    'square root of measured area unoccupancy',...
     'estimate from angled gap size',...
     'estimate from normal gap size',...
     'estimate from AABB width',...
@@ -96,7 +131,7 @@ legend('measured from planner',...
 
 figure(1)
 box on
-% plot(all_rd,1-measured_unoccupancy)
+plot(all_rd,1-measured_unoccupancy)
 hold on
 plot(all_rd,1-est_from_sqrt_area_ratio_all)
 plot(all_rd,1-est_from_gap_size_all)
@@ -108,7 +143,7 @@ xlabel('departure ratio [r_D]');
 % measuring distance outside of polytopes for 1 km travel i.e. unoccupancy
 ylabel('linear occupancy ratio');
 legend('measured from planner',...
-    'square root of measured area unoccupancy'...
+    'square root of measured area unoccupancy',...
     'estimate from angled gap size',...
     'estimate from normal gap size',...
     'estimate from AABB width',...
