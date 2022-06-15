@@ -70,7 +70,7 @@ for Halton_seed = 1:20:101
                 line_width = 2; % linewidth of the edge
                 axes_limits = [0 1 0 1]; % x and y axes limits
                 axis_style = 'square'; % plot axes style
-                fcn_plot_polytopes(shrunk_polytopes,fig,line_spec,line_width,axes_limits,axis_style);
+%                 fcn_plot_polytopes(shrunk_polytopes,fig,line_spec,line_width,axes_limits,axis_style);
 
 
                 %% plan path
@@ -108,9 +108,9 @@ for Halton_seed = 1:20:101
                 % plot path
                 figure(fig)
                 hold on
-                plot(path(:,1),path(:,2),'k-','linewidth',2)
-                plot(A.x, A.y, 'gx','linewidth',2)
-                plot(B.x, B.y, 'rx','linewidth',2)
+%                 plot(path(:,1),path(:,2),'k-','linewidth',2)
+%                 plot(A.x, A.y, 'gx','linewidth',2)
+%                 plot(B.x, B.y, 'rx','linewidth',2)
     %             fig = fig + 1;
                 x = path(:,1);
                 y = path(:,2);
@@ -128,7 +128,7 @@ for Halton_seed = 1:20:101
             end
             figure(747474)
             hold on
-            plot(des_costs,total_lengths,'Color', colors(gap_idx,1:3));
+%             plot(des_costs,total_lengths,'Color', colors(gap_idx,1:3));
 %             plot(des_costs, r_lc_sparse_average_actuals,'x','Color', colors(gap_idx,1:3));
             figure(747475)
             hold on
@@ -138,6 +138,7 @@ for Halton_seed = 1:20:101
             hold on
 %             plot(des_costs,(obs_through_all+obs_around_all),'Color',colors(gap_idx,1:3));
 %             plot(des_costs,predicted_N_int,'x','Color', colors(gap_idx,1:3));
+            close all;
         end
     end
 end
