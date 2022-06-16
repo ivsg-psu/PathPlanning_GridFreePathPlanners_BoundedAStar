@@ -207,3 +207,55 @@ save('C:\Users\sjh6473\Desktop\sive_iters_per_point')
 % ylabel('Critical Cost [traversal cost as % of free space cost]')
 % legend('predicted','actual')
 %
+figure(86868686)
+clf
+hold on
+box on
+xlabel('Departure ratio [r_D]')
+ylabel('Length Cost Ratio for Routing Straight Through [r_{LC}]')
+
+% sort dataframes by traversal costs
+straight_path_costs_by_poly_cost = sortrows(straight_path_costs,3);
+predicted_straight_path_costs_by_poly_cost = sortrows(predicted_straight_path_costs,3);
+
+for i = 1:120:841
+    data_this_poly_cost = straight_path_costs_by_poly_cost(i:i+119,:);
+    predicted_data_this_poly_cost = predicted_straight_path_costs_by_poly_cost(i:i+119,:);
+    plot(data_this_poly_cost(:,4),data_this_poly_cost(:,5),'o','Color',colors(data_this_poly_cost(1,3),:));
+    plot(predicted_data_this_poly_cost(:,4),predicted_data_this_poly_cost(:,5),'x','Color',colors(predicted_data_this_poly_cost(1,3),:));
+end
+
+legends = {};
+k = 1;
+for i = 1:length(des_costs)
+    legends(k) = {sprintf('cost = %.3f',des_costs(i))};
+    k = k + 1;
+    legends(k) = {sprintf('predicted for cost = %.3f',des_costs(i))};
+    k = k + 1;
+end
+
+legend(legends);
+
+figure(86868687)
+clf
+hold on
+box on
+xlabel('Departure ratio [r_D]')
+ylabel('Length Cost Ratio for Routing Straight Through [r_{LC}]')
+
+% sort dataframes by traversal costs
+straight_path_costs_by_poly_cost = sortrows(straight_path_costs,3);
+predicted_straight_path_costs_by_poly_cost = sortrows(predicted_straight_path_costs,3);
+
+for i = 1:120:841
+    data_this_poly_cost = straight_path_costs_by_poly_cost(i:i+119,:);
+    predicted_data_this_poly_cost = predicted_straight_path_costs_by_poly_cost(i:i+119,:);
+    plot(data_this_poly_cost(:,4),data_this_poly_cost(:,5),'o','Color',colors(data_this_poly_cost(1,3),:));
+    % plot a poly fit to the prediction data instead of a scatter
+    coefficients = polyfit(predicted_data_this_poly_cost(:,4), predicted_data_this_poly_cost(:,5), 2);
+    xFit = linspace(min(predicted_data_this_poly_cost(:,4)), max(predicted_data_this_poly_cost(:,4)), 1000);
+    yFit = polyval(coefficients , xFit);
+    plot(xFit,yFit,'Color',colors(predicted_data_this_poly_cost(1,3),:));
+end
+
+legend(legends);
