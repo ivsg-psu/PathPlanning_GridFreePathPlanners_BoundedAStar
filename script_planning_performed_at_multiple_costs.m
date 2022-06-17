@@ -45,7 +45,7 @@ for Halton_seed = 1:20:101
             rho = length(trim_polytopes)/area;
 
             %% initialize loop params and storage arrays for plotting
-            des_costs = linspace(0,0.2*pi,8);
+            des_costs = linspace(0,0.2*pi,9);
             total_lengths = [];
             obs_around_all = [];
             obs_through_all = [];
