@@ -191,7 +191,7 @@ k = 1;
 % end
 legend(legends);
 
-save('C:\Users\sjh6473\Desktop\sive_iters_per_point')
+save('C:\Users\sjhar\OneDrive\Desktop\sive_iters_per_point')
 
 % figure(8787)
 % clf
@@ -218,7 +218,7 @@ ylabel('Length Cost Ratio for Routing Straight Through [r_{LC}]')
 straight_path_costs_by_poly_cost = sortrows(straight_path_costs,3);
 predicted_straight_path_costs_by_poly_cost = sortrows(predicted_straight_path_costs,3);
 
-for i = 1:120:841
+for i = 1:120:961
     data_this_poly_cost = straight_path_costs_by_poly_cost(i:i+119,:);
     predicted_data_this_poly_cost = predicted_straight_path_costs_by_poly_cost(i:i+119,:);
     plot(data_this_poly_cost(:,4),data_this_poly_cost(:,5),'o','Color',colors(data_this_poly_cost(1,3),:));
@@ -247,7 +247,7 @@ ylabel('Length Cost Ratio for Routing Straight Through [r_{LC}]')
 straight_path_costs_by_poly_cost = sortrows(straight_path_costs,3);
 predicted_straight_path_costs_by_poly_cost = sortrows(predicted_straight_path_costs,3);
 
-for i = 1:120:841
+for i = 1:120:961
     data_this_poly_cost = straight_path_costs_by_poly_cost(i:i+119,:);
     predicted_data_this_poly_cost = predicted_straight_path_costs_by_poly_cost(i:i+119,:);
     plot(data_this_poly_cost(:,4),data_this_poly_cost(:,5),'o','Color',colors(data_this_poly_cost(1,3),:));
