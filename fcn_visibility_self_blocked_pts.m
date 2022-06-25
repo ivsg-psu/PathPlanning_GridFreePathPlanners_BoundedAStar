@@ -1,5 +1,51 @@
 function [cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...
     fcn_visibility_self_blocked_pts(polytopes,cur_pt,all_pts)
+    % fcn_visibility_self_blocked_pts
+    % determines the points blocked by the obstacle that the planner is currently
+    % at a vertex of
+    %
+    % FORMAT:
+    %
+    % [cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...
+    % fcn_visibility_self_blocked_pts(polytopes,cur_pt,all_pts)
+    %
+    % INPUTS:
+    %
+    % POLYTOPES: a 1-by-n seven field structure of shrunken polytopes,
+    % where n <= number of polytopes with fields:
+    %   vertices: a m+1-by-2 matrix of xy points with row1 = rowm+1, where m is
+    %     the number of the individual polytope vertices
+    %   xv: a 1-by-m vector of vertice x-coordinates
+    %   yv: a 1-by-m vector of vertice y-coordinates
+    %   distances: a 1-by-m vector of perimeter distances from one point to the
+    %     next point, distances(i) = distance from vertices(i) to vertices(i+1)
+    %   mean: centroid xy coordinate of the polytope
+    %   area: area of the polytope
+    % cur_pt: the 1x5 array representing the current point, expected to be a vertex of a polytope
+    % ALL_PTS: p-by-5 matrix of all the points except start and finish
+    %
+    % OUTPUTS:
+    % cur_obs_id - obstacle ID of the polytope that cur_pt is a vertex of
+    % self_blocked_cost - polytope traversal scaling of the polytope the cur_pt is a vertex of
+    % pts_blocked_by_self - the other vertices on the polytope that cur_pt is a vertex of
+    % that cannot be seen from cur_pt (i.e. neither neighboring vertex which would be visible
+    % by looking down the side of a convex polytope)
+    %
+    % DEPENDENCIES:
+    %
+    % EXAMPLES:
+    %
+    % For additional examples, see implementation of this in the through planner in
+    % fcn_algorithm_bound_Astar.m
+    %
+    % This function was written in 2022_05 by Steve Harentt
+    % Questions or comments? sjh6473@psu.edu
+    %
+
+    % Revision History:
+
+    % TO DO
+    % -- implement contingency for concave polytopes
 
     cur_obs_id = cur_pt(4);
     if cur_obs_id == -1
@@ -19,16 +65,8 @@ function [cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...
     assert(ismember(cur_pt(1),cur_poly.xv))
     assert(ismember(cur_pt(2),cur_poly.yv))
 
-    % TODO(@sjharnett) this needs tests, minimum of three (middle vertex is curPt, end is curPt, beginning is curPt)
-
-    % vertices = cur_poly.vertices;
-
-    % remove last vertex
-    % vertices = vertices(1:end-1,:);
 
     % find cur_pt's position in vertices
-    % cur_pt_xy = cur_pt(1:2);
-    % [~,cur_pt_indx]=ismember(cur_pt_xy,vertices,'rows');
     [~,cur_pt_indx]=ismember(cur_pt,pts_on_cur_poly,'rows');
 
     % initialize array of self blocked pts
