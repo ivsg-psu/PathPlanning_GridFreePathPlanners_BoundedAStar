@@ -1,4 +1,4 @@
-function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,bound_pts,varargin)
+function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,bound_pts,planner_mode,varargin)
 % FCN_ALGORITHM_BOUND_ASTAR performs Astar path planning algorithm from
 % start to finish around polytopes while constantly reducing boundaries
 %
@@ -24,7 +24,7 @@ function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts
 %   area: area of the polytope
 % ALL_PTS: p-by-5 matrix of all the points except start and finish
 % BOUND_PTS: subset of valid points that are usable
-% PLANNER_MODE: string containing "legacy","through at vertices","through or around"
+% PLANNER_MODE: string containing option for planner behavior
 % indicates the planner mode
 % "legacy" only goes around obstacles
 % "through at vertices" allows the planner to go through or around each obstacle
@@ -78,20 +78,18 @@ function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts
 %
 
 % check variable argument
-if nargin == 6
+if nargin == 7
     ellipse_polytopes = varargin{1};
-elseif nargin == 5
+elseif nargin == 6
     ellipse_polytopes = polytopes;
 else
-    error('incorrect number of iputs')
+    error('incorrect number of inputs')
 end
 
 
 % main code
 cost = inf;
 route = [];
-
-planner_mode = "straight through";
 
 if planner_mode == "straight through"
     [through_cost,distance_in_polys,distance_outside_polys,num_polys_traversed] = fcn_algorithm_straight_planner(start,finish,all_pts,polytopes);

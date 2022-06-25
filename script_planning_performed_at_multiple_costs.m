@@ -77,7 +77,7 @@ for Halton_seed = 1:20:101
                 % starting (A) and finish (B) coordinates
                 A.x = 0; A.y = 0.5; B.x = 1; B.y = 0.5;
                 % TODO fix this to not be the straight cost but just the planned cost
-                [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes,A,B);
+                [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes,A,B,'straight through');
                 % array is gap_idx, cost_idx, r_lc_straight_through_predicted
                 straight_path_costs = [straight_path_costs; Halton_seed, gap_idx, cost_idx, field_avg_r_D, cost];
                 % predict straight path cost

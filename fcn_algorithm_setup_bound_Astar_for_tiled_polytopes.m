@@ -1,4 +1,4 @@
-function [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(polytopes,A,B,varargin)
+function [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(polytopes,A,B,planner_mode,varargin)
 % FCN_DASTAR_FOR_VORONOI sets up the information needed to for the Dijkstra
 % Astar hybrid function and calls the function when the input polytopes are
 % generated from the voronoi diagram
@@ -27,6 +27,13 @@ function [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(p
 % BOUNDS: b-by-2 matrix of xy coordinates of the boundaries the path
 % planner must stay within, where b is the number of boundary points and
 % b>=3. If this argument not specified, there are no bounds.
+% PLANNER_MODE: string containing option for planner behavior
+% indicates the planner mode
+% "legacy" only goes around obstacles
+% "through at vertices" allows the planner to go through or around each obstacle
+% but only entering or exiting at vertices
+% "through or around" allows the planner to go through all obstacles or around all
+% "straight through" the planner only goes straight from the start to the goal, calculating the cost
 %
 % Examples:
 %
@@ -156,7 +163,7 @@ if err == 0 % A and B outside the polytopes
     ellipse_polytopes = polytopes;
 
     %% calculate path
-    [cost,path] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,valid_pts,ellipse_polytopes);
+    [cost,path] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,valid_pts,planner_mode,ellipse_polytopes);
 
 else % A or B are in the polytopes
    path = [];

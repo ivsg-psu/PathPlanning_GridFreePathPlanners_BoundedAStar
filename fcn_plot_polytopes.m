@@ -106,6 +106,7 @@ end
 if fill_info(1) == 1 % if fill is specified
     for polys = 1:size(polytopes,2) % fill each polytope with the specified color and transparence
         filler = fill(polytopes(polys).vertices(:,1)',polytopes(polys).vertices(:,2)',fill_info(2:4));
+        % the following shades polytopes based on traversal cost
         filler.FaceAlpha = polytopes(polys).cost;
         % Uncomment the following to write polytope cost on polytopes.
         % This is useful for debugging but cluttered
