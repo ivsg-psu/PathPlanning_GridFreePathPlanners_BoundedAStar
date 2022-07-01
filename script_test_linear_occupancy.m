@@ -7,7 +7,7 @@ addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 des_gap_size = linspace(0.0001,0.08,30);
 all_rd = [];
 
-flag_do_plot = 1;
+flag_do_plot = 0;
 
 %% initialize loop params and storage arrays for plotting
 % measured_unoccupancy = [];
@@ -17,6 +17,12 @@ est_from_AABB_all = [];
 est_from_slant_AABB_all = [];
 est_from_gap_size_normal_all = [];
 est_from_poly_fit_all = [];
+est_mean_all_rad_all = [];
+est_mean_mean_rad_all = [];
+est_med_all_rad_all = [];
+est_med_mean_rad_all = [];
+est_25th_all_rad_all = [];
+est_25th_mean_rad_all = [];
 
 % generate Voronoi tiling from Halton points
 low_pt = 1; high_pt = 1000; % range of Halton points to use to generate the tiling
@@ -62,12 +68,18 @@ for gap_idx = 1:length(des_gap_size)
 
     %% find estimated values
     unocc_ests = fcn_MapGen_polytopesPredictUnoccupancyRatio(trim_polytopes,shrunk_polytopes,gap_size);
-    est_from_sqrt_area_ratio_all = [est_from_sqrt_area_ratio_all; (unocc_ests.A_unocc_meas).^0.5]
+    est_from_sqrt_area_ratio_all = [est_from_sqrt_area_ratio_all; (unocc_ests.A_unocc_meas).^0.5];
     est_from_gap_size_all = [est_from_gap_size_all, unocc_ests.L_unocc_est_gap_size];
     est_from_AABB_all = [est_from_AABB_all, unocc_ests.L_unocc_est_AABB_width];
     est_from_slant_AABB_all = [est_from_slant_AABB_all, unocc_ests.L_unocc_est_slant_AABB_width];
     est_from_gap_size_normal_all = [est_from_gap_size_normal_all, unocc_ests.L_unocc_est_gap_size_normal];
     est_from_poly_fit_all = [est_from_poly_fit_all, unocc_ests.L_unocc_est_poly_fit];
+    est_mean_all_rad_all = [est_mean_all_rad_all, unocc_ests.L_unocc_est_mean_all_rad];
+    est_mean_mean_rad_all = [est_mean_mean_rad_all, unocc_ests.L_unocc_est_mean_mean_rad];
+    est_med_all_rad_all = [est_med_all_rad_all, unocc_ests.L_unocc_est_med_all_rad];
+    est_med_mean_rad_all = [est_med_mean_rad_all, unocc_ests.L_unocc_est_med_mean_rad];
+    est_25th_all_rad_all = [est_25th_all_rad_all, unocc_ests.L_unocc_est_25th_all_rad];
+    est_25th_mean_rad_all = [est_25th_mean_rad_all, unocc_ests.L_unocc_est_25th_mean_rad];
 end
 
 figure(2)
@@ -80,6 +92,12 @@ plot(all_rd,est_from_gap_size_normal_all)
 plot(all_rd,est_from_AABB_all)
 plot(all_rd,est_from_slant_AABB_all)
 plot(all_rd,est_from_poly_fit_all)
+plot(all_rd, est_mean_all_rad_all)
+plot(all_rd, est_mean_mean_rad_all)
+plot(all_rd, est_med_all_rad_all)
+plot(all_rd, est_med_mean_rad_all)
+plot(all_rd, est_25th_all_rad_all)
+plot(all_rd, est_25th_mean_rad_all)
 xlabel('departure ratio [r_D]');
 % measuring distance outside of polytopes for 1 km travel i.e. unoccupancy
 ylabel('linear unoccupancy ratio');
@@ -89,7 +107,13 @@ legend('measured from planner',...
     'estimate from normal gap size',...
     'estimate from AABB width',...
     'estimate from center 50% width',...
-    'estimate from quadratic fit');
+    'estimate from quadratic fit',...
+    'estimate from mean of all radii',...
+    'estiamte from mean of mean radii',...
+    'estimate from median of all radii',...
+    'estimate from median of mean radii',...
+    'estimate from 25th pct of all radii',...
+    'estimate from 25th pct of mean radii');
 
 figure(1)
 box on
@@ -101,6 +125,12 @@ plot(all_rd,1-est_from_gap_size_normal_all)
 plot(all_rd,1-est_from_AABB_all)
 plot(all_rd,1-est_from_slant_AABB_all)
 plot(all_rd,1-est_from_poly_fit_all)
+plot(all_rd, 1-est_mean_all_rad_all)
+plot(all_rd, 1-est_mean_mean_rad_all)
+plot(all_rd, 1-est_med_all_rad_all)
+plot(all_rd, 1-est_med_mean_rad_all)
+plot(all_rd, 1-est_25th_all_rad_all)
+plot(all_rd, 1-est_25th_mean_rad_all)
 xlabel('departure ratio [r_D]');
 % measuring distance outside of polytopes for 1 km travel i.e. unoccupancy
 ylabel('linear occupancy ratio');
@@ -110,4 +140,10 @@ legend('measured from planner',...
     'estimate from normal gap size',...
     'estimate from AABB width',...
     'estimate from center 50% width',...
-    'estimate from quadratic fit');
+    'estimate from quadratic fit',...
+    'estimate from mean of all radii',...
+    'estiamte from mean of mean radii',...
+    'estimate from median of all radii',...
+    'estimate from median of mean radii',...
+    'estimate from 25th pct of all radii',...
+    'estimate from 25th pct of mean radii');
