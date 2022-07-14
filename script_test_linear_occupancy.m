@@ -10,7 +10,7 @@ all_rd = [];
 flag_do_plot = 0;
 
 %% initialize loop params and storage arrays for plotting
-% measured_unoccupancy = [];
+measured_unoccupancy = [];
 est_from_sqrt_area_ratio_all = [];
 est_from_gap_size_all = [];
 est_from_AABB_all = [];
@@ -23,10 +23,60 @@ est_med_all_rad_all = [];
 est_med_mean_rad_all = [];
 est_25th_all_rad_all = [];
 est_25th_mean_rad_all = [];
+r_D_for_meas = [];
 
 % generate Voronoi tiling from Halton points
 low_pt = 1; high_pt = 1000; % range of Halton points to use to generate the tiling
 trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
+
+% use radial shrinking to get non-zero standard deviations of obstacle size
+% only for measured occupancy, predicted occupancy will still come from edge shrinking
+% because gap size is a required input
+sd_radius_values = [0, 0.01, 0.02, 0.04, 0.08, 0.16];%, 0.32];
+% loop through radius distributions
+for sd_radius_index = 1:1:length(sd_radius_values)
+    sd_radius = sd_radius_values(sd_radius_index);
+    % loop through radius goals
+    for radii_goals = 0.001:0.0025:0.081
+        des_rad = radii_goals; sigma_radius = sd_radius; min_rad = 0.001;
+        try
+            [shrunk_field,mu_final,sigma_final] = ...
+                fcn_MapGen_polytopesShrinkToRadius(...
+                    trim_polytopes,des_rad,sigma_radius,min_rad...
+            );
+        catch
+            sprintf('shrink failed at des. rad. %2f and sig. rad. %2f',des_rad,sigma_radius);
+            continue
+        end
+        % set polytope traversal cost. it doesn't matter what this is, as long as it's known.
+        des_cost = 0.2;
+        shrunk_polytopes_known_cost = fcn_polytope_editing_set_all_costs(shrunk_field,des_cost);
+        % find measured occupancy at different heights
+        for height_of_path = 0.1:0.2:0.9
+            %% plan path
+            A.x = 0; A.y = height_of_path; B.x = 1; B.y = height_of_path;
+            try
+                [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes_known_cost,A,B,"straight through");
+                % total_path_cost = dist_outside + dist_inside * (1+traversal_cost)
+                % => total_path_cost = (path_length - dist_inside) + dist_inside * (1+traversal_cost)
+                % => if path_length = 1: (total_path_cost - 1)/traversal_cost = dist_inside
+                dist_inside = (cost-1)/des_cost;
+                % because the path length is 1, dist_inside is linear occupancy
+                measured_unoccupancy = [measured_unoccupancy, (1-dist_inside)];
+                %% polytope stats to create inputs for predictor code
+                field_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes_known_cost);
+                field_stats_pre_shrink = fcn_MapGen_polytopesStatistics(trim_polytopes);
+                % extract parameters of interest
+                field_avg_r_D = field_stats.avg_r_D;
+                r_D_for_meas = [r_D_for_meas, field_avg_r_D];
+                straight_path_costs = [straight_path_costs, cost];
+            catch
+                sprintf('meas. cost failed for des. rad. %2f and sig. rad. %2f',des_rad,sigma_radius);
+            end
+        end
+    end
+end
+
 
 %% begin loop of departure ratios
 for gap_idx = 1:length(des_gap_size)
@@ -60,11 +110,6 @@ for gap_idx = 1:length(des_gap_size)
     end
 
 
-    %% plan path
-    A.x = 0; A.y = 0.5; B.x = 1; B.y = 0.5;
-    % TODO implement a way to return measured linear occupancy from the straight path planner
-    % [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes,A,B,"straight through");
-    % measured_unoccupancy = [measured_unoccupancy, cost];
 
     %% find estimated values
     unocc_ests = fcn_MapGen_polytopesPredictUnoccupancyRatio(trim_polytopes,shrunk_polytopes,gap_size);
@@ -84,14 +129,14 @@ end
 
 figure(2)
 box on
-% plot(all_rd,measured_unoccupancy)
+plot(r_D_for_meas, measured_unoccupancy, 'kd')
 hold on
-plot(all_rd,est_from_sqrt_area_ratio_all)
-plot(all_rd,est_from_gap_size_all)
-plot(all_rd,est_from_gap_size_normal_all)
-plot(all_rd,est_from_AABB_all)
-plot(all_rd,est_from_slant_AABB_all)
-plot(all_rd,est_from_poly_fit_all)
+plot(all_rd, est_from_sqrt_area_ratio_all)
+plot(all_rd, est_from_gap_size_all)
+plot(all_rd, est_from_gap_size_normal_all)
+plot(all_rd, est_from_AABB_all)
+plot(all_rd, est_from_slant_AABB_all)
+plot(all_rd, est_from_poly_fit_all)
 plot(all_rd, est_mean_all_rad_all)
 plot(all_rd, est_mean_mean_rad_all)
 plot(all_rd, est_med_all_rad_all)
@@ -117,7 +162,7 @@ legend('measured from planner',...
 
 figure(1)
 box on
-% plot(all_rd,1-measured_unoccupancy)
+plot(r_D_for_meas, 1-measured_unoccupancy,'kd')
 hold on
 plot(all_rd,1-est_from_sqrt_area_ratio_all)
 plot(all_rd,1-est_from_gap_size_all)
@@ -149,36 +194,37 @@ legend('measured from planner',...
     'estiamte from half avg. circ. value and alt. est. min radius');
 
 
-figure(3)
-clf
-box on
-% plot(all_rd,measured_unoccupancy)
-hold on
-plot(all_rd, (est_from_sqrt_area_ratio_all-measured_unoccupancy)./measured_unoccupancy)
-plot(all_rd, (est_from_gap_size_all-measured_unoccupancy)./measured_unoccupancy)
-plot(all_rd, (est_from_gap_size_normal_all-measured_unoccupancy)./measured_unoccupancy)
-plot(all_rd, (est_from_AABB_all-measured_unoccupancy)./measured_unoccupancy)
-plot(all_rd, (est_from_slant_AABB_all-measured_unoccupancy)./measured_unoccupancy)
-plot(all_rd, (est_from_poly_fit_all-measured_unoccupancy)./measured_unoccupancy)
-plot(all_rd, (est_mean_all_rad_all-measured_unoccupancy)./measured_unoccupancy)
-plot(all_rd, (est_mean_mean_rad_all-measured_unoccupancy)./measured_unoccupancy)
-plot(all_rd, (est_med_all_rad_all-measured_unoccupancy)./measured_unoccupancy)
-plot(all_rd, (est_med_mean_rad_all-measured_unoccupancy)./measured_unoccupancy)
-plot(all_rd, (est_25th_all_rad_all-measured_unoccupancy)./measured_unoccupancy)
-plot(all_rd, (est_25th_mean_rad_all-measured_unoccupancy)./measured_unoccupancy)
-xlabel('departure ratio [r_D]');
-% measuring distance outside of polytopes for 1 km travel i.e. unoccupancy
-ylabel('linear occupancy ratio percent error');
-legend(...
-    'square root of measured area unoccupancy',...
-    'estimate from angled gap size',...
-    'estimate from normal gap size',...
-    'estimate from AABB width',...
-    'estimate from vertex IQR width',...
-    'estimate from quadratic fit',...
-    'estimate from avg. circ. value and avg. min radius',...
-    'estiamte from half avg. circ. value and avg. min radius',...
-    'estimate from avg. circ. value and est. min radius',...
-    'estiamte from half avg. circ. value and est. min radius',...
-    'estimate from avg. circ. value and alt. est. min radius',...
-    'estiamte from half avg. circ. value and alt. est. min radius');
+% figure(3)
+% clf
+% box on
+% % plot(all_rd,measured_unoccupancy)
+% hold on
+% plot(all_rd, (est_from_sqrt_area_ratio_all-measured_unoccupancy)./measured_unoccupancy)
+% plot(all_rd, (est_from_gap_size_all-measured_unoccupancy)./measured_unoccupancy)
+% plot(all_rd, (est_from_gap_size_normal_all-measured_unoccupancy)./measured_unoccupancy)
+% plot(all_rd, (est_from_AABB_all-measured_unoccupancy)./measured_unoccupancy)
+% plot(all_rd, (est_from_slant_AABB_all-measured_unoccupancy)./measured_unoccupancy)
+% plot(all_rd, (est_from_poly_fit_all-measured_unoccupancy)./measured_unoccupancy)
+% plot(all_rd, (est_mean_all_rad_all-measured_unoccupancy)./measured_unoccupancy)
+% plot(all_rd, (est_mean_mean_rad_all-measured_unoccupancy)./measured_unoccupancy)
+% plot(all_rd, (est_med_all_rad_all-measured_unoccupancy)./measured_unoccupancy)
+% plot(all_rd, (est_med_mean_rad_all-measured_unoccupancy)./measured_unoccupancy)
+% plot(all_rd, (est_25th_all_rad_all-measured_unoccupancy)./measured_unoccupancy)
+% plot(all_rd, (est_25th_mean_rad_all-measured_unoccupancy)./measured_unoccupancy)
+% xlabel('departure ratio [r_D]');
+% % measuring distance outside of polytopes for 1 km travel i.e. unoccupancy
+% ylabel('linear occupancy ratio percent error');
+% legend(...
+%     'square root of measured area unoccupancy',...
+%     'estimate from angled gap size',...
+%     'estimate from normal gap size',...
+%     'estimate from AABB width',...
+%     'estimate from vertex IQR width',...
+%     'estimate from quadratic fit',...
+%     'estimate from avg. circ. value and avg. min radius',...
+%     'estiamte from half avg. circ. value and avg. min radius',...
+%     'estimate from avg. circ. value and est. min radius',...
+%     'estiamte from half avg. circ. value and est. min radius',...
+%     'estimate from avg. circ. value and alt. est. min radius',...
+%     'estiamte from half avg. circ. value and alt. est. min radius');
+%

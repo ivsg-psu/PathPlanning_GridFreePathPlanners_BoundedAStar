@@ -141,7 +141,7 @@ if err == 0 % A and B outside the polytopes
     start = [A.x A.y A_id Apoly A_beg_end];
     finish = [B.x B.y B_id Bpoly B_beg_end];
 
-    if nargin > 3
+    if nargin > 4
         bounds = varargin{1};
         bound_pts = all_pts(inpolygon(all_pts(:,1),all_pts(:,2),bounds(:,1),bounds(:,2)),:); % bound points at the start
     else

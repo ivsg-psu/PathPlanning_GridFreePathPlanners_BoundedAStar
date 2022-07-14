@@ -100,7 +100,7 @@ function [cost,distance_in_polys,distance_outside_polys,num_polys_traversed] = .
         assert(size(locations_of_crossings,1) == 2 || size(locations_of_crossings,1) == 0);
         % note the distance between intersection points
         if size(locations_of_crossings,1) == 2
-            figure(fig); hold on;
+            figure(111111); hold on;
             plot(locations_of_crossings(:,1),locations_of_crossings(:,2),"cx");
             distance_through_poly = fcn_general_calculation_euclidean_point_to_point_distance(locations_of_crossings(1,:),locations_of_crossings(2,:));
             % increment traversed polytope counter
