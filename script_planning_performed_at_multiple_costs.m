@@ -19,11 +19,11 @@ predicted_straight_path_costs = [];
 straight_path_costs = [];
 
 %% begin loop of departure ratios
-for Halton_seed = 1:20:101
-    for gap_idx = 1:length(des_gap_size)
+for Halton_seed = 1%:20:101
+    for gap_idx = 1%:length(des_gap_size)
         try
             % generate Voronoi tiling from Halton points
-            low_pt = 1+Halton_seed; high_pt = 1000+Halton_seed; % range of Halton points to use to generate the tiling
+            low_pt = 1+Halton_seed; high_pt = 4000+Halton_seed; % range of Halton points to use to generate the tiling
             trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
             % shink the polytopes so that they are no longer tiled
             gap_size = des_gap_size(gap_idx); % desired average maximum radius
@@ -56,7 +56,7 @@ for Halton_seed = 1:20:101
             actual_N_int = [];
 
             %% begin loop of costs
-            for cost_idx=1:length(des_costs)
+            for cost_idx=1%:length(des_costs)
                 des_cost = des_costs(cost_idx);
                 predicted_N_int = [predicted_N_int, field_stats.linear_density_mean];
                 shrunk_polytopes = fcn_polytope_editing_set_all_costs(shrunk_polytopes,des_cost);
