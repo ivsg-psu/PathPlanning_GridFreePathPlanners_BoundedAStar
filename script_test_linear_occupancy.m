@@ -1,82 +1,79 @@
-%% add necessary directories
-addpath([pwd '\Example_Map_Generation_Code'])
-addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
-addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
+% %% add necessary directories
+% addpath([pwd '\Example_Map_Generation_Code'])
+% addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
+% addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
+% 
+% %% initialize loop params and storage arrays for plotting
+% des_gap_size = linspace(0.0001,0.08,30);
+% all_rd = [];
+% 
+% flag_do_plot = 0;
+% 
+% %% initialize loop params and storage arrays for plotting
+% measured_unoccupancy = [];
+% est_from_sqrt_area_ratio_all = [];
+% est_from_gap_size_all = [];
+% est_from_AABB_all = [];
+% est_from_slant_AABB_all = [];
+% est_from_gap_size_normal_all = [];
+% est_from_poly_fit_all = [];
+% est_avg_circ_min_rad = [];
+% est_avg_circ_min_rad_est1 = [];
+% est_avg_circ_min_rad_est2 = [];
+% r_D_for_meas = [];
+% straight_path_costs = [];
+% est_d_eff = [];
+% 
+% % generate Voronoi tiling from Halton points
+% 
+% for halton_seeds = 0:2000:10000
+%     low_pt = 1+halton_seeds; high_pt = 1000+halton_seeds; % range of Halton points to use to generate the tiling
+%     trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
+%     for gap_idx = 1:length(des_gap_size)
+%         % shink the polytopes so that they are no longer tiled
+%         gap_size = des_gap_size(gap_idx); % desired average maximum radius
+%         shrunk_polytopes = fcn_MapGen_polytopesShrinkFromEdges(trim_polytopes,gap_size);
+% 
+%         %% polytope stats to create inputs for predictor code
+%         field_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes);
+%         field_stats_pre_shrink = fcn_MapGen_polytopesStatistics(trim_polytopes);
+%         % extract parameters of interest
+%         field_avg_r_D = field_stats.avg_r_D;
+%         field_avg_r_D_pre_shrink = field_stats_pre_shrink.avg_r_D;
+%         shrunk_distance = field_stats_pre_shrink.average_max_radius - field_stats.average_max_radius;
+%         shrink_ang = field_stats_pre_shrink.average_vertex_angle;
+%         R_bar_initial = field_stats_pre_shrink.average_max_radius;
+% 
+%         %% find measured occupancy
+%         % set polytope traversal cost. it doesn't matter what this is, as long as it's known.
+%         des_cost = 0.2;
+%         shrunk_polytopes_known_cost = fcn_polytope_editing_set_all_costs(shrunk_polytopes,des_cost);
+%         % find measured occupancy at different heights
+%         for height_of_path = 0.1:0.2:0.9
+%             %% plan path
+%             A.x = 0; A.y = height_of_path; B.x = 1; B.y = height_of_path;
+%             [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes_known_cost,A,B,"straight through");
+%             % total_path_cost = dist_outside + dist_inside * (1+traversal_cost)
+%             % => total_path_cost = (path_length - dist_inside) + dist_inside * (1+traversal_cost)
+%             % => if path_length = 1: (total_path_cost - 1)/traversal_cost = dist_inside
+%             dist_inside = (cost-1)/des_cost;
+%             % because the path length is 1, dist_inside is linear occupancy
+%             measured_unoccupancy = [measured_unoccupancy, (1-dist_inside)];
+%             %% polytope stats to create inputs for predictor code
+%             field_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes_known_cost);
+%             % extract parameters of interest
+%             field_avg_r_D = field_stats.avg_r_D;
+%             r_D_for_meas = [r_D_for_meas, field_avg_r_D];
+%             straight_path_costs = [straight_path_costs, cost];
+%         end
+%     end
+% end
 
-%% initialize loop params and storage arrays for plotting
-des_gap_size = linspace(0.0001,0.08,30);
-all_rd = [];
-
-flag_do_plot = 0;
-
-%% initialize loop params and storage arrays for plotting
-measured_unoccupancy = [];
-est_from_sqrt_area_ratio_all = [];
-est_from_gap_size_all = [];
-est_from_AABB_all = [];
-est_from_slant_AABB_all = [];
-est_from_gap_size_normal_all = [];
-est_from_poly_fit_all = [];
-est_avg_circ_min_rad = [];
-est_avg_circ_min_rad_est1 = [];
-est_avg_circ_min_rad_est2 = [];
-r_D_for_meas = [];
-
-% generate Voronoi tiling from Halton points
 low_pt = 1; high_pt = 1000; % range of Halton points to use to generate the tiling
 trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
 
-% use radial shrinking to get non-zero standard deviations of obstacle size
-% only for measured occupancy, predicted occupancy will still come from edge shrinking
-% because gap size is a required input
-sd_radius_values = [0, 0.01, 0.02, 0.04, 0.08, 0.16];%, 0.32];
-% loop through radius distributions
-for sd_radius_index = 1:1:length(sd_radius_values)
-    sd_radius = sd_radius_values(sd_radius_index);
-    % loop through radius goals
-    for radii_goals = 0.001:0.0025:0.081
-        des_rad = radii_goals; sigma_radius = sd_radius; min_rad = 0.001;
-        try
-            [shrunk_field,mu_final,sigma_final] = ...
-                fcn_MapGen_polytopesShrinkToRadius(...
-                    trim_polytopes,des_rad,sigma_radius,min_rad...
-            );
-        catch
-            sprintf('shrink failed at des. rad. %2f and sig. rad. %2f',des_rad,sigma_radius);
-            continue
-        end
-        % set polytope traversal cost. it doesn't matter what this is, as long as it's known.
-        des_cost = 0.2;
-        shrunk_polytopes_known_cost = fcn_polytope_editing_set_all_costs(shrunk_field,des_cost);
-        % find measured occupancy at different heights
-        for height_of_path = 0.1:0.2:0.9
-            %% plan path
-            A.x = 0; A.y = height_of_path; B.x = 1; B.y = height_of_path;
-            try
-                [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes_known_cost,A,B,"straight through");
-                % total_path_cost = dist_outside + dist_inside * (1+traversal_cost)
-                % => total_path_cost = (path_length - dist_inside) + dist_inside * (1+traversal_cost)
-                % => if path_length = 1: (total_path_cost - 1)/traversal_cost = dist_inside
-                dist_inside = (cost-1)/des_cost;
-                % because the path length is 1, dist_inside is linear occupancy
-                measured_unoccupancy = [measured_unoccupancy, (1-dist_inside)];
-                %% polytope stats to create inputs for predictor code
-                field_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes_known_cost);
-                field_stats_pre_shrink = fcn_MapGen_polytopesStatistics(trim_polytopes);
-                % extract parameters of interest
-                field_avg_r_D = field_stats.avg_r_D;
-                r_D_for_meas = [r_D_for_meas, field_avg_r_D];
-                straight_path_costs = [straight_path_costs, cost];
-            catch
-                sprintf('meas. cost failed for des. rad. %2f and sig. rad. %2f',des_rad,sigma_radius);
-            end
-        end
-    end
-end
-
-
 %% begin loop of departure ratios
-for gap_idx = 1:length(des_gap_size)
+for gap_idx = 1:1:18;%1:length(des_gap_size)
     % shink the polytopes so that they are no longer tiled
     gap_size = des_gap_size(gap_idx); % desired average maximum radius
     shrunk_polytopes = fcn_MapGen_polytopesShrinkFromEdges(trim_polytopes,gap_size);
@@ -107,7 +104,6 @@ for gap_idx = 1:length(des_gap_size)
     end
 
 
-
     %% find estimated values
     unocc_ests = fcn_MapGen_polytopesPredictUnoccupancyRatio(trim_polytopes,shrunk_polytopes,gap_size);
     est_from_sqrt_area_ratio_all = [est_from_sqrt_area_ratio_all, (unocc_ests.A_unocc_meas).^0.5];
@@ -119,6 +115,7 @@ for gap_idx = 1:length(des_gap_size)
     est_avg_circ_min_rad = [est_avg_circ_min_rad, unocc_ests.L_unocc_est_avg_circle_min_rad];
     est_avg_circ_min_rad_est1 = [est_avg_circ_min_rad_est1, unocc_ests.L_unocc_est_avg_circle_min_rad_est_1];
     est_avg_circ_min_rad_est2 = [est_avg_circ_min_rad_est2, unocc_ests.L_unocc_est_avg_circle_min_rad_est_2];
+    est_d_eff = [est_d_eff, unocc_ests.L_unocc_est_d_eff];
 end
 
 figure(2)
@@ -134,6 +131,7 @@ plot(all_rd, est_from_poly_fit_all)
 plot(all_rd, est_avg_circ_min_rad)
 plot(all_rd, est_avg_circ_min_rad_est1)
 plot(all_rd, est_avg_circ_min_rad_est2)
+plot(all_rd, est_d_eff)
 xlabel('departure ratio [r_D]');
 % measuring distance outside of polytopes for 1 km travel i.e. unoccupancy
 ylabel('linear unoccupancy ratio');
@@ -146,7 +144,8 @@ legend('measured from planner',...
     'estimate from quadratic fit',...
     'estimate from avg. circ. value and avg. min radius',...
     'estimate from avg. circ. value and est. min radius',...
-    'estimate from avg. circ. value and alt. est. min radius');
+    'estimate from avg. circ. value and alt. est. min radius',...
+    'estimate from d_{eff}');
 
 figure(1)
 box on
@@ -161,6 +160,7 @@ plot(all_rd,1-est_from_poly_fit_all)
 plot(all_rd, 1-est_avg_circ_min_rad)
 plot(all_rd, 1-est_avg_circ_min_rad_est1)
 plot(all_rd, 1-est_avg_circ_min_rad_est2)
+plot(all_rd, 1-est_d_eff)
 xlabel('departure ratio [r_D]');
 % measuring distance outside of polytopes for 1 km travel i.e. unoccupancy
 ylabel('linear occupancy ratio');
@@ -173,7 +173,8 @@ legend('measured from planner',...
     'estimate from quadratic fit',...
     'estimate from avg. circ. value and avg. min radius',...
     'estimate from avg. circ. value and est. min radius',...
-    'estimate from avg. circ. value and alt. est. min radius');
+    'estimate from avg. circ. value and alt. est. min radius',...
+    'estimate from d_{eff}');
 
 
 % figure(3)
@@ -211,9 +212,9 @@ hold on
 plot(r_D_for_meas, measured_unoccupancy+(1.1*(1-measured_unoccupancy)),'rd')
 plot(r_D_for_meas, measured_unoccupancy+(1.2*(1-measured_unoccupancy)),'gd')
 plot(r_D_for_meas, measured_unoccupancy+(1.3*(1-measured_unoccupancy)),'bd')
-plot(all_rd, est_avg_circ_min_rad_est1+(1.1*(1-est_avg_circ_min_rad_est1)),'r')
-plot(all_rd, est_avg_circ_min_rad_est1+(1.2*(1-est_avg_circ_min_rad_est1)),'g')
-plot(all_rd, est_avg_circ_min_rad_est1+(1.3*(1-est_avg_circ_min_rad_est1)),'b')
+plot(all_rd, est_avg_circ_min_rad+(1.1*(1-est_avg_circ_min_rad)),'r')
+plot(all_rd, est_avg_circ_min_rad+(1.2*(1-est_avg_circ_min_rad)),'g')
+plot(all_rd, est_avg_circ_min_rad+(1.3*(1-est_avg_circ_min_rad)),'b')
 
 
 xlabel('departure ratio [r_D]');
