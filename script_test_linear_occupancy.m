@@ -1,13 +1,13 @@
 % %% add necessary directories
-% addpath([pwd '\Example_Map_Generation_Code'])
-% addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
-% addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
+addpath([pwd '\Example_Map_Generation_Code'])
+addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
+addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 % 
 % %% initialize loop params and storage arrays for plotting
 % des_gap_size = linspace(0.0001,0.08,30);
-% all_rd = [];
+all_rd = [];
 % 
-% flag_do_plot = 0;
+flag_do_plot = 0;
 % 
 % %% initialize loop params and storage arrays for plotting
 % measured_unoccupancy = [];
@@ -74,106 +74,100 @@ trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
 
 %% begin loop of departure ratios
 for gap_idx = 1:1:18;%1:length(des_gap_size)
-    % shink the polytopes so that they are no longer tiled
-    gap_size = des_gap_size(gap_idx); % desired average maximum radius
-    shrunk_polytopes = fcn_MapGen_polytopesShrinkFromEdges(trim_polytopes,gap_size);
+    est_avg_circ_min_rad_est1_this_rd = [];
+    est_d_eff_this_rd = [];
+    rd_this_rd = [];
+    for halton_seeds = 0:2000:10000
+        low_pt = 1+halton_seeds; high_pt = 1000+halton_seeds; % range of Halton points to use to generate the tiling
+        trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
+        % shink the polytopes so that they are no longer tiled
+        gap_size = des_gap_size(gap_idx); % desired average maximum radius
+        shrunk_polytopes = fcn_MapGen_polytopesShrinkFromEdges(trim_polytopes,gap_size);
 
-    %% polytope stats to create inputs for predictor code
-    field_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes);
-    field_stats_pre_shrink = fcn_MapGen_polytopesStatistics(trim_polytopes);
-    % extract parameters of interest
-    field_avg_r_D = field_stats.avg_r_D;
-    field_avg_r_D_pre_shrink = field_stats_pre_shrink.avg_r_D;
-    shrunk_distance = field_stats_pre_shrink.average_max_radius - field_stats.average_max_radius;
-    shrink_ang = field_stats_pre_shrink.average_vertex_angle;
-    R_bar_initial = field_stats_pre_shrink.average_max_radius;
-
-    %% get some basic parameters for plotting
-    xlow = 0; xhigh = 1; ylow = 0; yhigh = 1;
-    area = (xhigh-xlow)*(yhigh-ylow);
-    rho = length(trim_polytopes)/area;
-    all_rd = [all_rd, field_avg_r_D];
-
-    if flag_do_plot
-        % plot the map
-        line_spec = 'b-'; % edge line plotting
-        line_width = 2; % linewidth of the edge
-        axes_limits = [0 1 0 1]; % x and y axes limits
-        axis_style = 'square'; % plot axes style
-        fcn_plot_polytopes(shrunk_polytopes,fig,line_spec,line_width,axes_limits,axis_style);
+    
+        %% polytope stats to create inputs for predictor code
+        field_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes);
+        field_stats_pre_shrink = fcn_MapGen_polytopesStatistics(trim_polytopes);
+        % extract parameters of interest
+        field_avg_r_D = field_stats.avg_r_D;
+        field_avg_r_D_pre_shrink = field_stats_pre_shrink.avg_r_D;
+        shrunk_distance = field_stats_pre_shrink.average_max_radius - field_stats.average_max_radius;
+        shrink_ang = field_stats_pre_shrink.average_vertex_angle;
+        R_bar_initial = field_stats_pre_shrink.average_max_radius;
+    
+        %% get some basic parameters for plotting
+        xlow = 0; xhigh = 1; ylow = 0; yhigh = 1;
+        area = (xhigh-xlow)*(yhigh-ylow);
+        rho = length(trim_polytopes)/area;
+        rd_this_rd = [rd_this_rd, field_avg_r_D];
+    
+        if flag_do_plot
+            % plot the map
+            line_spec = 'b-'; % edge line plotting
+            line_width = 2; % linewidth of the edge
+            axes_limits = [0 1 0 1]; % x and y axes limits
+            axis_style = 'square'; % plot axes style
+            fcn_plot_polytopes(shrunk_polytopes,fig,line_spec,line_width,axes_limits,axis_style);
+        end
+        unocc_ests = fcn_MapGen_polytopesPredictUnoccupancyRatio(trim_polytopes,shrunk_polytopes,gap_size);
+        est_avg_circ_min_rad_est1_this_rd = [est_avg_circ_min_rad_est1_this_rd, unocc_ests.L_unocc_est_avg_circle_min_rad_est_1];
+        est_d_eff_this_rd = [est_d_eff_this_rd, unocc_ests.L_unocc_est_d_eff];
     end
-
-
     %% find estimated values
-    unocc_ests = fcn_MapGen_polytopesPredictUnoccupancyRatio(trim_polytopes,shrunk_polytopes,gap_size);
-    est_from_sqrt_area_ratio_all = [est_from_sqrt_area_ratio_all, (unocc_ests.A_unocc_meas).^0.5];
-    est_from_gap_size_all = [est_from_gap_size_all, unocc_ests.L_unocc_est_gap_size];
-    est_from_AABB_all = [est_from_AABB_all, unocc_ests.L_unocc_est_AABB_width];
-    est_from_slant_AABB_all = [est_from_slant_AABB_all, unocc_ests.L_unocc_est_slant_AABB_width];
-    est_from_gap_size_normal_all = [est_from_gap_size_normal_all, unocc_ests.L_unocc_est_gap_size_normal];
-    est_from_poly_fit_all = [est_from_poly_fit_all, unocc_ests.L_unocc_est_poly_fit];
-    est_avg_circ_min_rad = [est_avg_circ_min_rad, unocc_ests.L_unocc_est_avg_circle_min_rad];
-    est_avg_circ_min_rad_est1 = [est_avg_circ_min_rad_est1, unocc_ests.L_unocc_est_avg_circle_min_rad_est_1];
-    est_avg_circ_min_rad_est2 = [est_avg_circ_min_rad_est2, unocc_ests.L_unocc_est_avg_circle_min_rad_est_2];
-    est_d_eff = [est_d_eff, unocc_ests.L_unocc_est_d_eff];
+    
+%     est_from_sqrt_area_ratio_all = [est_from_sqrt_area_ratio_all, (unocc_ests.A_unocc_meas).^0.5];
+%     est_from_gap_size_all = [est_from_gap_size_all, unocc_ests.L_unocc_est_gap_size];
+%     est_from_AABB_all = [est_from_AABB_all, unocc_ests.L_unocc_est_AABB_width];
+%     est_from_slant_AABB_all = [est_from_slant_AABB_all, unocc_ests.L_unocc_est_slant_AABB_width];
+%     est_from_gap_size_normal_all = [est_from_gap_size_normal_all, unocc_ests.L_unocc_est_gap_size_normal];
+%     est_from_poly_fit_all = [est_from_poly_fit_all, unocc_ests.L_unocc_est_poly_fit];
+%     est_avg_circ_min_rad = [est_avg_circ_min_rad, unocc_ests.L_unocc_est_avg_circle_min_rad];
+    est_avg_circ_min_rad_est1 = [est_avg_circ_min_rad_est1, mean(est_avg_circ_min_rad_est1_this_rd)];
+%     est_avg_circ_min_rad_est2 = [est_avg_circ_min_rad_est2, unocc_ests.L_unocc_est_avg_circle_min_rad_est_2];
+    est_d_eff = [est_d_eff, mean(est_d_eff_this_rd)];
+    all_rd = [all_rd,mean(rd_this_rd)];
 end
 
 figure(2)
 box on
 plot(r_D_for_meas, measured_unoccupancy, 'kd')
 hold on
-plot(all_rd, est_from_sqrt_area_ratio_all)
-plot(all_rd, est_from_gap_size_all)
-plot(all_rd, est_from_gap_size_normal_all)
-plot(all_rd, est_from_AABB_all)
-plot(all_rd, est_from_slant_AABB_all)
-plot(all_rd, est_from_poly_fit_all)
-plot(all_rd, est_avg_circ_min_rad)
+% plot(all_rd, est_from_sqrt_area_ratio_all)
+% plot(all_rd, est_from_gap_size_all)
+% plot(all_rd, est_from_gap_size_normal_all)
+% plot(all_rd, est_from_AABB_all)
+% plot(all_rd, est_from_slant_AABB_all)
+% plot(all_rd, est_from_poly_fit_all)
+% plot(all_rd, est_avg_circ_min_rad)
 plot(all_rd, est_avg_circ_min_rad_est1)
-plot(all_rd, est_avg_circ_min_rad_est2)
+% plot(all_rd, est_avg_circ_min_rad_est2)
 plot(all_rd, est_d_eff)
 xlabel('departure ratio [r_D]');
 % measuring distance outside of polytopes for 1 km travel i.e. unoccupancy
 ylabel('linear unoccupancy ratio');
 legend('measured from planner',...
-    'square root of measured area unoccupancy',...
-    'estimate from angled gap size',...
-    'estimate from normal gap size',...
-    'estimate from AABB width',...
-    'estimate from vertex IQR width',...
-    'estimate from quadratic fit',...
     'estimate from avg. circ. value and avg. min radius',...
-    'estimate from avg. circ. value and est. min radius',...
-    'estimate from avg. circ. value and alt. est. min radius',...
     'estimate from d_{eff}');
 
 figure(1)
 box on
 plot(r_D_for_meas, 1-measured_unoccupancy,'kd')
 hold on
-plot(all_rd,1-est_from_sqrt_area_ratio_all)
-plot(all_rd,1-est_from_gap_size_all)
-plot(all_rd,1-est_from_gap_size_normal_all)
-plot(all_rd,1-est_from_AABB_all)
-plot(all_rd,1-est_from_slant_AABB_all)
-plot(all_rd,1-est_from_poly_fit_all)
-plot(all_rd, 1-est_avg_circ_min_rad)
+% plot(all_rd,1-est_from_sqrt_area_ratio_all)
+% plot(all_rd,1-est_from_gap_size_all)
+% plot(all_rd,1-est_from_gap_size_normal_all)
+% plot(all_rd,1-est_from_AABB_all)
+% plot(all_rd,1-est_from_slant_AABB_all)
+% plot(all_rd,1-est_from_poly_fit_all)
+% plot(all_rd, 1-est_avg_circ_min_rad)
 plot(all_rd, 1-est_avg_circ_min_rad_est1)
-plot(all_rd, 1-est_avg_circ_min_rad_est2)
+% plot(all_rd, 1-est_avg_circ_min_rad_est2)
 plot(all_rd, 1-est_d_eff)
 xlabel('departure ratio [r_D]');
 % measuring distance outside of polytopes for 1 km travel i.e. unoccupancy
 ylabel('linear occupancy ratio');
 legend('measured from planner',...
-    'square root of measured area unoccupancy',...
-    'estimate from angled gap size',...
-    'estimate from normal gap size',...
-    'estimate from AABB width',...
-    'estimate from vertex IQR width',...
-    'estimate from quadratic fit',...
     'estimate from avg. circ. value and avg. min radius',...
-    'estimate from avg. circ. value and est. min radius',...
-    'estimate from avg. circ. value and alt. est. min radius',...
     'estimate from d_{eff}');
 
 
@@ -206,15 +200,15 @@ legend('measured from planner',...
 %
 
 
-figure(3)
+figure(4)
 box on
 hold on
 plot(r_D_for_meas, measured_unoccupancy+(1.1*(1-measured_unoccupancy)),'rd')
 plot(r_D_for_meas, measured_unoccupancy+(1.2*(1-measured_unoccupancy)),'gd')
 plot(r_D_for_meas, measured_unoccupancy+(1.3*(1-measured_unoccupancy)),'bd')
-plot(all_rd, est_avg_circ_min_rad+(1.1*(1-est_avg_circ_min_rad)),'r')
-plot(all_rd, est_avg_circ_min_rad+(1.2*(1-est_avg_circ_min_rad)),'g')
-plot(all_rd, est_avg_circ_min_rad+(1.3*(1-est_avg_circ_min_rad)),'b')
+plot(all_rd, est_avg_circ_min_rad_est1+(1.1*(1-est_avg_circ_min_rad_est1)),'r')
+plot(all_rd, est_avg_circ_min_rad_est1+(1.2*(1-est_avg_circ_min_rad_est1)),'g')
+plot(all_rd, est_avg_circ_min_rad_est1+(1.3*(1-est_avg_circ_min_rad_est1)),'b')
 
 
 xlabel('departure ratio [r_D]');
