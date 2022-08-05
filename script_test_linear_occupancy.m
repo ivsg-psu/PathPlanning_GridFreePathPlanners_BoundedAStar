@@ -18,11 +18,14 @@ flag_do_plot = 0;
 % est_from_gap_size_normal_all = [];
 % est_from_poly_fit_all = [];
 % est_avg_circ_min_rad = [];
-% est_avg_circ_min_rad_est1 = [];
+est_avg_circ_min_rad_est1 = [];
 % est_avg_circ_min_rad_est2 = [];
 % r_D_for_meas = [];
 % straight_path_costs = [];
-% est_d_eff = [];
+est_d_eff = [];
+est_d_eff2 = [];
+est_d_eff3 = [];
+est_d_eff4 = [];
 % 
 % % generate Voronoi tiling from Halton points
 % 
@@ -76,6 +79,9 @@ trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
 for gap_idx = 1:1:18;%1:length(des_gap_size)
     est_avg_circ_min_rad_est1_this_rd = [];
     est_d_eff_this_rd = [];
+    est_d_eff_this_rd2 = [];
+    est_d_eff_this_rd3 = [];
+    est_d_eff_this_rd4 = [];
     rd_this_rd = [];
     for halton_seeds = 0:2000:10000
         low_pt = 1+halton_seeds; high_pt = 1000+halton_seeds; % range of Halton points to use to generate the tiling
@@ -112,6 +118,9 @@ for gap_idx = 1:1:18;%1:length(des_gap_size)
         unocc_ests = fcn_MapGen_polytopesPredictUnoccupancyRatio(trim_polytopes,shrunk_polytopes,gap_size);
         est_avg_circ_min_rad_est1_this_rd = [est_avg_circ_min_rad_est1_this_rd, unocc_ests.L_unocc_est_avg_circle_min_rad_est_1];
         est_d_eff_this_rd = [est_d_eff_this_rd, unocc_ests.L_unocc_est_d_eff];
+        est_d_eff_this_rd2 = [est_d_eff_this_rd2, unocc_ests.L_unocc_est_d_eff2];
+        est_d_eff_this_rd3 = [est_d_eff_this_rd3, unocc_ests.L_unocc_est_d_eff3];
+        est_d_eff_this_rd4 = [est_d_eff_this_rd4, unocc_ests.L_unocc_est_d_eff4];
     end
     %% find estimated values
     
@@ -125,6 +134,9 @@ for gap_idx = 1:1:18;%1:length(des_gap_size)
     est_avg_circ_min_rad_est1 = [est_avg_circ_min_rad_est1, mean(est_avg_circ_min_rad_est1_this_rd)];
 %     est_avg_circ_min_rad_est2 = [est_avg_circ_min_rad_est2, unocc_ests.L_unocc_est_avg_circle_min_rad_est_2];
     est_d_eff = [est_d_eff, mean(est_d_eff_this_rd)];
+    est_d_eff2 = [est_d_eff2, mean(est_d_eff_this_rd2)];
+    est_d_eff3 = [est_d_eff3, mean(est_d_eff_this_rd3)];
+    est_d_eff4 = [est_d_eff4, mean(est_d_eff_this_rd4)];
     all_rd = [all_rd,mean(rd_this_rd)];
 end
 
@@ -142,12 +154,18 @@ hold on
 plot(all_rd, est_avg_circ_min_rad_est1)
 % plot(all_rd, est_avg_circ_min_rad_est2)
 plot(all_rd, est_d_eff)
+plot(all_rd, est_d_eff2)
+plot(all_rd, est_d_eff3)
+plot(all_rd, est_d_eff4)
 xlabel('departure ratio [r_D]');
 % measuring distance outside of polytopes for 1 km travel i.e. unoccupancy
 ylabel('linear unoccupancy ratio');
 legend('measured from planner',...
     'estimate from avg. circ. value and avg. min radius',...
-    'estimate from d_{eff}');
+    'estimate from d_{eff}',...
+    'estimate from d_{eff}2',...
+    'estimate from d_{eff}3',...
+    'estimate from d_{eff}4');
 
 figure(1)
 box on
@@ -163,12 +181,18 @@ hold on
 plot(all_rd, 1-est_avg_circ_min_rad_est1)
 % plot(all_rd, 1-est_avg_circ_min_rad_est2)
 plot(all_rd, 1-est_d_eff)
+plot(all_rd, 1-est_d_eff2)
+plot(all_rd, 1-est_d_eff3)
+plot(all_rd, 1-est_d_eff4)
 xlabel('departure ratio [r_D]');
 % measuring distance outside of polytopes for 1 km travel i.e. unoccupancy
 ylabel('linear occupancy ratio');
 legend('measured from planner',...
     'estimate from avg. circ. value and avg. min radius',...
-    'estimate from d_{eff}');
+    'estimate from d_{eff}',...
+    'estimate from d_{eff}2',...
+    'estimate from d_{eff}3',...
+    'estimate from d_{eff}4');
 
 
 % figure(3)
