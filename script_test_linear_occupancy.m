@@ -79,15 +79,15 @@ low_pt = 1; high_pt = 1000; % range of Halton points to use to generate the tili
 trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
 
 %% begin loop of departure ratios
-for gap_idx = 1:1:14%1:length(des_gap_size)
+for gap_idx = 6:1:14%1:length(des_gap_size)
     est_avg_circ_min_rad_est1_this_rd = [];
     est_d_eff_this_rd = [];
     est_d_eff_this_rd2 = [];
     est_d_eff_this_rd3 = [];
     est_d_eff_this_rd4 = [];
-    est_d_eff_this_rd6 = [];
+%     est_d_eff_this_rd6 = [];
     est_d_eff_this_rd5 = [];
-    est_d_eff_this_rd7 = [];
+%     est_d_eff_this_rd7 = [];
     rd_this_rd = [];
     for halton_seeds = 0%:2000:10000
         low_pt = 1+halton_seeds; high_pt = 1000+halton_seeds; % range of Halton points to use to generate the tiling
@@ -127,7 +127,7 @@ for gap_idx = 1:1:14%1:length(des_gap_size)
         est_d_eff_this_rd2 = [est_d_eff_this_rd2, unocc_ests.L_unocc_est_d_eff2];
         est_d_eff_this_rd3 = [est_d_eff_this_rd3, unocc_ests.L_unocc_est_d_eff3];
         est_d_eff_this_rd4 = [est_d_eff_this_rd4, unocc_ests.L_unocc_est_d_eff4];
-        est_d_eff_this_rd5 = [est_d_eff_this_rd2, unocc_ests.L_unocc_est_d_eff5];
+        est_d_eff_this_rd5 = [est_d_eff_this_rd5, unocc_ests.L_unocc_est_d_eff5];
 %         est_d_eff_this_rd6 = [est_d_eff_this_rd3, unocc_ests.L_unocc_est_d_eff6];
 %         est_d_eff_this_rd7 = [est_d_eff_this_rd7, unocc_ests.L_unocc_est_d_eff7];
     end
@@ -170,8 +170,8 @@ plot(all_rd, est_d_eff2)
 plot(all_rd, est_d_eff3)
 plot(all_rd, est_d_eff4)
 plot(all_rd, est_d_eff5)
-plot(all_rd, est_d_eff6)
-plot(all_rd, est_d_eff7)
+% plot(all_rd, est_d_eff6)
+% plot(all_rd, est_d_eff7)
 xlabel('departure ratio [r_D]');
 % measuring distance outside of polytopes for 1 km travel i.e. unoccupancy
 ylabel('linear unoccupancy ratio');
@@ -203,8 +203,8 @@ plot(all_rd, 1-est_d_eff2)
 plot(all_rd, 1-est_d_eff3)
 plot(all_rd, 1-est_d_eff4)
 plot(all_rd, 1-est_d_eff5)
-plot(all_rd, 1-est_d_eff6)
-plot(all_rd, 1-est_d_eff7)
+% plot(all_rd, 1-est_d_eff6)
+% plot(all_rd, 1-est_d_eff7)
 xlabel('departure ratio [r_D]');
 % measuring distance outside of polytopes for 1 km travel i.e. unoccupancy
 ylabel('linear occupancy ratio');
