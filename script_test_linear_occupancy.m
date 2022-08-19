@@ -79,7 +79,7 @@ low_pt = 1; high_pt = 1000; % range of Halton points to use to generate the tili
 trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
 
 %% begin loop of departure ratios
-for gap_idx = 6:1:14%1:length(des_gap_size)
+for gap_idx = 1:1:14%1:length(des_gap_size)
     est_avg_circ_min_rad_est1_this_rd = [];
     est_d_eff_this_rd = [];
     est_d_eff_this_rd2 = [];
@@ -89,7 +89,7 @@ for gap_idx = 6:1:14%1:length(des_gap_size)
     est_d_eff_this_rd5 = [];
 %     est_d_eff_this_rd7 = [];
     rd_this_rd = [];
-    for halton_seeds = 0%:2000:10000
+    for halton_seeds = 0:2000:10000
         low_pt = 1+halton_seeds; high_pt = 1000+halton_seeds; % range of Halton points to use to generate the tiling
         trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
         % shink the polytopes so that they are no longer tiled
@@ -140,16 +140,16 @@ for gap_idx = 6:1:14%1:length(des_gap_size)
 %     est_from_gap_size_normal_all = [est_from_gap_size_normal_all, unocc_ests.L_unocc_est_gap_size_normal];
 %     est_from_poly_fit_all = [est_from_poly_fit_all, unocc_ests.L_unocc_est_poly_fit];
 %     est_avg_circ_min_rad = [est_avg_circ_min_rad, unocc_ests.L_unocc_est_avg_circle_min_rad];
-    est_avg_circ_min_rad_est1 = [est_avg_circ_min_rad_est1, mean(est_avg_circ_min_rad_est1_this_rd)];
+    est_avg_circ_min_rad_est1 = [est_avg_circ_min_rad_est1, nanmean(est_avg_circ_min_rad_est1_this_rd)];
 %     est_avg_circ_min_rad_est2 = [est_avg_circ_min_rad_est2, unocc_ests.L_unocc_est_avg_circle_min_rad_est_2];
-    est_d_eff = [est_d_eff, mean(est_d_eff_this_rd)];
-    est_d_eff2 = [est_d_eff2, mean(est_d_eff_this_rd2)];
-    est_d_eff3 = [est_d_eff3, mean(est_d_eff_this_rd3)];
-    est_d_eff4 = [est_d_eff4, mean(est_d_eff_this_rd4)];
-    est_d_eff5 = [est_d_eff5, mean(est_d_eff_this_rd5)];
+    est_d_eff = [est_d_eff, nanmean(est_d_eff_this_rd)];
+    est_d_eff2 = [est_d_eff2, nanmean(est_d_eff_this_rd2)];
+    est_d_eff3 = [est_d_eff3, nanmean(est_d_eff_this_rd3)];
+    est_d_eff4 = [est_d_eff4, nanmean(est_d_eff_this_rd4)];
+    est_d_eff5 = [est_d_eff5, nanmean(est_d_eff_this_rd5)];
 %     est_d_eff6 = [est_d_eff6, mean(est_d_eff_this_rd6)];
 %     est_d_eff7 = [est_d_eff7, mean(est_d_eff_this_rd7)];
-    all_rd = [all_rd,mean(rd_this_rd)];
+    all_rd = [all_rd,nanmean(rd_this_rd)];
 end
 
 figure(2)

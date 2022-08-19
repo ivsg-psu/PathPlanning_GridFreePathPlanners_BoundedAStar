@@ -20,7 +20,7 @@ straight_path_costs = [];
 
 %% begin loop of departure ratios
 for Halton_seed = 1%:20:101
-    for gap_idx = 1%:length(des_gap_size)
+    for gap_idx = 5%1:length(des_gap_size)
         try
             % generate Voronoi tiling from Halton points
             low_pt = 1+Halton_seed; high_pt = 4000+Halton_seed; % range of Halton points to use to generate the tiling
@@ -56,7 +56,7 @@ for Halton_seed = 1%:20:101
             actual_N_int = [];
 
             %% begin loop of costs
-            for cost_idx=1%:length(des_costs)
+            for cost_idx=1:length(des_costs)
                 des_cost = des_costs(cost_idx);
                 predicted_N_int = [predicted_N_int, field_stats.linear_density_mean];
                 shrunk_polytopes = fcn_polytope_editing_set_all_costs(shrunk_polytopes,des_cost);
@@ -75,7 +75,7 @@ for Halton_seed = 1%:20:101
                 % starting (A) and finish (B) coordinates
                 A.x = 0; A.y = 0.5; B.x = 1; B.y = 0.5;
 
-                [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes,A,B,'straight through');
+                [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes,A,B,'through or around');
                 % array is gap_idx, cost_idx, r_lc_straight_through_predicted
                 straight_path_costs = [straight_path_costs; Halton_seed, gap_idx, cost_idx, field_avg_r_D, cost];
                 % predict straight path cost
