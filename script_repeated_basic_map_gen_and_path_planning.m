@@ -12,7 +12,7 @@ repetitions = 10;
 % variables of the structure type, as it will take a lot of memory)
 final_info(repetitions) = struct('polytopes',[],'start',[],'finish',[],'path_x',[],'path_y',[],'appex1_x',[],'appex1_y',[],'appex2_x',[],'appex2_y',[]);
 % generate Voronoi tiling from Halton points
-pt_density = 50; % point density used for generation
+pt_density = 100; % point density used for generation
 low_pts = 1:pt_density:(pt_density*(repetitions-1)+1); % lower bound of Halton set range
 high_pts = pt_density:pt_density:pt_density*repetitions; % upper bound of Halton set range
 % remove the edge polytope that extend past the high and low points
@@ -49,7 +49,7 @@ for rep = 1:repetitions
         fcn_plot_polytopes(shrunk_polytopes,fig,line_spec,line_width,axes_limits,axis_style);
     end
     %% plan path
-    [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes,A,B);
+    [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes,A,B,'through at vertices');
     % path: series of points [x y point_id obs_id beg_end]
     % cost: path length
     % err: marker indicating if there was an error in setup (1) or not (0)
