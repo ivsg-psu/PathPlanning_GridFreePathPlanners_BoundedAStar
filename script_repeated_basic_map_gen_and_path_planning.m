@@ -4,8 +4,6 @@ close all
 
 %% add necessary directories
 addpath([pwd '\Example_Map_Generation_Code'])
-addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
-addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 
 %% map generation control
 % repetition controls and storage
@@ -25,7 +23,7 @@ sigma_radius = 0.002; % desired standard deviation in maximum radii
 min_rad = 0.0001; % minimum possible maximum radius for any obstacle
 shrink_seed = 1111; % seed used for randomizing the shrinking process
 % starting (A) and finish (B) coordinates
-A.x = 0; A.y = 1; B.x = 1; B.y = 0;
+A.x = 0; A.y = 0.5; B.x = 1; B.y = 0.5;
 
 %% plotting control
 plotting = 1; % 1 if you would like to see plots, anything else if not
@@ -39,9 +37,8 @@ for rep = 1:repetitions
     trim_polytopes = fcn_polytope_editing_remove_edge_polytopes(tiled_polytopes,xlow,xhigh,ylow,yhigh);
     % shink the polytopes so that they are no longer tiled
     rng(shrink_seed) % set the random number generator with the shrink seed
-    shrunk_polytopes = fcn_polytope_editing_shrink_to_average_max_radius_with_variance(trim_polytopes,des_radius*1.2,sigma_radius,min_rad);
-    shrunk_polytopes = fcn_polytope_editing_set_all_costs(shrunk_polytopes,0.1);
-    %% 
+    shrunk_polytopes = fcn_polytope_editing_shrink_to_average_max_radius_with_variance(trim_polytopes,des_radius,sigma_radius,min_rad);
+
     % plot the map
     if plotting == 1
         fig = 99; % figure to plot on
@@ -51,59 +48,19 @@ for rep = 1:repetitions
         axis_style = 'square'; % plot axes style
         fcn_plot_polytopes(shrunk_polytopes,fig,line_spec,line_width,axes_limits,axis_style);
     end
-    flag_interpolate_polys = 1;
-    if flag_interpolate_polys
-        resolution = 0.005; % TODO something better than a hard coded resolution could be used here
-        flag_do_plot = 0;
-        for i = 1:length(shrunk_polytopes)
-            new_verts = [];
-            if flag_do_plot
-                figure(102938)
-                hold on
-                plot(shrunk_polytopes(i).vertices(:,1),shrunk_polytopes(i).vertices(:,2),'k')
-                plot(shrunk_polytopes(i).vertices(:,1),shrunk_polytopes(i).vertices(:,2),'kx')
-            end
-            for j = 1:(size(shrunk_polytopes(i).vertices,1)-1)
-                % if this side goes backwards (from larger x to smaller x) we
-                % have to flip the interpolated points
-                if shrunk_polytopes(i).vertices(j,1) < shrunk_polytopes(i).vertices(j+1,1)
-                    xq = shrunk_polytopes(i).vertices(j,1):resolution:shrunk_polytopes(i).vertices(j+1,1);
-                    vq = interp1([shrunk_polytopes(i).vertices(j,1),shrunk_polytopes(i).vertices(j+1,1)],...
-                                 [shrunk_polytopes(i).vertices(j,2),shrunk_polytopes(i).vertices(j+1,2)],...
-                                 xq);
-                else
-                    xq = shrunk_polytopes(i).vertices(j+1,1):resolution:shrunk_polytopes(i).vertices(j,1);
-                    vq = interp1([shrunk_polytopes(i).vertices(j+1,1),shrunk_polytopes(i).vertices(j,1)],...
-                                 [shrunk_polytopes(i).vertices(j+1,2),shrunk_polytopes(i).vertices(j,2)],...
-                                 xq);
-                    vq = flip(vq);
-                    xq = flip(xq);
-                end
-                new_verts_this_side = [xq; vq]';
-                new_verts = [new_verts; new_verts_this_side];
-            end
-            shrunk_polytopes(i).vertices = [new_verts;new_verts(1,:)];
-            shrunk_polytopes(i).xv = new_verts(:,1)';
-            shrunk_polytopes(i).yv = new_verts(:,2)';
-            if flag_do_plot
-                figure(102938)
-                hold on
-                plot(shrunk_polytopes(i).vertices(:,1),shrunk_polytopes(i).vertices(:,2),'rx')
-                legend('','orig. vertices','dense vertices')
-            end
-        end
-    end
     %% plan path
     [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes,A,B,'through at vertices');
     % path: series of points [x y point_id obs_id beg_end]
     % cost: path length
     % err: marker indicating if there was an error in setup (1) or not (0)
+
     % plot path
     if plotting == 1
         plot(path(:,1),path(:,2),'k-','linewidth',2)
         plot(A.x, A.y, 'gx','linewidth',2)
         plot(B.x, B.y, 'rx','linewidth',2)
     end
+
     %% info needed for further work
     % gather data on all the points
     point_tot = length([shrunk_polytopes.xv]); % total number of vertices in the polytopes
