@@ -26,7 +26,7 @@ shrink_seed = 1111; % seed used for randomizing the shrinking process
 A.x = 0; A.y = 0.5; B.x = 1; B.y = 0.5;
 
 %% plotting control
-plotting = 1; % 1 if you would like to see plots, anything else if not
+flag_do_plot = 0; % 1 if you would like to see plots, anything else if not
 
 for rep = 1:repetitions
     %% generate map
@@ -40,7 +40,7 @@ for rep = 1:repetitions
     shrunk_polytopes = fcn_polytope_editing_shrink_to_average_max_radius_with_variance(trim_polytopes,des_radius,sigma_radius,min_rad);
 
     % plot the map
-    if plotting == 1
+    if flag_do_plot
         fig = 99; % figure to plot on
         line_spec = 'b-'; % edge line plotting
         line_width = 2; % linewidth of the edge
@@ -55,7 +55,7 @@ for rep = 1:repetitions
     % err: marker indicating if there was an error in setup (1) or not (0)
 
     % plot path
-    if plotting == 1
+    if flag_do_plot
         plot(path(:,1),path(:,2),'k-','linewidth',2)
         plot(A.x, A.y, 'gx','linewidth',2)
         plot(B.x, B.y, 'rx','linewidth',2)
@@ -115,7 +115,7 @@ for rep = 1:repetitions
     % appex_x = [appex_x1 closer_x1 farther_x1; appex_x2 closer_x2 farther_x2; .... appex_xn closer_xn farther_xn]
     % appex_y = [appex_y1 closer_y1 farther_y1; appex_y2 closer_y2 farther_y2; .... appex_yn closer_yn farther_yn]
 
-    if plotting == 1
+    if flag_do_plot
         plot(appex_x,appex_y,'o','linewidth',2)
         pause(2)
         close 99
