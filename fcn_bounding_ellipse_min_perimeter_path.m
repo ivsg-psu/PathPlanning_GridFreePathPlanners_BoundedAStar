@@ -73,7 +73,8 @@ function [max_dist] = fcn_bounding_ellipse_min_perimeter_path(int_polytopes,inte
 if nargin ~= 4
     error('Incorrect number of arguments');
 end
-
+% TODO @sjharnett replace bug with estimated R_lc function to define boundary in
+% new heuristic bounded A*
 %% starting values
 max_dist = 0; % start the max_dist at 0
 points = intersections.points; % pull the intersection points from intersections

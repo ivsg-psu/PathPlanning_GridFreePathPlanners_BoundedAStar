@@ -143,7 +143,8 @@ while ~isempty(open_set) % continue until open set is empty
     % find polytopes that could be intersected
     close_polytopes  = fcn_polytope_calculation_polytopes_near_the_line(cur_pt,finish,ellipse_polytopes);
     %%%%%%%%%%%%% polytopes changed to ellipse_polytopes
-
+    % TODO @sjharnett put boundary call here instead of in while loop
+    % rebrand in new function called fast bounded A*
     % find if finish is blocked and any intersection data
     if ~isempty(close_polytopes) % if there's close obstacles
         [~,blocked_pts,D,di,~,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP] = fcn_visibility_clear_and_blocked_points(close_polytopes,cur_pt,finish);
@@ -207,6 +208,8 @@ while ~isempty(open_set) % continue until open set is empty
             % plot(finish(1),finish(2),'kx','linewidth',2)
 
             %%% Step 4: For all bound points, find points visible to cur_pt and calculate their costs
+            % TODO @sjharnett calculate visibility matrix once at beginning then simply remove
+            % vertices outisde boundary and squeeze() matrix to remove empty rows & cols
             neighbor_pts = fcn_visibility_clear_and_blocked_points(bound_polytopes,cur_pt,[bound_pts; finish]);
         end
         if planner_mode == "through at vertices"
