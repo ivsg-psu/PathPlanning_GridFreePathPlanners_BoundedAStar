@@ -110,9 +110,9 @@ if fill_info(1) == 1 % if fill is specified
         filler.FaceAlpha = polytopes(polys).cost;
         % Uncomment the following to write polytope cost on polytopes.
         % This is useful for debugging but cluttered
-        % txt = sprintf('%.2f',round(polytopes(polys).cost,2));
+        txt = sprintf('%.2f',round(polytopes(polys).cost,2));
         % plot the
-        % text(polytopes(polys).mean(1),polytopes(polys).mean(2),txt,'clipping', 'off');
+        text(polytopes(polys).mean(1),polytopes(polys).mean(2),txt,'clipping', 'off');
     end
 end
 if plots == 1 % basic plot with only polytopes, figure, line_spec, and line_width

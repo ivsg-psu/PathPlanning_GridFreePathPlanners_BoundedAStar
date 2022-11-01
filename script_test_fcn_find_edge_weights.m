@@ -1,10 +1,10 @@
-% script_test_fcn_visibility_clear_and_blocked_points_global
-% Tests: fcn_visibility_clear_and_blocked_points_global
+% script_test_fcn_find_edge_weights
+% Tests: fcn_find_edge_weights
 
 %
 % REVISION HISTORY:
 %
-% 2022_10_28 by S. Harnett
+% 2022_11_01 by S. Harnett
 % -- first write of script
 %%%%%%%%%%%%%%§
 
@@ -21,10 +21,10 @@ flag_do_plot = 1;
 
 %% generate map
 Halton_seed = 10;
-low_pt = 1+Halton_seed; high_pt = 100+Halton_seed; % range of Halton points to use to generate the tiling
+low_pt = 1+Halton_seed; high_pt = 15+Halton_seed; % range of Halton points to use to generate the tiling
 trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
 % shink the polytopes so that they are no longer tiled
-gap_size = 0.025; % desired average maximum radius
+gap_size = 0.0001; % desired average maximum radius
 polytopes = fcn_MapGen_polytopesShrinkFromEdges(trim_polytopes,gap_size);
 % plot the map
 if flag_do_plot
@@ -56,15 +56,21 @@ for poly = 1:size(polytopes,2) % check each polytope
     curpt = curpt+num_verts;
     polytopes(poly).perimeter = sum(polytopes(poly).distances);
 end
+
 obs_id = [polytopes.obs_id];
 point_tot = length([polytopes.xv]); % need to recheck total points
 beg_end = beg_end(1:point_tot); % remove any extra points
 
 all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
 
+%% add known costs to polytopes
+polytopes(1).cost = 1;
+polytopes(2).cost = 2;
+polytopes(3).cost = 3;
 
 %% calculate vibility graph
-vgraph = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts);
+vgraph = fcn_visibility_clear_and_blocked_points_global(polytopes, all_pts);
+
 
 % plot visibility graph edges
 if flag_do_plot
@@ -74,5 +80,26 @@ if flag_do_plot
                 plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'-g')
             end
         end
+    end
+end
+
+
+%% calculate weighted visibility graph (cost graph)
+cgraph = fcn_find_edge_weights(polytopes, all_pts);
+
+% plot cgraph edges
+if flag_do_plot
+    vgraph = vgraph - eye(size(vgraph,1));
+    [r, c] = find(vgraph==1);
+    for i = size(r,1)
+            hold on;
+            txt = sprintf('%.2f',round(cgraph(r(i),c(i)),2));
+            x1 = all_pts(r(1),1);
+            x2 = all_pts(c(1),1);
+            y1 = all_pts(r(1),2);
+            y2 = all_pts(c(1),2);
+            xbar = mean([x1, x2]);
+            ybar = mean([y1, y2]);
+            text(xbar, ybar, txt, 'clipping', 'off', 'Color', 'g');
     end
 end

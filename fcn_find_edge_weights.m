@@ -19,4 +19,5 @@ function cost_matrix = fcn_find_edge_weights(polytopes, all_pts)
     min_traversal_costs = min(first_traversal_costs,second_traversal_costs);
     idx = sub2ind(size(visibility_matrix), r, c);
     visibility_matrix(idx) = min_traversal_costs;
+    cost_matrix = visibility_matrix;
 end
