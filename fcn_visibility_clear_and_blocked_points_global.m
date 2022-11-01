@@ -1,4 +1,4 @@
-function [vgraph] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts)
+function visibility_matrix = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts)
     % fcn_MapGen_increasePolytopeVertexCount
     % The function fcn_visibility_clear_and_blocked_points returns an intersection
     % matrix for a single start point, showing what was intersected between
@@ -9,7 +9,7 @@ function [vgraph] = fcn_visibility_clear_and_blocked_points_global(polytopes,all
     %
     %
     % FORMAT:
-    % [vgraph] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts)
+    % visibility_matrix = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts)
     %
     % INPUTS:
     %     polytopes - the polytope field
@@ -25,7 +25,7 @@ function [vgraph] = fcn_visibility_clear_and_blocked_points_global(polytopes,all
     %
     % OUTPUTS:
     %
-    %     vgraph - nxn matrix, where n is the number of points in all_pts
+    %     visibility_matrix - nxn matrix, where n is the number of points in all_pts
     %       a 1 in column i and row j indicates that all_pts(i,:) is visible from
     %       all_pts(j,:).  This matrix is therefore symmetric
     %
@@ -44,8 +44,12 @@ function [vgraph] = fcn_visibility_clear_and_blocked_points_global(polytopes,all
     % -- first written by Steve Harnett
     % Questions? sjh6473@psu.edu
 
+    % TODO(@sjharnett) could use the Lee algorithm to speed up if necessary
+    % https://github.com/davetcoleman/visibility_graph/blob/master/Visibility_Graph_Algorithm.pdf
+    % TODO(@sjharnett) could also discard sides based on direction of normal relative to scan direction
+
     num_points = size(all_pts,1)
-    vgraph = NaN(num_points)
+    visibility_matrix = NaN(num_points)
     for i = 1:num_points
         [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = ...
             fcn_visibility_clear_and_blocked_points(polytopes,all_pts(i,:),all_pts);
@@ -54,6 +58,9 @@ function [vgraph] = fcn_visibility_clear_and_blocked_points_global(polytopes,all
         % sum each column into a row vector so each element is the sum of number
         % of sides hit
         % if sum>0, this implies there is no visibility
-        vgraph(i,:) = sum(D')==0;
+        visibility_matrix(i,:) = sum(D')==0;
+        % sometimes the diagonal does not contain only 1's (it always should
+        % since every point is visible to itself so we overwrite this)
+        visibility_matrix(i,i) = 1;
     end
 end
