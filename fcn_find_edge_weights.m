@@ -20,4 +20,5 @@ function cost_matrix = fcn_find_edge_weights(polytopes, all_pts)
     % explanation of the following line: https://www.mathworks.com/company/newsletters/articles/matrix-indexing-in-matlab.html
     idx = sub2ind(size(visibility_matrix), r, c);
     visibility_matrix(idx) = min_traversal_costs;
+    cost_matrix = visibility_matrix;
 end
