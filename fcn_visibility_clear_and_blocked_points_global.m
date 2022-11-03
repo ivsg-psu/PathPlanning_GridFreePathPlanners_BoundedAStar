@@ -47,7 +47,10 @@ function visibility_matrix = fcn_visibility_clear_and_blocked_points_global(poly
     % TODO(@sjharnett) could use the Lee algorithm to speed up if necessary
     % https://github.com/davetcoleman/visibility_graph/blob/master/Visibility_Graph_Algorithm.pdf
     % TODO(@sjharnett) could also discard sides based on direction of normal relative to scan direction
-
+    % there is an issue: polytopes contain points, therefore points are represented multiple times
+    % need the reverse mappping of points to polytopes
+    % then each point is only represented once
+    % visibility graph can then be reduced
     num_points = size(all_pts,1)
     visibility_matrix = NaN(num_points)
     for i = 1:num_points

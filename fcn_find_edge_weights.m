@@ -1,4 +1,7 @@
 function cost_matrix = fcn_find_edge_weights(polytopes, all_pts)
+    % TODO if the visibility matrix is reduced, this should be modified to
+    % find the min cost, of the two polytopes that are both members of pt 1
+    % and pt 2
     % all_pts = [xv' yv' [1:length(xv)]' obs_id beg_end];
     % pts : obs_id
     % want to form a matrix of 1 and 0 for visibility
