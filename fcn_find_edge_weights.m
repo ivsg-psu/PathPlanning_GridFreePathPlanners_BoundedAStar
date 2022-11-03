@@ -11,7 +11,7 @@ function cost_matrix = fcn_find_edge_weights(polytopes, all_pts)
     second_pts = all_pts(c,:);
     % find the corresponding polytopes
     first_polys = polytopes(first_pts(:,4));
-    second_polys = polytopes(first_pts(:,4));
+    second_polys = polytopes(second_pts(:,4));
     % find the corresponding costs
     first_traversal_costs = extractfield(first_polys,'cost');
     second_traversal_costs = extractfield(second_polys,'cost');

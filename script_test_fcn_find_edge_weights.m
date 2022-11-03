@@ -21,7 +21,7 @@ flag_do_plot = 1;
 
 %% generate map
 Halton_seed = 10;
-low_pt = 1+Halton_seed; high_pt = 15+Halton_seed; % range of Halton points to use to generate the tiling
+low_pt = 1+Halton_seed; high_pt = 5+Halton_seed; % range of Halton points to use to generate the tiling
 trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
 % shink the polytopes so that they are no longer tiled
 gap_size = 0.0001; % desired average maximum radius
@@ -63,11 +63,6 @@ beg_end = beg_end(1:point_tot); % remove any extra points
 
 all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
 
-%% add known costs to polytopes
-polytopes(1).cost = 1;
-polytopes(2).cost = 2;
-polytopes(3).cost = 3;
-
 %% calculate vibility graph
 vgraph = fcn_visibility_clear_and_blocked_points_global(polytopes, all_pts);
 
@@ -81,6 +76,15 @@ if flag_do_plot
             end
         end
     end
+    for i = 1:size(all_pts,1)
+        hold on;
+            txt = sprintf('%.2f',round(all_pts(i,3),0));
+            %% test that all_pts id column is correct
+            assert(isequal(all_pts(i,3),i));
+            x = all_pts(i,1);
+            y = all_pts(i,2);
+            text(x, y, txt, 'clipping', 'off', 'Color', 'r');
+    end
 end
 
 
@@ -89,17 +93,23 @@ cgraph = fcn_find_edge_weights(polytopes, all_pts);
 
 % plot cgraph edges
 if flag_do_plot
-    vgraph = vgraph - eye(size(vgraph,1));
-    [r, c] = find(vgraph==1);
-    for i = size(r,1)
+    % for symmetric we only ned upper triangular part
+    cgraph_upper_tri = triu(cgraph,1);
+    [r, c] = find(cgraph_upper_tri>0);
+    for i = 1:size(r,1)
             hold on;
             txt = sprintf('%.2f',round(cgraph(r(i),c(i)),2));
-            x1 = all_pts(r(1),1);
-            x2 = all_pts(c(1),1);
-            y1 = all_pts(r(1),2);
-            y2 = all_pts(c(1),2);
+            x1 = all_pts(r(i),1);
+            x2 = all_pts(c(i),1);
+            y1 = all_pts(r(i),2);
+            y2 = all_pts(c(i),2);
             xbar = mean([x1, x2]);
             ybar = mean([y1, y2]);
             text(xbar, ybar, txt, 'clipping', 'off', 'Color', 'g');
     end
+    % test for symmetry
+    assert(issymmetric(vgraph))
+    assert(issymmetric(cgraph))
+    % test that vgraph and cgraph have the same number of non-zero elements
+    assert(isequal(sum(sum(vgraph)),sum(sum(cgraph>0))))
 end
