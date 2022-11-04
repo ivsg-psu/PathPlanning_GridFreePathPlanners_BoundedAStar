@@ -23,10 +23,12 @@ sigma_radius = 0.002; % desired standard deviation in maximum radii
 min_rad = 0.0001; % minimum possible maximum radius for any obstacle
 shrink_seed = 1111; % seed used for randomizing the shrinking process
 % starting (A) and finish (B) coordinates
-A.x = 0; A.y = 0.5; B.x = 1; B.y = 0.5;
+A.x = 0.0; A.y = 0.5; B.x = 1; B.y = 0.5;
+% uncomment below to start in a polytope
+% A.x = 0.15; A.y = 0.54; B.x = 1; B.y = 0.5;
 
 %% plotting control
-flag_do_plot = 0; % 1 if you would like to see plots, anything else if not
+flag_do_plot = 1; % 1 if you would like to see plots, anything else if not
 
 for rep = 1:repetitions
     %% generate map
@@ -38,7 +40,8 @@ for rep = 1:repetitions
     % shink the polytopes so that they are no longer tiled
     rng(shrink_seed) % set the random number generator with the shrink seed
     shrunk_polytopes = fcn_polytope_editing_shrink_to_average_max_radius_with_variance(trim_polytopes,des_radius,sigma_radius,min_rad);
-
+    % if starting in a polytope, at 0.15, 0.45 per above, this controls its cost
+    % shrunk_polytopes(31).cost = 0.1;
     % plot the map
     if flag_do_plot
         fig = 99; % figure to plot on

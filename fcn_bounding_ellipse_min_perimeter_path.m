@@ -68,7 +68,7 @@ function [max_dist] = fcn_bounding_ellipse_min_perimeter_path(int_polytopes,inte
 % This function was written on 2018_11_17 by Seth Tau
 % Questions or comments? sat5340@psu.edu
 %
-
+try
 %% check input arguments
 if nargin ~= 4
     error('Incorrect number of arguments');
@@ -220,3 +220,6 @@ while ~isempty(points) % points not empty
 end
 % add the distance from the last intersection to the end point
 max_dist = max_dist + fcn_general_calculation_euclidean_point_to_point_distance(startpt,finishpt);
+catch
+    max_dist = fcn_general_calculation_euclidean_point_to_point_distance(startpt,finishpt)*2;
+end

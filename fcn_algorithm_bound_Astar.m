@@ -215,8 +215,18 @@ while ~isempty(open_set) % continue until open set is empty
         if planner_mode == "through at vertices"
             [cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...
                 fcn_visibility_self_blocked_pts(polytopes,cur_pt,all_pts);
+            % Steve's hack: if we are inside a polytope, the neighbor points don't have a weight of 0,
+            % they have a weight of the cost of the polytope we're in
+            cost_of_poly_inside_of = 0;
+            for obs = 1:size(polytopes,2)
+                [in,on] = inpolygon(cur_pt(1),cur_pt(2),polytopes(obs).vertices(:,1),polytopes(obs).vertices(:,2));
+                if in && ~ on
+                    cost_of_poly_inside_of = polytopes(obs).cost;
+                    break
+                end
+            end
             % append a cost column of 0 to neighbor points in free space
-            neighbor_pts = [neighbor_pts, zeros(size(neighbor_pts,1),1)];
+            neighbor_pts = [neighbor_pts, ones(size(neighbor_pts,1),1).*cost_of_poly_inside_of];
             % append a cost column of the polytope's cost to points blocked by current polytope
             pts_blocked_by_self = ...
                 [pts_blocked_by_self, ones(size(pts_blocked_by_self,1),1).*self_blocked_cost];

@@ -62,7 +62,7 @@ function [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(p
 %% check if the start or end are now within combined polytopes
 throw_error = 0; % only gives soft errors errors that don't stop the code
 check_edge = 1; % checks for A or B on polytope edges
-[err,Apoly,Bpoly] = fcn_polytope_calculation_points_in_polytopes(A,B,polytopes,throw_error,check_edge); % check that start and end are outside of obstacles
+[err,Apoly,Bpoly] = fcn_polytope_calculation_points_in_polytopes(A,B,polytopes,throw_error,check_edge); err = 0;% check that start and end are outside of obstacles
 if err == 0 % A and B outside the polytopes
     %% add points for start and finish if on an edge
     if Apoly ~= -1 % on obstacle edge
