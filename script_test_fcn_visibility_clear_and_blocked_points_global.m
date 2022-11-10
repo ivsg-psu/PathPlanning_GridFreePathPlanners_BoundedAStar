@@ -64,7 +64,7 @@ all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all poi
 
 
 %% calculate vibility graph
-vgraph = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts);
+vgraph = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,gap_size);
 
 % plot visibility graph edges
 if flag_do_plot
