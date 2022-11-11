@@ -1,5 +1,5 @@
-% script_test_fcn_conver_polytope_struct_to_deduped_points.m
-% Tests: fcn_conver_polytope_struct_to_deduped_points
+% script_test_fcn_convert_polytope_struct_to_deduped_points
+% Tests: fcn_convert_polytope_struct_to_deduped_points
 
 %
 % REVISION HISTORY:
