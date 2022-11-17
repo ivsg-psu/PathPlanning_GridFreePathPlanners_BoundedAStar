@@ -83,12 +83,31 @@ function visibility_matrix = fcn_visibility_clear_and_blocked_points_global(poly
             % set a 1, indicating the self-blocked points are visible
             visibility_matrix(idx) = 1;
         end
-    else
+    elseif gap_size == 0
         % for the zero gap size case, we can do an optimization: all points on the same polytope
         % are visible, either along the side or across the polytope
         % other points are not visible since there are no gaps and angles of 180 deg
         % are not possible in a Voronoi diagram where all vertices have 3 Voronoi sides
-        deduped_pts = fcn_convert_polytope_struct_to_deduped_pts(polytopes);
-
+        deduped_pts = fcn_convert_polytope_struct_to_deduped_points(all_pts);
+        num_unique_pts = length(deduped_pts);
+        all_polys = NaN(num_unique_pts,3);
+        for i = 1:num_unique_pts
+            for j = 1:length(deduped_pts(i).polys)
+                all_polys(i,j) = deduped_pts(i).polys(j);
+            end
+        end
+        visibility_matrix = zeros(num_unique_pts);
+        for i = 1:num_unique_pts
+            for j = 1:3
+                poly_of_interest = all_polys(i,j);
+                if isnan(poly_of_interest)
+                    continue
+                end
+                [r,c] = find(all_polys == poly_of_interest);
+                for k = 1:length(r)
+                    visibility_matrix(i,r(k)) = 1;
+                end
+            end
+        end
     end
 end
