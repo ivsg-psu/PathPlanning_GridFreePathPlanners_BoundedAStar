@@ -8,9 +8,9 @@ addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
 addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 
 %% initialize loop params and storage arrays for plotting
-des_gap_size = linspace(0.0001,0.08,3);
+des_gap_size = linspace(0.0001,0.08,20);
 % colors = [1 0 0; 0 1 0; 0 0 1; 0 1 1;1 0 1;1 1 0; 0 0 0;0 0.4470 0.7410; 0.8500 0.3250 0.0980; 0.9290 0.6940 0.1250; 0.4940 0.1840 0.5560; 0.4660 0.6740 0.1880; 0.3010 0.7450 0.9330; 0.6350 0.0780 0.1840; 1 0 0; 0 1 0; 0 0 1; 0 1 1;1 0 1;1 1 0];
-des_costs = [0.1,0.15,0.2,0.25,0];
+des_costs = [0.5];%,0.15,0.2,0.25,0];
 all_rd = [];
 all_rlc = [];
 all_obs_through = [];
@@ -28,7 +28,7 @@ for Halton_seed = 1%:20:101
     for gap_idx = 1:length(des_gap_size)
 
         % generate Voronoi tiling from Halton points
-        low_pt = 1+Halton_seed; high_pt = 4000+Halton_seed; % range of Halton points to use to generate the tiling
+        low_pt = 1+Halton_seed; high_pt = 1000+Halton_seed; % range of Halton points to use to generate the tiling
         trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
         % shink the polytopes so that they are no longer tiled
         gap_size = des_gap_size(gap_idx); % desired average maximum radius
@@ -39,6 +39,7 @@ for Halton_seed = 1%:20:101
         field_stats_pre_shrink = fcn_MapGen_polytopesStatistics(trim_polytopes);
         % extract parameters of interest
         field_avg_r_D = field_stats.avg_r_D;
+        all_rd = [all_rd, field_avg_r_D];
         field_avg_r_D_pre_shrink = field_stats_pre_shrink.avg_r_D;
 
 
@@ -63,16 +64,19 @@ for Halton_seed = 1%:20:101
             y = path(:,2);
             d = diff([x(:) y(:)]);
             total_length = sum(sqrt(sum(d.*d,2)));
-            all_rlc = [all_rlc, total_length];
+            all_rlc = [all_rlc, cost];
             % num_predicted_obs_traversals_this_rd = [num_predicted_obs_traversals_this_rd, num_predicted_obs_traversals];
             [obs_around, obs_through] =...
                 fcn_general_calculation_count_obs_in_path(path);
             all_obs_through = [all_obs_through, obs_through];
             all_obs_around = [all_obs_around, obs_around];
-            figure(fig)
-            hold on
-            plot(r_D,r_LC,'Color',[obs_around/(obs_around+obs_through)*255,0,obs_through/(obs_around+obs_through)*255]);
+            
         end
 
     end
+end
+for i = 1:length(all_rd)
+    figure(fig)
+    hold on
+    plot(all_rd(i),all_rlc(i),'Marker','d','Color',[all_obs_around(i)/(all_obs_around(i)+all_obs_through(i)),0,all_obs_through(i)/(all_obs_around(i)+all_obs_through(i))]);
 end
