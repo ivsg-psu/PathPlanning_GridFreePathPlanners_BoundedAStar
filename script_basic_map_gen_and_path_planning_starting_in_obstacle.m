@@ -45,7 +45,12 @@ for i = 1:length(des_cost)
     plot(B.x, B.y, 'rx','linewidth',2)
     dist_s2g = sqrt((B.x-A.x)^2+(B.y-A.y)^2);
     rlc = cost/dist_s2g;
-    title(sprintf('Traversal cost: %.2f, \nlength cost ratio: %.2f, \nMeander penalty: on',des_cost(i),rlc));
+    x = path(:,1);
+    y = path(:,2);
+    d = diff([x(:) y(:)]);
+    total_length = sum(sqrt(sum(d.*d,2)));
+    meander = total_length/dist_s2g;
+    title(sprintf('Obstacle traversal cost: %.2f, \nlength cost ratio: %.2f, \nmeander: %.2f, \nCurve penalty: on',des_cost(i),rlc,meander));
     
     % zoom in on polytope started inside of
 %     xlim([0.05,0.4]);ylim([0.4,0.75])
