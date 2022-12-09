@@ -278,31 +278,45 @@ while ~isempty(open_set) % continue until open set is empty
                         tentative_cost = cost_in(cur_pt(3)) + ...
                             (1+neighbor_pts(poly_cost_index,6))*fcn_general_calculation_euclidean_point_to_point_distance(...
                             cur_pt(1:2),all_pts(neighbor,1:2));
-
-                        %% curveyness metric
+                        %% hill model
+%                         find the path so far
                         if cur_pt(3) ~= start(3)
-                            % find the path so far
-                            route_so_far = cur_pt;
-                            ind_so_far = parent(cur_pt(3));
-                            while ind_so_far ~= start(3)
-                                route_so_far = [all_pts(ind_so_far,:); route_so_far];
-                                ind_so_far = parent(all_pts(ind_so_far,3));
+                            next_pt_x = all_pts(neighbor,1);
+                            cur_pt_x = cur_pt(1);
+                            next_pt_y = all_pts(neighbor,2);
+                            cur_pt_y  = cur_pt(2);
+                            if cur_pt_y > next_pt_y % we go right
+                                hill_penalty = 1.2;
+                            else
+                                hill_penalty = 1;
                             end
-                            route_so_far = [start; route_so_far];
-                            % calculate angle between previous segment and
-                            % next possible segment
-
-                            % next_seg = [next_pt_x - cur_pt_x, next_pt_y - cur_pt_y]
-                            next_seg = [all_pts(neighbor,1)-cur_pt(1),all_pts(neighbor,2)-cur_pt(2)];
-                            % prev_seg = [cur_pt_x - prev_pt_x, cur_pt_y - prev_pt_y]
-                            prev_seg = [cur_pt(1)-route_so_far(end-1,1),cur_pt(2)-route_so_far(end-1,2)];
-
-                            ang = acos(dot(next_seg,prev_seg)/(norm(next_seg)*norm(prev_seg)));
-                            % express curveneyness as portion of max curve (180)
-                            curveyness_portion = ang/pi;
-                            % scale cost by max curveyness
-                            tentative_cost = tentative_cost*(1+curveyness_portion);
+                            tentative_cost = tentative_cost*hill_penalty;
                         end
+
+                        % %% curveyness metric
+                        % if cur_pt(3) ~= start(3)
+                        %     % find the path so far
+                        %     route_so_far = cur_pt;
+                        %     ind_so_far = parent(cur_pt(3));
+                        %     while ind_so_far ~= start(3)
+                        %         route_so_far = [all_pts(ind_so_far,:); route_so_far];
+                        %         ind_so_far = parent(all_pts(ind_so_far,3));
+                        %     end
+                        %     route_so_far = [start; route_so_far];
+                        %     % calculate angle between previous segment and
+                        %     % next possible segment
+
+                        %     % next_seg = [next_pt_x - cur_pt_x, next_pt_y - cur_pt_y]
+                        %     next_seg = [all_pts(neighbor,1)-cur_pt(1),all_pts(neighbor,2)-cur_pt(2)];
+                        %     % prev_seg = [cur_pt_x - prev_pt_x, cur_pt_y - prev_pt_y]
+                        %     prev_seg = [cur_pt(1)-route_so_far(end-1,1),cur_pt(2)-route_so_far(end-1,2)];
+
+                        %     ang = acos(dot(next_seg,prev_seg)/(norm(next_seg)*norm(prev_seg)));
+                        %     % express curveneyness as portion of max curve (180)
+                        %     curveyness_portion = ang/pi;
+                        %     % scale cost by max curveyness
+                        %     tentative_cost = tentative_cost*(1+curveyness_portion);
+                        % end
                     end
 
                     if isempty(find(open_set==neighbor,1)) % not already in the open set

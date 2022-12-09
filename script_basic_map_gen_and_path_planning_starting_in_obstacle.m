@@ -1,6 +1,6 @@
 clear
 clc
-close all
+% close all
 
 %% add necessary directories
 addpath([pwd '\Example_Map_Generation_Code'])
@@ -23,7 +23,7 @@ des_cost = [0.1,0.4,1.0];
 for i = 1:length(des_cost)
     shrunk_polytopes = fcn_polytope_editing_set_all_costs(shrunk_polytopes,des_cost(i));
     % plot the map
-    fig = 99+i; % figure to plot on
+    fig = 110+i; % figure to plot on
     line_spec = 'b-'; % edge line plotting
     line_width = 2; % linewidth of the edge
     axes_limits = [0 1 0 1]; % x and y axes limits
@@ -50,7 +50,7 @@ for i = 1:length(des_cost)
     d = diff([x(:) y(:)]);
     total_length = sum(sqrt(sum(d.*d,2)));
     meander = total_length/dist_s2g;
-    title(sprintf('Obstacle traversal cost: %.2f, \nlength cost ratio: %.2f, \nmeander: %.2f, \nCurve penalty: on',des_cost(i),rlc,meander));
+    title(sprintf('Obstacle traversal cost: %.2f, \ncost ratio: %.2f, \nlength cost ratio: %.2f, \nHill 1.2, uphill in neg. y',des_cost(i),rlc,meander));
     
     % zoom in on polytope started inside of
 %     xlim([0.05,0.4]);ylim([0.4,0.75])
