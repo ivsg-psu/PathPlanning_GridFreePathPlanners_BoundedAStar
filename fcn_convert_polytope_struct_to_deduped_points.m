@@ -1,4 +1,26 @@
 function unique_deduped_points_struct = fcn_convert_polytope_struct_to_deduped_points(all_pts)
+% this function takes in the table of all points, which in a fully tiled field contains repeated
+% points when a vertex belongs to multiple polytopes, and returns a points data structure
+% without duplicates, where each point has an associated list of polytopes it belongs to
+%
+% unique_deduped_points_struct = fcn_convert_polytope_struct_to_deduped_points(all_pts)
+%
+% returns:
+% unique_deduped_points_struct: an L-dimensional struct where L is the number of unique points in
+% the field with fields .x and .y for the x and y coordintes of the point, respectively
+% and .polys containing a list of all the polytope ids this point is a vertex of
+%
+% with inputs:
+% ALL_PTS: a-by-5 matrix of all map points, where a = number of map points
+% note that a>=L
+% the columns in all_pts are as follows: [x y point_id obs_id beg_end] see fcn_algorithm_setup_bound_Astar_for_tiled_polytopes for more
+%
+% Examples:
+%      see script_test_fcn_convert_polytope_struct_to_deduped_points
+%
+% This function was written on in 2022 by Stephen Harnett
+% Questions or comments? sjharnett@psu.edu
+%
     deduped_points_struct = [];
     for i = 1:size(all_pts,1)
         deduped_points_struct(i).x = all_pts(i,1);
