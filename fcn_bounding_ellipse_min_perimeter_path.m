@@ -9,7 +9,7 @@ function [max_dist] = fcn_bounding_ellipse_min_perimeter_path(int_polytopes,inte
 %   minimum perimeters
 %
 % with inputs:
-% INT_POLYTOPES: a 1-by-p seven field structure of intersected polytopes,  
+% INT_POLYTOPES: a 1-by-p seven field structure of intersected polytopes,
 %   where p = number of intersected polytopes, with fields:
 % vertices: a m+1-by-2 matrix of xy points with row1 = rowm+1, where m is
 %   the number of the individual polytope vertices
@@ -22,22 +22,22 @@ function [max_dist] = fcn_bounding_ellipse_min_perimeter_path(int_polytopes,inte
 % max_radius: distance from the mean to the furthest vertex
 % INTERSECTIONS: a 1-by-f three field structure of intersection information, where
 %   f = number of finish points, with fields:
-% points: i-by-2 matrix of xy coordinates, where i=number of intersections  
+% points: i-by-2 matrix of xy coordinates, where i=number of intersections
 % index: 1-by-i vector of intersecting line indices
 % obstacles: 1-by-i vector of obstacles intersecting the line
 % START: a 1-by-5 vector of starting point information, including:
 %   x-coordinate
 %   y-coordinate
 %   point id number
-%   obstacle id number 
+%   obstacle id number
 %   beginning/ending indication (1 if the point is a beginning or ending
-%   point and 0 otherwise) 
+%   point and 0 otherwise)
 %   Ex: [x y point_id obs_id beg_end]
 % FINISH: a 1-by-5 vector of ending point information, including the same
 %   information as START
 %
 % Examples:
-%      
+%
 %      % BASIC example
 %      cur_path = pwd;
 %      main_folder = '!Voronoi Tiling Obstacles - Organized';
@@ -62,18 +62,19 @@ function [max_dist] = fcn_bounding_ellipse_min_perimeter_path(int_polytopes,inte
 %      plot([start(1) finish(1)],[start(2) finish(2)],'k--','linewidth',2)
 %      for xing = 1:length(intersections(end).index)
 %          plot(intersections(end).points(xing,1),intersections(end).points(xing,2),'kx','linewidth',1)
-%      end    
-%      
-% 
-% This function was written on 2018_11_17 by Seth Tau
-% Questions or comments? sat5340@psu.edu 
+%      end
 %
-
+%
+% This function was written on 2018_11_17 by Seth Tau
+% Questions or comments? sat5340@psu.edu
+%
+try
 %% check input arguments
 if nargin ~= 4
     error('Incorrect number of arguments');
 end
-
+% TODO @sjharnett replace bug with estimated R_lc function to define boundary in
+% new heuristic bounded A*
 %% starting values
 max_dist = 0; % start the max_dist at 0
 points = intersections.points; % pull the intersection points from intersections
@@ -128,7 +129,7 @@ while ~isempty(points) % points not empty
         curobs = obstacles(ind);
         obstacles(ind) = []; % remove obstacle
     end
-    
+
     % find furthest point on current obstacle
     f_ind = find(dist == max(dist(obstacles == curobs)));
     if (length(f_ind) > 1) && (sum(obstacles(f_ind)==curobs)>0)
@@ -146,7 +147,7 @@ while ~isempty(points) % points not empty
     dist = dist - dist(ind2); % remove extra distance
     dist(rem_ind) = []; % remove distance
     obstacles(rem_ind) = []; % remove obstacle
-    
+
 %     % assigne values to find the perimeter
 %     if sum(obstacles == obstacles(ind)) == 1 % only intersecting an obstacle once
 %         if obstacles(ind) == startobs % on starting obstacle away from the end
@@ -163,7 +164,7 @@ while ~isempty(points) % points not empty
 %         else % some sort of single intersection
 %             [in,on] = inpolygon(startpt(1),startpt(2),int_polytopes(ind).xv,int_polytopes(ind).yv);
 %             if in && ~on % point within obstacle
-%             	error('Possible point within obstacle') % removed to allow
+%                 error('Possible point within obstacle') % removed to allow
 %             else % hitting single vertex on obstacle
 %                 max_dist = max_dist + min_dist; % distance to reach that point
 %                 xing1 = points(ind,:); % closest intersection is the next perimeter point
@@ -191,14 +192,14 @@ while ~isempty(points) % points not empty
 %             curobs = obstacles(ind);
 %             obstacles(ind) = []; % remove obstacle
 %         end
-%         
+%
 %         % find furthest point on current obstacle
 %         ind = find(dist == max(dist(obstacles == curobs)));
 %         if (length(ind) > 1) && (sum(obstacles(ind)==curobs)>0)
 %             ind = ind(obstacles(ind)==curobs);
 %         end
 %         xing2 = points(ind,:);
-%         
+%
 %         % remove all points and obstacles in between
 %         rem_ind = (dist >= min_dist).*(dist <= dist(ind))==1;
 %         int_polytopes(rem_ind) = []; % remove polytope
@@ -217,5 +218,8 @@ while ~isempty(points) % points not empty
     end
     startpt = xing2; % make xing2 the next starting point
 end
-% add the distance from the last intersection to the end point 
+% add the distance from the last intersection to the end point
 max_dist = max_dist + fcn_general_calculation_euclidean_point_to_point_distance(startpt,finishpt);
+catch
+    max_dist = fcn_general_calculation_euclidean_point_to_point_distance(startpt,finishpt)*2;
+end

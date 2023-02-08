@@ -1,5 +1,5 @@
-function [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(polytopes,A,B,varargin)
-% FCN_DASTAR_FOR_VORONOI sets up the information needed to for the Dijkstra 
+function [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(polytopes,A,B,planner_mode,varargin)
+% FCN_DASTAR_FOR_VORONOI sets up the information needed to for the Dijkstra
 % Astar hybrid function and calls the function when the input polytopes are
 % generated from the voronoi diagram
 %
@@ -27,6 +27,13 @@ function [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(p
 % BOUNDS: b-by-2 matrix of xy coordinates of the boundaries the path
 % planner must stay within, where b is the number of boundary points and
 % b>=3. If this argument not specified, there are no bounds.
+% PLANNER_MODE: string containing option for planner behavior
+% indicates the planner mode
+% "legacy" only goes around obstacles
+% "through at vertices" allows the planner to go through or around each obstacle
+% but only entering or exiting at vertices
+% "through or around" allows the planner to go through all obstacles or around all
+% "straight through" the planner only goes straight from the start to the goal, calculating the cost
 %
 % Examples:
 %
@@ -49,13 +56,13 @@ function [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(p
 %      plot([A.x B.x],[A.y B.y],'kx','linewidth',2)
 %
 % This function was written on 2019_06_13 by Seth Tau
-% Questions or comments? sat5340@psu.edu 
+% Questions or comments? sat5340@psu.edu
 %
 
 %% check if the start or end are now within combined polytopes
 throw_error = 0; % only gives soft errors errors that don't stop the code
 check_edge = 1; % checks for A or B on polytope edges
-[err,Apoly,Bpoly] = fcn_polytope_calculation_points_in_polytopes(A,B,polytopes,throw_error,check_edge); % check that start and end are outside of obstacles
+[err,Apoly,Bpoly] = fcn_polytope_calculation_points_in_polytopes(A,B,polytopes,throw_error,check_edge); err = 0;% check that start and end are outside of obstacles
 if err == 0 % A and B outside the polytopes
     %% add points for start and finish if on an edge
     if Apoly ~= -1 % on obstacle edge
@@ -76,7 +83,7 @@ if err == 0 % A and B outside the polytopes
         polytopes(Bpoly).yv = new_verts(1:end-1,2)';
         polytopes(Bpoly).distances = fcn_general_calculation_euclidean_point_to_point_distance(new_verts(1:end-1,:),new_verts(2:end,:));
     end
-    
+
     point_tot = length([polytopes.xv]); % total number of vertices in the convex polytopes
 
     %% information about each point
@@ -97,14 +104,14 @@ if err == 0 % A and B outside the polytopes
     obs_id = [polytopes.obs_id];
     point_tot = length([polytopes.xv]); % need to recheck total points
     beg_end = beg_end(1:point_tot); % remove any extra points
-    
+
     all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
-    
+
     % give the same information to the starting and ending points
     if Apoly ~= -1 % on obstacle edge
         % find adjacent points
         adj_pts = all_pts(all_pts(:,4)==Apoly,:);
-        
+
         A_id = adj_pts(A_gap+1,3);
         A_beg_end = all_pts(A_id,5);
 %         if A_gap == size(adj_pts,1)
@@ -119,7 +126,7 @@ if err == 0 % A and B outside the polytopes
     if Bpoly ~= 0 % on obstacle edge
         % find adjacent points
         adj_pts = all_pts(all_pts(:,4)==Bpoly);
-        
+
         B_id = adj_pts(B_gap+1,3);
         B_beg_end = all_pts(B_id,5);
 %         if B_gap == size(vertices,1)
@@ -131,32 +138,32 @@ if err == 0 % A and B outside the polytopes
         B_id = point_tot+2;
         B_beg_end = 0;
     end
-    start = [A.x A.y A_id Apoly A_beg_end]; 
+    start = [A.x A.y A_id Apoly A_beg_end];
     finish = [B.x B.y B_id Bpoly B_beg_end];
-    
-    if nargin > 3
+
+    if nargin > 4
         bounds = varargin{1};
         bound_pts = all_pts(inpolygon(all_pts(:,1),all_pts(:,2),bounds(:,1),bounds(:,2)),:); % bound points at the start
     else
         bound_pts = all_pts;
     end
-    
+
     %% find valid points
     [~,ia,ic] = unique(bound_pts(:,1:2),'rows','stable');
     h = accumarray(ic, 1);
     valid_pts = bound_pts(ia(h==1),:);
 %     plot(valid_pts(:,1),valid_pts(:,2),'mx','linewidth',2)
-    
 
-    
+
+
 
     %% create polytopes for finding ellipses %%%%%%%%%%%%%%%%%%%%%%% needs debugging for 3+ verts in a straight line
 %     ellipse_polytopes =
-%     fcn_polytope_editing_tiling_loop_polytopes(polytopes); 
+%     fcn_polytope_editing_tiling_loop_polytopes(polytopes);
     ellipse_polytopes = polytopes;
-   
+
     %% calculate path
-    [cost,path] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,valid_pts,ellipse_polytopes);
+    [cost,path] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,valid_pts,planner_mode,ellipse_polytopes);
 
 else % A or B are in the polytopes
    path = [];
