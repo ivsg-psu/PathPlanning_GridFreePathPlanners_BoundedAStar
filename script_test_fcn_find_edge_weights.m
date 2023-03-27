@@ -24,7 +24,7 @@ Halton_seed = 10;
 low_pt = 1+Halton_seed; high_pt = 5+Halton_seed; % range of Halton points to use to generate the tiling
 trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
 % shink the polytopes so that they are no longer tiled
-gap_size = 0.0001; % desired average maximum radius
+gap_size = 0.000; % desired average maximum radius
 polytopes = fcn_MapGen_polytopesShrinkFromEdges(trim_polytopes,gap_size);
 % plot the map
 if flag_do_plot
