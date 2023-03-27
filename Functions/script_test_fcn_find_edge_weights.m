@@ -24,7 +24,7 @@ Halton_seed = 10;
 low_pt = 1+Halton_seed; high_pt = 5+Halton_seed; % range of Halton points to use to generate the tiling
 trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
 % shink the polytopes so that they are no longer tiled
-gap_size = 0.000; % desired average maximum radius
+gap_size = 0; % desired average maximum radius
 polytopes = fcn_MapGen_polytopesShrinkFromEdges(trim_polytopes,gap_size);
 % plot the map
 if flag_do_plot
@@ -65,25 +65,39 @@ all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all poi
 
 %% calculate weighted visibility graph (cost graph)
 [cgraph, vgraph] = fcn_find_edge_weights(polytopes, all_pts, gap_size);
-
+deduped_pts = fcn_convert_polytope_struct_to_deduped_points(all_pts);
 % plot visibility graph edges
 if flag_do_plot
-    for i = 1:size(vgraph,1)
-        for j = 1:size(vgraph,1)
-            if vgraph(i,j) == 1
-                plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'-g')
+    
+deduped_pts = fcn_convert_polytope_struct_to_deduped_points(all_pts);
+% plot visibility graph edges
+    if gap_size ==0
+        for i = 1:size(vgraph,1)
+            for j = 1:size(vgraph,1)
+                if vgraph(i,j) == 1
+                    plot([deduped_pts(i).x,deduped_pts(j).x],[deduped_pts(i).y,deduped_pts(j).y],'--g','LineWidth',1)
+                end
             end
         end
     end
-    for i = 1:size(all_pts,1)
-        hold on;
-            txt = sprintf('%.2f',round(all_pts(i,3),0));
-            %% test that all_pts id column is correct
-            assert(isequal(all_pts(i,3),i));
-            x = all_pts(i,1);
-            y = all_pts(i,2);
-            text(x, y, txt, 'clipping', 'off', 'Color', 'r');
+    if gap_size ~=0
+        for i = 1:size(vgraph,1)
+            for j = 1:size(vgraph,1)
+                if vgraph(i,j) == 1
+                    plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'--g','LineWidth',2)
+                end
+            end
+        end
     end
+%     for i = 1:size(all_pts,1)
+%         hold on;
+%             txt = sprintf('%.2f',round(all_pts(i,3),0));
+%             %% test that all_pts id column is correct
+%             assert(isequal(all_pts(i,3),i));
+%             x = all_pts(i,1);
+%             y = all_pts(i,2);
+%             text(x, y, txt, 'clipping', 'off', 'Color', 'r');
+%     end
 end
 
 % plot cgraph edges
@@ -100,7 +114,7 @@ if flag_do_plot
             y2 = all_pts(c(i),2);
             xbar = mean([x1, x2]);
             ybar = mean([y1, y2]);
-            text(xbar, ybar, txt, 'clipping', 'off', 'Color', 'g');
+            text(xbar, ybar, txt, 'clipping', 'off', 'Color', 'b');
     end
     % test for symmetry
     assert(issymmetric(vgraph))
