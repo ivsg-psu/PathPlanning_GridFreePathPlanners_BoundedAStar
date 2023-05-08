@@ -3,7 +3,7 @@ clc
 close all
 
 %% add necessary directories
-addpath([pwd '\Example_Map_Generation_Code'])
+addpath([pwd '\..\Example_Map_Generation_Code'])
 
 %% map generation control
 % repetition controls and storage
@@ -22,6 +22,7 @@ des_radius = 0.05; % desired average maximum radius
 sigma_radius = 0.002; % desired standard deviation in maximum radii
 min_rad = 0.0001; % minimum possible maximum radius for any obstacle
 shrink_seed = 1111; % seed used for randomizing the shrinking process
+des_cost = 0; % polytope traversal cost
 % starting (A) and finish (B) coordinates
 A.x = 0.0; A.y = 0.5; B.x = 1; B.y = 0.5;
 % uncomment below to start in a polytope
@@ -40,6 +41,7 @@ for rep = 1:repetitions
     % shink the polytopes so that they are no longer tiled
     rng(shrink_seed) % set the random number generator with the shrink seed
     shrunk_polytopes = fcn_polytope_editing_shrink_to_average_max_radius_with_variance(trim_polytopes,des_radius,sigma_radius,min_rad);
+    shrunk_polytopes = fcn_polytope_editing_set_all_costs(shrunk_polytopes,des_cost);
     % if starting in a polytope, at 0.15, 0.45 per above, this controls its cost
     % shrunk_polytopes(31).cost = 0.1;
     % plot the map
@@ -52,7 +54,7 @@ for rep = 1:repetitions
         fcn_plot_polytopes(shrunk_polytopes,fig,line_spec,line_width,axes_limits,axis_style);
     end
     %% plan path
-    [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes,A,B,'through at vertices');
+    [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes,A,B,'legacy');
     % path: series of points [x y point_id obs_id beg_end]
     % cost: path length
     % err: marker indicating if there was an error in setup (1) or not (0)
@@ -120,6 +122,9 @@ for rep = 1:repetitions
 
     if flag_do_plot
         plot(appex_x,appex_y,'o','linewidth',2)
+        my_title = sprintf('Path length [m]: %.4f',cost)
+        title(my_title)
+        box on
         pause(2)
         close 99
     end

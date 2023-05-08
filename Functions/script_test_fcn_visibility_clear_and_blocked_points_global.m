@@ -13,9 +13,9 @@ clc
 close all
 
 %% add necessary directories
-addpath([pwd '\Example_Map_Generation_Code'])
-addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
-addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
+addpath([pwd '\..\Example_Map_Generation_Code'])
+addpath([pwd '\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
+addpath([pwd '\..\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 
 flag_do_plot = 1;
 
@@ -65,7 +65,7 @@ all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all poi
 
 %% calculate vibility graph
 tic
-vgraph = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,gap_size);
+[vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,gap_size);
 toc
 % plot visibility graph edges
 if flag_do_plot

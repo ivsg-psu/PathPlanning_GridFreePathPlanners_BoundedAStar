@@ -3,9 +3,9 @@ clc
 close all
 
 %% add necessary directories
-addpath([pwd '\Example_Map_Generation_Code'])
-addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
-addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
+addpath([pwd '\..\Example_Map_Generation_Code'])
+addpath([pwd '\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
+addpath([pwd '\..\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 
 %% generate map
 % generate Voronoi tiling from Halton points
