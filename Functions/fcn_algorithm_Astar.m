@@ -12,7 +12,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
     % path generated to get there.
     all_pts_plus_start_and_fin = [all_pts; start; finish];
     % find all heuristic costs as distances from point to finish
-    hs = sqrt((all_pts_plus_start_and_fin(:,1) - finish(1)).^2 + (all_pts_plus_start_and_fin(:,2) - finish(2)).^2)';
+    hs = 0*sqrt((all_pts_plus_start_and_fin(:,1) - finish(1)).^2 + (all_pts_plus_start_and_fin(:,2) - finish(2)).^2)';
     
     %  the estimated movement cost to move from that given square on the grid to
     % the final destination. This is often referred to as the heuristic
@@ -53,8 +53,9 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
             successor = all_pts_plus_start_and_fin(successor_idxs(i),:);
     %         i) if successor is the goal, stop search
 
-
+            % TODO fix parentage by setting parent once for each point
             if successor(3) == finish(3)
+                hs = sqrt((all_pts_plus_start_and_fin(:,1) - finish(1)).^2 + (all_pts_plus_start_and_fin(:,2) - finish(2)).^2)';
                 cost = open_set_gs(idx_of_q) + hs(idx_of_q);
                 route = [finish];
                 parent = idx_of_q;
@@ -76,7 +77,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
                 return
             else
                 successor_g = open_set_gs(idx_of_q) + sqrt((successor(1) - q(1)).^2 + ((successor(2) - q(2)).^2));
-                successor_h = sqrt((successor(1) - finish(1)).^2 + ((successor(2) - finish(2)).^2));
+                successor_h = hs(successor(3));
                 successor_f = successor_g + successor_h;
                 open_set(successor(3)) = successor(3);
                 open_set_gs(successor(3)) = successor_g;
