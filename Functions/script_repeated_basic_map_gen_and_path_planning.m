@@ -34,7 +34,7 @@ flag_do_plot = 1; % 1 if you would like to see plots, anything else if not
 for rep = 1:repetitions
     %% generate map
     % generate Voronoi tiling from Halton points
-    low_pt = low_pts(rep); high_pt = high_pts(rep)-40; % range of Halton points to use to generate the tiling
+    low_pt = low_pts(rep); high_pt = high_pts(rep)-60; % range of Halton points to use to generate the tiling
     tiled_polytopes = fcn_polytope_generation_halton_voronoi_tiling(low_pt,high_pt);
     % remove the edge polytope that extend past the high and low points
     trim_polytopes = fcn_polytope_editing_remove_edge_polytopes(tiled_polytopes,xlow,xhigh,ylow,yhigh);

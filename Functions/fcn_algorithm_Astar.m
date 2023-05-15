@@ -73,6 +73,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
 %                     parent_position_in_history = find(parent == q_history(:,3));
                     possible_parents = intersect(q_parents{parent_position_in_history}, q_history(:,3));
                 end
+                return
             else
                 successor_g = open_set_gs(idx_of_q) + sqrt((successor(1) - q(1)).^2 + ((successor(2) - q(2)).^2));
                 successor_h = sqrt((successor(1) - finish(1)).^2 + ((successor(2) - finish(2)).^2));
