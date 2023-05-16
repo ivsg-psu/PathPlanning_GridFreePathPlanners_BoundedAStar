@@ -64,28 +64,42 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
             if successor(3) == finish(3)
                 % code to recover path
                 cost = open_set_gs(idx_of_q) + hs(idx_of_q);
-                route = [finish];
-                parent = idx_of_q;
+
                 route = [q; finish];
-                q_history(end,:) = [];
-                possible_parents = intersect(q_parents{end}, q_history(:,3));
-                while parent ~= start(3)
-                    parent_gs = open_set_gs(possible_parents);
-                    [parent_g, idx_of_parent] = min(parent_gs);
-                    parent = possible_parents(idx_of_parent);
-                    parent_position_in_history = find(parent == q_history(:,3));
-                    parent_point = q_history(parent_position_in_history,:);
-                    route = [parent_point;route];
-                    q_history(parent_position_in_history:end,:) = [];
-%                     parent = possible_parents(idx_of_parent);
-%                     parent_position_in_history = find(parent == q_history(:,3));
-                    possible_parents = intersect(q_parents{parent_position_in_history}, q_history(:,3));
+                cur_pt_idx = q(3);
+                while parents(cur_pt_idx) ~= start(3)
+                    % add cur_pt's parent to the path
+                    parent = all_pts_plus_start_and_fin(parents(cur_pt_idx),:);
+                    route = [parent; route];
+                    % set q to its parent
+                    cur_pt_idx = parents(cur_pt_idx);
                 end
+                route = [start; route];
+
+                % % code to recover path
+                % cost = open_set_gs(idx_of_q) + hs(idx_of_q);
+                % route = [finish];
+                % parent = idx_of_q;
+                % route = [q; finish];
+                % q_history(end,:) = [];
+                % possible_parents = intersect(q_parents{end}, q_history(:,3));
+                % while parent ~= start(3)
+                    % parent_gs = open_set_gs(possible_parents);
+                    % [parent_g, idx_of_parent] = min(parent_gs);
+                    % parent = possible_parents(idx_of_parent);
+                    % parent_position_in_history = find(parent == q_history(:,3));
+                    % parent_point = q_history(parent_position_in_history,:);
+                    % route = [parent_point;route];
+                    % q_history(parent_position_in_history:end,:) = [];
+% %                     parent = possible_parents(idx_of_parent);
+% %                     parent_position_in_history = find(parent == q_history(:,3));
+                    % possible_parents = intersect(q_parents{parent_position_in_history}, q_history(:,3));
+                % end
                 return
             else
             tentative_cost = open_set_gs(idx_of_q) + possible_gs(successor(3),q(3));%sqrt((successor(1) - q(1)).^2 + ((successor(2) - q(2)).^2));
             if tentative_cost < open_set_gs(successor(3))
-                parent(successor(3)) = idx_of_q;
+                parents(successor(3)) = idx_of_q;
                 open_set_gs(successor(3)) = tentative_cost;
                 open_set_fs(successor(3)) = tentative_cost + hs(successor(3));
                 open_set(successor(3)) = successor(3);
