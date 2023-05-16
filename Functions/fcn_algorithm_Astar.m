@@ -6,14 +6,19 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
     num_nodes = size(vgraph,1); % number of nodes in the cost graph
     open_set = nan(1,num_nodes);
     open_set(start(3)) = start(3); % only store the ID not the whole point
+
+    all_pts_plus_start_and_fin = [all_pts; start; finish];
+    xs = all_pts_plus_start_and_fin(:,1);
+    ys = all_pts_plus_start_and_fin(:,2);
+    possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2)';
+
     open_set_gs = inf*ones(1,num_nodes); % initialize costs of open set to infinity
-    open_set_gs(start(3)) = 0; % g-value for nodes in open set.  g is the movement cost to
+    open_set_gs(start(3)) = possible_gs(start(3),start(3)); % g-value for nodes in open set.  g is the movement cost to
     % move from the starting point to a given square on the grid, following the
     % path generated to get there.
-    all_pts_plus_start_and_fin = [all_pts; start; finish];
     % find all heuristic costs as distances from point to finish
     hs = sqrt((all_pts_plus_start_and_fin(:,1) - finish(1)).^2 + (all_pts_plus_start_and_fin(:,2) - finish(2)).^2)';
-    
+
     %  the estimated movement cost to move from that given square on the grid to
     % the final destination. This is often referred to as the heuristic
     open_set_fs = open_set_gs + hs; % f-vlaue for nodes in the open set.
@@ -36,7 +41,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
 %                 b) pop q off the open list
             open_set_fs(idx_of_q) = inf;
             open_set(idx_of_q) = NaN;
-%                 c) generate q's 8 successors and set their 
+%                 c) generate q's 8 successors and set their
 %        parents to q
             qs_row = vgraph(idx_of_q,:);
             successor_idxs = [];
@@ -47,7 +52,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
 
 
 
- 
+
 
           q_parents{end+1} = successor_idxs;
     %     d) for each successor
@@ -78,7 +83,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
                 end
                 return
             else
-            tentative_cost = open_set_gs(idx_of_q) + sqrt((successor(1) - q(1)).^2 + ((successor(2) - q(2)).^2));
+            tentative_cost = open_set_gs(idx_of_q) + possible_gs(successor(3),q(3));%sqrt((successor(1) - q(1)).^2 + ((successor(2) - q(2)).^2));
             if tentative_cost < open_set_gs(successor(3))
                 parent(successor(3)) = idx_of_q;
                 open_set_gs(successor(3)) = tentative_cost;
@@ -93,14 +98,14 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
 %                 fScore[neighbor] := tentative_gScore + h(neighbor)
 %                 if neighbor not in openSet
 %                     openSet.add(neighbor)
-% 
+%
 %                 successor_h = hs(successor(3));
 %                 successor_f = successor_g + successor_h;
 %                 open_set(successor(3)) = successor(3);
 %                 open_set_gs(successor(3)) = successor_g;
 %                 open_set_fs(successor(3)) = successor_f;
 %             end    %         ii) else, compute both g and h for successor
-      
+
 
 
 
