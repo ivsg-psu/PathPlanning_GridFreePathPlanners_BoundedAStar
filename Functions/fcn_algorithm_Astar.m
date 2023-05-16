@@ -12,7 +12,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
     % path generated to get there.
     all_pts_plus_start_and_fin = [all_pts; start; finish];
     % find all heuristic costs as distances from point to finish
-    hs = 0*sqrt((all_pts_plus_start_and_fin(:,1) - finish(1)).^2 + (all_pts_plus_start_and_fin(:,2) - finish(2)).^2)';
+    hs = sqrt((all_pts_plus_start_and_fin(:,1) - finish(1)).^2 + (all_pts_plus_start_and_fin(:,2) - finish(2)).^2)';
     
     %  the estimated movement cost to move from that given square on the grid to
     % the final destination. This is often referred to as the heuristic
@@ -23,6 +23,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
     closed_set = nan(1,num_nodes);
     q_history = [];
     q_parents = {};
+    parents = nan(1,num_nodes);
     % 3.  while the open list is not empty
     % implies at least one nan
         while (sum(isnan(open_set)) > 0)
@@ -41,6 +42,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
             successor_idxs = [];
             successor_idxs = find(qs_row);
             % TODO @sjharnett set parents to q
+%             parents(successor_idxs) = idx_of_q;
 
 
 
@@ -55,7 +57,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
 
             % TODO fix parentage by setting parent once for each point
             if successor(3) == finish(3)
-                hs = sqrt((all_pts_plus_start_and_fin(:,1) - finish(1)).^2 + (all_pts_plus_start_and_fin(:,2) - finish(2)).^2)';
+                % code to recover path
                 cost = open_set_gs(idx_of_q) + hs(idx_of_q);
                 route = [finish];
                 parent = idx_of_q;
@@ -76,13 +78,28 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
                 end
                 return
             else
-                successor_g = open_set_gs(idx_of_q) + sqrt((successor(1) - q(1)).^2 + ((successor(2) - q(2)).^2));
-                successor_h = hs(successor(3));
-                successor_f = successor_g + successor_h;
+            tentative_cost = open_set_gs(idx_of_q) + sqrt((successor(1) - q(1)).^2 + ((successor(2) - q(2)).^2));
+            if tentative_cost < open_set_gs(successor(3))
+                parent(successor(3)) = idx_of_q;
+                open_set_gs(successor(3)) = tentative_cost;
+                open_set_fs(successor(3)) = tentative_cost + hs(successor(3));
                 open_set(successor(3)) = successor(3);
-                open_set_gs(successor(3)) = successor_g;
-                open_set_fs(successor(3)) = successor_f;
-            end    %         ii) else, compute both g and h for successor
+            end
+
+%             if tentative_gScore < gScore[neighbor]
+%                 // This path to neighbor is better than any previous one. Record it!
+%                 cameFrom[neighbor] := current
+%                 gScore[neighbor] := tentative_gScore
+%                 fScore[neighbor] := tentative_gScore + h(neighbor)
+%                 if neighbor not in openSet
+%                     openSet.add(neighbor)
+% 
+%                 successor_h = hs(successor(3));
+%                 successor_f = successor_g + successor_h;
+%                 open_set(successor(3)) = successor(3);
+%                 open_set_gs(successor(3)) = successor_g;
+%                 open_set_fs(successor(3)) = successor_f;
+%             end    %         ii) else, compute both g and h for successor
       
 
 
