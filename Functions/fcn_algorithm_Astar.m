@@ -1,42 +1,45 @@
 function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
+    % set the diagonal to 0 because while points are technically visible from
+    % themselves, A* should not consider them as such else the lowest cost
+    % neighbor of any point is itself
     vgraph = vgraph - eye(size(vgraph,1));
-    % 1.  Initialize the open list
-    %     put the starting node on the open
-    %     list (you can leave its f at zero)
+
+    % init the open set, put the start in the open set
     num_nodes = size(vgraph,1); % number of nodes in the cost graph
     open_set = nan(1,num_nodes);
     open_set(start(3)) = start(3); % only store the ID not the whole point
 
+    % make new all pts list including start and end
     all_pts_plus_start_and_fin = [all_pts; start; finish];
-    xs = all_pts_plus_start_and_fin(:,1);
-    ys = all_pts_plus_start_and_fin(:,2);
-    possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2)';
+    xs = all_pts_plus_start_and_fin(:,1); % vector of all x coords
+    ys = all_pts_plus_start_and_fin(:,2); % vector of all y coords
 
+    % make cost matrix, g
+    possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2)'; % distance of every pt from all other pts
     open_set_gs = inf*ones(1,num_nodes); % initialize costs of open set to infinity
     open_set_gs(start(3)) = possible_gs(start(3),start(3)); % g-value for nodes in open set.  g is the movement cost to
-    % move from the starting point to a given square on the grid, following the
-    % path generated to get there.
-    % find all heuristic costs as distances from point to finish
-    hs = sqrt((all_pts_plus_start_and_fin(:,1) - finish(1)).^2 + (all_pts_plus_start_and_fin(:,2) - finish(2)).^2)';
 
-    %  the estimated movement cost to move from that given square on the grid to
-    % the final destination. This is often referred to as the heuristic
+    % make heuristic matrix, h
+    hs = sqrt((xs - finish(1)).^2 + (ys - finish(2)).^2)';
+
+    % total cost f, is g for the open set nodes plus the corresponding h
     open_set_fs = open_set_gs + hs; % f-vlaue for nodes in the open set.
-    % f is the sum of the g-value and h-value
-    % TODO @sjharnett f, g, and h should only depend on cost graph not including calculations
-    % 2.  Initialize the closed list
+
+    % Initialize the closed list
     closed_set = nan(1,num_nodes);
-    q_history = [];
-    q_parents = {};
+
+    % Init. array to track the parent (predecessor) of each node
+    % this represents the cheapest way to get to the node and is necessary to
+    % reconstruct the cheapest path
     parents = nan(1,num_nodes);
-    % 3.  while the open list is not empty
-    % implies at least one nan
+
+    % while the open list is not empty
+    % the condition implies at least one nan
         while (sum(isnan(open_set)) > 0)
         %     a) find the node with the least f on
         %        the open list, call it "q"
             [f_of_q, idx_of_q] = min(open_set_fs);
             q = all_pts_plus_start_and_fin(idx_of_q,:);
-            q_history = [q_history; q];
 
 %                 b) pop q off the open list
             open_set_fs(idx_of_q) = inf;
@@ -49,12 +52,6 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
             % TODO @sjharnett set parents to q
 %             parents(successor_idxs) = idx_of_q;
 
-
-
-
-
-
-          q_parents{end+1} = successor_idxs;
     %     d) for each successor
         for i = 1:length(successor_idxs)
             successor = all_pts_plus_start_and_fin(successor_idxs(i),:);
