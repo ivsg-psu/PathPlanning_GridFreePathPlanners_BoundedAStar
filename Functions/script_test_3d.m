@@ -1,16 +1,23 @@
 clear all; close all; clc
 
-polytopes(1).vertices = [1 1 0; 2 1 0;  3 1 20; 2 1 20]; % a line that translates its length in x over the course of 20 seconds
+verts = [1 1 0; 2 1 0;  3 1 20; 2 1 20]; % a line that translates its length in x over the course of 20 seconds
 start = [2 0 0];
 finish = [2 2 15];
-fill3(polytopes(1).vertices(:,1),polytopes(1).vertices(:,2),polytopes(1).vertices(:,3),'b');
+fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b');
+hold on;
+fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'r');
 box on; hold on;
 plot3(start(1),start(2),start(3),'gx');
 plot3(finish(1),finish(2),finish(3),'rx');
-
-https://www.mathworks.com/matlabcentral/fileexchange/33073-triangle-ray-intersection
-https://en.wikipedia.org/wiki/Intersection_of_a_polyhedron_with_a_line
-https://www.mathworks.com/help/matlab/visualize/multifaceted-patches.html
+plot3([start(1) finish(1)],[start(2) finish(2)],[start(3) finish(3)])
+% finish = start + dir
+% thus dir = finish-start
+[intersect, t, u, v, xcoor] = TriangleRayIntersection (start, finish-start, verts(1,:),verts(2,:),verts(3,:),'lineType','segment')
+[intersect2, t2, u2, v2, xcoor2] = TriangleRayIntersection (start, finish-start, verts(1,:),verts(3,:),verts(4,:),'lineType','segment')
+plot3(xcoor(1),xcoor(2),xcoor(3),'cx')
+% https://www.mathworks.com/matlabcentral/fileexchange/33073-triangle-ray-intersection
+% https://en.wikipedia.org/wiki/Intersection_of_a_polyhedron_with_a_line
+% https://www.mathworks.com/help/matlab/visualize/multifaceted-patches.html
 % at each time t, calculate P
 % ir for all points on all bodies that are candidates for collision
 % select one point P
