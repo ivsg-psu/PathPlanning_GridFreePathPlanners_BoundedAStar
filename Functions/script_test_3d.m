@@ -15,6 +15,34 @@ plot3([start(1) finish(1)],[start(2) finish(2)],[start(3) finish(3)])
 [intersect, t, u, v, xcoor] = TriangleRayIntersection (start, finish-start, verts(1,:),verts(2,:),verts(3,:),'lineType','segment')
 [intersect2, t2, u2, v2, xcoor2] = TriangleRayIntersection (start, finish-start, verts(1,:),verts(3,:),verts(4,:),'lineType','segment')
 plot3(xcoor(1),xcoor(2),xcoor(3),'cx')
+
+
+%% this code is required to vectorize the edge, triangle intersection checking
+all_pts = [verts; start; finish];
+all_surfels = [verts(1,:),verts(2,:),verts(3,:);verts(1,:),verts(3,:),verts(4,:)]
+
+num_pts = size(all_pts,1); % number of rows
+all_pts_idx = 1:1:num_pts; % array of all possible pt idx
+all_pt_combos = nchoosek(all_pts_idx,2); % each row of this matrix is a combination of 2 point idxs
+
+all_ray_starts = all_pts(all_pt_combos(:,1),:); % take all cols of all_pts at the row provided by the first col of all combos
+all_ray_ends = all_pts(all_pt_combos(:,2),:); % take all cols of all_pts at the row provided by the second col of all combos
+all_ray_dirs = all_ray_ends - all_ray_starts; % TriangleRayIntersection takes a ray direction which is end minus beginning
+
+num_surfels = size(all_surfels,2);
+num_rays = size(all_ray_starts,2);
+all_ray_idx = 1:1:num_rays;
+all_surfel_idx = 1:1:num_surfels;
+all_surfel_ray_combos =combinations(all_ray_idx,all_surfel_idx);
+
+all_ray_starts_repeated = all_ray_starts(all_surfel_ray_combos(:,1),:);
+all_ray_dirs_repeated = all_ray_dirs(all_surfel_ray_combos(:,1),:);
+all_surfels_repeated = all_surfels(all_surfel_ray_combos(:,2),:);
+
+[intersects, ts, us, vs, xcoors] = TriangleRayIntersection (all_ray_starts_repeated, all_ray_dirs_repeated, all_surfels_repeated(:,1:3),all_surfels_repeated(:,4:6),all_surfels_repeated(:,7:9),'lineType','segment');
+
+
+
 % https://www.mathworks.com/matlabcentral/fileexchange/33073-triangle-ray-intersection
 % https://en.wikipedia.org/wiki/Intersection_of_a_polyhedron_with_a_line
 % https://www.mathworks.com/help/matlab/visualize/multifaceted-patches.html
