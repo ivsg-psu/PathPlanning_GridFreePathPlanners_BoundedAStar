@@ -37,6 +37,10 @@ figure; hold on; box on; title('all rays casted')
 for i = 1:1:num_rays
     plot3([all_ray_starts(i,1), all_ray_ends(i,1)],[all_ray_starts(i,2), all_ray_ends(i,2)],[all_ray_starts(i,3), all_ray_ends(i,3)],'LineWidth',2)
 end
+figure; hold on; box on; title('vgraph')
+for i = 1:1:num_rays
+    plot3([all_ray_starts(i,1), all_ray_ends(i,1)],[all_ray_starts(i,2), all_ray_ends(i,2)],[all_ray_starts(i,3), all_ray_ends(i,3)],'g','LineWidth',2)
+end
 num_surfels = size(all_surfels,1);
 all_ray_idx = 1:1:num_rays;
 all_surfel_idx = 1:1:num_surfels;
@@ -48,32 +52,15 @@ all_ray_dirs_repeated = all_ray_dirs(all_surfel_ray_combos(:,1),:);
 all_surfels_repeated = all_surfels(all_surfel_ray_combos(:,2),:);
 
 [intersects, ts, us, vs, xcoors] = TriangleRayIntersection (all_ray_starts_repeated, all_ray_dirs_repeated, all_surfels_repeated(:,1:3),all_surfels_repeated(:,4:6),all_surfels_repeated(:,7:9),'lineType','segment','border','exclusive');
-mys = [];
-for i = all_pts_idx
-    for j = all_pts_idx
-        my_intersects = [];
-        [my_intersects, ts, us, vs, xcoors] = TriangleRayIntersection (all_pts(i,:), all_pts(j,:), all_surfels(:,1:3),all_surfels(:,4:6),all_surfels(:,7:9),'lineType','segment','border','exclusive');
-        mys = [mys;my_intersects];
-        if sum(my_intersects)>0
-            figure(99); hold on; box on;
-            string = 'tomatoes'
-            plot3([all_pts(i,1), all_pts(j,1)],[all_pts(i,2), all_pts(j,2)],[all_pts(i,3), all_pts(j,3)],'-r','LineWidth',2)
-        else
-            figure(99); hold on; box on;
-            plot3([all_pts(i,1), all_pts(j,1)],[all_pts(i,2), all_pts(j,2)],[all_pts(i,3), all_pts(j,3)],'-g','LineWidth',2)
-        end
-    end
-end
 
-figure
-fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b');
-hold on;
-fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'r');
-box on; hold on;
-plot3(start(1),start(2),start(3),'gx');
-plot3(finish(1),finish(2),finish(3),'rx');
-plot3([all_ray_starts(:,1), all_ray_ends(:,1)],[all_ray_starts(:,2), all_ray_ends(:,2)],[all_ray_starts(:,3), all_ray_ends(:,3)],'LineWidth',2)
-plot3(rmmissing(xcoors(:,1)),rmmissing(xcoors(:,2)),rmmissing(xcoors(:,3)),'cx','MarkerSize',10)
+intersects_idx = find(intersects);
+for k = 1:1:length(intersects_idx)
+    i = intersects_idx(k);
+    plot3([all_ray_starts_repeated(i,1), all_ray_ends_repeated(i,1)],[all_ray_starts_repeated(i,2), all_ray_ends_repeated(i,2)],[all_ray_starts_repeated(i,3), all_ray_ends_repeated(i,3)],'r','LineWidth',2)
+    plot3(rmmissing(xcoors(i,1)),rmmissing(xcoors(i,2)),rmmissing(xcoors(i,3)),'cx','MarkerSize',10)
+end
+fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b','FaceAlpha',0.3);
+fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'b','FaceAlpha',0.3);
 % https://www.mathworks.com/matlabcentral/fileexchange/33073-triangle-ray-intersection
 % https://en.wikipedia.org/wiki/Intersection_of_a_polyhedron_with_a_line
 % https://www.mathworks.com/help/matlab/visualize/multifaceted-patches.html
