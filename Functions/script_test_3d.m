@@ -1,4 +1,8 @@
 clear all; close all; clc
+
+addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
+addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
+
 % define figure properties
 opts.width      = 8;
 opts.height     = 6;
@@ -139,6 +143,70 @@ for l = 1:1:length(speed_violation_idx)
 end
 
 
+%% create an animation for moving line
+dt = 1;
+% for each shape
+% get shape.verts
+verts = [1 1 0 1; 2 1 0 2;  3 1 20 2; 2 1 20 1]; % a line that translates its length in x over the course of 20 seconds
+% columns of verts are x,y,t,id
+% gif('moving_wall_demo.gif','LoopCount',1,'DelayTime',dt)
+% for number of unique time values in verts...
+unique_times = unique(verts(:,3));
+num_unique_times = length(unique(verts(:,3)));
+
+unique_verts = unique(verts(:,4));
+num_unique_verts = length(unique(verts(:,4)));
+
+dense_times = [];
+for i = 2:1:num_unique_times
+    new_times = unique_times(i-1):dt:unique_times(i);
+    dense_times = [dense_times; new_times'];
+end
+dense_times = unique(dense_times);
+num_dense_times = length(dense_times);
+
+for i = 1:1:num_unique_verts
+    this_vert_id = unique_verts(i);
+    this_vert_rows = find(verts(:,4)==this_vert_id);
+    this_vert_x = verts(this_vert_rows,1);
+    this_vert_y = verts(this_vert_rows,2);
+    this_vert_t = verts(this_vert_rows,3);
+
+    this_vert_dense_x = interp1(this_vert_t,this_vert_x,dense_times);
+    this_vert_dense_y = interp1(this_vert_t,this_vert_y,dense_times);
+    this_vert_id_repeated = ones(num_dense_times,1);
+    verts = [verts; this_vert_dense_x this_vert_dense_y dense_times this_vert_id_repeated];
+end
+
+% will need to remove duplicate rows
+
+% end for each shape
+
+figure; hold on; box on; title('all vertices, interpolated, and start and finish')
+fig = gcf;
+% scaling
+fig.Units               = 'centimeters';
+fig.Position(3)         = opts.width;
+fig.Position(4)         = opts.height;
+
+% set text properties
+set(fig.Children, ...
+    'FontName',     'Times', ...
+    'FontSize',     9);
+
+% remove unnecessary white space
+set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+xlabel('x [m]')
+ylabel('y [m]')
+zlabel('t [s]')
+plot3(start(1),start(2),start(3),'gx');
+plot3(finish(1),finish(2),finish(3),'rx');
+plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
+
+
+% fill plot xy for each shape
+% interpolate times linearly
+% you're done
 
 % https://www.mathworks.com/matlabcentral/fileexchange/33073-triangle-ray-intersection
 % https://en.wikipedia.org/wiki/Intersection_of_a_polyhedron_with_a_line
