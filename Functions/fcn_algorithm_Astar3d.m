@@ -1,5 +1,5 @@
 
-function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
+function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish)
     % set the diagonal to 0 because while points are technically visible from
     % themselves, A* should not consider them as such else the lowest cost
     % neighbor of any point is itself
@@ -8,22 +8,23 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
     % init the open set, put the start in the open set
     num_nodes = size(vgraph,1); % number of nodes in the cost graph
     open_set = nan(1,num_nodes);
-    open_set(start(3)) = start(3); % only store the ID not the whole point
+    open_set(start(4)) = start(4); % only store the ID not the whole point
 
     % make new all pts list including start and end
     all_pts_plus_start_and_fin = [all_pts; start; finish];
     xs = all_pts_plus_start_and_fin(:,1); % vector of all x coords
     ys = all_pts_plus_start_and_fin(:,2); % vector of all y coords
+    zs = all_pts_plus_start_and_fin(:,3); % vector of all y coords
 
     % make cost matrix, g
-    possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2)'; % distance of every pt from all other pts
+    possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2 + (zs - zs').^2)'; % distance of every pt from all other pts
     open_set_gs = inf*ones(1,num_nodes); % initialize costs of open set to infinity
-    open_set_gs(start(3)) = possible_gs(start(3),start(3)); % g-value for nodes in open set.  g is the movement cost to
+    open_set_gs(start(4)) = possible_gs(start(4),start(4)); % g-value for nodes in open set.  g is the movement cost to
 
     % make heuristic matrix, h
-    hs = sqrt((xs - finish(1)).^2 + (ys - finish(2)).^2)';
+    hs = sqrt((xs - finish(1)).^2 + (ys - finish(2)).^2 + (zs - finish(3)).^2)';
 
-    % total cost f, is g for the open set nodes plus the corresponding h
+   % total cost f, is g for the open set nodes plus the corresponding h
     open_set_fs = open_set_gs + hs; % f-vlaue for nodes in the open set.
 
     % Initialize the closed list
@@ -59,13 +60,13 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
     %         i) if successor is the goal, stop search
 
             % TODO fix parentage by setting parent once for each point
-            if successor(3) == finish(3)
+            if successor(4) == finish(4)
                 % code to recover path
                 cost = open_set_gs(idx_of_q) + hs(idx_of_q);
 
                 route = [q; finish];
-                cur_pt_idx = q(3);
-                while parents(cur_pt_idx) ~= start(3)
+                cur_pt_idx = q(4);
+                while parents(cur_pt_idx) ~= start(4)
                     % add cur_pt's parent to the path
                     parent = all_pts_plus_start_and_fin(parents(cur_pt_idx),:);
                     route = [parent; route];
@@ -74,52 +75,15 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
                 end
                 route = [start; route];
 
-                % % code to recover path
-                % cost = open_set_gs(idx_of_q) + hs(idx_of_q);
-                % route = [finish];
-                % parent = idx_of_q;
-                % route = [q; finish];
-                % q_history(end,:) = [];
-                % possible_parents = intersect(q_parents{end}, q_history(:,3));
-                % while parent ~= start(3)
-                    % parent_gs = open_set_gs(possible_parents);
-                    % [parent_g, idx_of_parent] = min(parent_gs);
-                    % parent = possible_parents(idx_of_parent);
-                    % parent_position_in_history = find(parent == q_history(:,3));
-                    % parent_point = q_history(parent_position_in_history,:);
-                    % route = [parent_point;route];
-                    % q_history(parent_position_in_history:end,:) = [];
-% %                     parent = possible_parents(idx_of_parent);
-% %                     parent_position_in_history = find(parent == q_history(:,3));
-                    % possible_parents = intersect(q_parents{parent_position_in_history}, q_history(:,3));
-                % end
                 return
             else
-            tentative_cost = open_set_gs(idx_of_q) + possible_gs(successor(3),q(3));%sqrt((successor(1) - q(1)).^2 + ((successor(2) - q(2)).^2));
-            if tentative_cost < open_set_gs(successor(3))
-                parents(successor(3)) = idx_of_q;
-                open_set_gs(successor(3)) = tentative_cost;
-                open_set_fs(successor(3)) = tentative_cost + hs(successor(3));
-                open_set(successor(3)) = successor(3);
+            tentative_cost = open_set_gs(idx_of_q) + possible_gs(successor(4),q(4));%sqrt((successor(1) - q(1)).^2 + ((successor(2) - q(2)).^2));
+            if tentative_cost < open_set_gs(successor(4))
+                parents(successor(4)) = idx_of_q;
+                open_set_gs(successor(4)) = tentative_cost;
+                open_set_fs(successor(4)) = tentative_cost + hs(successor(4));
+                open_set(successor(4)) = successor(4);
             end
-
-%             if tentative_gScore < gScore[neighbor]
-%                 // This path to neighbor is better than any previous one. Record it!
-%                 cameFrom[neighbor] := current
-%                 gScore[neighbor] := tentative_gScore
-%                 fScore[neighbor] := tentative_gScore + h(neighbor)
-%                 if neighbor not in openSet
-%                     openSet.add(neighbor)
-%
-%                 successor_h = hs(successor(3));
-%                 successor_f = successor_g + successor_h;
-%                 open_set(successor(3)) = successor(3);
-%                 open_set_gs(successor(3)) = successor_g;
-%                 open_set_fs(successor(3)) = successor_f;
-%             end    %         ii) else, compute both g and h for successor
-
-
-
 
     %      end (for loop)
         end

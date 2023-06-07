@@ -72,10 +72,9 @@ all_ray_ends_repeated = all_ray_ends(all_surfel_ray_combos(:,1),:);
 all_ray_dirs_repeated = all_ray_dirs(all_surfel_ray_combos(:,1),:);
 all_surfels_repeated = all_surfels(all_surfel_ray_combos(:,2),:);
 
-[intersects, ts, us, vs, xcoors] = TriangleRayIntersection (all_ray_starts_repeated, all_ray_dirs_repeated, all_surfels_repeated(:,1:3),all_surfels_repeated(:,4:6),all_surfels_repeated(:,7:9),'lineType','segment','border','exclusive');
+[intersects, ts, us, vs, xcoors] = TriangleRayIntersection (all_ray_starts_repeated(:,1:3), all_ray_dirs_repeated(:,1:3), all_surfels_repeated(:,1:3),all_surfels_repeated(:,4:6),all_surfels_repeated(:,7:9),'lineType','segment','border','exclusive');
 
-vgraph = zeros(num_pts); % initialize vgraph as zero
-vgraph = vgraph + eye(num_pts); % add I as all pts are self visible
+vgraph = ones(num_pts); % initialize vgraph as zero
 intersects_idx = find(intersects);
 for k = 1:1:length(intersects_idx)
     i = intersects_idx(k);
@@ -83,11 +82,16 @@ for k = 1:1:length(intersects_idx)
     plot3(rmmissing(xcoors(i,1)),rmmissing(xcoors(i,2)),rmmissing(xcoors(i,3)),'cx','MarkerSize',10)
     start_id = all_ray_starts_repeated(i,4);
     end_id = all_ray_ends_repeated(i,4);
-    vgrpah(start_id,end_id) = 1;
+    vgraph(start_id,end_id) = 0;
+    vgraph(end_id,start_id) = 0;
 end
 fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b','FaceAlpha',0.3);
 fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'b','FaceAlpha',0.3);
 
+[cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts(1:end-2,:), all_pts(end-1,:), all_pts(end,:));
+
+plot3(route(:,1),route(:,2),route(:,3),'-b','LineWidth',3);
+return
 %% discard rays that are too high in velocity
 % ray slope is rise over run
 % rise is delta t
