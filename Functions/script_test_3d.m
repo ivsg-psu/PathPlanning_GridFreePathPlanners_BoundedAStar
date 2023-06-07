@@ -42,24 +42,26 @@ plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
 
 num_pts = size(all_pts,1); % number of rows
 all_pts_idx = 1:1:num_pts; % array of all possible pt idx
+all_pts = [all_pts all_pts_idx']; % add pt ID column to all_pts
 all_pt_combos = nchoosek(all_pts_idx,2); % each row of this matrix is a combination of 2 point idxs
 
 all_ray_starts = all_pts(all_pt_combos(:,1),:); % take all cols of all_pts at the row provided by the first col of all combos
 all_ray_ends = all_pts(all_pt_combos(:,2),:); % take all cols of all_pts at the row provided by the second col of all combos
 all_ray_dirs = all_ray_ends - all_ray_starts; % TriangleRayIntersection takes a ray direction which is end minus beginning
 num_rays = size(all_ray_starts,1);
+
 figure; hold on; box on; title('all rays casted')
 INTERNAL_fcn_format_timespace_plot();
-
 for i = 1:1:num_rays
     plot3([all_ray_starts(i,1), all_ray_ends(i,1)],[all_ray_starts(i,2), all_ray_ends(i,2)],[all_ray_starts(i,3), all_ray_ends(i,3)],'LineWidth',2)
 end
+
 figure; hold on; box on; title('vgraph')
 INTERNAL_fcn_format_timespace_plot();
-
 for i = 1:1:num_rays
     plot3([all_ray_starts(i,1), all_ray_ends(i,1)],[all_ray_starts(i,2), all_ray_ends(i,2)],[all_ray_starts(i,3), all_ray_ends(i,3)],'g','LineWidth',2)
 end
+
 num_surfels = size(all_surfels,1);
 all_ray_idx = 1:1:num_rays;
 all_surfel_idx = 1:1:num_surfels;
@@ -72,11 +74,16 @@ all_surfels_repeated = all_surfels(all_surfel_ray_combos(:,2),:);
 
 [intersects, ts, us, vs, xcoors] = TriangleRayIntersection (all_ray_starts_repeated, all_ray_dirs_repeated, all_surfels_repeated(:,1:3),all_surfels_repeated(:,4:6),all_surfels_repeated(:,7:9),'lineType','segment','border','exclusive');
 
+vgraph = zeros(num_pts); % initialize vgraph as zero
+vgraph = vgraph + eye(num_pts); % add I as all pts are self visible
 intersects_idx = find(intersects);
 for k = 1:1:length(intersects_idx)
     i = intersects_idx(k);
     plot3([all_ray_starts_repeated(i,1), all_ray_ends_repeated(i,1)],[all_ray_starts_repeated(i,2), all_ray_ends_repeated(i,2)],[all_ray_starts_repeated(i,3), all_ray_ends_repeated(i,3)],'r','LineWidth',2)
     plot3(rmmissing(xcoors(i,1)),rmmissing(xcoors(i,2)),rmmissing(xcoors(i,3)),'cx','MarkerSize',10)
+    start_id = all_ray_starts_repeated(i,4);
+    end_id = all_ray_ends_repeated(i,4);
+    vgrpah(start_id,end_id) = 1;
 end
 fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b','FaceAlpha',0.3);
 fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'b','FaceAlpha',0.3);
