@@ -3,6 +3,9 @@ clear all; close all; clc
 addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
 addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
 
+addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
+addpath 'C:\Users\sjhar\Desktop\gif\gif'
+
 % define figure properties
 opts.width      = 8;
 opts.height     = 6;
@@ -47,12 +50,13 @@ set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
 xlabel('x [m]')
 ylabel('y [m]')
 zlabel('t [s]')
-
+view([36 30])
 
 %% this code is required to vectorize the edge, triangle intersection checking
 all_pts = [verts; start; finish];
 all_surfels = [verts(1,:),verts(2,:),verts(3,:);verts(1,:),verts(3,:),verts(4,:)]
 figure; hold on; box on; title('all vertices and start and finish')
+view([36 30])
 plot3(start(1),start(2),start(3),'gx');
 plot3(finish(1),finish(2),finish(3),'rx');
 plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
@@ -82,6 +86,7 @@ set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
 xlabel('x [m]')
 ylabel('y [m]')
 zlabel('t [s]')
+view([36 30])
 for i = 1:1:num_rays
     plot3([all_ray_starts(i,1), all_ray_ends(i,1)],[all_ray_starts(i,2), all_ray_ends(i,2)],[all_ray_starts(i,3), all_ray_ends(i,3)],'LineWidth',2)
 end
@@ -102,6 +107,7 @@ set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
 xlabel('x [m]')
 ylabel('y [m]')
 zlabel('t [s]')
+view([36 30])
 for i = 1:1:num_rays
     plot3([all_ray_starts(i,1), all_ray_ends(i,1)],[all_ray_starts(i,2), all_ray_ends(i,2)],[all_ray_starts(i,3), all_ray_ends(i,3)],'g','LineWidth',2)
 end
@@ -142,14 +148,12 @@ for l = 1:1:length(speed_violation_idx)
     plot3([all_ray_starts(i,1), all_ray_ends(i,1)],[all_ray_starts(i,2), all_ray_ends(i,2)],[all_ray_starts(i,3), all_ray_ends(i,3)],'k','LineWidth',2)
 end
 
-
-%% create an animation for moving line
+%% interpolation code for a shape
 dt = 1;
 % for each shape
 % get shape.verts
 verts = [1 1 0 1; 2 1 0 2;  3 1 20 2; 2 1 20 1]; % a line that translates its length in x over the course of 20 seconds
 % columns of verts are x,y,t,id
-% gif('moving_wall_demo.gif','LoopCount',1,'DelayTime',dt)
 % for number of unique time values in verts...
 unique_times = unique(verts(:,3));
 num_unique_times = length(unique(verts(:,3)));
@@ -202,11 +206,46 @@ zlabel('t [s]')
 plot3(start(1),start(2),start(3),'gx');
 plot3(finish(1),finish(2),finish(3),'rx');
 plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
+view([36 30])
+
+close all;
+%% create an animation for moving line
+for i = 1:num_dense_times
+    hold on; box on; title('animation of moving two point wall')
+    fig = gcf;
+    % scaling
+    fig.Units               = 'centimeters';
+    fig.Position(3)         = opts.width;
+    fig.Position(4)         = opts.height;
+    set(gcf,'color','white')
+    % set text properties
+    set(fig.Children, ...
+        'FontName',     'Times', ...
+        'FontSize',     9);
+
+    % remove unnecessary white space
+    set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+    xlabel('x [m]')
+    ylabel('y [m]')
+    ylim([0 2])
+    xlim([0 4])
+    % for each poly
+    % this polys verts
+    % need to get x y and z coords at this time
+    cur_time = dense_times(i);
+    cur_time_locations = find(verts(:,3) == cur_time);
+    cur_x = verts(cur_time_locations,1);
+    cur_y = verts(cur_time_locations,2);
+    fill(cur_x,cur_y,'b','FaceAlpha',0.2);
+    if i == 1
+        gif('moving_wall_demo.gif','LoopCount',1,'DelayTime',dt)
+    else
+        gif
+    end
+    delete(gca)
+end
 
 
-% fill plot xy for each shape
-% interpolate times linearly
-% you're done
 
 % https://www.mathworks.com/matlabcentral/fileexchange/33073-triangle-ray-intersection
 % https://en.wikipedia.org/wiki/Intersection_of_a_polyhedron_with_a_line
