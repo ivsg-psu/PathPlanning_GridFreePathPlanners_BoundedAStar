@@ -6,12 +6,6 @@ addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
 addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
 addpath 'C:\Users\sjhar\Desktop\gif\gif'
 
-% define figure properties
-opts.width      = 8;
-opts.height     = 6;
-opts.fontType   = 'Times';
-opts.fontSize   = 9;
-
 
 facets = [];
 
@@ -35,28 +29,13 @@ plot3([start(1) finish(1)],[start(2) finish(2)],[start(3) finish(3)])
 [intersect2, t2, u2, v2, xcoor2] = TriangleRayIntersection (start, finish-start, verts(1,:),verts(3,:),verts(4,:),'lineType','segment')
 plot3(xcoor(1),xcoor(2),xcoor(3),'cx')
 legend('tri 1','tri 2','start','goal','','intersection')
-% scaling
-fig.Units               = 'centimeters';
-fig.Position(3)         = opts.width;
-fig.Position(4)         = opts.height;
-
-% set text properties
-set(fig.Children, ...
-    'FontName',     'Times', ...
-    'FontSize',     9);
-
-% remove unnecessary white space
-set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
-xlabel('x [m]')
-ylabel('y [m]')
-zlabel('t [s]')
-view([36 30])
+INTERNAL_fcn_format_timespace_plot();
 
 %% this code is required to vectorize the edge, triangle intersection checking
 all_pts = [verts; start; finish];
 all_surfels = [verts(1,:),verts(2,:),verts(3,:);verts(1,:),verts(3,:),verts(4,:)]
 figure; hold on; box on; title('all vertices and start and finish')
-view([36 30])
+INTERNAL_fcn_format_timespace_plot();
 plot3(start(1),start(2),start(3),'gx');
 plot3(finish(1),finish(2),finish(3),'rx');
 plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
@@ -70,44 +49,14 @@ all_ray_ends = all_pts(all_pt_combos(:,2),:); % take all cols of all_pts at the 
 all_ray_dirs = all_ray_ends - all_ray_starts; % TriangleRayIntersection takes a ray direction which is end minus beginning
 num_rays = size(all_ray_starts,1);
 figure; hold on; box on; title('all rays casted')
-fig = gcf;
-% scaling
-fig.Units               = 'centimeters';
-fig.Position(3)         = opts.width;
-fig.Position(4)         = opts.height;
+INTERNAL_fcn_format_timespace_plot();
 
-% set text properties
-set(fig.Children, ...
-    'FontName',     'Times', ...
-    'FontSize',     9);
-
-% remove unnecessary white space
-set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
-xlabel('x [m]')
-ylabel('y [m]')
-zlabel('t [s]')
-view([36 30])
 for i = 1:1:num_rays
     plot3([all_ray_starts(i,1), all_ray_ends(i,1)],[all_ray_starts(i,2), all_ray_ends(i,2)],[all_ray_starts(i,3), all_ray_ends(i,3)],'LineWidth',2)
 end
 figure; hold on; box on; title('vgraph')
-fig = gcf;
-% scaling
-fig.Units               = 'centimeters';
-fig.Position(3)         = opts.width;
-fig.Position(4)         = opts.height;
+INTERNAL_fcn_format_timespace_plot();
 
-% set text properties
-set(fig.Children, ...
-    'FontName',     'Times', ...
-    'FontSize',     9);
-
-% remove unnecessary white space
-set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
-xlabel('x [m]')
-ylabel('y [m]')
-zlabel('t [s]')
-view([36 30])
 for i = 1:1:num_rays
     plot3([all_ray_starts(i,1), all_ray_ends(i,1)],[all_ray_starts(i,2), all_ray_ends(i,2)],[all_ray_starts(i,3), all_ray_ends(i,3)],'g','LineWidth',2)
 end
@@ -187,31 +136,20 @@ end
 % end for each shape
 
 figure; hold on; box on; title('all vertices, interpolated, and start and finish')
-fig = gcf;
-% scaling
-fig.Units               = 'centimeters';
-fig.Position(3)         = opts.width;
-fig.Position(4)         = opts.height;
-
-% set text properties
-set(fig.Children, ...
-    'FontName',     'Times', ...
-    'FontSize',     9);
-
-% remove unnecessary white space
-set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
-xlabel('x [m]')
-ylabel('y [m]')
-zlabel('t [s]')
+INTERNAL_fcn_format_timespace_plot();
 plot3(start(1),start(2),start(3),'gx');
 plot3(finish(1),finish(2),finish(3),'rx');
 plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
-view([36 30])
 
 close all;
 %% create an animation for moving line
 for i = 1:num_dense_times
     hold on; box on; title('animation of moving two point wall')
+    % define figure properties
+    opts.width      = 8;
+    opts.height     = 6;
+    opts.fontType   = 'Times';
+    opts.fontSize   = 9;
     fig = gcf;
     % scaling
     fig.Units               = 'centimeters';
@@ -264,3 +202,27 @@ end
 % ray-facet intersection is similar to edge-facet intersection described below
 % point in polygon does not always work for thin bodies (may need edge intersection)
 %
+function INTERNAL_fcn_format_timespace_plot()
+    % define figure properties
+    opts.width      = 8;
+    opts.height     = 6;
+    opts.fontType   = 'Times';
+    opts.fontSize   = 9;
+    fig = gcf;
+    % scaling
+    fig.Units               = 'centimeters';
+    fig.Position(3)         = opts.width;
+    fig.Position(4)         = opts.height;
+
+    % set text properties
+    set(fig.Children, ...
+        'FontName',     'Times', ...
+        'FontSize',     9);
+
+    % remove unnecessary white space
+    set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+    xlabel('x [m]')
+    ylabel('y [m]')
+    zlabel('t [s]')
+    view([36 30])
+end
