@@ -89,7 +89,18 @@ fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b','FaceAlpha',0.3);
 fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'b','FaceAlpha',0.3);
 
 [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts(1:end-2,:), all_pts(end-1,:), all_pts(end,:));
+% route metrics follow
+total_time = max(route(:,3));
+route_x = route(:,1);
+route_y = route(:,2);
+route_t = route(:,3);
+lengths = diff([route_x(:) route_y(:)]);
+total_length = sum(sqrt(sum(lengths.*lengths,2)));
+lengths_3d = diff([route_x(:) route_y(:) route_t(:)]);
+total_length_3d = sum(sqrt(sum(lengths_3d.*lengths_3d,2)));
 
+metrics_title = sprintf('route duration [s]: %.3f \n route length [m]: %.3f \n route length 3D: %.3f',total_time,total_length,total_length_3d);
+title(metrics_title);
 plot3(route(:,1),route(:,2),route(:,3),'-b','LineWidth',3);
 return
 %% discard rays that are too high in velocity
