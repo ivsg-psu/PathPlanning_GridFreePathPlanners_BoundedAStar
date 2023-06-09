@@ -131,6 +131,25 @@ for k = 1:1:length(intersects_idx)
 end
 fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b','FaceAlpha',0.3);
 fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'b','FaceAlpha',0.3);
+%% discard rays that are too high in velocity
+% ray slope is rise over run
+% rise is delta t
+all_delta_ts = abs(all_ray_ends_repeated(:,3) - all_ray_starts_repeated(:,3));
+% run is change in total length regardless of x or y
+all_delta_xs = all_ray_ends_repeated(:,1) - all_ray_starts_repeated(:,1);
+all_delta_ys = all_ray_ends_repeated(:,2) - all_ray_starts_repeated(:,2);
+all_delta_dist = (all_delta_xs.^2 + all_delta_ys.^2).^0.5;
+all_slopes = all_delta_ts./all_delta_dist;
+
+speed_violation_idx = find(all_slopes == 0);
+for l = 1:1:length(speed_violation_idx)
+    i = speed_violation_idx(l);
+    plot3([all_ray_starts_repeated(i,1), all_ray_ends_repeated(i,1)],[all_ray_starts_repeated(i,2), all_ray_ends_repeated(i,2)],[all_ray_starts_repeated(i,3), all_ray_ends_repeated(i,3)],'k','LineWidth',2)
+    start_id = all_ray_starts_repeated(i,4);
+    end_id = all_ray_ends_repeated(i,4);
+    vgraph(start_id,end_id) = 0;
+    vgraph(end_id,start_id) = 0;
+end
 
 [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts(1:end-7,:), all_pts(end-6,:), all_pts(end-5:end,:));
 % route metrics follow
@@ -147,21 +166,6 @@ metrics_title = sprintf('route duration [s]: %.3f \n route length [m]: %.3f \n r
 title(metrics_title);
 plot3(route(:,1),route(:,2),route(:,3),'-b','LineWidth',3);
 
-%% discard rays that are too high in velocity
-% ray slope is rise over run
-% rise is delta t
-all_delta_ts = all_ray_ends(:,3) - all_ray_starts(:,3);
-% run is change in total length regardless of x or y
-all_delta_xs = all_ray_ends(:,1) - all_ray_starts(:,1);
-all_delta_ys = all_ray_ends(:,2) - all_ray_starts(:,2);
-all_delta_dist = (all_delta_xs.^2 + all_delta_ys.^2).^0.5;
-all_slopes = all_delta_ts./all_delta_dist;
-
-speed_violation_idx = find(all_slopes == 0);
-for l = 1:1:length(speed_violation_idx)
-    i = speed_violation_idx(l);
-    plot3([all_ray_starts(i,1), all_ray_ends(i,1)],[all_ray_starts(i,2), all_ray_ends(i,2)],[all_ray_starts(i,3), all_ray_ends(i,3)],'k','LineWidth',2)
-end
 
 %% interpolation code for a shape
 dt = 1;
@@ -206,7 +210,7 @@ INTERNAL_fcn_format_timespace_plot();
 plot3(start(1),start(2),start(3),'gx');
 plot3(finish(1),finish(2),finish(3),'rx');
 plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
-
+return
 close all;
 %% create an animation for moving line
 for i = 1:num_dense_times
@@ -267,8 +271,16 @@ end
 dense_times = unique(dense_times);
 num_dense_times = length(dense_times);
 
-route_dense_x = interp1(route(:,3),route(:,1),dense_times);
-route_dense_y = interp1(route(:,3),route(:,2),dense_times);
+try
+    route_dense_x = interp1(route(:,3),route(:,1),dense_times);
+catch
+    route_dense_x = route(1,1)*ones(size(dense_times,1),size(dense_times,2));
+end
+try
+    route_dense_y = interp1(route(:,3),route(:,2),dense_times);
+catch
+    route_dense_y = route(1,2)*ones(size(dense_times,1),size(dense_times,2));
+end
 
 route_dense = [route_dense_x route_dense_y dense_times];
 

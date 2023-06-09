@@ -17,11 +17,15 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish)
 
     % make cost matrix, g
     possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2 + (zs - zs').^2)'; % distance of every pt from all other pts
+    possible_gs = sqrt((zs - zs').^2)'; % distance of every pt from all other pts
+    possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2)'; % distance of every pt from all other pts
     open_set_gs = inf*ones(1,num_nodes); % initialize costs of open set to infinity
     open_set_gs(start(4)) = possible_gs(start(4),start(4)); % g-value for nodes in open set.  g is the movement cost to
 
     % make heuristic matrix, h
-    hs = sqrt((xs - finish(1)).^2 + (ys - finish(2)).^2 + (zs - finish(3)).^2)';
+    hs = sqrt((xs - finish(1,1)).^2 + (ys - finish(2,2)).^2 + (zs - finish(3,3)).^2)';
+    hs = sqrt((zs - finish(3,3)).^2)';
+    hs = sqrt((xs - finish(1,1)).^2 + (ys - finish(2,2)).^2)';
 
    % total cost f, is g for the open set nodes plus the corresponding h
     open_set_fs = open_set_gs + hs; % f-vlaue for nodes in the open set.
@@ -59,11 +63,11 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish)
     %         i) if successor is the goal, stop search
 
             % TODO fix parentage by setting parent once for each point
-            if successor(4) == finish(4)
+            if ismember(successor(4), finish(:,4))
                 % code to recover path
                 cost = open_set_gs(idx_of_q) + hs(idx_of_q);
-
-                route = [q; finish];
+                selected_finish_idx = find(successor(4) == finish(:,4));
+                route = [q; finish(selected_finish_idx,:)];
                 cur_pt_idx = q(4);
                 while parents(cur_pt_idx) ~= start(4)
                     % add cur_pt's parent to the path
