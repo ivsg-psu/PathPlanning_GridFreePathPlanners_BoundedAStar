@@ -1,4 +1,4 @@
-clear all; close all; clc
+clear; close all; clc
 
 addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
 addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
@@ -6,9 +6,11 @@ addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
 addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
 addpath 'C:\Users\sjhar\Desktop\gif\gif'
 
-
 facets = [];
-
+% TODO @sjharnett break out this code into functions for:
+% vertex interp
+% line segment to facet intersection checking and vgraph creation
+%
 % verts (Nx3 array of verts)
 % isObs (is it a size wall or polytope obstacle)
 % obsID (ID for polytope obstacle it belongs to)
@@ -16,6 +18,7 @@ facets = [];
 verts = [1 1 0; 2 1 0;  3 1 20; 2 1 20]; % a line that translates its length in x over the course of 20 seconds
 start = [2 0 0];
 finish = [2 2 30];
+
 figure; hold on; box on; title('surfels and line from start to goal')
 fig = gcf;
 fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b');
@@ -25,15 +28,54 @@ plot3(finish(1),finish(2),finish(3),'rx');
 plot3([start(1) finish(1)],[start(2) finish(2)],[start(3) finish(3)])
 % finish = start + dir
 % thus dir = finish-start
-[intersect, t, u, v, xcoor] = TriangleRayIntersection (start, finish-start, verts(1,:),verts(2,:),verts(3,:),'lineType','segment','border','exclusive')
-[intersect2, t2, u2, v2, xcoor2] = TriangleRayIntersection (start, finish-start, verts(1,:),verts(3,:),verts(4,:),'lineType','segment')
+[intersect, t, u, v, xcoor] = TriangleRayIntersection (start, finish-start, verts(1,:),verts(2,:),verts(3,:),'lineType','segment','border','exclusive');
+[intersect2, t2, u2, v2, xcoor2] = TriangleRayIntersection (start, finish-start, verts(1,:),verts(3,:),verts(4,:),'lineType','segment');
 plot3(xcoor(1),xcoor(2),xcoor(3),'cx')
 legend('tri 1','tri 2','start','goal','','intersection')
 INTERNAL_fcn_format_timespace_plot();
 
+%% interpolation code for a shape
+dt = 1;
+% for each shape
+% get shape.verts
+verts = [1 1 0 1; 2 1 0 2;  3 1 20 2; 2 1 20 1]; % a line that translates its length in x over the course of 20 seconds
+% columns of verts are x,y,t,id
+% for number of unique time values in verts...
+unique_times = unique(verts(:,3));
+num_unique_times = length(unique(verts(:,3)));
+
+unique_verts = unique(verts(:,4));
+num_unique_verts = length(unique(verts(:,4)));
+
+dense_times = [];
+for i = 2:1:num_unique_times
+    new_times = unique_times(i-1):dt:unique_times(i);
+    dense_times = [dense_times; new_times'];
+end
+dense_times = unique(dense_times);
+num_dense_times = length(dense_times);
+
+for i = 1:1:num_unique_verts
+    this_vert_id = unique_verts(i);
+    this_vert_rows = find(verts(:,4)==this_vert_id);
+    this_vert_x = verts(this_vert_rows,1);
+    this_vert_y = verts(this_vert_rows,2);
+    this_vert_t = verts(this_vert_rows,3);
+
+    this_vert_dense_x = interp1(this_vert_t,this_vert_x,dense_times);
+    this_vert_dense_y = interp1(this_vert_t,this_vert_y,dense_times);
+    this_vert_id_repeated = ones(num_dense_times,1);
+    verts = [verts; this_vert_dense_x this_vert_dense_y dense_times this_vert_id_repeated];
+end
+
+% will need to remove duplicate rows
+
+% end for each shape
+
 %% this code is required to vectorize the edge, triangle intersection checking
+verts = verts(:,1:3);
 all_pts = [verts; start; finish];
-all_surfels = [verts(1,:),verts(2,:),verts(3,:);verts(1,:),verts(3,:),verts(4,:)]
+all_surfels = [verts(1,:),verts(2,:),verts(3,:);verts(1,:),verts(3,:),verts(4,:)];
 figure; hold on; box on; title('all vertices and start and finish')
 INTERNAL_fcn_format_timespace_plot();
 plot3(start(1),start(2),start(3),'gx');
@@ -102,7 +144,7 @@ total_length_3d = sum(sqrt(sum(lengths_3d.*lengths_3d,2)));
 metrics_title = sprintf('route duration [s]: %.3f \n route length [m]: %.3f \n route length 3D: %.3f',total_time,total_length,total_length_3d);
 title(metrics_title);
 plot3(route(:,1),route(:,2),route(:,3),'-b','LineWidth',3);
-return
+
 %% discard rays that are too high in velocity
 % ray slope is rise over run
 % rise is delta t
@@ -149,7 +191,7 @@ for i = 1:1:num_unique_verts
 
     this_vert_dense_x = interp1(this_vert_t,this_vert_x,dense_times);
     this_vert_dense_y = interp1(this_vert_t,this_vert_y,dense_times);
-    this_vert_id_repeated = ones(num_dense_times,1);
+    this_vert_id_repeated = this_vert_id*ones(num_dense_times,1);
     verts = [verts; this_vert_dense_x this_vert_dense_y dense_times this_vert_id_repeated];
 end
 
@@ -164,9 +206,74 @@ plot3(finish(1),finish(2),finish(3),'rx');
 plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
 
 close all;
+% %% create an animation for moving line
+% for i = 1:num_dense_times
+%     hold on; box on; title('animation of moving two point wall shown at 10x speed')
+%     % define figure properties
+%     opts.width      = 8;
+%     opts.height     = 6;
+%     opts.fontType   = 'Times';
+%     opts.fontSize   = 9;
+%     fig = gcf;
+%     % scaling
+%     fig.Units               = 'centimeters';
+%     fig.Position(3)         = opts.width;
+%     fig.Position(4)         = opts.height;
+%     set(gcf,'color','white')
+%     % set text properties
+%     set(fig.Children, ...
+%         'FontName',     'Times', ...
+%         'FontSize',     9);
+%
+%     % remove unnecessary white space
+%     set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+%     xlabel('x [m]')
+%     ylabel('y [m]')
+%     ylim([0 2])
+%     xlim([0 4])
+%     % for each poly
+%     % this polys verts
+%     % need to get x y and z coords at this time
+%     cur_time = dense_times(i);
+%     cur_time_locations = find(verts(:,3) == cur_time);
+%     cur_x = verts(cur_time_locations,1);
+%     cur_y = verts(cur_time_locations,2);
+%     fill(cur_x,cur_y,'b','FaceAlpha',0.2);
+%     if i == 1
+%         gif('moving_wall_demo.gif','LoopCount',1,'DelayTime',dt/10)
+%     else
+%         gif
+%     end
+%     delete(gca)
+% end
+
+
+%% interpolation code for a route
+dt = 1;
+% columns of verts are x,y,t,id
+% for number of unique time values in verts...
+unique_times = unique(route(:,3));
+num_unique_times = length(unique(route(:,3)));
+
+num_route_verts = size(route,1);
+
+dense_times = [];
+for i = 2:1:num_unique_times
+    new_times = unique_times(i-1):dt:unique_times(i);
+    dense_times = [dense_times; new_times'];
+end
+dense_times = unique(dense_times);
+num_dense_times = length(dense_times);
+
+route_dense_x = interp1(route(:,3),route(:,1),dense_times);
+route_dense_y = interp1(route(:,3),route(:,2),dense_times);
+
+route_dense = [route_dense_x route_dense_y dense_times];
+
+close all;
 %% create an animation for moving line
 for i = 1:num_dense_times
-    hold on; box on; title('animation of moving two point wall')
+    hold on; box on; title(sprintf('animation of routing around \n moving two point wall shown at 10x speed'))
     % define figure properties
     opts.width      = 8;
     opts.height     = 6;
@@ -187,7 +294,7 @@ for i = 1:num_dense_times
     set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
     xlabel('x [m]')
     ylabel('y [m]')
-    ylim([0 2])
+    ylim([-1 3])
     xlim([0 4])
     % for each poly
     % this polys verts
@@ -196,16 +303,21 @@ for i = 1:num_dense_times
     cur_time_locations = find(verts(:,3) == cur_time);
     cur_x = verts(cur_time_locations,1);
     cur_y = verts(cur_time_locations,2);
+
+    cur_route_idx = find(route_dense(:,3) == cur_time);
+
+    plot(route_dense(1:cur_route_idx,1),route_dense(1:cur_route_idx,2),'-k','LineWidth',2);
+    plot(route_dense(cur_route_idx,1),route_dense(cur_route_idx,2),'xk','MarkerSize',2)
+    plot(start(1),start(2),'gx');
+    plot(finish(1),finish(2),'rx');
     fill(cur_x,cur_y,'b','FaceAlpha',0.2);
     if i == 1
-        gif('moving_wall_demo.gif','LoopCount',1,'DelayTime',dt)
+        gif('moving_wall_with_path.gif','LoopCount',1,'DelayTime',dt/10)
     else
         gif
     end
     delete(gca)
 end
-
-
 
 % https://www.mathworks.com/matlabcentral/fileexchange/33073-triangle-ray-intersection
 % https://en.wikipedia.org/wiki/Intersection_of_a_polyhedron_with_a_line
