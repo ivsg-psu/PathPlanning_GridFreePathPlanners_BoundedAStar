@@ -17,7 +17,7 @@ facets = [];
 
 verts = [1 1 0; 2 1 0;  3 1 20; 2 1 20]; % a line that translates its length in x over the course of 20 seconds
 start = [2 0 0];
-finish = [2 2 30];
+finish = [2 2 21];
 
 figure; hold on; box on; title('surfels and line from start to goal')
 fig = gcf;
@@ -206,46 +206,46 @@ plot3(finish(1),finish(2),finish(3),'rx');
 plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
 
 close all;
-% %% create an animation for moving line
-% for i = 1:num_dense_times
-%     hold on; box on; title('animation of moving two point wall shown at 10x speed')
-%     % define figure properties
-%     opts.width      = 8;
-%     opts.height     = 6;
-%     opts.fontType   = 'Times';
-%     opts.fontSize   = 9;
-%     fig = gcf;
-%     % scaling
-%     fig.Units               = 'centimeters';
-%     fig.Position(3)         = opts.width;
-%     fig.Position(4)         = opts.height;
-%     set(gcf,'color','white')
-%     % set text properties
-%     set(fig.Children, ...
-%         'FontName',     'Times', ...
-%         'FontSize',     9);
-%
-%     % remove unnecessary white space
-%     set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
-%     xlabel('x [m]')
-%     ylabel('y [m]')
-%     ylim([0 2])
-%     xlim([0 4])
-%     % for each poly
-%     % this polys verts
-%     % need to get x y and z coords at this time
-%     cur_time = dense_times(i);
-%     cur_time_locations = find(verts(:,3) == cur_time);
-%     cur_x = verts(cur_time_locations,1);
-%     cur_y = verts(cur_time_locations,2);
-%     fill(cur_x,cur_y,'b','FaceAlpha',0.2);
-%     if i == 1
-%         gif('moving_wall_demo.gif','LoopCount',1,'DelayTime',dt/10)
-%     else
-%         gif
-%     end
-%     delete(gca)
-% end
+%% create an animation for moving line
+for i = 1:num_dense_times
+    hold on; box on; title(sprintf('animation of \n moving two point wall shown at 10x speed'))
+    % define figure properties
+    opts.width      = 8;
+    opts.height     = 6;
+    opts.fontType   = 'Times';
+    opts.fontSize   = 9;
+    fig = gcf;
+    % scaling
+    fig.Units               = 'centimeters';
+    fig.Position(3)         = opts.width;
+    fig.Position(4)         = opts.height;
+    set(gcf,'color','white')
+    % set text properties
+    set(fig.Children, ...
+        'FontName',     'Times', ...
+        'FontSize',     9);
+
+    % remove unnecessary white space
+    set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+    xlabel('x [m]')
+    ylabel('y [m]')
+    ylim([0 2])
+    xlim([0 4])
+    % for each poly
+    % this polys verts
+    % need to get x y and z coords at this time
+    cur_time = dense_times(i);
+    cur_time_locations = find(verts(:,3) == cur_time);
+    cur_x = verts(cur_time_locations,1);
+    cur_y = verts(cur_time_locations,2);
+    fill(cur_x,cur_y,'b','FaceAlpha',0.2);
+    if i == 1
+        gif('moving_wall_demo.gif','LoopCount',1,'DelayTime',dt/10)
+    else
+        gif
+    end
+    delete(gca)
+end
 
 
 %% interpolation code for a route
@@ -306,10 +306,10 @@ for i = 1:num_dense_times
 
     cur_route_idx = find(route_dense(:,3) == cur_time);
 
-    plot(route_dense(1:cur_route_idx,1),route_dense(1:cur_route_idx,2),'-k','LineWidth',2);
-    plot(route_dense(cur_route_idx,1),route_dense(cur_route_idx,2),'xk','MarkerSize',2)
-    plot(start(1),start(2),'gx');
-    plot(finish(1),finish(2),'rx');
+    p_route = plot(route_dense(1:cur_route_idx,1),route_dense(1:cur_route_idx,2),'-k','LineWidth',2);
+    p_pose = plot(route_dense(cur_route_idx,1),route_dense(cur_route_idx,2),'xk','MarkerSize',2)
+    p_start = plot(start(1),start(2),'gx');
+    p_finish = plot(finish(1),finish(2),'rx');
     fill(cur_x,cur_y,'b','FaceAlpha',0.2);
     if i == 1
         gif('moving_wall_with_path.gif','LoopCount',1,'DelayTime',dt/10)
@@ -317,9 +317,12 @@ for i = 1:num_dense_times
         gif
     end
     delete(gca)
+    delete(p_route)
+    delete(p_pose)
+    delete(p_start)
+    delete(p_finish)
 end
-
-% https://www.mathworks.com/matlabcentral/fileexchange/33073-triangle-ray-intersection
+    % https://www.mathworks.com/matlabcentral/fileexchange/33073-triangle-ray-intersection
 % https://en.wikipedia.org/wiki/Intersection_of_a_polyhedron_with_a_line
 % https://www.mathworks.com/help/matlab/visualize/multifaceted-patches.html
 % at each time t, calculate P
