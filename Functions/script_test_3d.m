@@ -131,24 +131,42 @@ for k = 1:1:length(intersects_idx)
 end
 fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b','FaceAlpha',0.3);
 fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'b','FaceAlpha',0.3);
+
 %% discard rays that are too high in velocity
 % ray slope is rise over run
 % rise is delta t
-all_delta_ts = abs(all_ray_ends_repeated(:,3) - all_ray_starts_repeated(:,3));
+% all_delta_ts = (all_ray_ends_repeated(:,3) - all_ray_starts_repeated(:,3));
+% % run is change in total length regardless of x or y
+% all_delta_xs = all_ray_ends_repeated(:,1) - all_ray_starts_repeated(:,1);
+% all_delta_ys = all_ray_ends_repeated(:,2) - all_ray_starts_repeated(:,2);
+% all_delta_dist = (all_delta_xs.^2 + all_delta_ys.^2).^0.5;
+% all_slopes = all_delta_ts./all_delta_dist;
+%
+% speed_violation_idx = find(all_slopes <= 0);
+% for l = 1:1:length(speed_violation_idx)
+%     i = speed_violation_idx(l);
+%     plot3([all_ray_starts_repeated(i,1), all_ray_ends_repeated(i,1)],[all_ray_starts_repeated(i,2), all_ray_ends_repeated(i,2)],[all_ray_starts_repeated(i,3), all_ray_ends_repeated(i,3)],'k','LineWidth',2)
+%     start_id = all_ray_starts_repeated(i,4);
+%     end_id = all_ray_ends_repeated(i,4);
+%     vgraph(start_id,end_id) = 0;
+% end
+
+%% discard rays too high in velocity using all pts array
+all_delta_ts = (all_pts(:,3) - (all_pts(:,3))');
 % run is change in total length regardless of x or y
-all_delta_xs = all_ray_ends_repeated(:,1) - all_ray_starts_repeated(:,1);
-all_delta_ys = all_ray_ends_repeated(:,2) - all_ray_starts_repeated(:,2);
+all_delta_xs = (all_pts(:,1) - (all_pts(:,1))');
+all_delta_ys = (all_pts(:,2) - (all_pts(:,2))');
 all_delta_dist = (all_delta_xs.^2 + all_delta_ys.^2).^0.5;
 all_slopes = all_delta_ts./all_delta_dist;
 
 speed_violation_idx = find(all_slopes == 0);
 for l = 1:1:length(speed_violation_idx)
     i = speed_violation_idx(l);
-    plot3([all_ray_starts_repeated(i,1), all_ray_ends_repeated(i,1)],[all_ray_starts_repeated(i,2), all_ray_ends_repeated(i,2)],[all_ray_starts_repeated(i,3), all_ray_ends_repeated(i,3)],'k','LineWidth',2)
-    start_id = all_ray_starts_repeated(i,4);
-    end_id = all_ray_ends_repeated(i,4);
+    [beg,term] = ind2sub(size(all_slopes),i);
+    % plot3([all_pts(beg,1), all_pts(term,1)],[all_pts(beg,2), all_pts(term,2)],[all_pts(beg,3), all_pts(term,3)],'k','LineWidth',2)
+    start_id = all_pts(beg,4);
+    end_id = all_pts(term,4);
     vgraph(start_id,end_id) = 0;
-    vgraph(end_id,start_id) = 0;
 end
 
 [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts(1:end-7,:), all_pts(end-6,:), all_pts(end-5:end,:));
@@ -210,7 +228,7 @@ INTERNAL_fcn_format_timespace_plot();
 plot3(start(1),start(2),start(3),'gx');
 plot3(finish(1),finish(2),finish(3),'rx');
 plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
-return
+
 close all;
 %% create an animation for moving line
 for i = 1:num_dense_times
@@ -321,7 +339,7 @@ for i = 1:num_dense_times
     cur_route_idx = find(route_dense(:,3) == cur_time);
 
     p_route = plot(route_dense(1:cur_route_idx,1),route_dense(1:cur_route_idx,2),'-k','LineWidth',2);
-    p_pose = plot(route_dense(cur_route_idx,1),route_dense(cur_route_idx,2),'xk','MarkerSize',2)
+    p_pose = plot(route_dense(cur_route_idx,1),route_dense(cur_route_idx,2),'xk','MarkerSize',2);
     p_start = plot(start(1),start(2),'gx');
     p_finish = plot(finish(1),finish(2),'rx');
     fill(cur_x,cur_y,'b','FaceAlpha',0.2);
