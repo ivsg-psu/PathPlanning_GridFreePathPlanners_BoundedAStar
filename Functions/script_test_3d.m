@@ -17,24 +17,26 @@ facets = [];
 
 verts = [1 1 0; 2 1 0;  3 1 20; 2 1 20]; % a line that translates its length in x over the course of 20 seconds
 start = [2 0 0];
-finish = [2 2 21];
+finish = [2*ones(6,1) 2*ones(6,1) (11:2:21)'];
+starts = [2*ones(6,1) 2*ones(6,1) zeros(6,1)];
 
 figure; hold on; box on; title('surfels and line from start to goal')
 fig = gcf;
 fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b');
 fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'r');
 plot3(start(1),start(2),start(3),'gx');
-plot3(finish(1),finish(2),finish(3),'rx');
+plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
 plot3([start(1) finish(1)],[start(2) finish(2)],[start(3) finish(3)])
 % finish = start + dir
 % thus dir = finish-start
-[intersect, t, u, v, xcoor] = TriangleRayIntersection (start, finish-start, verts(1,:),verts(2,:),verts(3,:),'lineType','segment','border','exclusive');
-[intersect2, t2, u2, v2, xcoor2] = TriangleRayIntersection (start, finish-start, verts(1,:),verts(3,:),verts(4,:),'lineType','segment');
+[intersect, t, u, v, xcoor] = TriangleRayIntersection (starts, finish-starts, verts(1,:),verts(2,:),verts(3,:),'lineType','segment','border','exclusive');
+[intersect2, t2, u2, v2, xcoor2] = TriangleRayIntersection (starts, finish-starts, verts(1,:),verts(3,:),verts(4,:),'lineType','segment');
 plot3(xcoor(1),xcoor(2),xcoor(3),'cx')
 legend('tri 1','tri 2','start','goal','','intersection')
 INTERNAL_fcn_format_timespace_plot();
 
 %% interpolation code for a shape
+% TODO @sjharnett when functionalizing this, add the vertex ID column but then remove it
 dt = 1;
 % for each shape
 % get shape.verts
@@ -79,7 +81,7 @@ all_surfels = [verts(1,:),verts(2,:),verts(3,:);verts(1,:),verts(3,:),verts(4,:)
 figure; hold on; box on; title('all vertices and start and finish')
 INTERNAL_fcn_format_timespace_plot();
 plot3(start(1),start(2),start(3),'gx');
-plot3(finish(1),finish(2),finish(3),'rx');
+plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
 plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
 
 num_pts = size(all_pts,1); % number of rows
@@ -130,7 +132,7 @@ end
 fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b','FaceAlpha',0.3);
 fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'b','FaceAlpha',0.3);
 
-[cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts(1:end-2,:), all_pts(end-1,:), all_pts(end,:));
+[cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts(1:end-7,:), all_pts(end-6,:), all_pts(end-5:end,:));
 % route metrics follow
 total_time = max(route(:,3));
 route_x = route(:,1);
