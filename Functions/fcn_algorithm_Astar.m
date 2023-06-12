@@ -1,4 +1,13 @@
 function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
+
+    % vgraph is nxn matrix of 1s and 0s where n is the number of points including the start and goal
+    % 1 implies reachability and 0 implies blocked
+    % vgrah is indexed from row to col (i.e. vgrpah(3,4) is the reachability of 4 from 3)
+
+    % all_pts is (n-2)x3 matrix where each row is a point and the columns are x,y, and point ID
+
+    % start and finish are points of the same format as all points
+
     % set the diagonal to 0 because while points are technically visible from
     % themselves, A* should not consider them as such else the lowest cost
     % neighbor of any point is itself
@@ -17,9 +26,10 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
     % make cost matrix, g
     possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2)'; % distance of every pt from all other pts
     open_set_gs = inf*ones(1,num_nodes); % initialize costs of open set to infinity
-    open_set_gs(start(3)) = possible_gs(start(3),start(3)); % g-value for nodes in open set.  g is the movement cost to
+    open_set_gs(start(3)) = possible_gs(start(3),start(3)); % assign g value from possible_gs to open_set_gs for the start
 
     % make heuristic matrix, h
+    % here it is the distance from each point to the finish
     hs = sqrt((xs - finish(1)).^2 + (ys - finish(2)).^2)';
 
     % total cost f, is g for the open set nodes plus the corresponding h
@@ -33,98 +43,65 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
     % reconstruct the cheapest path
     parents = nan(1,num_nodes);
 
-    % while the open list is not empty
+    % while the open list is not empty...
     % the condition implies at least one nan
         while (sum(isnan(open_set)) > 0)
-        %     a) find the node with the least f on
-        %        the open list, call it "q"
+            % find the node with the least f on
+            % the open list, call it "q"
             [f_of_q, idx_of_q] = min(open_set_fs);
             q = all_pts_plus_start_and_fin(idx_of_q,:);
 
-%                 b) pop q off the open list
+            % pop q off the open list
             open_set_fs(idx_of_q) = inf;
             open_set(idx_of_q) = NaN;
-%                 c) generate q's 8 successors and set their
-%        parents to q
+            % generate q's successors (points reachable from q)
             qs_row = vgraph(idx_of_q,:);
             successor_idxs = [];
             successor_idxs = find(qs_row);
-            % TODO @sjharnett set parents to q
-%             parents(successor_idxs) = idx_of_q;
 
-    %     d) for each successor
+        % for each successor...
         for i = 1:length(successor_idxs)
             successor = all_pts_plus_start_and_fin(successor_idxs(i),:);
-    %         i) if successor is the goal, stop search
-
-            % TODO fix parentage by setting parent once for each point
+            % check if this successor is the goal, if so we're done
             if successor(3) == finish(3)
-                % code to recover path
+                %% execute code to recover path
+                % total path cost is the cost so far to reach q, plus the distance
+                % from q to the goal
                 cost = open_set_gs(idx_of_q) + hs(idx_of_q);
-
+                % initialize the route consisting of q and the finish
                 route = [q; finish];
+                % set the current point back one from the finish, to q
                 cur_pt_idx = q(3);
+                % then walk back through the parents array until the start is reached
+                % recall the parent array contains the lowest cost predecessor to each node
+                % at that nodes ID (i.e. parents(5) = 3 implies the best way to reach 5 is through 3,
+                % thus you could then look at parents(3) to find the best way to reach 3 until you have
+                % reached the start and therefore recovered the optimal path)
                 while parents(cur_pt_idx) ~= start(3)
-                    % add cur_pt's parent to the path
+                    % add cur_pt's parent to the route
                     parent = all_pts_plus_start_and_fin(parents(cur_pt_idx),:);
                     route = [parent; route];
-                    % set q to its parent
+                    % set current point to the current point's parent
                     cur_pt_idx = parents(cur_pt_idx);
                 end
+                % return the route
                 route = [start; route];
-
-                % % code to recover path
-                % cost = open_set_gs(idx_of_q) + hs(idx_of_q);
-                % route = [finish];
-                % parent = idx_of_q;
-                % route = [q; finish];
-                % q_history(end,:) = [];
-                % possible_parents = intersect(q_parents{end}, q_history(:,3));
-                % while parent ~= start(3)
-                    % parent_gs = open_set_gs(possible_parents);
-                    % [parent_g, idx_of_parent] = min(parent_gs);
-                    % parent = possible_parents(idx_of_parent);
-                    % parent_position_in_history = find(parent == q_history(:,3));
-                    % parent_point = q_history(parent_position_in_history,:);
-                    % route = [parent_point;route];
-                    % q_history(parent_position_in_history:end,:) = [];
-% %                     parent = possible_parents(idx_of_parent);
-% %                     parent_position_in_history = find(parent == q_history(:,3));
-                    % possible_parents = intersect(q_parents{parent_position_in_history}, q_history(:,3));
-                % end
                 return
             else
-            tentative_cost = open_set_gs(idx_of_q) + possible_gs(successor(3),q(3));%sqrt((successor(1) - q(1)).^2 + ((successor(2) - q(2)).^2));
+            % if the finish is not a successor of q, find the cost of reaching the successor via q
+            % this is the cost to reach q + the cost from q to successor
+            tentative_cost = open_set_gs(idx_of_q) + possible_gs(successor(3),q(3));
+            % if this is less than the last recorded cost to reach successor,
+            % update the cost to reach successor, add successor to the open set,
+            % and set successor's parent to q
             if tentative_cost < open_set_gs(successor(3))
                 parents(successor(3)) = idx_of_q;
                 open_set_gs(successor(3)) = tentative_cost;
                 open_set_fs(successor(3)) = tentative_cost + hs(successor(3));
                 open_set(successor(3)) = successor(3);
-            end
-
-%             if tentative_gScore < gScore[neighbor]
-%                 // This path to neighbor is better than any previous one. Record it!
-%                 cameFrom[neighbor] := current
-%                 gScore[neighbor] := tentative_gScore
-%                 fScore[neighbor] := tentative_gScore + h(neighbor)
-%                 if neighbor not in openSet
-%                     openSet.add(neighbor)
-%
-%                 successor_h = hs(successor(3));
-%                 successor_f = successor_g + successor_h;
-%                 open_set(successor(3)) = successor(3);
-%                 open_set_gs(successor(3)) = successor_g;
-%                 open_set_fs(successor(3)) = successor_f;
-%             end    %         ii) else, compute both g and h for successor
-
-
-
-
-    %      end (for loop)
-        end
-    %
-    %     e) push q on the closed list
+            end % end tentative cost comparison check
+        end % end looping through successors
+        % having checked all of q's successors, push q on the closed list
         closed_set(idx_of_q) = idx_of_q;
-    %     end (while loop)
-    end
-end
+    end % end while loop through open set
+end % end function
