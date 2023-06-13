@@ -152,14 +152,14 @@ fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'b','FaceAlpha',0.3);
 % end
 
 %% discard rays too high in velocity using all pts array
-all_delta_ts = (all_pts(:,3) - (all_pts(:,3))');
+all_delta_ts = (-all_pts(:,3) + (all_pts(:,3))');
 % run is change in total length regardless of x or y
 all_delta_xs = (all_pts(:,1) - (all_pts(:,1))');
 all_delta_ys = (all_pts(:,2) - (all_pts(:,2))');
 all_delta_dist = (all_delta_xs.^2 + all_delta_ys.^2).^0.5;
 all_slopes = all_delta_ts./all_delta_dist;
 
-speed_violation_idx = find(all_slopes == 0);
+speed_violation_idx = find(all_slopes <= 0 );
 for l = 1:1:length(speed_violation_idx)
     i = speed_violation_idx(l);
     [beg,term] = ind2sub(size(all_slopes),i);
@@ -229,6 +229,23 @@ plot3(start(1),start(2),start(3),'gx');
 plot3(finish(1),finish(2),finish(3),'rx');
 plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
 
+%% example of speed limit inforcement
+figure; hold on; box on; title('example of speed limit enforcement')
+INTERNAL_fcn_format_timespace_plot();
+fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b','FaceAlpha',0.3);
+fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'b','FaceAlpha',0.3);
+beg = 20;
+example_vgraph_row = vgraph(beg,:);
+for term = 1:1:length(example_vgraph_row)
+    if example_vgraph_row(term)
+        color = 'g';
+    else
+        color = 'k';
+    end
+    plot3([all_pts(beg,1), all_pts(term,1)],[all_pts(beg,2), all_pts(term,2)],[all_pts(beg,3), all_pts(term,3)],color,'LineWidth',2)
+end
+
+return
 close all;
 %% create an animation for moving line
 for i = 1:num_dense_times

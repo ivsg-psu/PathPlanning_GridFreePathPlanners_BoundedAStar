@@ -80,7 +80,7 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish)
 
                 return
             else
-            tentative_cost = open_set_gs(idx_of_q) + possible_gs(successor(4),q(4));%sqrt((successor(1) - q(1)).^2 + ((successor(2) - q(2)).^2));
+            tentative_cost = open_set_gs(idx_of_q) + possible_gs(q(4),successor(4));%sqrt((successor(1) - q(1)).^2 + ((successor(2) - q(2)).^2));
             if tentative_cost < open_set_gs(successor(4))
                 parents(successor(4)) = idx_of_q;
                 open_set_gs(successor(4)) = tentative_cost;
