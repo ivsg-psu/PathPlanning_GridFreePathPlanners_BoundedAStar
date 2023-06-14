@@ -15,14 +15,14 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish)
     ys = all_pts_plus_start_and_fin(:,2); % vector of all y coords
     zs = all_pts_plus_start_and_fin(:,3); % vector of all y coords
 
-    % make cost matrix, g
+    % make cost matrix, g - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
     possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2 + (zs - zs').^2)'; % distance of every pt from all other pts
     possible_gs = sqrt((zs - zs').^2)'; % distance of every pt from all other pts
     possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2)'; % distance of every pt from all other pts
     open_set_gs = inf*ones(1,num_nodes); % initialize costs of open set to infinity
     open_set_gs(start(4)) = possible_gs(start(4),start(4)); % g-value for nodes in open set.  g is the movement cost to
 
-    % make heuristic matrix, h
+    % make heuristic matrix, h - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
     hs = sqrt((xs - finish(1,1)).^2 + (ys - finish(2,2)).^2 + (zs - finish(3,3)).^2)';
     hs = sqrt((zs - finish(3,3)).^2)';
     hs = sqrt((xs - finish(1,1)).^2 + (ys - finish(2,2)).^2)';
