@@ -14,12 +14,27 @@ facets = [];
 % verts (Nx3 array of verts)
 % isObs (is it a size wall or polytope obstacle)
 % obsID (ID for polytope obstacle it belongs to)
+% list of obstacles
+% each obstacle contains a verts table
+% verts with the same vert ID are the same vert
+% num time slices is num time stamps
+% facets: 1 flat polytope at each time slice + 1 side wall per side for every 2 time steps
+
+% for each facet, find centroid, move vertices towards centroid
+% then triangulate
+% then do ray triangle intersection
 
 verts = [1 1 0; 2 1 0;  3 1 20; 2 1 20]; % a line that translates its length in x over the course of 20 seconds
+% verts = [1+eps 1 0+eps; 2-eps 1 0+eps;  3-eps 1 20-eps; 2+eps 1 20-eps]; % a line that translates its length in x over the course of 20 seconds
 start = [2 0 0];
-finish = [2*ones(6,1) 2*ones(6,1) (11:2:21)'];
+finish = [2*ones(6,1) 2*ones(6,1) (10:2:20)'];
 starts = [2*ones(6,1) 2*ones(6,1) zeros(6,1)];
-
+% either for each facet, pull each vertex towards the centroid
+% or try different border options in triangle ray intersection function
+% or try overlapping numerous triangles on one facet
+% or see what is done for triangle mesh in demo script
+% or move all vertices away from shapes by eps
+% also new matlab add on needs to be updated
 figure; hold on; box on; title('surfels and line from start to goal')
 fig = gcf;
 fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b');
@@ -30,7 +45,7 @@ plot3([start(1) finish(1)],[start(2) finish(2)],[start(3) finish(3)])
 % finish = start + dir
 % thus dir = finish-start
 [intersect, t, u, v, xcoor] = TriangleRayIntersection (starts, finish-starts, verts(1,:),verts(2,:),verts(3,:),'lineType','segment','border','exclusive');
-[intersect2, t2, u2, v2, xcoor2] = TriangleRayIntersection (starts, finish-starts, verts(1,:),verts(3,:),verts(4,:),'lineType','segment');
+[intersect2, t2, u2, v2, xcoor2] = TriangleRayIntersection (starts, finish-starts, verts(1,:),verts(3,:),verts(4,:),'lineType','segment','border','exclusive');
 plot3(xcoor(1),xcoor(2),xcoor(3),'cx')
 legend('tri 1','tri 2','start','goal','','intersection')
 INTERNAL_fcn_format_timespace_plot();
