@@ -24,7 +24,8 @@ facets = [];
 % then triangulate
 % then do ray triangle intersection
 
-verts = [1+10e-5 1 0+10e-5; 2-10e-5 1 0+10e-5;  3-10e-5 1 20-10e-5; 2+10e-5 1 20-10e-5]; % a line that translates its length in x over the course of 20 seconds
+verts = [1 1 0; 2 1 0;  3 1 20; 2 1 20]; % a line that translates its length in x over the course of 20 seconds
+% verts = [1+10e-5 1 0+10e-5; 2-10e-5 1 0+10e-5;  3-10e-5 1 20-10e-5; 2+10e-5 1 20-10e-5]; % a line that translates its length in x over the course of 20 seconds
 % verts = [1+eps 1 0+eps; 2-eps 1 0+eps;  3-eps 1 20-eps; 2+eps 1 20-eps]; % a line that translates its length in x over the course of 20 seconds
 start = [2 0 0];
 finish = [2*ones(6,1) 2*ones(6,1) (10:2:20)'];
@@ -132,18 +133,31 @@ all_ray_ends_repeated = all_ray_ends(all_surfel_ray_combos(:,1),:);
 all_ray_dirs_repeated = all_ray_dirs(all_surfel_ray_combos(:,1),:);
 all_surfels_repeated = all_surfels(all_surfel_ray_combos(:,2),:);
 
-[intersects, ts, us, vs, xcoors] = TriangleRayIntersection (all_ray_starts_repeated(:,1:3), all_ray_dirs_repeated(:,1:3), all_surfels_repeated(:,1:3),all_surfels_repeated(:,4:6),all_surfels_repeated(:,7:9),'lineType','segment','border','inclusive');
+[intersects, ts, us, vs, xcoors] = TriangleRayIntersection (all_ray_starts_repeated(:,1:3), all_ray_dirs_repeated(:,1:3), all_surfels_repeated(:,1:3),all_surfels_repeated(:,4:6),all_surfels_repeated(:,7:9),'lineType','segment','border','normal');
 
 vgraph = ones(num_pts); % initialize vgraph as zero
 intersects_idx = find(intersects);
 for k = 1:1:length(intersects_idx)
     i = intersects_idx(k);
-    plot3([all_ray_starts_repeated(i,1), all_ray_ends_repeated(i,1)],[all_ray_starts_repeated(i,2), all_ray_ends_repeated(i,2)],[all_ray_starts_repeated(i,3), all_ray_ends_repeated(i,3)],'r','LineWidth',2)
-    plot3(rmmissing(xcoors(i,1)),rmmissing(xcoors(i,2)),rmmissing(xcoors(i,3)),'cx','MarkerSize',10)
-    start_id = all_ray_starts_repeated(i,4);
-    end_id = all_ray_ends_repeated(i,4);
-    vgraph(start_id,end_id) = 0;
-    vgraph(end_id,start_id) = 0;
+    % if the intersection occured at a node that implies that the end of the ray
+    % touched a plane segment, rather than the ray passing through the plane
+    intersect_x = xcoors(i,1);
+    intersect_y = xcoors(i,2);
+    intersect_t = xcoors(i,3);
+    verts_x = verts(:,1);
+    verts_y = verts(:,2);
+    verts_t = verts(:,3);
+    diff_intersect_and_verts = abs([verts_x - intersect_x, verts_y - intersect_y, verts_t - intersect_t]);
+    total_diffs = sum(diff_intersect_and_verts,2);
+    small_diffs_bool = total_diffs < 10e-14;
+    if sum(small_diffs_bool) == 0
+        plot3([all_ray_starts_repeated(i,1), all_ray_ends_repeated(i,1)],[all_ray_starts_repeated(i,2), all_ray_ends_repeated(i,2)],[all_ray_starts_repeated(i,3), all_ray_ends_repeated(i,3)],'r','LineWidth',2)
+        plot3(rmmissing(xcoors(i,1)),rmmissing(xcoors(i,2)),rmmissing(xcoors(i,3)),'cx','MarkerSize',10)
+        start_id = all_ray_starts_repeated(i,4);
+        end_id = all_ray_ends_repeated(i,4);
+        vgraph(start_id,end_id) = 0;
+        vgraph(end_id,start_id) = 0;
+    end
 end
 fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b','FaceAlpha',0.3);
 fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'b','FaceAlpha',0.3);
