@@ -24,7 +24,7 @@ facets = [];
 % then triangulate
 % then do ray triangle intersection
 
-verts = [1 1 0; 2 1 0;  3 1 20; 2 1 20]; % a line that translates its length in x over the course of 20 seconds
+verts = [1+10e-5 1 0+10e-5; 2-10e-5 1 0+10e-5;  3-10e-5 1 20-10e-5; 2+10e-5 1 20-10e-5]; % a line that translates its length in x over the course of 20 seconds
 % verts = [1+eps 1 0+eps; 2-eps 1 0+eps;  3-eps 1 20-eps; 2+eps 1 20-eps]; % a line that translates its length in x over the course of 20 seconds
 start = [2 0 0];
 finish = [2*ones(6,1) 2*ones(6,1) (10:2:20)'];
@@ -52,9 +52,10 @@ INTERNAL_fcn_format_timespace_plot();
 
 %% interpolation code for a shape
 % TODO @sjharnett when functionalizing this, add the vertex ID column but then remove it
-dt = 1;
+dt = 4;
 % for each shape
 % get shape.verts
+verts_orig = verts;
 verts = [1 1 0 1; 2 1 0 2;  3 1 20 2; 2 1 20 1]; % a line that translates its length in x over the course of 20 seconds
 % columns of verts are x,y,t,id
 % for number of unique time values in verts...
@@ -92,7 +93,7 @@ end
 %% this code is required to vectorize the edge, triangle intersection checking
 verts = verts(:,1:3);
 all_pts = [verts; start; finish];
-all_surfels = [verts(1,:),verts(2,:),verts(3,:);verts(1,:),verts(3,:),verts(4,:)];
+all_surfels = [verts_orig(1,:),verts_orig(2,:),verts_orig(3,:);verts_orig(1,:),verts_orig(3,:),verts_orig(4,:)];
 figure; hold on; box on; title('all vertices and start and finish')
 INTERNAL_fcn_format_timespace_plot();
 plot3(start(1),start(2),start(3),'gx');
@@ -131,7 +132,7 @@ all_ray_ends_repeated = all_ray_ends(all_surfel_ray_combos(:,1),:);
 all_ray_dirs_repeated = all_ray_dirs(all_surfel_ray_combos(:,1),:);
 all_surfels_repeated = all_surfels(all_surfel_ray_combos(:,2),:);
 
-[intersects, ts, us, vs, xcoors] = TriangleRayIntersection (all_ray_starts_repeated(:,1:3), all_ray_dirs_repeated(:,1:3), all_surfels_repeated(:,1:3),all_surfels_repeated(:,4:6),all_surfels_repeated(:,7:9),'lineType','segment','border','exclusive');
+[intersects, ts, us, vs, xcoors] = TriangleRayIntersection (all_ray_starts_repeated(:,1:3), all_ray_dirs_repeated(:,1:3), all_surfels_repeated(:,1:3),all_surfels_repeated(:,4:6),all_surfels_repeated(:,7:9),'lineType','segment','border','inclusive');
 
 vgraph = ones(num_pts); % initialize vgraph as zero
 intersects_idx = find(intersects);
@@ -146,7 +147,7 @@ for k = 1:1:length(intersects_idx)
 end
 fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b','FaceAlpha',0.3);
 fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'b','FaceAlpha',0.3);
-
+return
 %% discard rays that are too high in velocity
 % ray slope is rise over run
 % rise is delta t
