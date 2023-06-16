@@ -28,8 +28,12 @@ verts = [1 1 0; 2 1 0;  3 1 20; 2 1 20]; % a line that translates its length in 
 % verts = [1+10e-5 1 0+10e-5; 2-10e-5 1 0+10e-5;  3-10e-5 1 20-10e-5; 2+10e-5 1 20-10e-5]; % a line that translates its length in x over the course of 20 seconds
 % verts = [1+eps 1 0+eps; 2-eps 1 0+eps;  3-eps 1 20-eps; 2+eps 1 20-eps]; % a line that translates its length in x over the course of 20 seconds
 start = [2 0 0];
-finish = [2*ones(6,1) 2*ones(6,1) (11:2:21)'];
-starts = [2*ones(6,1) 2*ones(6,1) zeros(6,1)];
+% finish = [2*ones(6,1) 2*ones(6,1) (11:2:21)'];
+finish = [2 2 11; 1.25 1.25 21];
+dt = 1;
+finish = fcn_interpolate_route_in_time(finish,dt);
+num_finish_pts = size(finish,1);
+starts = [2*ones(num_finish_pts,1) 2*ones(num_finish_pts,1) zeros(num_finish_pts,1)];
 % either for each facet, pull each vertex towards the centroid
 % or try different border options in triangle ray intersection function
 % or try overlapping numerous triangles on one facet
@@ -51,7 +55,6 @@ plot3(xcoor(1),xcoor(2),xcoor(3),'cx')
 legend('tri 1','tri 2','start','goal','','intersection')
 INTERNAL_fcn_format_timespace_plot();
 
-dt = 1;
 verts_orig = verts;
 verts = [1 1 0 1; 2 1 0 2;  3 1 20 2; 2 1 20 1]; % a line that translates its length in x over the course of 20 seconds
 verts = fcn_interpolate_polytopes_in_time(verts,dt);
@@ -59,6 +62,9 @@ verts = fcn_interpolate_polytopes_in_time(verts,dt);
 %% this code is required to vectorize the edge, triangle intersection checking
 verts = verts(:,1:3);
 all_pts = [verts; start; finish];
+
+num_verts = size(verts,1);
+
 num_pts = size(all_pts,1); % number of rows
 all_pts_idx = 1:1:num_pts; % array of all possible pt idx
 all_pts = [all_pts all_pts_idx']; % add pt ID column to all_pts
@@ -73,7 +79,7 @@ speed_limit = inf;
 vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit);
 
 
-[cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts(1:end-7,:), all_pts(end-6,:), all_pts(end-5:end,:));
+[cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts(1:num_verts,:), all_pts(num_verts+1,:), all_pts(num_verts+2:end,:));
 % route metrics follow
 total_time = max(route(:,3));
 route_x = route(:,1);
