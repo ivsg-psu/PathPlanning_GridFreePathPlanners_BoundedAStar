@@ -28,8 +28,8 @@ verts = [1 1 0; 2 1 0;  3 1 20; 2 1 20]; % a line that translates its length in 
 % verts = [1+10e-5 1 0+10e-5; 2-10e-5 1 0+10e-5;  3-10e-5 1 20-10e-5; 2+10e-5 1 20-10e-5]; % a line that translates its length in x over the course of 20 seconds
 % verts = [1+eps 1 0+eps; 2-eps 1 0+eps;  3-eps 1 20-eps; 2+eps 1 20-eps]; % a line that translates its length in x over the course of 20 seconds
 start = [2 0 0];
-% finish = [2*ones(6,1) 2*ones(6,1) (11:2:21)'];
-finish = [2 2 11; 1.25 1.25 21];
+finish = [2*ones(6,1) 2*ones(6,1) (11:2:21)']; % multiple time static finish
+% finish = [2 2 11; 1.25 1.25 21]; % moving finish
 dt = 1;
 finish = fcn_interpolate_route_in_time(finish,dt);
 num_finish_pts = size(finish,1);
@@ -75,7 +75,7 @@ plot3(start(1),start(2),start(3),'gx');
 plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
 plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
 
-speed_limit = inf;
+speed_limit = 1/1.25;
 vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit);
 
 
@@ -103,12 +103,20 @@ plot3(finish(1),finish(2),finish(3),'rx');
 plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
 
 %% example of speed limit inforcement
-figure; hold on; box on; title('example of speed limit enforcement')
+my_title = sprintf('example of speed limit enforcement,\n speed limit %0.1f m/s',speed_limit);
+figure; hold on; box on; title(my_title);
 INTERNAL_fcn_format_timespace_plot();
 fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b','FaceAlpha',0.3);
 fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'b','FaceAlpha',0.3);
 beg = 20;
 example_vgraph_row = vgraph(beg,:);
+cone_apex = [0 0 0];
+cone_apex = [all_pts(beg,1) all_pts(beg,2) all_pts(beg,3)];
+speed_lim_time_change = 3;
+speed_lim_dist_change = speed_limit*speed_lim_time_change;
+[X,Y,Z]=cylinder((0:0.2:1)*speed_lim_dist_change,1000);
+M=makehgtform('translate',cone_apex);
+h=surf(X,Y,speed_lim_time_change*Z,'Parent',hgtransform('Matrix',M),'LineStyle','none','FaceAlpha',0.3);
 for term = 1:1:length(example_vgraph_row)
     if example_vgraph_row(term)
         color = 'g';
@@ -117,6 +125,7 @@ for term = 1:1:length(example_vgraph_row)
     end
     plot3([all_pts(beg,1), all_pts(term,1)],[all_pts(beg,2), all_pts(term,2)],[all_pts(beg,3), all_pts(term,3)],color,'LineWidth',2)
 end
+view([1 0 0])
 
 route_dense = fcn_interpolate_route_in_time(route,dt);
 return
