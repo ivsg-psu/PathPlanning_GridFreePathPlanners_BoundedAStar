@@ -6,27 +6,33 @@ addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
 addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
 addpath 'C:\Users\sjhar\Desktop\gif\gif'
 
-verts = [1 1 0 1; 1.5 2 0 2; 2 1 0 3; 2 2 20 1; 2.5 3 20 2; 3 2 20 3;]; % a line that translates its length in x over the course of 20 seconds
+verts = [1 1 0 1; 1.5 2 0 2; 2 1 0 3; 2 2 20 1; 2.5 3 20 2; 3 2 20 3;1 1 30 1; 1.5 2 30 2; 2 1 30 3]; % a line that translates its length in x over the course of 20 seconds
 time_space_polytopes(1).vertices = verts;
 time_space_polytopes = fcn_make_facets_from_verts(time_space_polytopes);
 figure; hold on; box on; title('polytopes in timespace')
 fig = gcf;
+all_surfels = [];
 for i = 1:length(time_space_polytopes)
     flats = time_space_polytopes.flats;
     sides = time_space_polytopes.sides;
     for j = 1:size(flats,1)
         my_flat = flats(j,:);
         my_flat_matrix = (reshape(my_flat,[4 length(my_flat)/4]))';
+        flat_centroid = [mean(my_flat_matrix(:,1)) mean(my_flat_matrix(:,2)) mean(my_flat_matrix(:,3))];
+        tris_this_flat = [my_flat_matrix(1,1:3) my_flat_matrix(2,1:3) my_flat_matrix(3,1:3)];
+        all_surfels = [all_surfels; tris_this_flat];
         fill3(my_flat_matrix(:,1),my_flat_matrix(:,2),my_flat_matrix(:,3),rand(1,3),'FaceAlpha',0.3);
     end
     for j = 1:size(sides,1)
         my_side = sides(j,:);
         my_side_matrix = (reshape(my_side,[4 length(my_side)/4]))';
+        tris_this_side = [my_side_matrix(1,1:3) my_side_matrix(2,1:3) my_side_matrix(3,1:3);...
+                          my_side_matrix(1,1:3) my_side_matrix(3,1:3) my_side_matrix(4,1:3)] % 1 2 3, 1 3 4
+        all_surfels = [all_surfels; tris_this_side];
         fill3(my_side_matrix(:,1),my_side_matrix(:,2),my_side_matrix(:,3),rand(1,3),'FaceAlpha',0.3);
     end
 end
 INTERNAL_fcn_format_timespace_plot();
-return
 % TODO @sjharnett break out this code into functions for:
 % vertex interp
 % line segment to facet intersection checking and vgraph creation
@@ -44,11 +50,10 @@ return
 % then triangulate
 % then do ray triangle intersection
 
-verts = [1 1 0; 2 1 0;  3 1 20; 2 1 20]; % a line that translates its length in x over the course of 20 seconds
 % verts = [1+10e-5 1 0+10e-5; 2-10e-5 1 0+10e-5;  3-10e-5 1 20-10e-5; 2+10e-5 1 20-10e-5]; % a line that translates its length in x over the course of 20 seconds
 % verts = [1+eps 1 0+eps; 2-eps 1 0+eps;  3-eps 1 20-eps; 2+eps 1 20-eps]; % a line that translates its length in x over the course of 20 seconds
 start = [2 0 0];
-finish = [2*ones(6,1) 2*ones(6,1) (11:2:21)']; % multiple time static finish
+finish = [2*ones(6,1) 3*ones(6,1) (11:2:21)']; % multiple time static finish
 % finish = [2 2 11; 1.25 1.25 21]; % moving finish
 dt = 1;
 finish = fcn_interpolate_route_in_time(finish,dt);
@@ -60,23 +65,18 @@ starts = [2*ones(num_finish_pts,1) 2*ones(num_finish_pts,1) zeros(num_finish_pts
 % or see what is done for triangle mesh in demo script
 % or move all vertices away from shapes by eps
 % also new matlab add on needs to be updated
-figure; hold on; box on; title('surfels and line from start to goal')
+figure; hold on; box on; title('surfels, start, and goals')
 fig = gcf;
-fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b');
-fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'r');
+for i = 1:size(all_surfels,1)
+    X = [all_surfels(i,1), all_surfels(i,4), all_surfels(i,7)];
+    Y = [all_surfels(i,2), all_surfels(i,5), all_surfels(i,8)];
+    Z = [all_surfels(i,3), all_surfels(i,6), all_surfels(i,9)];
+    fill3(X,Y,Z,rand(3,1),'FaceAlpha',0.3);
+end
 plot3(start(1),start(2),start(3),'gx');
 plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
-plot3([start(1) finish(1)],[start(2) finish(2)],[start(3) finish(3)])
-% finish = start + dir
-% thus dir = finish-start
-[intersect, t, u, v, xcoor] = TriangleRayIntersection (starts, finish-starts, verts(1,:),verts(2,:),verts(3,:),'lineType','segment','border','exclusive');
-[intersect2, t2, u2, v2, xcoor2] = TriangleRayIntersection (starts, finish-starts, verts(1,:),verts(3,:),verts(4,:),'lineType','segment','border','exclusive');
-plot3(xcoor(1),xcoor(2),xcoor(3),'cx')
-legend('tri 1','tri 2','start','goal','','intersection')
 INTERNAL_fcn_format_timespace_plot();
 
-verts_orig = verts;
-verts = [1 1 0 1; 2 1 0 2;  3 1 20 2; 2 1 20 1]; % a line that translates its length in x over the course of 20 seconds
 verts = fcn_interpolate_polytopes_in_time(verts,dt);
 
 %% this code is required to vectorize the edge, triangle intersection checking
@@ -88,7 +88,7 @@ num_verts = size(verts,1);
 num_pts = size(all_pts,1); % number of rows
 all_pts_idx = 1:1:num_pts; % array of all possible pt idx
 all_pts = [all_pts all_pts_idx']; % add pt ID column to all_pts
-all_surfels = [verts_orig(1,:),verts_orig(2,:),verts_orig(3,:);verts_orig(1,:),verts_orig(3,:),verts_orig(4,:)];
+
 figure; hold on; box on; title('all vertices and start and finish')
 INTERNAL_fcn_format_timespace_plot();
 plot3(start(1),start(2),start(3),'gx');
@@ -97,7 +97,6 @@ plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
 
 speed_limit = 1/1.25;
 vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit);
-
 
 [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts(1:num_verts,:), all_pts(num_verts+1,:), all_pts(num_verts+2:end,:));
 % route metrics follow

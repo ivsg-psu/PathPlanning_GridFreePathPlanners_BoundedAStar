@@ -75,9 +75,11 @@ plot3(start(1),start(2),start(3),'gx');
 plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
 plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
 
-speed_limit = 1/1.25;
+speed_limit = 0.01;
 vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit);
-
+start = all_pts(num_verts+1,:);
+finish = all_pts(num_verts+2:end,:);
+[is_reachable, num_steps] = fcn_check_reachability(vgraph,start,finish)
 
 [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts(1:num_verts,:), all_pts(num_verts+1,:), all_pts(num_verts+2:end,:));
 % route metrics follow
