@@ -109,9 +109,24 @@ total_length = sum(sqrt(sum(lengths.*lengths,2)));
 lengths_3d = diff([route_x(:) route_y(:) route_t(:)]);
 total_length_3d = sum(sqrt(sum(lengths_3d.*lengths_3d,2)));
 
+% plot path on vgraph
 metrics_title = sprintf('route duration [s]: %.3f \n route length [m]: %.3f \n route length 3D: %.3f',total_time,total_length,total_length_3d);
 title(metrics_title);
 plot3(route(:,1),route(:,2),route(:,3),'-b','LineWidth',3);
+
+% plot path on surfels
+figure; hold on; box on; title(metrics_title);
+plot3(route(:,1),route(:,2),route(:,3),'-b','LineWidth',3);
+fig = gcf;
+for i = 1:size(all_surfels,1)
+    X = [all_surfels(i,1), all_surfels(i,4), all_surfels(i,7)];
+    Y = [all_surfels(i,2), all_surfels(i,5), all_surfels(i,8)];
+    Z = [all_surfels(i,3), all_surfels(i,6), all_surfels(i,9)];
+    fill3(X,Y,Z,rand(3,1),'FaceAlpha',0.3);
+end
+plot3(start(1),start(2),start(3),'gx');
+plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
+INTERNAL_fcn_format_timespace_plot();
 
 % end for each shape
 
