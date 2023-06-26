@@ -59,9 +59,13 @@ function vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfe
             vgraph(end_id,start_id) = 0;
         end
     end
-    fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b','FaceAlpha',0.3);
-    fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'b','FaceAlpha',0.3);
 
+    for i = 1:size(all_surfels,1)
+        X = [all_surfels(i,1), all_surfels(i,4), all_surfels(i,7)];
+        Y = [all_surfels(i,2), all_surfels(i,5), all_surfels(i,8)];
+        Z = [all_surfels(i,3), all_surfels(i,6), all_surfels(i,9)];
+        fill3(X,Y,Z,'b','FaceAlpha',0.3);
+    end
     %% discard rays that are too high in velocity
     % ray slope is rise over run
     % rise is delta t

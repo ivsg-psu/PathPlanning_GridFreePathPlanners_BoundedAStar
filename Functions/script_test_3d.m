@@ -28,8 +28,8 @@ verts = [1 1 0; 2 1 0;  3 1 20; 2 1 20]; % a line that translates its length in 
 % verts = [1+10e-5 1 0+10e-5; 2-10e-5 1 0+10e-5;  3-10e-5 1 20-10e-5; 2+10e-5 1 20-10e-5]; % a line that translates its length in x over the course of 20 seconds
 % verts = [1+eps 1 0+eps; 2-eps 1 0+eps;  3-eps 1 20-eps; 2+eps 1 20-eps]; % a line that translates its length in x over the course of 20 seconds
 start = [2 0 0];
-finish = [2*ones(6,1) 2*ones(6,1) (11:2:21)']; % multiple time static finish
-% finish = [2 2 11; 1.25 1.25 21]; % moving finish
+% finish = [2*ones(6,1) 2*ones(6,1) (11:2:21)']; % multiple time static finish
+finish = [2 2 11; 1.25 1.25 21]; % moving finish
 dt = 1;
 finish = fcn_interpolate_route_in_time(finish,dt);
 num_finish_pts = size(finish,1);
@@ -75,7 +75,7 @@ plot3(start(1),start(2),start(3),'gx');
 plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
 plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
 
-speed_limit = 0.01;
+speed_limit = 1;
 vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit);
 start = all_pts(num_verts+1,:);
 finish = all_pts(num_verts+2:end,:);
@@ -130,7 +130,7 @@ end
 view([1 0 0])
 
 route_dense = fcn_interpolate_route_in_time(route,dt);
-return
+
 fcn_animate_timespace_path_plan(start, finish, verts, route_dense, dt);
 
 % https://www.mathworks.com/matlabcentral/fileexchange/33073-triangle-ray-intersection
