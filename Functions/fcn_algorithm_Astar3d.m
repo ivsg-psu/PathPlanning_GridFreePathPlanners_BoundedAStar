@@ -37,6 +37,7 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish)
     % this represents the cheapest way to get to the node and is necessary to
     % reconstruct the cheapest path
     parents = nan(1,num_nodes);
+    parents(start(4)) = start(4); % parent of start must be itself for route reconstruction
 
     % while the open list is not empty
     % the condition implies at least one nan
