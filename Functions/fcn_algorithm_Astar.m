@@ -42,7 +42,6 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
     % this represents the cheapest way to get to the node and is necessary to
     % reconstruct the cheapest path
     parents = nan(1,num_nodes);
-    parents(start(4)) = start(4); % parent of start must be itself for route reconstruction
 
     % while the open list is not empty...
     % the condition implies at least one nan
@@ -78,6 +77,9 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
                 % at that nodes ID (i.e. parents(5) = 3 implies the best way to reach 5 is through 3,
                 % thus you could then look at parents(3) to find the best way to reach 3 until you have
                 % reached the start and therefore recovered the optimal path)
+                if cur_pt_idx == start(4)
+                    return
+                end
                 while parents(cur_pt_idx) ~= start(3)
                     % add cur_pt's parent to the route
                     parent = all_pts_plus_start_and_fin(parents(cur_pt_idx),:);
