@@ -57,7 +57,11 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish)
             successor_idxs = find(qs_row);
             % TODO @sjharnett set parents to q
 %             parents(successor_idxs) = idx_of_q;
-
+        gs_from_q = possible_gs(q(4),:);
+        gs_from_q_to_successors = gs_from_q(successor_idxs);
+        successors_with_gs = [gs_from_q_to_successors' successor_idxs'];
+        successors_with_gs_sorted = sortrows(successors_with_gs);
+        successor_idxs = successors_with_gs_sorted(:,2);
     %     d) for each successor
         for i = 1:length(successor_idxs)
             successor = all_pts_plus_start_and_fin(successor_idxs(i),:);

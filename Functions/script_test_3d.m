@@ -75,7 +75,7 @@ plot3(start(1),start(2),start(3),'gx');
 plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
 plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
 
-speed_limit = 1;
+speed_limit = 100;
 vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit);
 start = all_pts(num_verts+1,:);
 finish = all_pts(num_verts+2:end,:);
@@ -130,6 +130,7 @@ end
 view([1 0 0])
 
 route_dense = fcn_interpolate_route_in_time(route,dt);
+return
 
 fcn_animate_timespace_path_plan(start, finish, verts, route_dense, dt);
 
