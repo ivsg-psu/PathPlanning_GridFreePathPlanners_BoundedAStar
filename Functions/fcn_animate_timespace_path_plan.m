@@ -1,4 +1,4 @@
-function fcn_animate_timespace_path_plan(start, finish, verts, route_dense, dt)
+function fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, route_dense, dt, xlims, ylims)
     close all;
     %% create an animation for moving line
     dense_times = route_dense(:,3);
@@ -25,15 +25,19 @@ function fcn_animate_timespace_path_plan(start, finish, verts, route_dense, dt)
         set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
         xlabel('x [m]')
         ylabel('y [m]')
-        ylim([-1 3])
-        xlim([0 4])
+        ylim(ylims)
+        xlim(xlims)
         % for each poly
         % this polys verts
         % need to get x y and z coords at this time
         cur_time = dense_times(i);
-        cur_time_locations = find(verts(:,3) == cur_time);
-        cur_x = verts(cur_time_locations,1);
-        cur_y = verts(cur_time_locations,2);
+        for j = 1:length(time_space_polytopes)
+            verts = time_space_polytopes(j).dense_vertices;
+            cur_time_locations = find(verts(:,3) == cur_time);
+            cur_x = verts(cur_time_locations,1);
+            cur_y = verts(cur_time_locations,2);
+            fill(cur_x,cur_y,'b','FaceAlpha',0.2);
+        end
 
         cur_route_idx = find(route_dense(:,3) == cur_time);
 
@@ -42,7 +46,6 @@ function fcn_animate_timespace_path_plan(start, finish, verts, route_dense, dt)
         cur_time_locations_in_finish = find(finish(:,3) == cur_time);
         p_start = plot(start(:,1),start(:,2),'gx');
         p_finish = plot(finish(cur_time_locations_in_finish ,1),finish(cur_time_locations_in_finish,2),'rx');
-        fill(cur_x,cur_y,'b','FaceAlpha',0.2);
         if i == 1
             gif('moving_wall_with_path.gif','LoopCount',1,'DelayTime',dt/10)
         else

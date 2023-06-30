@@ -8,13 +8,19 @@ addpath 'C:\Users\sjhar\Desktop\gif\gif'
 
 verts = [1 1 0 1; 1.5 2 0 2; 2 1 0 3; 2 2 20 1; 2.5 3 20 2; 3 2 20 3;1 1 30 1; 1.5 2 30 2; 2 1 30 3]; % a line that translates its length in x over the course of 20 seconds
 time_space_polytopes(1).vertices = verts;
+verts = [1 1 0 1; 1 3 0 2; 1.25 4 0 3; 1 2 20 1; 1 4 20 2; 1.25 5 20 3;1 1 30 1; 1 3 30 2; 1.25 4 30 3]; % a line that translates its length in x over the course of 20 seconds
+time_space_polytopes(2).vertices = verts;
+verts = [2 4 0 1; 2 5 0 2; 2.5 5 0 3; 2 6 20 1; 2 7 20 2; 2.5 7 20 3; 2 4 30 1; 2 5 30 2; 2.5 5 30 3]; % a line that translates its length in x over the course of 20 seconds
+time_space_polytopes(3).vertices = verts;
 time_space_polytopes = fcn_make_facets_from_verts(time_space_polytopes);
 figure; hold on; box on; title('polytopes in timespace')
 fig = gcf;
+
+% TODO make a function from this for all_surfel generation and triangulation
 all_surfels = [];
 for i = 1:length(time_space_polytopes)
-    flats = time_space_polytopes.flats;
-    sides = time_space_polytopes.sides;
+    flats = time_space_polytopes(i).flats;
+    sides = time_space_polytopes(i).sides;
     for j = 1:size(flats,1)
         my_flat = flats(j,:);
         my_flat_matrix = (reshape(my_flat,[4 length(my_flat)/4]))';
@@ -52,8 +58,8 @@ INTERNAL_fcn_format_timespace_plot();
 
 % verts = [1+10e-5 1 0+10e-5; 2-10e-5 1 0+10e-5;  3-10e-5 1 20-10e-5; 2+10e-5 1 20-10e-5]; % a line that translates its length in x over the course of 20 seconds
 % verts = [1+eps 1 0+eps; 2-eps 1 0+eps;  3-eps 1 20-eps; 2+eps 1 20-eps]; % a line that translates its length in x over the course of 20 seconds
-start = [2 0 0];
-finish = [2*ones(6,1) 3*ones(6,1) (11:2:21)']; % multiple time static finish
+start = [2.5 7 0];
+finish = [1.5*ones(6,1) -1*ones(6,1) (21:2:31)']; % multiple time static finish
 % finish = [2 2 11; 1.25 1.25 21]; % moving finish
 dt = 1;
 finish = fcn_interpolate_route_in_time(finish,dt);
@@ -77,7 +83,14 @@ plot3(start(1),start(2),start(3),'gx');
 plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
 INTERNAL_fcn_format_timespace_plot();
 
-verts = fcn_interpolate_polytopes_in_time(verts,dt);
+verts = [];
+for i = 1:length(time_space_polytopes)
+    verts_this_poly = time_space_polytopes(i).vertices;
+    dense_verts_this_poly = fcn_interpolate_polytopes_in_time(verts_this_poly,dt);
+    time_space_polytopes(i).dense_vertices = dense_verts_this_poly;
+    verts = [verts; dense_verts_this_poly];
+end
+
 
 %% this code is required to vectorize the edge, triangle intersection checking
 verts = verts(:,1:3);
@@ -163,7 +176,7 @@ view([1 0 0])
 
 route_dense = fcn_interpolate_route_in_time(route,dt);
 return
-fcn_animate_timespace_path_plan(start, finish, verts, route_dense, dt);
+fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, route_dense, dt, [1 3], [-2 8]);
 
 % https://www.mathworks.com/matlabcentral/fileexchange/33073-triangle-ray-intersection
 % https://en.wikipedia.org/wiki/Intersection_of_a_polyhedron_with_a_line

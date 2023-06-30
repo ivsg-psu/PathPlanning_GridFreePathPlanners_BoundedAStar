@@ -132,7 +132,8 @@ view([1 0 0])
 route_dense = fcn_interpolate_route_in_time(route,dt);
 return
 
-fcn_animate_timespace_path_plan(start, finish, verts, route_dense, dt);
+fcn_animate_timespace_path_plan(start, finish, verts, route_dense, dt, [-1 3],[0 4]);
+
 
 % https://www.mathworks.com/matlabcentral/fileexchange/33073-triangle-ray-intersection
 % https://en.wikipedia.org/wiki/Intersection_of_a_polyhedron_with_a_line
