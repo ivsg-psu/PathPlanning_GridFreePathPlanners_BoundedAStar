@@ -6,6 +6,26 @@ addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
 addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
 addpath 'C:\Users\sjhar\Desktop\gif\gif'
 tic
+
+tiled_polytopes = fcn_MapGen_haltonVoronoiTiling([1,20],[1 1]);
+% remove the edge polytope that extend past the high and low points
+% shink the polytopes so that they are no longer tiled
+des_radius = 0.05; % desired average maximum radius
+sigma_radius = 0.002; % desired standard deviation in maximum radii
+min_rad = 0.0001; % minimum possible maximum radius for any obstacle
+[shrunk_polytopes,mu_final,sigma_final] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes,des_radius,sigma_radius,min_rad);
+
+% plot the map
+fig = 99; % figure to plot on
+line_spec = 'b-'; % edge line plotting
+line_width = 2; % linewidth of the edge
+axes_limits = [0 1 0 1]; % x and y axes limits
+axis_style = 'square'; % plot axes style
+fcn_plot_polytopes(shrunk_polytopes,fig,line_spec,line_width,axes_limits,axis_style);
+return
+
+
+
 verts = [1 1 0 1; 1.5 2 0 2; 2 1 0 3; 2 2 20 1; 2.5 3 20 2; 3 2 20 3;1 1 30 1; 1.5 2 30 2; 2 1 30 3]; % a line that translates its length in x over the course of 20 seconds
 time_space_polytopes(1).vertices = verts;
 verts = [1 1 0 1; 1 3 0 2; 1.25 4 0 3; 1 2 20 1; 1 4 20 2; 1.25 5 20 3;1 1 30 1; 1 3 30 2; 1.25 4 30 3]; % a line that translates its length in x over the course of 20 seconds
@@ -57,7 +77,7 @@ starts = [2*ones(num_finish_pts,1) 2*ones(num_finish_pts,1) zeros(num_finish_pts
 %     X = [all_surfels(i,1), all_surfels(i,4), all_surfels(i,7)];
 %     Y = [all_surfels(i,2), all_surfels(i,5), all_surfels(i,8)];
 %     Z = [all_surfels(i,3), all_surfels(i,6), all_surfels(i,9)];
-%     fill3(X,Y,Z,rand(3,1),'FaceAlpha',0.3);
+    % fill3(X,Y,Z,rand(3,1),'FaceAlpha',0.3);
 % end
 % plot3(start(1),start(2),start(3),'gx');
 % plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
