@@ -23,15 +23,9 @@ axes_limits = [0 1 0 1]; % x and y axes limits
 axis_style = 'square'; % plot axes style
 fcn_plot_polytopes(shrunk_polytopes,fig,line_spec,line_width,axes_limits,axis_style);
 
-for i = 1:length(shrunk_polytopes)
-    max_vel_component = 0.15;
-    vel_this_poly = [(rand-0.5)*max_vel_component (rand-0.5)*max_vel_component];
-    num_verts = length(shrunk_polytopes(i).xv);
-    vert_ids = (1:1:num_verts)';
-    verts = [shrunk_polytopes(i).xv' shrunk_polytopes(i).yv' 0*ones(num_verts,1) vert_ids;
-             shrunk_polytopes(i).xv'+vel_this_poly(1) shrunk_polytopes(i).yv'+vel_this_poly(2) 20*ones(num_verts,1) vert_ids];
-    time_space_polytopes(i).vertices = verts;
-end
+max_translation_distance = 0.15;
+final_time = 20;
+time_space_polytopes = fcn_make_timespace_polyhedra_from_polygons(shrunk_polytopes, max_translation_distance, final_time);
 
 time_space_polytopes = fcn_make_facets_from_verts(time_space_polytopes);
 % figure; hold on; box on; title('polytopes in timespace')
