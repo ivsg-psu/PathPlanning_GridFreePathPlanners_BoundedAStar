@@ -22,16 +22,17 @@ line_width = 2; % linewidth of the edge
 axes_limits = [0 1 0 1]; % x and y axes limits
 axis_style = 'square'; % plot axes style
 fcn_plot_polytopes(shrunk_polytopes,fig,line_spec,line_width,axes_limits,axis_style);
-return
 
+for i = 1:length(shrunk_polytopes)
+    max_vel_component = 0.15;
+    vel_this_poly = [(rand-0.5)*max_vel_component (rand-0.5)*max_vel_component];
+    num_verts = length(shrunk_polytopes(i).xv);
+    vert_ids = (1:1:num_verts)';
+    verts = [shrunk_polytopes(i).xv' shrunk_polytopes(i).yv' 0*ones(num_verts,1) vert_ids;
+             shrunk_polytopes(i).xv'+vel_this_poly(1) shrunk_polytopes(i).yv'+vel_this_poly(2) 20*ones(num_verts,1) vert_ids];
+    time_space_polytopes(i).vertices = verts;
+end
 
-
-verts = [1 1 0 1; 1.5 2 0 2; 2 1 0 3; 2 2 20 1; 2.5 3 20 2; 3 2 20 3;1 1 30 1; 1.5 2 30 2; 2 1 30 3]; % a line that translates its length in x over the course of 20 seconds
-time_space_polytopes(1).vertices = verts;
-verts = [1 1 0 1; 1 3 0 2; 1.25 4 0 3; 1 2 20 1; 1 4 20 2; 1.25 5 20 3;1 1 30 1; 1 3 30 2; 1.25 4 30 3]; % a line that translates its length in x over the course of 20 seconds
-time_space_polytopes(2).vertices = verts;
-verts = [2 4 0 1; 2 5 0 2; 2.5 5 0 3; 2 6 20 1; 2 7 20 2; 2.5 7 20 3; 2 4 30 1; 2 5 30 2; 2.5 5 30 3]; % a line that translates its length in x over the course of 20 seconds
-time_space_polytopes(3).vertices = verts;
 time_space_polytopes = fcn_make_facets_from_verts(time_space_polytopes);
 % figure; hold on; box on; title('polytopes in timespace')
 % fig = gcf;
@@ -39,6 +40,7 @@ time_space_polytopes = fcn_make_facets_from_verts(time_space_polytopes);
 all_surfels = fcn_make_triangular_surfels_from_facets(time_space_polytopes);
 
 % INTERNAL_fcn_format_timespace_plot();
+
 % TODO @sjharnett break out this code into functions for:
 % vertex interp
 % line segment to facet intersection checking and vgraph creation
@@ -77,12 +79,12 @@ starts = [2*ones(num_finish_pts,1) 2*ones(num_finish_pts,1) zeros(num_finish_pts
 %     X = [all_surfels(i,1), all_surfels(i,4), all_surfels(i,7)];
 %     Y = [all_surfels(i,2), all_surfels(i,5), all_surfels(i,8)];
 %     Z = [all_surfels(i,3), all_surfels(i,6), all_surfels(i,9)];
-    % fill3(X,Y,Z,rand(3,1),'FaceAlpha',0.3);
+%     fill3(X,Y,Z,rand(3,1),'FaceAlpha',0.3);
 % end
 % plot3(start(1),start(2),start(3),'gx');
 % plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
 % INTERNAL_fcn_format_timespace_plot();
-
+return
 verts = [];
 for i = 1:length(time_space_polytopes)
     verts_this_poly = time_space_polytopes(i).vertices;
