@@ -42,10 +42,11 @@ function fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, ro
         cur_route_idx = find(route_dense(:,3) == cur_time);
 
         p_route = plot(route_dense(1:cur_route_idx,1),route_dense(1:cur_route_idx,2),'-k','LineWidth',2);
-        p_pose = plot(route_dense(cur_route_idx,1),route_dense(cur_route_idx,2),'xk','MarkerSize',2);
+        p_pose = plot(route_dense(cur_route_idx,1),route_dense(cur_route_idx,2),'xk');
         cur_time_locations_in_finish = find(finish(:,3) == cur_time);
         p_start = plot(start(:,1),start(:,2),'gx');
         p_finish = plot(finish(cur_time_locations_in_finish ,1),finish(cur_time_locations_in_finish,2),'rx');
+        p_finish_traj = plot(finish(:,1),finish(:,2),'--r');
         if i == 1
             gif('moving_wall_with_path.gif','LoopCount',1,'DelayTime',dt/10)
         else
@@ -56,6 +57,7 @@ function fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, ro
         delete(p_pose)
         delete(p_start)
         delete(p_finish)
+        delete(p_finish_traj)
     end
         % https://www.mathworks.com/matlabcentral/fileexchange/33073-triangle-ray-intersection
     % https://en.wikipedia.org/wiki/Intersection_of_a_polyhedron_with_a_line

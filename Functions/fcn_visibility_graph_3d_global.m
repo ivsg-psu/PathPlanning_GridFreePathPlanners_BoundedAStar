@@ -11,17 +11,17 @@ function vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfe
     all_ray_dirs = all_ray_ends - all_ray_starts; % TriangleRayIntersection takes a ray direction which is end minus beginning
     num_rays = size(all_ray_starts,1);
 
-    figure; hold on; box on; title('all rays casted')
-    INTERNAL_fcn_format_timespace_plot();
-    for i = 1:1:num_rays
-        plot3([all_ray_starts(i,1), all_ray_ends(i,1)],[all_ray_starts(i,2), all_ray_ends(i,2)],[all_ray_starts(i,3), all_ray_ends(i,3)],'LineWidth',2)
-    end
+    % figure; hold on; box on; title('all rays casted')
+    % INTERNAL_fcn_format_timespace_plot();
+    % for i = 1:1:num_rays
+    %     plot3([all_ray_starts(i,1), all_ray_ends(i,1)],[all_ray_starts(i,2), all_ray_ends(i,2)],[all_ray_starts(i,3), all_ray_ends(i,3)],'LineWidth',2)
+    % end
 
-    figure; hold on; box on; title('vgraph')
-    INTERNAL_fcn_format_timespace_plot();
-    for i = 1:1:num_rays
-        plot3([all_ray_starts(i,1), all_ray_ends(i,1)],[all_ray_starts(i,2), all_ray_ends(i,2)],[all_ray_starts(i,3), all_ray_ends(i,3)],'Color',[0 1 0],'LineWidth',1)
-    end
+    % figure; hold on; box on; title('vgraph')
+    % INTERNAL_fcn_format_timespace_plot();
+    % for i = 1:1:num_rays
+    %     plot3([all_ray_starts(i,1), all_ray_ends(i,1)],[all_ray_starts(i,2), all_ray_ends(i,2)],[all_ray_starts(i,3), all_ray_ends(i,3)],'Color',[0 1 0],'LineWidth',1)
+    % end
 
     num_surfels = size(all_surfels,1);
     all_ray_idx = 1:1:num_rays;
@@ -51,8 +51,8 @@ function vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfe
         total_diffs = sum(diff_intersect_and_verts,2);
         small_diffs_bool = total_diffs < 10e-14;
         if sum(small_diffs_bool) == 0
-            plot3([all_ray_starts_repeated(i,1), all_ray_ends_repeated(i,1)],[all_ray_starts_repeated(i,2), all_ray_ends_repeated(i,2)],[all_ray_starts_repeated(i,3), all_ray_ends_repeated(i,3)],'Color',[1 0 0],'LineWidth',1)
-            plot3(rmmissing(xcoors(i,1)),rmmissing(xcoors(i,2)),rmmissing(xcoors(i,3)),'cx','MarkerSize',10)
+            % plot3([all_ray_starts_repeated(i,1), all_ray_ends_repeated(i,1)],[all_ray_starts_repeated(i,2), all_ray_ends_repeated(i,2)],[all_ray_starts_repeated(i,3), all_ray_ends_repeated(i,3)],'Color',[1 0 0],'LineWidth',1)
+            % plot3(rmmissing(xcoors(i,1)),rmmissing(xcoors(i,2)),rmmissing(xcoors(i,3)),'cx','MarkerSize',10)
             start_id = all_ray_starts_repeated(i,4);
             end_id = all_ray_ends_repeated(i,4);
             vgraph(start_id,end_id) = 0;
@@ -60,12 +60,12 @@ function vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfe
         end
     end
 
-    for i = 1:size(all_surfels,1)
-        X = [all_surfels(i,1), all_surfels(i,4), all_surfels(i,7)];
-        Y = [all_surfels(i,2), all_surfels(i,5), all_surfels(i,8)];
-        Z = [all_surfels(i,3), all_surfels(i,6), all_surfels(i,9)];
-        fill3(X,Y,Z,'b','FaceAlpha',0.3);
-    end
+    % for i = 1:size(all_surfels,1)
+    %     X = [all_surfels(i,1), all_surfels(i,4), all_surfels(i,7)];
+    %     Y = [all_surfels(i,2), all_surfels(i,5), all_surfels(i,8)];
+    %     Z = [all_surfels(i,3), all_surfels(i,6), all_surfels(i,9)];
+    %     fill3(X,Y,Z,'b','FaceAlpha',0.3);
+    % end
     %% discard rays that are too high in velocity
     % ray slope is rise over run
     % rise is delta t

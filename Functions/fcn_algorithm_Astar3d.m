@@ -16,16 +16,23 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish)
     zs = all_pts_plus_start_and_fin(:,3); % vector of all y coords
 
     % make cost matrix, g - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
+    possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2)'; % distance of every pt from all other pts
     possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2 + (zs - zs').^2)'; % distance of every pt from all other pts
     possible_gs = sqrt((zs - zs').^2)'; % distance of every pt from all other pts
-    possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2)'; % distance of every pt from all other pts
     open_set_gs = inf*ones(1,num_nodes); % initialize costs of open set to infinity
     open_set_gs(start(4)) = possible_gs(start(4),start(4)); % g-value for nodes in open set.  g is the movement cost to
 
     % make heuristic matrix, h - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
-    hs = sqrt((xs - finish(1,1)).^2 + (ys - finish(2,2)).^2 + (zs - finish(3,3)).^2)';
-    hs = sqrt((zs - finish(3,3)).^2)';
-    hs = sqrt((xs - finish(1,1)).^2 + (ys - finish(2,2)).^2)';
+    % xs - finish(:,1)' gives a matrix where each row is a point and each
+    % column is a finish point so the element in 3,4 is the difference of
+    % point 3 and finish 4
+    % then performing min(M,[],2) on this matrix gives a vector with the
+    % minimum of each row, i.e. for each point the lowest heuristic cost to
+    % a goal.  This is important for the multiple goal case as A* must have
+    % a heuristic that underestimtes actual cost
+    hs = min(sqrt((xs - finish(:,1)').^2 + (ys - finish(:,2)').^2),[],2)';
+    hs = min(sqrt((xs - finish(:,1)').^2 + (ys - finish(:,2)').^2 + (zs - finish(:,3)').^2),[],2)';
+    hs = min(sqrt((zs - finish(:,3)').^2),[],2)';
 
    % total cost f, is g for the open set nodes plus the corresponding h
     open_set_fs = open_set_gs + hs; % f-vlaue for nodes in the open set.
@@ -38,10 +45,12 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish)
     % reconstruct the cheapest path
     parents = nan(1,num_nodes);
 
-
+    nodes_expanded = 0;
+    nodes_explored = 0;
     % while the open list is not empty
     % the condition implies at least one nan
         while (sum(isnan(open_set)) > 0)
+            nodes_expanded = nodes_expanded + 1;
         %     a) find the node with the least f on
         %        the open list, call it "q"
             [f_of_q, idx_of_q] = min(open_set_fs);
@@ -64,6 +73,7 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish)
         successor_idxs = successors_with_gs_sorted(:,2);
     %     d) for each successor
         for i = 1:length(successor_idxs)
+            nodes_explored = nodes_explored + 1;
             successor = all_pts_plus_start_and_fin(successor_idxs(i),:);
     %         i) if successor is the goal, stop search
 
@@ -85,7 +95,8 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish)
                     cur_pt_idx = parents(cur_pt_idx);
                 end
                 route = [start; route];
-
+                sprintf('total nodes expanded: \n %0f',nodes_expanded)
+                sprintf('total nodes explored: \n %0f',nodes_explored)
                 return
             else
             tentative_cost = open_set_gs(idx_of_q) + possible_gs(q(4),successor(4));%sqrt((successor(1) - q(1)).^2 + ((successor(2) - q(2)).^2));
