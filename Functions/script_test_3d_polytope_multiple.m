@@ -5,6 +5,9 @@ addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
 
 addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
 addpath 'C:\Users\sjhar\Desktop\gif\gif'
+
+addpath 'C:\Users\sjhar\Documents\GitHub\Errata_Tutorials_DebugTools\Functions\'
+addpath 'C:\Users\sjhar\Documents\GitHub\PathPlanning_MapTools_MapGenClassLibrary\Functions'
 tic
 
 tiled_polytopes = fcn_MapGen_haltonVoronoiTiling([1,20],[1 1]);
@@ -54,13 +57,13 @@ all_surfels = fcn_make_triangular_surfels_from_facets(time_space_polytopes);
 
 % verts = [1+10e-5 1 0+10e-5; 2-10e-5 1 0+10e-5;  3-10e-5 1 20-10e-5; 2+10e-5 1 20-10e-5]; % a line that translates its length in x over the course of 20 seconds
 % verts = [1+eps 1 0+eps; 2-eps 1 0+eps;  3-eps 1 20-eps; 2+eps 1 20-eps]; % a line that translates its length in x over the course of 20 seconds
-start = [2.5 7 0];
+start = [0 0.5 0];
 % finish = [1.5*ones(6,1) -1*ones(6,1) (21:2:31)']; % multiple time static finish
-finish = [1.5 -1 21; 2 -1 31]; % moving finish
-dt = 1;
+finish = [1 0.5 0; 1 0.2 20]; % moving finish
+dt = 3;
 finish = fcn_interpolate_route_in_time(finish,dt);
 num_finish_pts = size(finish,1);
-starts = [2*ones(num_finish_pts,1) 2*ones(num_finish_pts,1) zeros(num_finish_pts,1)];
+starts = [start(1)*ones(num_finish_pts,1) start(2)*ones(num_finish_pts,1) start(3)*ones(num_finish_pts,1)];
 % either for each facet, pull each vertex towards the centroid
 % or try different border options in triangle ray intersection function
 % or try overlapping numerous triangles on one facet
@@ -78,7 +81,7 @@ starts = [2*ones(num_finish_pts,1) 2*ones(num_finish_pts,1) zeros(num_finish_pts
 % plot3(start(1),start(2),start(3),'gx');
 % plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
 % INTERNAL_fcn_format_timespace_plot();
-return
+
 verts = [];
 for i = 1:length(time_space_polytopes)
     verts_this_poly = time_space_polytopes(i).vertices;
@@ -104,7 +107,7 @@ all_pts = [all_pts all_pts_idx']; % add pt ID column to all_pts
 % plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
 % plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
 
-speed_limit = 1/1.25;
+speed_limit = 1/20;
 vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit);
 
 num_starts = size(start,1);
@@ -122,31 +125,31 @@ lengths_3d = diff([route_x(:) route_y(:) route_t(:)]);
 total_length_3d = sum(sqrt(sum(lengths_3d.*lengths_3d,2)));
 
 % plot path on vgraph
-% metrics_title = sprintf('route duration [s]: %.3f \n route length [m]: %.3f \n route length 3D: %.3f',total_time,total_length,total_length_3d);
+metrics_title = sprintf('route duration [s]: %.3f \n route length [m]: %.3f \n route length 3D: %.3f',total_time,total_length,total_length_3d);
 % title(metrics_title);
 % plot3(route(:,1),route(:,2),route(:,3),'-b','LineWidth',3);
 
-% % plot path on surfels
-% figure; hold on; box on; title(metrics_title);
-% plot3(route(:,1),route(:,2),route(:,3),'-b','LineWidth',3);
-% fig = gcf;
-% for i = 1:size(all_surfels,1)
-%     X = [all_surfels(i,1), all_surfels(i,4), all_surfels(i,7)];
-%     Y = [all_surfels(i,2), all_surfels(i,5), all_surfels(i,8)];
-%     Z = [all_surfels(i,3), all_surfels(i,6), all_surfels(i,9)];
-%     fill3(X,Y,Z,rand(3,1),'FaceAlpha',0.3);
-% end
-% plot3(start(1),start(2),start(3),'gx');
-% plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
-% INTERNAL_fcn_format_timespace_plot();
+% plot path on surfels
+figure; hold on; box on; title(metrics_title);
+plot3(route(:,1),route(:,2),route(:,3),'-b','LineWidth',3);
+fig = gcf;
+for i = 1:size(all_surfels,1)
+    X = [all_surfels(i,1), all_surfels(i,4), all_surfels(i,7)];
+    Y = [all_surfels(i,2), all_surfels(i,5), all_surfels(i,8)];
+    Z = [all_surfels(i,3), all_surfels(i,6), all_surfels(i,9)];
+    fill3(X,Y,Z,rand(3,1),'FaceAlpha',0.3);
+end
+plot3(start(1),start(2),start(3),'gx');
+plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
+INTERNAL_fcn_format_timespace_plot();
 
 % end for each shape
 
-% figure; hold on; box on; title('all vertices, interpolated, and start and finish')
-% INTERNAL_fcn_format_timespace_plot();
-% plot3(start(1),start(2),start(3),'gx');
-% plot3(finish(1),finish(2),finish(3),'rx');
-% plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
+figure; hold on; box on; title('all vertices, interpolated, and start and finish')
+INTERNAL_fcn_format_timespace_plot();
+plot3(start(1),start(2),start(3),'gx');
+plot3(finish(1),finish(2),finish(3),'rx');
+plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
 
 %% example of speed limit inforcement
 % my_title = sprintf('example of speed limit enforcement,\n speed limit %0.1f m/s',speed_limit);
@@ -176,7 +179,7 @@ total_length_3d = sum(sqrt(sum(lengths_3d.*lengths_3d,2)));
 route_dense = fcn_interpolate_route_in_time(route,dt);
 toc
 return
-fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, route_dense, dt, [1 3], [-2 8]);
+fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, route_dense, dt, [0 1], [0 1]);
 
 % https://www.mathworks.com/matlabcentral/fileexchange/33073-triangle-ray-intersection
 % https://en.wikipedia.org/wiki/Intersection_of_a_polyhedron_with_a_line

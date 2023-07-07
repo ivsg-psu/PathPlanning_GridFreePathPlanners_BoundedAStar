@@ -27,7 +27,7 @@ function all_surfels = fcn_make_triangular_surfels_from_facets(time_space_polyto
             my_side = sides(j,:);
             my_side_matrix = (reshape(my_side,[4 length(my_side)/4]))';
             tris_this_side = [my_side_matrix(1,1:3) my_side_matrix(2,1:3) my_side_matrix(3,1:3);...
-                              my_side_matrix(1,1:3) my_side_matrix(3,1:3) my_side_matrix(4,1:3)] % 1 2 3, 1 3 4
+                              my_side_matrix(1,1:3) my_side_matrix(3,1:3) my_side_matrix(4,1:3)]; % 1 2 3, 1 3 4
             all_surfels = [all_surfels; tris_this_side];
             % fill3(my_side_matrix(:,1),my_side_matrix(:,2),my_side_matrix(:,3),rand(1,3),'FaceAlpha',0.3);
         end
