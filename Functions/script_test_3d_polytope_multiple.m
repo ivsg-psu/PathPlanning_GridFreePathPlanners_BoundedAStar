@@ -107,13 +107,21 @@ all_pts = [all_pts all_pts_idx']; % add pt ID column to all_pts
 % plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
 % plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
 
-speed_limit = 1/20;
+speed_limit = 0.12;
 vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit);
+
 
 num_starts = size(start,1);
 num_finishes = size(finish,1);
 
-[cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts(1:num_verts,:), all_pts(num_verts+1:num_verts+num_starts,:), all_pts(num_verts+num_starts+1:num_verts+num_starts+num_finishes,:));
+
+start_with_ids = all_pts(num_verts+1:num_verts+num_starts,:);
+finish_with_ids = all_pts(num_verts+num_starts+1:num_verts+num_starts+num_finishes,:);
+all_pts_with_ids_no_start_and_fin = all_pts(1:num_verts,:);
+
+[is_reachable, num_steps] = fcn_check_reachability(vgraph, start_with_ids, finish_with_ids);
+
+[cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids);
 % route metrics follow
 total_time = max(route(:,3));
 route_x = route(:,1);
