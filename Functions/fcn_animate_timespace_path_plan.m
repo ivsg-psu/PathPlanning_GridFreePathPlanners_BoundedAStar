@@ -4,7 +4,7 @@ function fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, ro
     dense_times = route_dense(:,3);
     num_dense_times = length(dense_times);
     for i = 1:num_dense_times
-        hold on; box on; title(sprintf('speed limit: none,\ncost funtion: distance'))
+        hold on; box on; title(sprintf('speed limit: 0.12 m/s,\ncost funtion: time'))
         % define figure properties
         opts.width      = 8;
         opts.height     = 6;
