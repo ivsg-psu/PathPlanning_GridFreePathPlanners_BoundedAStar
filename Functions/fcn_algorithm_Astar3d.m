@@ -25,7 +25,7 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish,rg
     % new experimental cost function prioritizing reachability
     reachable_nodes_from_each_node = sum(rgraph,2);
     inv_reach_cost = 1./reachable_nodes_from_each_node;
-    inv_reach_cost = inv_reach_cost';
+    inv_reach_cost = 0*inv_reach_cost';
 
     % make heuristic matrix, h - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
     % xs - finish(:,1)' gives a matrix where each row is a point and each

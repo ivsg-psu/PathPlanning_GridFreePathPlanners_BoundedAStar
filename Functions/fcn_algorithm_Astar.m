@@ -1,4 +1,4 @@
-function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
+function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish, rgraph)
 
     % vgraph is nxn matrix of 1s and 0s where n is the number of points including the start and goal
     % 1 implies reachability and 0 implies blocked
@@ -28,12 +28,22 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
     open_set_gs = inf*ones(1,num_nodes); % initialize costs of open set to infinity
     open_set_gs(start(3)) = possible_gs(start(3),start(3)); % assign g value from possible_gs to open_set_gs for the start
 
+    % new experimental cost function prioritizing reachability
+    reachable_nodes_from_each_node = sum(rgraph,2);
+    inv_reach_cost = 1./reachable_nodes_from_each_node;
+    inv_reach_cost = inv_reach_cost';
+
+    % new experimental cost function prioritizing reachability
+    visible_nodes_from_each_node = sum(vgraph,2);
+    inv_vis_cost = 10*1./(visible_nodes_from_each_node);
+    inv_vis_cost = inv_vis_cost';
+
     % make heuristic matrix, h
     % here it is the distance from each point to the finish
-    hs = sqrt((xs - finish(1)).^2 + (ys - finish(2)).^2)';
+    hs = sqrt((xs - finish(1)).^2 + (ys - finish(2)).^2)' + inv_vis_cost;
 
     % total cost f, is g for the open set nodes plus the corresponding h
-    open_set_fs = open_set_gs + hs; % f-vlaue for nodes in the open set.
+    open_set_fs = open_set_gs + hs + inv_reach_cost + inv_vis_cost; % f-vlaue for nodes in the open set.
 
     % Initialize the closed list
     closed_set = nan(1,num_nodes);
@@ -100,7 +110,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
             if tentative_cost < open_set_gs(successor(3))
                 parents(successor(3)) = idx_of_q;
                 open_set_gs(successor(3)) = tentative_cost;
-                open_set_fs(successor(3)) = tentative_cost + hs(successor(3));
+                open_set_fs(successor(3)) = tentative_cost + hs(successor(3)) + inv_reach_cost(successor(3)) + inv_vis_cost(successor(3));
                 open_set(successor(3)) = successor(3);
             end % end tentative cost comparison check
         end % end looping through successors
