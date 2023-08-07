@@ -1,5 +1,5 @@
 function time_space_polytopes_with_facets = fcn_make_facets_from_verts(time_space_polytopes)
-% time_space_polytopes_with_facets
+% fcn_make_facets_from_verts
 %
 % Takes a timespace or 3D polytope, defined by its vertices, and associates these vertices
 % into facets (the 2D faces of the 3D shape) so it is clear how the vertices should be connected by plane segments.

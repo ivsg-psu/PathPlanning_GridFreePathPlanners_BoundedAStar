@@ -63,7 +63,7 @@ all_surfels = fcn_make_triangular_surfels_from_facets(time_space_polytopes);
 start = [0 0.5 0];
 % finish = [1.5*ones(6,1) -1*ones(6,1) (21:2:31)']; % multiple time static finish
 finish = [1 0.5 0; 1 0.2 20]; % moving finish
-dt = 3;
+dt = 5;
 finish = fcn_interpolate_route_in_time(finish,dt);
 num_finish_pts = size(finish,1);
 starts = [start(1)*ones(num_finish_pts,1) start(2)*ones(num_finish_pts,1) start(3)*ones(num_finish_pts,1)];
@@ -86,12 +86,8 @@ starts = [start(1)*ones(num_finish_pts,1) start(2)*ones(num_finish_pts,1) start(
 % INTERNAL_fcn_format_timespace_plot();
 
 verts = [];
-for i = 1:length(time_space_polytopes)
-    verts_this_poly = time_space_polytopes(i).vertices;
-    dense_verts_this_poly = fcn_interpolate_polytopes_in_time(verts_this_poly,dt);
-    time_space_polytopes(i).dense_vertices = dense_verts_this_poly;
-    verts = [verts; dense_verts_this_poly];
-end
+
+[verts, time_space_polytopes] = fcn_interpolate_polytopes_in_time(time_space_polytopes,dt);
 
 
 %% this code is required to vectorize the edge, triangle intersection checking
@@ -124,7 +120,7 @@ all_pts_with_ids_no_start_and_fin = all_pts(1:num_verts,:);
 
 [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph, start_with_ids, finish_with_ids);
 
-[cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids,brgraph);
+[cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids,rgraph);
 % route metrics follow
 total_time = max(route(:,3));
 route_x = route(:,1);

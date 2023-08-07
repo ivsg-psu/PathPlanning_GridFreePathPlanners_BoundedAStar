@@ -133,6 +133,12 @@ The following are the top level directories within the repository:
 <!-- FUNCTION DEFINITIONS -->
 ## Functions
 
+
+<pre align="center">
+<img src=".\Images\call_flow.png">
+<figcaption>This is the basic flow of data and function calls to get from a 2D polytope map and a maximum translation distance for each polytope, to a route through 3D timespace.  Not all parts of this call flow are necessary (e.g. obstacles could be manually defined, interpolation of polytopes in time could be skipped, etc.) but the general flow remains unchanged.</figcaption>
+</pre>
+
 ### Main Algorithms
 
 The following are the core algorithms that make 3D planning possible:
@@ -164,19 +170,38 @@ The following are the core algorithms that make 3D planning possible:
 
 The following are more basic functions that support the above functions:
 
-`fcn_interpolate_polytopes_in_time.m` : Adds nodes to the input polytopes to increase the density of nodes in the time (z) dimension so that the planner has more options of where to route.
-
-
-<img src=".\Images\interpolated.png">
-<figcaption>A cartoon of a polytope with the minimum vertices (left) and the interpolated vertices (right).</figcaption>
-</pre>
-
 `fcn_make_timespace_polyhedra_from_polygons` : Takes an array of polytopes as an input and gives them random, bounded velocities, thus forming dynamic polytopes in timespace.
 
 `fcn_make_facets_from_verts` : Takes a timespace or 3D polytope, defined by its vertices, and associates these vertices into facets (the 2D faces of the 3D shape) so it is clear how the vertices should be connected by plane segments.
 
+<pre align="center">
+<img src=".\Images\facets.png">
+<figcaption>An example of a triangular polytope moving in time, shown as individual facets which can be "flat" representing the triangular polytope at different times or "side walls" representing the translation of the polytope in time.</figcaption>
+</pre>
+
 `fcn_make_triangular_surfels_from_facets` : Decomposes timespace polytopes into triangular surface elements (surfels) which are necessary for performing intersection checking between possible visibity graph edges and polytope obstacles.
 
+<pre align="center">
+<img src=".\Images\surfels.png">
+<figcaption>An example of the flat and side wall facets shown for the timespace obstacle above, now broken down into triangular surface elements.</figcaption>
+</pre>
+
+`fcn_interpolate_polytopes_in_time.m` : Adds nodes to the input polytopes to increase the density of nodes in the time (z) dimension so that the planner has more options of where to route.
+
+<pre align="center">
+<img src=".\Images\interpolated.png">
+<figcaption>A cartoon of a polytope with the minimum vertices (left) and the interpolated vertices (right).</figcaption>
+</pre>
+
+<pre align="center">
+<img src=".\Images\interpolated_verts.png">
+<figcaption>The triangular timespace obstalce shown above, displayed as only its vertices, after interpolation, in cyan.</figcaption>
+</pre>
+
+
+`fcn_interpolate_route_in_time.m` : Adds waypoints to the input route to increase the density of points according to the input time step.  This is useful prior to crafting an animation to get the route and polytopes to have the same time step.
+
+`fcn_animate_timepace_path_plan.m` : Uses the `gif` library to plot the vehicle position, route progress, and polytope positions at each time step, then creating a gif frame from this plot, and saving all plotted frames as a gif for animating timespace (XYZ) routes and obstalces as a series of 2D (XY) plots.  See examples below.
 
 Additionally, each of the functions includes a docstring that explains inputs and outputs. These are supported by MATLAB's help style so that one can type:
 
