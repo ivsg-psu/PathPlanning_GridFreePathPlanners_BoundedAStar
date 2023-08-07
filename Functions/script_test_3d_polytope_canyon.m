@@ -105,9 +105,26 @@ for i = 1:size(route,1)
     nodes_reach_from_route = nodes_reach_from_route + nodes_reach_from_way_pt;
 end
 
+x = route(:,1);
+y = route(:,2);
+d = diff([x(:) y(:)]);
+total_length = sum(sqrt(sum(d.*d,2)));
 
-metrics_title = sprintf('nodes visible from route waypoints: %i \n nodes reachable from route waypoints: %i',nodes_vis_from_route,nodes_reach_from_route);
+metrics_title = sprintf('nodes visible from route waypoints: %i \n nodes visible per unit length: %.2f \n nodes reachable from route waypoints: %i \n nodes reachable per unit length: %.2f',nodes_vis_from_route,nodes_vis_from_route/total_length,nodes_reach_from_route,nodes_reach_from_route/total_length);
 title(metrics_title);
+
+all_pts = [all_pts; start; finish];
+%% highlight visible nodes and reachable nodes
+num_waypoints = size(route,1);
+for i = 2:num_waypoints-1
+    waypoint_id = route(i,3);
+    visible_nodes = find(vgraph(waypoint_id,:));
+    num_visible_nodes = size(visible_nodes,2);
+    for j = 1:num_visible_nodes
+        visible_node_id = visible_nodes(j);
+        plot(all_pts(visible_node_id,1),all_pts(visible_node_id,2),'o','MarkerSize',3,'MarkerEdgeColor','r','MarkerFaceColor',[0.9290 0.6940 0.1250])
+    end
+end
 
 return
 max_translation_distance = 0.15;

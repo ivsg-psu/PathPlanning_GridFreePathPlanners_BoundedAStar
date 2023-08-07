@@ -30,13 +30,13 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish, rgr
 
     % new experimental cost function prioritizing reachability
     reachable_nodes_from_each_node = sum(rgraph,2);
-    inv_reach_cost = 1./reachable_nodes_from_each_node;
-    inv_reach_cost = inv_reach_cost';
+    inv_reach_cost = 10*1./reachable_nodes_from_each_node;
+    inv_reach_cost = 0*inv_reach_cost';
 
-    % new experimental cost function prioritizing reachability
+    % new experimental cost function prioritizing visibility
     visible_nodes_from_each_node = sum(vgraph,2);
     inv_vis_cost = 10*1./(visible_nodes_from_each_node);
-    inv_vis_cost = inv_vis_cost';
+    inv_vis_cost = 0*inv_vis_cost';
 
     % make heuristic matrix, h
     % here it is the distance from each point to the finish

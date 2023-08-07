@@ -16,16 +16,21 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish,rg
     zs = all_pts_plus_start_and_fin(:,3); % vector of all y coords
 
     % make cost matrix, g - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
-    possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2)'; % distance of every pt from all other pts
     possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2 + (zs - zs').^2)'; % distance of every pt from all other pts
     possible_gs = sqrt((zs - zs').^2)'; % distance of every pt from all other pts
+    possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2)'; % distance of every pt from all other pts
     open_set_gs = inf*ones(1,num_nodes); % initialize costs of open set to infinity
     open_set_gs(start(4)) = possible_gs(start(4),start(4)); % g-value for nodes in open set.  g is the movement cost to
 
     % new experimental cost function prioritizing reachability
     reachable_nodes_from_each_node = sum(rgraph,2);
-    inv_reach_cost = 1./reachable_nodes_from_each_node;
+    inv_reach_cost = 10*1./reachable_nodes_from_each_node;
     inv_reach_cost = 0*inv_reach_cost';
+
+    % new experimental cost function prioritizing visibility
+    visible_nodes_from_each_node = sum(vgraph,2);
+    inv_vis_cost = 10*1./(visible_nodes_from_each_node);
+    inv_vis_cost = 0*inv_vis_cost';
 
     % make heuristic matrix, h - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
     % xs - finish(:,1)' gives a matrix where each row is a point and each
@@ -35,9 +40,9 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish,rg
     % minimum of each row, i.e. for each point the lowest heuristic cost to
     % a goal.  This is important for the multiple goal case as A* must have
     % a heuristic that underestimtes actual cost
-    hs = min(sqrt((xs - finish(:,1)').^2 + (ys - finish(:,2)').^2),[],2)';
     hs = min(sqrt((xs - finish(:,1)').^2 + (ys - finish(:,2)').^2 + (zs - finish(:,3)').^2),[],2)';
     hs = min(sqrt((zs - finish(:,3)').^2),[],2)';
+    hs = min(sqrt((xs - finish(:,1)').^2 + (ys - finish(:,2)').^2),[],2)';
 
    % total cost f, is g for the open set nodes plus the corresponding h
     open_set_fs = open_set_gs + hs + inv_reach_cost; % f-vlaue for nodes in the open set.
