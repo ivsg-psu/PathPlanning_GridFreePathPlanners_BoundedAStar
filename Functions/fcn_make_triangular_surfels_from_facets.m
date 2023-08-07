@@ -1,5 +1,6 @@
 function all_surfels = fcn_make_triangular_surfels_from_facets(time_space_polytopes)
 % fcn_make_triangular_surfels_from_facets
+%
 % Decomposes timespace polytopes with facets into triangular surface elements (surfels) which are necessary for
 % performing intersection checking between possible visibity graph edges and polytope obstacles.
 %
@@ -19,10 +20,10 @@ function all_surfels = fcn_make_triangular_surfels_from_facets(time_space_polyto
 %       flats: field associating vertices into flat facets (i.e. facets that lie flat in a single time plane)
 %       sides: field associating vertices into side wall facets (i.e. facets that can span several time values)
 %       both the flats and sides fields have the same format: a matrix where each row is a facet and every 4 columns
-%       is one vertex consisting of (x, y, t, and ID) as stated above
-%       e.g. two flats with three vertices each would be represented as the following 2x12 matrix:
-%       flat 1, vert 1 x, flat 1 vert 1 y, flat 1 vert 1 t, flat 1 vert 1 ID, ..., flat 1, vert 3 x, flat 1 vert 3 y, flat 1 vert 3 t, flat 1 vert 3 ID
-%       flat 2, vert 1 x, flat 2 vert 1 y, flat 2 vert 1 t, flat 2 vert 1 ID, ..., flat 2, vert 3 x, flat 2 vert 3 y, flat 2 vert 3 t, flat 2 vert 3 ID
+%         is one vertex consisting of (x, y, t, and ID) as stated above
+%         e.g. two flats with three vertices each would be represented as the following 2x12 matrix:
+%         flat 1, vert 1 x, flat 1 vert 1 y, flat 1 vert 1 t, flat 1 vert 1 ID, ..., flat 1, vert 3 x, flat 1 vert 3 y, flat 1 vert 3 t, flat 1 vert 3 ID
+%         flat 2, vert 1 x, flat 2 vert 1 y, flat 2 vert 1 t, flat 2 vert 1 ID, ..., flat 2, vert 3 x, flat 2 vert 3 y, flat 2 vert 3 t, flat 2 vert 3 ID
 %
 %
 % OUTPUTS:

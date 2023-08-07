@@ -1,5 +1,6 @@
 function time_space_polytopes = fcn_make_timespace_polyhedra_from_polygons(shrunk_polytopes, max_translation_distance, final_time)
 % fcn_make_timespace_polyhedra_from_polygons
+%
 % Takes an array of polytopes as an input and gives them random,
 % bounded velocities, thus forming dynamic polytopes in timespace.
 %

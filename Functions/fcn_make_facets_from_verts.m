@@ -27,10 +27,10 @@ function time_space_polytopes_with_facets = fcn_make_facets_from_verts(time_spac
 %       flats: field associating vertices into flat facets (i.e. facets that lie flat in a single time plane)
 %       sides: field associating vertices into side wall facets (i.e. facets that can span several time values)
 %       both the flats and sides fields have the same format: a matrix where each row is a facet and every 4 columns
-%       is one vertex consisting of (x, y, t, and ID) as stated above
-%       e.g. two flats with three vertices each would be represented as the following 2x12 matrix:
-%       flat 1, vert 1 x, flat 1 vert 1 y, flat 1 vert 1 t, flat 1 vert 1 ID, ..., flat 1, vert 3 x, flat 1 vert 3 y, flat 1 vert 3 t, flat 1 vert 3 ID
-%       flat 2, vert 1 x, flat 2 vert 1 y, flat 2 vert 1 t, flat 2 vert 1 ID, ..., flat 2, vert 3 x, flat 2 vert 3 y, flat 2 vert 3 t, flat 2 vert 3 ID
+%         is one vertex consisting of (x, y, t, and ID) as stated above
+%         e.g. two flats with three vertices each would be represented as the following 2x12 matrix:
+%         flat 1, vert 1 x, flat 1 vert 1 y, flat 1 vert 1 t, flat 1 vert 1 ID, ..., flat 1, vert 3 x, flat 1 vert 3 y, flat 1 vert 3 t, flat 1 vert 3 ID
+%         flat 2, vert 1 x, flat 2 vert 1 y, flat 2 vert 1 t, flat 2 vert 1 ID, ..., flat 2, vert 3 x, flat 2 vert 3 y, flat 2 vert 3 t, flat 2 vert 3 ID
 %
 %
 % DEPENDENCIES:
