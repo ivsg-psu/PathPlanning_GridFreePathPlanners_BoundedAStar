@@ -1,4 +1,7 @@
 function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish,rgraph)
+
+
+
     % set the diagonal to 0 because while points are technically visible from
     % themselves, A* should not consider them as such else the lowest cost
     % neighbor of any point is itself
