@@ -1,5 +1,58 @@
 function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish, rgraph)
-
+  % fcn_algorithm_Astar  
+  %  
+  % A minimal version of the A* algorithm for graph searching.  Designed to contain minimal subproceses e.g. visibility graph
+  %  
+  %  
+  %  
+  % FORMAT:  
+  % [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish, rgraph)
+  %   
+  %  
+  % INPUTS:  
+  %  
+  %   start: the start point vector (x,t,t,id) 
+  %  
+  %   finish: the finish point matrix of all valid finishes where each row is a single finish point vector (x,y,t,id)
+  % 
+  %   all_pts: the point matrix of all point that can be in the route, except the start and finish where each row is a single point vector (x,y,t,id)
+  %  
+  %   vgraph: the visibility graph as an nxn matrix where n is the number of points (nodes) in the map. 
+  %       A 1 is in position i,j if point j is visible from point i.  0 otherwise.
+  %
+  %   rgraph: the total reachability graph as an nxn matrix where n is the number of pointes (nodes) in the map. 
+  %         A 1 is in position i,j if j is reachable from point i in a path with n or fewer steps (path segments). 0 otherwise.
+  %  
+  %  
+  % OUTPUTS:  
+  %  
+  %     cost: the total cost of the selected route
+  % 
+  %     route: 
+  %  
+  
+  %  
+  % DEPENDENCIES:  
+  %  
+  % none but several functions exist to create visibility matrices and fcn_check_reachability can create reachability matrices
+  %  
+  % EXAMPLES:  
+  %  
+  % See the script: script_test_Astar
+  % for a full test suite.  
+  %  
+  % This function was written on summer 2023 by Steve Harnett  
+  % Questions or comments? contact sjharnett@psu.edu  
+  
+  %  
+  % REVISION HISTORY:  
+  %  
+  % 2023, summer by Steve Harnett  
+  % -- first write of function  
+  %  
+  % TO DO:  
+  %  
+  % -- fill in to-do items here.
     % vgraph is nxn matrix of 1s and 0s where n is the number of points including the start and goal
     % 1 implies reachability and 0 implies blocked
     % vgrah is indexed from row to col (i.e. vgrpah(3,4) is the reachability of 4 from 3)
