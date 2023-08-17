@@ -19,7 +19,7 @@ function [dense_verts, time_space_polytopes_with_dense_verts] = fcn_interpolate_
 %
 % OUTPUTS:
 %
-%      dense_verts: matrix of all vertices in the polytope field, after interpolation
+%      dense_verts: matrix of all vertices in the polytope field, after interpolation. Each row should be a point, and each column is x, y, and z or T
 %
 %      time_space_polytopes_with_dense_verts: time_space_polytopes input struct array, replicated with
 %      a new field called dense_verts_this_poly representing the interpolated vertices for each polytope
