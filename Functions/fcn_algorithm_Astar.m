@@ -1,58 +1,60 @@
 function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish, rgraph)
-  % fcn_algorithm_Astar  
-  %  
-  % A minimal version of the A* algorithm for graph searching.  Designed to contain minimal subproceses e.g. visibility graph
-  %  
-  %  
-  %  
-  % FORMAT:  
-  % [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish, rgraph)
-  %   
-  %  
-  % INPUTS:  
-  %  
-  %   start: the start point vector (x,t,t,id) 
-  %  
-  %   finish: the finish point matrix of all valid finishes where each row is a single finish point vector (x,y,t,id)
-  % 
-  %   all_pts: the point matrix of all point that can be in the route, except the start and finish where each row is a single point vector (x,y,t,id)
-  %  
-  %   vgraph: the visibility graph as an nxn matrix where n is the number of points (nodes) in the map. 
-  %       A 1 is in position i,j if point j is visible from point i.  0 otherwise.
-  %
-  %   rgraph: the total reachability graph as an nxn matrix where n is the number of pointes (nodes) in the map. 
-  %         A 1 is in position i,j if j is reachable from point i in a path with n or fewer steps (path segments). 0 otherwise.
-  %  
-  %  
-  % OUTPUTS:  
-  %  
-  %     cost: the total cost of the selected route
-  % 
-  %     route: 
-  %  
-  
-  %  
-  % DEPENDENCIES:  
-  %  
-  % none but several functions exist to create visibility matrices and fcn_check_reachability can create reachability matrices
-  %  
-  % EXAMPLES:  
-  %  
-  % See the script: script_test_Astar
-  % for a full test suite.  
-  %  
-  % This function was written on summer 2023 by Steve Harnett  
-  % Questions or comments? contact sjharnett@psu.edu  
-  
-  %  
-  % REVISION HISTORY:  
-  %  
-  % 2023, summer by Steve Harnett  
-  % -- first write of function  
-  %  
-  % TO DO:  
-  %  
-  % -- fill in to-do items here.
+% fcn_algorithm_Astar
+%
+% A minimal version of the A* algorithm for graph searching.  Designed to contain minimal subproceses e.g. visibility graph
+%
+%
+%
+% FORMAT:
+% [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish, rgraph)
+%
+%
+% INPUTS:
+%
+%   start: the start point vector (x,t,id)
+%
+%   finish: the finish point matrix of all valid finishes where each row is a single finish point vector (x,y,id)
+%
+%   all_pts: the point matrix of all point that can be in the route, except the start and finish where
+%       each row is a single point vector (x,y,id)
+%
+%   vgraph: the visibility graph as an nxn matrix where n is the number of points (nodes) in the map.
+%       A 1 is in position i,j if point j is visible from point i.  0 otherwise.
+%
+%   rgraph: the total reachability graph as an nxn matrix where n is the number of pointes (nodes) in the map.
+%         A 1 is in position i,j if j is reachable from point i in a path with n or fewer steps (path segments). 0 otherwise.
+%
+%
+% OUTPUTS:
+%
+%     cost: the total cost of the selected route
+%
+%    route: the matrix as produced by fcn_algorithm_Astar3d consisting of waypoints.  Each row is a
+%    waypoint, and each column is x, y, and point ID
+%
+%
+% DEPENDENCIES:
+%
+% none but several functions exist to create visibility matrices and fcn_check_reachability can create reachability matrices
+%
+% EXAMPLES:
+%
+% See the script: script_test_fcn_algorithm_Astar
+% for a full test suite.
+%
+% This function was written on spring 2023 by Steve Harnett
+% Questions or comments? contact sjharnett@psu.edu
+
+%
+% REVISION HISTORY:
+%
+% 2023, spring by Steve Harnett
+% -- first write of function
+%
+% TO DO:
+%
+% -- fill in to-do items here.
+
     % vgraph is nxn matrix of 1s and 0s where n is the number of points including the start and goal
     % 1 implies reachability and 0 implies blocked
     % vgrah is indexed from row to col (i.e. vgrpah(3,4) is the reachability of 4 from 3)
@@ -76,7 +78,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish, rgr
     xs = all_pts_plus_start_and_fin(:,1); % vector of all x coords
     ys = all_pts_plus_start_and_fin(:,2); % vector of all y coords
 
-    % make cost matrix, g
+    % make cost matrix, g - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
     possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2)'; % distance of every pt from all other pts
     open_set_gs = inf*ones(1,num_nodes); % initialize costs of open set to infinity
     open_set_gs(start(3)) = possible_gs(start(3),start(3)); % assign g value from possible_gs to open_set_gs for the start
@@ -91,8 +93,8 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish, rgr
     inv_vis_cost = 10*1./(visible_nodes_from_each_node);
     inv_vis_cost = 0*inv_vis_cost';
 
-    % make heuristic matrix, h
     % here it is the distance from each point to the finish
+    % make heuristic matrix, h - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
     hs = sqrt((xs - finish(1)).^2 + (ys - finish(2)).^2)' + inv_vis_cost;
 
     % total cost f, is g for the open set nodes plus the corresponding h
@@ -122,10 +124,10 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish, rgr
             successor_idxs = [];
             successor_idxs = find(qs_row);
 
-        % for each successor...
-        for i = 1:length(successor_idxs)
-            successor = all_pts_plus_start_and_fin(successor_idxs(i),:);
-            % check if this successor is the goal, if so we're done
+            % for each successor...
+            for i = 1:length(successor_idxs)
+                successor = all_pts_plus_start_and_fin(successor_idxs(i),:);
+               % check if this successor is the goal, if so we're done
             if successor(3) == finish(3)
                 %% execute code to recover path
                 % total path cost is the cost so far to reach q, plus the distance
