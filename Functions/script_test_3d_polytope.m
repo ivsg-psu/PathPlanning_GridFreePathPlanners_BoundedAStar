@@ -165,6 +165,7 @@ if flag_do_plot
         view([1 0 0])
     end
 end
+flag_do_plot = 0;
 if flag_do_plot
 %% vgraph plot
     figure; hold on; box on; title('visibility graph');

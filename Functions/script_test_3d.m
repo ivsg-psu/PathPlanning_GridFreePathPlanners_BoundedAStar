@@ -6,7 +6,10 @@ addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
 addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
 addpath 'C:\Users\sjhar\Desktop\gif\gif'
 
+flag_do_plot = 1;
+
 facets = [];
+
 % TODO @sjharnett break out this code into functions for:
 % vertex interp
 % line segment to facet intersection checking and vgraph creation
@@ -57,7 +60,9 @@ INTERNAL_fcn_format_timespace_plot();
 
 verts_orig = verts;
 verts = [1 1 0 1; 2 1 0 2;  3 1 20 2; 2 1 20 1]; % a line that translates its length in x over the course of 20 seconds
-verts = fcn_interpolate_polytopes_in_time(verts,dt);
+time_space_polytopes(1).vertices = verts;
+[verts, time_space_polytopes] = fcn_interpolate_polytopes_in_time(time_space_polytopes,dt)
+
 
 %% this code is required to vectorize the edge, triangle intersection checking
 verts = verts(:,1:3);

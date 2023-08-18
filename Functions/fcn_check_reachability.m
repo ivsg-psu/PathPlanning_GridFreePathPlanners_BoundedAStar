@@ -62,7 +62,7 @@ function [is_reachable, num_steps, rgraph_total] = fcn_check_reachability(vgraph
         % vgraph^k gives the rgraph describing reachability using paths with exactly k steps
         rgraph = vgraph^num_steps; % see Judith Gersting's Mathematical Structures for Computer Science for formula
         rgraph_total = rgraph_total + rgraph; % add rgraph for num_steps steps to all prior rgraphs with 1 to num_steps steps
-        ind = sub2ind([num_pts,num_pts],start_id_repeated,finish_id); want to check all start finish combos
+        ind = sub2ind([num_pts,num_pts],start_id_repeated,finish_id);  % want to check all start finish combos
         if sum(rgraph(ind)) > 0
             is_reachable = 1; % if any start to finish combo has more than 0, some finish is reachable
         end

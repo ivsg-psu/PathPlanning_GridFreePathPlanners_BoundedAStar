@@ -9,26 +9,31 @@ addpath 'C:\Users\sjhar\Desktop\gif\gif'
 addpath 'C:\Users\sjh6473\Desktop\gif\gif'
 addpath 'C:\Users\sjh6473\Desktop\TriangleRayIntersection'
 
-addpath 'C:\Users\sjhar\Documents\GitHub\Errata_Tutorials_DebugTools\Functions\'
-addpath 'C:\Users\sjhar\Documents\GitHub\PathPlanning_MapTools_MapGenClassLibrary\Functions'
+%% load test fixtures for polytope map rather than creating it here
+% load distribution north of canyon
+load(strcat(pwd,'\..\Test_Fixtures\shrunk_polytopes1.mat'));
+% this test fixture was made with the following block of code using functions from the MapGen repo
+% tiled_polytopes1 = fcn_MapGen_haltonVoronoiTiling([1,20],[2 1]);
+% % remove the edge polytope that extend past the high and low points
+% % shink the polytopes so that they are no longer tiled
+% des_radius = 0.05; % desired average maximum radius
+% sigma_radius = 0.002; % desired standard deviation in maximum radii
+% min_rad = 0.0001; % minimum possible maximum radius for any obstacle
+% [shrunk_polytopes1,~,~] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes1,des_radius,sigma_radius,min_rad);
 
-load('C:\Users\sjhar\Documents\GitHub\sjharnett\figures\3d_planning_canyon_example\canyon_polys_without_exterior.mat')
+% load polytopes representing canyon
+load(strcat(pwd,'\..\Test_Fixtures\canyon_polys_without_exterior.mat'));
+% these polytopes were manually defined
+
+% load distribution south of canyon
+load(strcat(pwd,'\..\Test_Fixtures\shrunk_polytopes2.mat'));
+% this test fixture was made with the following block of code using functions from the MapGen repo
+% tiled_polytopes2 = fcn_MapGen_haltonVoronoiTiling([1, 20],[2 1]);
+% % remove the edge polytope that extend past the high and low points
+% % shink the polytopes so that they are no longer tiled
+% [shrunk_polytopes2,~,~] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes2,des_radius,sigma_radius,min_rad);
 tic
 
-% make distribution north of canyon
-tiled_polytopes1 = fcn_MapGen_haltonVoronoiTiling([1,20],[2 1]);
-% remove the edge polytope that extend past the high and low points
-% shink the polytopes so that they are no longer tiled
-des_radius = 0.05; % desired average maximum radius
-sigma_radius = 0.002; % desired standard deviation in maximum radii
-min_rad = 0.0001; % minimum possible maximum radius for any obstacle
-[shrunk_polytopes1,~,~] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes1,des_radius,sigma_radius,min_rad);
-
-% make distribution south of canyon
-tiled_polytopes2 = fcn_MapGen_haltonVoronoiTiling([1, 20],[2 1]);
-% remove the edge polytope that extend past the high and low points
-% shink the polytopes so that they are no longer tiled
-[shrunk_polytopes2,~,~] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes2,des_radius,sigma_radius,min_rad);
 
 second_field_vertical_translation = 1.5;
 
@@ -260,6 +265,7 @@ plot3(start(1),start(2),start(3),'gx');
 plot3(finish(1),finish(2),finish(3),'rx');
 plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
 
+flag_do_plot = 0;
 if flag_do_plot
 %% vgraph plot
     figure; hold on; box on; title('visibility graph');
