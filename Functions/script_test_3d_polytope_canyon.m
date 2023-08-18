@@ -260,6 +260,33 @@ plot3(start(1),start(2),start(3),'gx');
 plot3(finish(1),finish(2),finish(3),'rx');
 plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
 
+if flag_do_plot
+%% vgraph plot
+    figure; hold on; box on; title('visibility graph');
+    INTERNAL_fcn_format_timespace_plot();
+    % start with surfels plot
+    for i = 1:size(all_surfels,1)
+        X = [all_surfels(i,1), all_surfels(i,4), all_surfels(i,7)];
+        Y = [all_surfels(i,2), all_surfels(i,5), all_surfels(i,8)];
+        Z = [all_surfels(i,3), all_surfels(i,6), all_surfels(i,9)];
+        fill3(X,Y,Z,rand(3,1),'FaceAlpha',0.3);
+    end
+    plot3(start(1),start(2),start(3),'gx');
+    plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
+    for beg = 1:size(vgraph,1)
+        example_vgraph_row = vgraph(beg,:);
+        for term = 1:1:length(example_vgraph_row)
+            if example_vgraph_row(term)
+                color = 'g';
+            else
+                color = 'r';
+            end
+            plot3([all_pts(beg,1), all_pts(term,1)],[all_pts(beg,2), all_pts(term,2)],[all_pts(beg,3), all_pts(term,3)],color,'LineWidth',2)
+        end
+        view([1 0 0])
+    end
+end
+
 %% example of speed limit inforcement
 % my_title = sprintf('example of speed limit enforcement,\n speed limit %0.1f m/s',speed_limit);
 % figure; hold on; box on; title(my_title);

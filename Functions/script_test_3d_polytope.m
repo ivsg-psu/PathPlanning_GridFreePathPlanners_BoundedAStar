@@ -6,6 +6,9 @@ addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
 addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
 addpath 'C:\Users\sjhar\Desktop\gif\gif'
 tic
+
+flag_do_plot = 1;
+
 verts = [1 1 0 1; 1.5 2 0 2; 2 1 0 3; 2 2 20 1; 2.5 3 20 2; 3 2 20 3;1 1 30 1; 1.5 2 30 2; 2 1 30 3]; % a line that translates its length in x over the course of 20 seconds
 time_space_polytopes(1).vertices = verts;
 verts = [1 1 0 1; 1 3 0 2; 1.25 4 0 3; 1 2 20 1; 1 4 20 2; 1.25 5 20 3;1 1 30 1; 1 3 30 2; 1.25 4 30 3]; % a line that translates its length in x over the course of 20 seconds
@@ -13,12 +16,18 @@ time_space_polytopes(2).vertices = verts;
 verts = [2 4 0 1; 2 5 0 2; 2.5 5 0 3; 2 6 20 1; 2 7 20 2; 2.5 7 20 3; 2 4 30 1; 2 5 30 2; 2.5 5 30 3]; % a line that translates its length in x over the course of 20 seconds
 time_space_polytopes(3).vertices = verts;
 time_space_polytopes = fcn_make_facets_from_verts(time_space_polytopes);
-% figure; hold on; box on; title('polytopes in timespace')
-% fig = gcf;
+
 
 all_surfels = fcn_make_triangular_surfels_from_facets(time_space_polytopes);
 
-% INTERNAL_fcn_format_timespace_plot();
+if flag_do_plot
+    figure; hold on; box on; title('polytopes in timespace')
+    fig = gcf;
+    for i = 1:size(all_surfels,1)
+        fill3([all_surfels(i,1) all_surfels(i,4) all_surfels(i,7)], [all_surfels(i,2) all_surfels(i,5) all_surfels(i,8)], [all_surfels(i,3) all_surfels(i,6) all_surfels(i,9)],rand(1,3),'FaceAlpha',0.3);
+    end
+    INTERNAL_fcn_format_timespace_plot();
+end
 % TODO @sjharnett break out this code into functions for:
 % vertex interp
 % line segment to facet intersection checking and vgraph creation
@@ -64,12 +73,8 @@ starts = [2*ones(num_finish_pts,1) 2*ones(num_finish_pts,1) zeros(num_finish_pts
 % INTERNAL_fcn_format_timespace_plot();
 
 verts = [];
-for i = 1:length(time_space_polytopes)
-    verts_this_poly = time_space_polytopes(i).vertices;
-    dense_verts_this_poly = fcn_interpolate_polytopes_in_time(verts_this_poly,dt);
-    time_space_polytopes(i).dense_vertices = dense_verts_this_poly;
-    verts = [verts; dense_verts_this_poly];
-end
+[verts, time_space_polytopes] = fcn_interpolate_polytopes_in_time(time_space_polytopes,dt)
+
 
 
 %% this code is required to vectorize the edge, triangle intersection checking
@@ -94,7 +99,9 @@ vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed
 num_starts = size(start,1);
 num_finishes = size(finish,1);
 
-[cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts(1:num_verts,:), all_pts(num_verts+1:num_verts+num_starts,:), all_pts(num_verts+num_starts+1:num_verts+num_starts+num_finishes,:));
+rgraph = vgraph;
+
+[cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts(1:num_verts,:), all_pts(num_verts+1:num_verts+num_starts,:), all_pts(num_verts+num_starts+1:num_verts+num_starts+num_finishes,:),rgraph);
 % route metrics follow
 total_time = max(route(:,3));
 route_x = route(:,1);
@@ -132,6 +139,58 @@ total_length_3d = sum(sqrt(sum(lengths_3d.*lengths_3d,2)));
 % plot3(finish(1),finish(2),finish(3),'rx');
 % plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
 
+if flag_do_plot
+%% vgraph plot
+    figure; hold on; box on; title('visibility graph');
+    INTERNAL_fcn_format_timespace_plot();
+    % start with surfels plot
+    for i = 1:size(all_surfels,1)
+        X = [all_surfels(i,1), all_surfels(i,4), all_surfels(i,7)];
+        Y = [all_surfels(i,2), all_surfels(i,5), all_surfels(i,8)];
+        Z = [all_surfels(i,3), all_surfels(i,6), all_surfels(i,9)];
+        fill3(X,Y,Z,rand(3,1),'FaceAlpha',0.3);
+    end
+    plot3(start(1),start(2),start(3),'gx');
+    plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
+    for beg = 1:size(vgraph,1)
+        example_vgraph_row = vgraph(beg,:);
+        for term = 1:1:length(example_vgraph_row)
+            if example_vgraph_row(term)
+                color = 'g';
+            else
+                color = 'r';
+            end
+            plot3([all_pts(beg,1), all_pts(term,1)],[all_pts(beg,2), all_pts(term,2)],[all_pts(beg,3), all_pts(term,3)],color,'LineWidth',2)
+        end
+        view([1 0 0])
+    end
+end
+if flag_do_plot
+%% vgraph plot
+    figure; hold on; box on; title('visibility graph');
+    INTERNAL_fcn_format_timespace_plot();
+    % start with surfels plot
+    for i = 1:size(all_surfels,1)
+        X = [all_surfels(i,1), all_surfels(i,4), all_surfels(i,7)];
+        Y = [all_surfels(i,2), all_surfels(i,5), all_surfels(i,8)];
+        Z = [all_surfels(i,3), all_surfels(i,6), all_surfels(i,9)];
+        fill3(X,Y,Z,rand(3,1),'FaceAlpha',0.3);
+    end
+    plot3(start(1),start(2),start(3),'gx');
+    plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
+    for beg = 1:size(vgraph,1)
+        example_vgraph_row = vgraph(beg,:);
+        for term = 1:1:length(example_vgraph_row)
+            if example_vgraph_row(term)
+                color = 'g';
+            else
+                color = 'r';
+            end
+            plot3([all_pts(beg,1), all_pts(term,1)],[all_pts(beg,2), all_pts(term,2)],[all_pts(beg,3), all_pts(term,3)],color,'LineWidth',2)
+        end
+        view([1 0 0])
+    end
+end
 %% example of speed limit inforcement
 % my_title = sprintf('example of speed limit enforcement,\n speed limit %0.1f m/s',speed_limit);
 % figure; hold on; box on; title(my_title);

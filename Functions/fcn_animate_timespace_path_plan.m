@@ -102,7 +102,7 @@ function fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, ro
         p_finish_traj = plot(finish(:,1),finish(:,2),'--r'); % plot past and future trajectory of finish if it moves
         % first call of the gif function is different from subsequent calls
         if i == 1
-            gif('moving_wall_with_path.gif','LoopCount',1,'DelayTime',dt/10) % notice frame duration is dt/10 to speed up animations for convenient viewing
+            gif('timespace_animation.gif','LoopCount',1,'DelayTime',dt/10) % notice frame duration is dt/10 to speed up animations for convenient viewing
         else
             gif
         end

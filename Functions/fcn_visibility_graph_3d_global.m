@@ -73,17 +73,6 @@ function vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfe
     all_ray_dirs = all_ray_ends - all_ray_starts; % TriangleRayIntersection takes a ray direction which is end minus beginning
     num_rays = size(all_ray_starts,1);
 
-    % figure; hold on; box on; title('all rays casted')
-    % INTERNAL_fcn_format_timespace_plot();
-    % for i = 1:1:num_rays
-    %     plot3([all_ray_starts(i,1), all_ray_ends(i,1)],[all_ray_starts(i,2), all_ray_ends(i,2)],[all_ray_starts(i,3), all_ray_ends(i,3)],'LineWidth',2)
-    % end
-
-    % figure; hold on; box on; title('vgraph')
-    % INTERNAL_fcn_format_timespace_plot();
-    % for i = 1:1:num_rays
-    %     plot3([all_ray_starts(i,1), all_ray_ends(i,1)],[all_ray_starts(i,2), all_ray_ends(i,2)],[all_ray_starts(i,3), all_ray_ends(i,3)],'Color',[0 1 0],'LineWidth',1)
-    % end
 
     % need to form all possible combinations of a ray to check and a surfel it may collide with
     num_surfels = size(all_surfels,1);
@@ -125,31 +114,6 @@ function vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfe
         end
     end
 
-    % for i = 1:size(all_surfels,1)
-    %     X = [all_surfels(i,1), all_surfels(i,4), all_surfels(i,7)];
-    %     Y = [all_surfels(i,2), all_surfels(i,5), all_surfels(i,8)];
-    %     Z = [all_surfels(i,3), all_surfels(i,6), all_surfels(i,9)];
-    %     fill3(X,Y,Z,'b','FaceAlpha',0.3);
-    % end
-    %% discard rays that are too high in velocity
-    % ray slope is rise over run
-    % rise is delta t
-    % all_delta_ts = (all_ray_ends_repeated(:,3) - all_ray_starts_repeated(:,3));
-    % % run is change in total length regardless of x or y
-    % all_delta_xs = all_ray_ends_repeated(:,1) - all_ray_starts_repeated(:,1);
-    % all_delta_ys = all_ray_ends_repeated(:,2) - all_ray_starts_repeated(:,2);
-    % all_delta_dist = (all_delta_xs.^2 + all_delta_ys.^2).^0.5;
-    % all_slopes = all_delta_ts./all_delta_dist;
-    %
-    % speed_violation_idx = find(all_slopes <= 0);
-    % for l = 1:1:length(speed_violation_idx)
-    %     i = speed_violation_idx(l);
-    %     plot3([all_ray_starts_repeated(i,1), all_ray_ends_repeated(i,1)],[all_ray_starts_repeated(i,2), all_ray_ends_repeated(i,2)],[all_ray_starts_repeated(i,3), all_ray_ends_repeated(i,3)],'k','LineWidth',2)
-    %     start_id = all_ray_starts_repeated(i,4);
-    %     end_id = all_ray_ends_repeated(i,4);
-    %     vgraph(start_id,end_id) = 0;
-    % end
-
     %% discard rays too high in velocity using all pts array
     all_delta_ts = (-all_pts(:,3) + (all_pts(:,3))');
     % run is change in total length regardless of x or y
@@ -168,29 +132,4 @@ function vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfe
         end_id = all_pts(term,4);
         vgraph(start_id,end_id) = 0;
     end
-end
-
-function INTERNAL_fcn_format_timespace_plot()
-    % define figure properties
-    opts.width      = 8;
-    opts.height     = 6;
-    opts.fontType   = 'Times';
-    opts.fontSize   = 9;
-    fig = gcf;
-    % scaling
-    fig.Units               = 'centimeters';
-    fig.Position(3)         = opts.width;
-    fig.Position(4)         = opts.height;
-
-    % set text properties
-    set(fig.Children, ...
-        'FontName',     'Times', ...
-        'FontSize',     9);
-
-    % remove unnecessary white space
-    set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
-    xlabel('x [m]')
-    ylabel('y [m]')
-    zlabel('t [s]')
-    view([36 30])
 end
