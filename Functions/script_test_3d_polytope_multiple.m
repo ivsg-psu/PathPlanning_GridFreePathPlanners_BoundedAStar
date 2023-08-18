@@ -1,4 +1,7 @@
 clear; close all; clc
+% script_test_3d_polytope_multiple
+% defacto example of 3D path planning scenario in timespace
+% typical field of polytopes, each with a random velocity, that the planner routes around
 
 addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
 addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'

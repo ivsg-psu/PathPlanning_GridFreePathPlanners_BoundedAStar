@@ -107,14 +107,6 @@ if flag_do_plot
     INTERNAL_fcn_format_timespace_plot();
 end
 
-if flag_do_plot
-    figure; hold on; box on; title('all vertices, interpolated, and start and finish')
-    INTERNAL_fcn_format_timespace_plot();
-    plot3(start(1),start(2),start(3),'gx');
-    plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
-    plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
-end
-
 %% vgraph plot
 if flag_do_slow_plot
     figure; hold on; box on; title('visibility graph');
