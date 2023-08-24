@@ -97,6 +97,11 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, r
     inv_vis_cost = 10*1./(visible_nodes_from_each_node);
     inv_vis_cost = 0*inv_vis_cost';
 
+    delta_y = (ys - ys');
+    delta_y_is_up = delta_y > 0;
+    weight = delta_y_is_up*0.5;
+    possible_gs = possible_gs.*weight;
+
     % make heuristic matrix, h - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
     % xs - finish(:,1)' gives a matrix where each row is a point and each
     % column is a finish point so the element in 3,4 is the difference of
