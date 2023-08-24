@@ -128,9 +128,24 @@ if flag_do_plot
     plot3(start(1),start(2),start(3),'gx');
     plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
     INTERNAL_fcn_format_timespace_plot();
-    [startx,starty] = meshgrid(0:0.1:1, 0:0.1:1);
-    startz = zeros(11,11);
-    u = ones(11,11)*0;v = ones(11,11)*1;w = ones(11,11)*0;
+    % vectors going up
+    % [startx,starty] = meshgrid(0:0.1:1, 0:0.1:1);
+    % startz = zeros(11,11);
+    % u = ones(11,11)*0;v = ones(11,11)*1;w = ones(11,11)*0;
+    % quiver3(startx,starty,startz,u,v,w)
+    % source
+    % [startx,starty] = meshgrid(0.3:0.05:0.5, 0.3:0.05:0.5);
+    % startz = zeros(5,5);
+    % u = (startx-0.4);
+    % v = (starty-0.4);
+    % w = startz*0;
+    % quiver3(startx,starty,startz,u,v,w)
+    % sink
+    [startx,starty] = meshgrid(0.3:0.05:0.5, 0.3:0.05:0.5);
+    startz = zeros(5,5);
+    u = -(startx-0.4);
+    v = -(starty-0.4);
+    w = startz*0;
     quiver3(startx,starty,startz,u,v,w)
 end
 
