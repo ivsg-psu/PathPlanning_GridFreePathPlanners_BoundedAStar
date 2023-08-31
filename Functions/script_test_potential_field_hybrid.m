@@ -99,7 +99,7 @@ finish_with_ids = all_pts(num_verts+num_starts+1:num_verts+num_starts+num_finish
 all_pts_with_ids_no_start_and_fin = all_pts(1:num_verts,:);
 
 %% form reachability graph
-[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph, start_with_ids, finish_with_ids);
+% [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph, start_with_ids, finish_with_ids);
 
 weight_matrix = fcn_make_potential_field_weight_matrix(vgraph, all_pts)
 %% plan route
