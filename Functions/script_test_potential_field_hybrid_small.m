@@ -112,12 +112,13 @@ if flag_do_plot
     % u = ones(11,11)*0;v = ones(11,11)*1;w = ones(11,11)*0;
     % quiver3(startx,starty,startz,u,v,w)
     % source
-    % [startx,starty] = meshgrid(0.3:0.05:0.5, 0.3:0.05:0.5);
-    % startz = zeros(5,5);
-    % u = (startx-0.4);
-    % v = (starty-0.4);
-    % w = startz*0;
-    % quiver3(startx,starty,startz,u,v,w)
+    [startx,starty] = meshgrid(1:0.2:3, -2:0.2:8);
+    startz = zeros(size(startx,1),size(startx,2));
+    u = (startx-2.2);
+    v = (starty-3);
+    w = startz*0;
+    quiver3(startx,starty,startz,u,v,w)
+    xlim([1 3]);ylim([-2 8]);
     % sink
     % [startx,starty] = meshgrid(0.3:0.05:0.5, 0.3:0.05:0.5);
     % startz = zeros(5,5);
