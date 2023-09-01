@@ -105,7 +105,7 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, r
     % weight = delta_y_is_up*0.5;
     % possible_gs = possible_gs.*weight;
 
-    weight = fcn_make_potential_field_weight_matrix(vgraph, all_pts_plus_start_and_fin);
+    weight = fcn_make_potential_field_weight_matrix(vgraph, all_pts_plus_start_and_fin,'numeric');
     % weight = nan(num_nodes,num_nodes);
     % for i = 1:num_nodes
     %     start_vec = [xs(i) ys(i) zs(i)];
