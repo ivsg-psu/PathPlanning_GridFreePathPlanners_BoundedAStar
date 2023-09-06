@@ -105,8 +105,8 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, r
     % weight = delta_y_is_up*0.5;
     % possible_gs = possible_gs.*weight;
 
-    weight = fcn_make_potential_field_weight_matrix(vgraph, all_pts_plus_start_and_fin,'numeric');
-    % weight = nan(num_nodes,num_nodes);
+    % weight = fcn_make_potential_field_weight_matrix(vgraph, all_pts_plus_start_and_fin,'numeric');
+    weight = ones(num_nodes,num_nodes);
     % for i = 1:num_nodes
     %     start_vec = [xs(i) ys(i) zs(i)];
     %     for j = 1:num_nodes
@@ -169,6 +169,7 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, r
         % find the node with the least f on
         % the open list, call it "q"
         nodes_expanded = nodes_expanded + 1;
+
         [f_of_q, idx_of_q] = min(open_set_fs);
         q = all_pts_plus_start_and_fin(idx_of_q,:);
 
@@ -193,6 +194,7 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, r
         for i = 1:length(successor_idxs)
             nodes_explored = nodes_explored + 1;
             successor = all_pts_plus_start_and_fin(successor_idxs(i),:);
+
             % check if this successor is the goal, if so we're done
 
             if ismember(successor(4), finish(:,4))
