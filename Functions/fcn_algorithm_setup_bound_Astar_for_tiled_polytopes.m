@@ -161,12 +161,8 @@ if err == 0 % A and B outside the polytopes
 %     ellipse_polytopes =
 %     fcn_polytope_editing_tiling_loop_polytopes(polytopes);
     ellipse_polytopes = polytopes;
-    starts = [start; all_pts];
-    finishes = [all_pts; finish];
-    [~, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(polytopes, starts, finishes);
-    [~, visibility_results_finish] = fcn_visibility_clear_and_blocked_points_global(polytopes, starts, finish);
     %% calculate path
-    [cost,path] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,valid_pts,planner_mode, visibility_results_all_pts, visibility_results_finish, ellipse_polytopes);
+    [cost,path] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,valid_pts,planner_mode,ellipse_polytopes);
 
 else % A or B are in the polytopes
    path = [];

@@ -1,4 +1,4 @@
-function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,bound_pts,planner_mode, visibility_results_all_pts, visibility_results_finish,varargin)
+function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,bound_pts,planner_mode,varargin)
 % FCN_ALGORITHM_BOUND_ASTAR performs Astar path planning algorithm from
 % start to finish around polytopes while constantly reducing boundaries
 %
@@ -78,9 +78,9 @@ function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts
 %
 
 % check variable argument
-if nargin == 9
+if nargin == 7
     ellipse_polytopes = varargin{1};
-elseif nargin == 8
+elseif nargin ==6
     ellipse_polytopes = polytopes;
 else
     error('incorrect number of inputs')
@@ -141,24 +141,14 @@ while ~isempty(open_set) % continue until open set is empty
      %%% Step 1: Find intersections from start to finish and intersection points
 
     % find polytopes that could be intersected
-    close_polytopes  = polytopes;%fcn_polytope_calculation_polytopes_near_the_line(cur_pt,finish,ellipse_polytopes);
+    close_polytopes  = fcn_polytope_calculation_polytopes_near_the_line(cur_pt,finish,ellipse_polytopes);
     %%%%%%%%%%%%% polytopes changed to ellipse_polytopes
     % TODO @sjharnett put boundary call here instead of in while loop
     % rebrand in new function called fast bounded A*
     % find if finish is blocked and any intersection data
     if ~isempty(close_polytopes) % if there's close obstacles
-        cur_pt_id = cur_pt(3);
-        blocked_pts = visibility_results_finish(cur_pt_id).blocked_pts;
-        D = visibility_results_finish(cur_pt_id).D;
-        di = visibility_results_finish(cur_pt_id).di;
-        num_int = visibility_results_finish(cur_pt_id).num_int;
-        xiP = visibility_results_finish(cur_pt_id).xiP;
-        yiP = visibility_results_finish(cur_pt_id).yiP;
-        xiQ = visibility_results_finish(cur_pt_id).xiQ;
-        yiQ = visibility_results_finish(cur_pt_id).yiQ;
-        xjP = visibility_results_finish(cur_pt_id).xjP;
-        yjP = visibility_results_finish(cur_pt_id).yjP;
-        xings = fcn_visibility_line_polytope_intersections(xiP,yiP,xiQ,yiQ,xjP,yjP,D,di,num_int,polytopes);
+        [~,blocked_pts,D,di,~,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP] = fcn_visibility_clear_and_blocked_points(close_polytopes,cur_pt,finish);
+        xings = fcn_visibility_line_polytope_intersections(xiP,yiP,xiQ,yiQ,xjP,yjP,D,di,num_int,close_polytopes);
     else % no close obstacles
         blocked_pts = []; % no blocked points
     end
@@ -182,8 +172,8 @@ while ~isempty(open_set) % continue until open set is empty
 
         %%% Step 2: Find intersected polytopes and calculate the sum of minimum perimeters around the polytopes and intersection to intersection distances
         xing_polytopes = close_polytopes(xings(end).obstacles); % polytopes crossed between start and finish
-        max_dist = norm(finish(1:2)-start(1:2))*2;
-        % max_dist = fcn_bounding_ellipse_min_perimeter_path(xing_polytopes,xings,cur_pt,finish);
+        % max_dist = norm(finish(1:2)-start(1:2))*2;
+        max_dist = fcn_bounding_ellipse_min_perimeter_path(xing_polytopes,xings,cur_pt,finish);
 
         %%% Step 3: Bound points with the same or less cost based on triangle inequality (bounding box based on ellipse major & minor axes)
         straight = fcn_general_calculation_euclidean_point_to_point_distance(cur_pt(1:2),finish(1:2)); % straight distance start to finish
@@ -221,7 +211,7 @@ while ~isempty(open_set) % continue until open set is empty
             %%% Step 4: For all bound points, find points visible to cur_pt and calculate their costs
             % TODO @sjharnett calculate visibility matrix once at beginning then simply remove
             % vertices outisde boundary and squeeze() matrix to remove empty rows & cols
-            neighbor_pts = visibility_results_all_pts(cur_pt(3)).clear_pts;
+            neighbor_pts = fcn_visibility_clear_and_blocked_points(bound_polytopes,cur_pt,[bound_pts; finish]);
         end
         if planner_mode == "through at vertices"
             [cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...
