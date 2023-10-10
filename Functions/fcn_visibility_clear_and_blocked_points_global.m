@@ -53,11 +53,11 @@ function [visibility_matrix, visibility_results] = fcn_visibility_clear_and_bloc
     % need the reverse mappping of points to polytopes
     % then each point is only represented once
     % visibility graph can then be reduced
-    num_points = size(starts,1)
+    num_points = size(starts,1);
     % for non-zero gap size, we can repeatedly call the legacy visibility functions
 
     % if gap_size ~= 0
-        visibility_matrix = NaN(num_points)
+        visibility_matrix = NaN(num_points);
         %% loop through all points
         for j = 1:num_points
             i = starts(j,3);
