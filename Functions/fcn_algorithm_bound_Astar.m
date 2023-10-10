@@ -80,7 +80,11 @@ function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts
 % check variable argument
 if nargin == 9
     ellipse_polytopes = varargin{1};
+<<<<<<< HEAD
 elseif nargin == 8
+=======
+elseif nargin ==6
+>>>>>>> main
     ellipse_polytopes = polytopes;
 else
     error('incorrect number of inputs')
@@ -182,8 +186,13 @@ while ~isempty(open_set) % continue until open set is empty
 
         %%% Step 2: Find intersected polytopes and calculate the sum of minimum perimeters around the polytopes and intersection to intersection distances
         xing_polytopes = close_polytopes(xings(end).obstacles); % polytopes crossed between start and finish
+<<<<<<< HEAD
         max_dist = norm(finish(1:2)-start(1:2))*2;
         % max_dist = fcn_bounding_ellipse_min_perimeter_path(xing_polytopes,xings,cur_pt,finish);
+=======
+        % max_dist = norm(finish(1:2)-start(1:2))*2;
+        max_dist = fcn_bounding_ellipse_min_perimeter_path(xing_polytopes,xings,cur_pt,finish);
+>>>>>>> main
 
         %%% Step 3: Bound points with the same or less cost based on triangle inequality (bounding box based on ellipse major & minor axes)
         straight = fcn_general_calculation_euclidean_point_to_point_distance(cur_pt(1:2),finish(1:2)); % straight distance start to finish
