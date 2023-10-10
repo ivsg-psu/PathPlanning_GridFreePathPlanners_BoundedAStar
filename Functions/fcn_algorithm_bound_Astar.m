@@ -80,7 +80,7 @@ function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts
 % check variable argument
 if nargin == 7
     ellipse_polytopes = varargin{1};
-elseif nargin == 6
+elseif nargin ==6
     ellipse_polytopes = polytopes;
 else
     error('incorrect number of inputs')
@@ -172,6 +172,7 @@ while ~isempty(open_set) % continue until open set is empty
 
         %%% Step 2: Find intersected polytopes and calculate the sum of minimum perimeters around the polytopes and intersection to intersection distances
         xing_polytopes = close_polytopes(xings(end).obstacles); % polytopes crossed between start and finish
+        % max_dist = norm(finish(1:2)-start(1:2))*2;
         max_dist = fcn_bounding_ellipse_min_perimeter_path(xing_polytopes,xings,cur_pt,finish);
 
         %%% Step 3: Bound points with the same or less cost based on triangle inequality (bounding box based on ellipse major & minor axes)
@@ -315,12 +316,12 @@ while ~isempty(open_set) % continue until open set is empty
 
                                 % calculate angle between previous segment and
                                 % next possible segment
-    
+
                                 % next_seg = [next_pt_x - cur_pt_x, next_pt_y - cur_pt_y]
                                 next_seg = [all_pts(neighbor,1)-cur_pt(1),all_pts(neighbor,2)-cur_pt(2)];
                                 % prev_seg = [cur_pt_x - prev_pt_x, cur_pt_y - prev_pt_y]
                                 prev_seg = [cur_pt(1)-route_so_far(end-1,1),cur_pt(2)-route_so_far(end-1,2)];
-    
+
                                 ang = acos(dot(next_seg,prev_seg)/(norm(next_seg)*norm(prev_seg)));
 
                                 % express curveneyness as portion of max turn (180)

@@ -1,4 +1,4 @@
-function visibility_matrix = fcn_visibility_clear_and_blocked_points_global(polytopes, all_pts, gap_size)
+function [visibility_matrix, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes, starts, finishes)
     % fcn_MapGen_increasePolytopeVertexCount
     % The function fcn_visibility_clear_and_blocked_points returns an intersection
     % matrix for a single start point, showing what was intersected between
@@ -53,61 +53,63 @@ function visibility_matrix = fcn_visibility_clear_and_blocked_points_global(poly
     % need the reverse mappping of points to polytopes
     % then each point is only represented once
     % visibility graph can then be reduced
-    num_points = size(all_pts,1)
+    num_points = size(starts,1)
     % for non-zero gap size, we can repeatedly call the legacy visibility functions
-    if gap_size ~= 0
+
+    % if gap_size ~= 0
         visibility_matrix = NaN(num_points)
         %% loop through all points
-        for i = 1:num_points
+        for j = 1:num_points
+            i = starts(j,3);
             % legacy visibility function returns visibility vector for this point
-            [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = ...
-                fcn_visibility_clear_and_blocked_points(polytopes,all_pts(i,:),all_pts);
+            [visibility_results(i).clear_pts,visibility_results(i).blocked_pts,visibility_results(i).D,visibility_results(i).di,visibility_results(i).dj,visibility_results(i).num_int,visibility_results(i).xiP,visibility_results(i).yiP,visibility_results(i).xiQ,visibility_results(i).yiQ,visibility_results(i).xjP,visibility_results(i).yjP,visibility_results(i).xjQ,visibility_results(i).yjQ] = ...
+                fcn_visibility_clear_and_blocked_points(polytopes,starts(j,:),finishes);
             % D is finish points on the rows and polytope sides on the columns
             % transpose this so we have column for each point
             % sum each column into a row vector so each element is the sum of number
             % of sides hit
             % if sum>0, this implies there is no visibility
-            visibility_matrix(i,:) = sum(D')==0;
+            visibility_matrix(i,:) = sum(visibility_results(i).D')==0;
             % sometimes the diagonal does not contain only 1's (it always should
             % since every point is visible to itself so we overwrite this)
             visibility_matrix(i,i) = 1;
 
-            %% add self-blocked points
-            % points across the polytope are also visible so find self blocked pts
-            % find obs_id for cur_pt
-            cur_obs_id = all_pts(i,4);
-            % find pt ids of every point on this obstacle
-            pt_idx = find(all_pts(:,4)==cur_obs_id);
-            % at row i, and columns with values in pt_idx...
-            idx = sub2ind(size(visibility_matrix), i.*ones(size(pt_idx,1),size(pt_idx,2)), pt_idx);
-            % set a 1, indicating the self-blocked points are visible
-            visibility_matrix(idx) = 1;
-        end
-    elseif gap_size == 0
-        % for the zero gap size case, we can do an optimization: all points on the same polytope
-        % are visible, either along the side or across the polytope
-        % other points are not visible since there are no gaps and angles of 180 deg
-        % are not possible in a Voronoi diagram where all vertices have 3 Voronoi sides
-        deduped_pts = fcn_convert_polytope_struct_to_deduped_points(all_pts);
-        num_unique_pts = length(deduped_pts);
-        all_polys = NaN(num_unique_pts,3);
-        for i = 1:num_unique_pts
-            for j = 1:length(deduped_pts(i).polys)
-                all_polys(i,j) = deduped_pts(i).polys(j);
-            end
-        end
-        visibility_matrix = zeros(num_unique_pts);
-        for i = 1:num_unique_pts
-            for j = 1:3
-                poly_of_interest = all_polys(i,j);
-                if isnan(poly_of_interest)
-                    continue
-                end
-                [r,c] = find(all_polys == poly_of_interest);
-                for k = 1:length(r)
-                    visibility_matrix(i,r(k)) = 1;
-                end
-            end
-        end
-    end
+            % %% add self-blocked points
+            % % points across the polytope are also visible so find self blocked pts
+            % % find obs_id for cur_pt
+            % cur_obs_id = all_pts(i,4);
+            % % find pt ids of every point on this obstacle
+            % pt_idx = find(all_pts(:,4)==cur_obs_id);
+            % % at row i, and columns with values in pt_idx...
+            % idx = sub2ind(size(visibility_matrix), i.*ones(size(pt_idx,1),size(pt_idx,2)), pt_idx);
+            % % set a 1, indicating the self-blocked points are visible
+            % visibility_matrix(idx) = 1;
+    %     end
+    % elseif gap_size == 0
+    %     % for the zero gap size case, we can do an optimization: all points on the same polytope
+    %     % are visible, either along the side or across the polytope
+    %     % other points are not visible since there are no gaps and angles of 180 deg
+    %     % are not possible in a Voronoi diagram where all vertices have 3 Voronoi sides
+    %     deduped_pts = fcn_convert_polytope_struct_to_deduped_points(all_pts);
+    %     num_unique_pts = length(deduped_pts);
+    %     all_polys = NaN(num_unique_pts,3);
+    %     for i = 1:num_unique_pts
+    %         for j = 1:length(deduped_pts(i).polys)
+    %             all_polys(i,j) = deduped_pts(i).polys(j);
+    %         end
+    %     end
+    %     visibility_matrix = zeros(num_unique_pts);
+    %     for i = 1:num_unique_pts
+    %         for j = 1:3
+    %             poly_of_interest = all_polys(i,j);
+    %             if isnan(poly_of_interest)
+    %                 continue
+    %             end
+    %             [r,c] = find(all_polys == poly_of_interest);
+    %             for k = 1:length(r)
+    %                 visibility_matrix(i,r(k)) = 1;
+    %             end
+    %         end
+    %     end
+    % end
 end

@@ -4,6 +4,7 @@ close all
 
 %% add necessary directories
 addpath([pwd '\..\Example_Map_Generation_Code'])
+addpath([pwd '\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
 
 %% map generation control
 % repetition controls and storage
@@ -53,18 +54,6 @@ for rep = 1:repetitions
         axis_style = 'square'; % plot axes style
         fcn_plot_polytopes(shrunk_polytopes,fig,line_spec,line_width,axes_limits,axis_style);
     end
-    %% plan path
-    [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes,A,B,'legacy');
-    % path: series of points [x y point_id obs_id beg_end]
-    % cost: path length
-    % err: marker indicating if there was an error in setup (1) or not (0)
-
-    % plot path
-    if flag_do_plot
-        plot(path(:,1),path(:,2),'k-','linewidth',2)
-        plot(A.x, A.y, 'gx','linewidth',2)
-        plot(B.x, B.y, 'rx','linewidth',2)
-    end
 
     %% info needed for further work
     % gather data on all the points
@@ -79,6 +68,25 @@ for rep = 1:repetitions
     end
     obs_id = [shrunk_polytopes.obs_id];
     all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
+
+    %% plan path
+    start = [A.x, A.y size(all_pts,1)+1 -1 1]
+    finish = [B.x, B.y size(all_pts,1)+2 -1 1]
+    finishes = [all_pts; start; finish];
+    starts = [all_pts; start; finish];
+    [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes);
+
+    [cost, path] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
+    % path: series of points [x y point_id obs_id beg_end]
+    % cost: path length
+    % err: marker indicating if there was an error in setup (1) or not (0)
+
+    % plot path
+    if flag_do_plot
+        plot(path(:,1),path(:,2),'k-','linewidth',2)
+        plot(A.x, A.y, 'gx','linewidth',2)
+        plot(B.x, B.y, 'rx','linewidth',2)
+    end
 
     appex_x = zeros(size(path,1)-2,3);
     appex_y = appex_x;
@@ -125,6 +133,7 @@ for rep = 1:repetitions
         my_title = sprintf('Path length [m]: %.4f',cost)
         title(my_title)
         box on
+        return
         pause(2)
         close 99
     end

@@ -161,7 +161,6 @@ if err == 0 % A and B outside the polytopes
 %     ellipse_polytopes =
 %     fcn_polytope_editing_tiling_loop_polytopes(polytopes);
     ellipse_polytopes = polytopes;
-
     %% calculate path
     [cost,path] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts,valid_pts,planner_mode,ellipse_polytopes);
 

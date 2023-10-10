@@ -19,13 +19,14 @@ addpath([pwd '\..\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 
 flag_do_plot = 1;
 
-%% generate map
+%% generate polytope map
 Halton_seed = 10;
-low_pt = 1+Halton_seed; high_pt = 11+Halton_seed; % range of Halton points to use to generate the tiling
+low_pt = 1+Halton_seed; high_pt = 6+Halton_seed; % range of Halton points to use to generate the tiling
 trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
 % shink the polytopes so that they are no longer tiled
-gap_size = 0.025; % desired average maximum radius
+gap_size = 0.125; % desired average maximum radius
 polytopes = fcn_MapGen_polytopesShrinkFromEdges(trim_polytopes,gap_size);
+
 % plot the map
 if flag_do_plot
     fig = 99; % figure to plot on
@@ -39,8 +40,8 @@ if flag_do_plot
     xlabel('x [km]')
     ylabel('y [km]')
 end
-
-%% generate all_pts table
+%% plot visibility and path for convex map
+% generate all_pts table
 point_tot = length([polytopes.xv]); % total number of vertices in the convex polytopes
 beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
 curpt = 0;
@@ -63,9 +64,9 @@ beg_end = beg_end(1:point_tot); % remove any extra points
 all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
 
 
-%% calculate vibility graph
+% calculate vibility graph
 tic
-[vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,gap_size);
+[vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts);
 toc
 % plot visibility graph edges
 if flag_do_plot
@@ -78,18 +79,39 @@ if flag_do_plot
     end
 end
 
-%% test zero gap case
-% generate map
-polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
-% shink the polytopes so that they are no longer tiled
-gap_size = 0.01; % desired average maximum radius
-if gap_size ~=0
-    polytopes = fcn_MapGen_polytopesShrinkFromEdges(polytopes,gap_size);
+A.x = 0.0; A.y = 0.5; B.x = 1; B.y = 0.5;
+[path,cost,err] = fcn_algorithm_setup_Astar_for_tiled_polytopes(polytopes,A,B,'legacy');
+% path: series of points [x y point_id obs_id beg_end]
+% cost: path length
+% err: marker indicating if there was an error in setup (1) or not (0)
+
+% plot path
+if flag_do_plot
+    plot(path(:,1),path(:,2),'k-','linewidth',2)
+    plot(A.x, A.y, 'gx','linewidth',2)
+    plot(B.x, B.y, 'rx','linewidth',2)
+    my_title = sprintf('Path length [m]: %.4f',cost)
+    title(my_title)
+    box on
 end
 
-% plot the map
+
+
+%% change one polytope to be concave and repeat
+
+% make a polytope concave
+% polytopes(2) = [];
+polytopes(2).vertices = [0.5717    0.3059;
+    0.5892    0.2072;
+    0.9375    0.4032;
+    0.9375    0.6633;
+    0.7       0.42;
+    0.7598    0.6233];
+polytopes(2) = fcn_MapGen_fillPolytopeFieldsFromVertices(polytopes(2));
+
+
 if flag_do_plot
-    fig = 199; % figure to plot on
+    fig = 100; % figure to plot on
     line_spec = 'b-'; % edge line plotting
     line_width = 2; % linewidth of the edge
     axes_limits = [0 1 0 1]; % x and y axes limits
@@ -101,7 +123,7 @@ if flag_do_plot
     ylabel('y [km]')
 end
 
-%% generate all_pts table
+% generate all_pts table
 point_tot = length([polytopes.xv]); % total number of vertices in the convex polytopes
 beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
 curpt = 0;
@@ -123,42 +145,53 @@ beg_end = beg_end(1:point_tot); % remove any extra points
 
 all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
 
-%% calculate vibility graph
+
+% calculate vibility graph
 tic
-vgraph = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,gap_size);
+[vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts);
 toc
-deduped_pts = fcn_convert_polytope_struct_to_deduped_points(all_pts);
 % plot visibility graph edges
-if flag_do_plot && gap_size ==0
-    for i = 1:size(vgraph,1)
-        for j = 1:size(vgraph,1)
-            if vgraph(i,j) == 1
-                plot([deduped_pts(i).x,deduped_pts(j).x],[deduped_pts(i).y,deduped_pts(j).y],'--g','LineWidth',1)
-            end
-        end
-    end
-end
-if flag_do_plot && gap_size ~=0
-    for i = 1:size(vgraph,1)
-        for j = 1:size(vgraph,1)
-            if vgraph(i,j) == 1
-                plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'--g','LineWidth',2)
-            end
-        end
-    end
-end
-
-% generate map
-polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
-% shink the polytopes so that they are no longer tiled
-gap_size = 0; % desired average maximum radius
-if gap_size ~=0
-    polytopes = fcn_MapGen_polytopesShrinkFromEdges(polytopes,gap_size);
-end
-
-% plot the map
 if flag_do_plot
-    fig = 299; % figure to plot on
+    for i = 1:size(vgraph,1)
+        for j = 1:size(vgraph,1)
+            if vgraph(i,j) == 1
+                plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'-g')
+            end
+        end
+    end
+end
+
+A.x = 0.0; A.y = 0.5; B.x = 1; B.y = 0.5;
+[path,cost,err] = fcn_algorithm_setup_Astar_for_tiled_polytopes(polytopes,A,B,'legacy');
+% path: series of points [x y point_id obs_id beg_end]
+% cost: path length
+% err: marker indicating if there was an error in setup (1) or not (0)
+
+% plot path
+if flag_do_plot
+    plot(path(:,1),path(:,2),'k-','linewidth',2)
+    plot(A.x, A.y, 'gx','linewidth',2)
+    plot(B.x, B.y, 'rx','linewidth',2)
+    my_title = sprintf('Path length [m]: %.4f',cost)
+    title(my_title)
+    box on
+end
+
+%% add a concave polytope that blocks the path
+polytopes(5).vertices = [
+    0.6374    0.6620;
+    0.5178    0.7517;
+    0.4 0.6;
+    0.45 .55;
+    0.4 0.4;
+    0.4878    0.4096;
+    0.6374    0.6620];
+
+polytopes(5) = fcn_MapGen_fillPolytopeFieldsFromVertices(polytopes(5));
+
+
+if flag_do_plot
+    fig = 101; % figure to plot on
     line_spec = 'b-'; % edge line plotting
     line_width = 2; % linewidth of the edge
     axes_limits = [0 1 0 1]; % x and y axes limits
@@ -170,7 +203,7 @@ if flag_do_plot
     ylabel('y [km]')
 end
 
-%% generate all_pts table
+% generate all_pts table
 point_tot = length([polytopes.xv]); % total number of vertices in the convex polytopes
 beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
 curpt = 0;
@@ -192,27 +225,34 @@ beg_end = beg_end(1:point_tot); % remove any extra points
 
 all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
 
-%% calculate vibility graph
+
+% calculate vibility graph
 tic
-vgraph = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,gap_size);
+[vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts);
 toc
-deduped_pts = fcn_convert_polytope_struct_to_deduped_points(all_pts);
 % plot visibility graph edges
-if flag_do_plot && gap_size ==0
+if flag_do_plot
     for i = 1:size(vgraph,1)
         for j = 1:size(vgraph,1)
             if vgraph(i,j) == 1
-                plot([deduped_pts(i).x,deduped_pts(j).x],[deduped_pts(i).y,deduped_pts(j).y],'--g','LineWidth',1)
+                plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'-g')
             end
         end
     end
 end
-if flag_do_plot && gap_size ~=0
-    for i = 1:size(vgraph,1)
-        for j = 1:size(vgraph,1)
-            if vgraph(i,j) == 1
-                plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'--g','LineWidth',2)
-            end
-        end
-    end
+
+A.x = 0.0; A.y = 0.5; B.x = 1; B.y = 0.5;
+[path,cost,err] = fcn_algorithm_setup_Astar_for_tiled_polytopes(polytopes,A,B,'legacy');
+% path: series of points [x y point_id obs_id beg_end]
+% cost: path length
+% err: marker indicating if there was an error in setup (1) or not (0)
+
+% plot path
+if flag_do_plot
+    plot(path(:,1),path(:,2),'k-','linewidth',2)
+    plot(A.x, A.y, 'gx','linewidth',2)
+    plot(B.x, B.y, 'rx','linewidth',2)
+    my_title = sprintf('Path length [m]: %.4f',cost)
+    title(my_title)
+    box on
 end
