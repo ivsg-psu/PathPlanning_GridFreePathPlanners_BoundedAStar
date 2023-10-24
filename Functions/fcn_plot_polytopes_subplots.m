@@ -1,4 +1,4 @@
-function [polytopes] = fcn_plot_polytopes_subplots(polytopes,ax,line_spec,line_width,varargin)
+function h = fcn_plot_polytopes_subplots(polytopes,ax,line_spec,line_width,varargin)
 % FCN_PLOT_POLYTOPES plot the polytopes as specified
 %
 % [FIG]=FCN_PLOT_POLYTOPES(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH)
@@ -79,6 +79,9 @@ else
 end
 hold on % allow multiple plot calls
 
+% outline handles
+h(1) = plot(NaN, NaN); % init
+
 %% determine color and axis values
 plots = 1; % basic plot with only polytopes, figure, line_spec, and line_width
 color = []; axis_limits = []; axis_style = []; fill_info = [1 0 0 0 0]; % initialize empty values
@@ -109,10 +112,10 @@ if fill_info(1) == 1 % if fill is specified
             %filler = fill(polytopes(polys).vertices(:,1)',polytopes(polys).vertices(:,2)',fill_info(2:4));
             [r, g, b, a] = fcn_get_RGBa_from_polytope_cost(polytopes(polys).cost, polytopes(polys).cost_uncertainty);
             %filler = fill(polytopes(polys).vertices(:,1)',polytopes(polys).vertices(:,2)',[r, g, b]);
-            polytopes(polys).filler_handle = fill(polytopes(polys).vertices(:,1)',polytopes(polys).vertices(:,2)',[r, g, b]);
+            h(end+1) = fill(polytopes(polys).vertices(:,1)',polytopes(polys).vertices(:,2)',[r, g, b]);
             % the following shades polytopes based on traversal cost
             %filler.FaceAlpha = polytopes(polys).cost;
-            polytopes(polys).filler_handle.FaceAlpha = a;
+            h(end).FaceAlpha = a;
             % Uncomment the following to write polytope cost on polytopes.
             % This is useful for debugging but cluttered
             % txt = sprintf('%.2f',round(polytopes(polys).cost,2));
@@ -121,13 +124,13 @@ if fill_info(1) == 1 % if fill is specified
         end
     else
         for polys = 1:size(polytopes,2) % fill each polytope with the specified color and transparence
-            polytopes(polys).filler_handle = fill(polytopes(polys).vertices(:,1)',polytopes(polys).vertices(:,2)',fill_info(2:4));
+            h(end+1) = fill(polytopes(polys).vertices(:,1)',polytopes(polys).vertices(:,2)',fill_info(2:4));
             %[r, g, b, a] = fcn_get_RGBa_from_polytope_cost(polytopes(polys).cost, polytopes(polys).cost_uncertainty);
             %filler = fill(polytopes(polys).vertices(:,1)',polytopes(polys).vertices(:,2)',[r, g, b]);
             %polytopes(polys).filler_handle = fill(polytopes(polys).vertices(:,1)',polytopes(polys).vertices(:,2)',[r, g, b]);
             % the following shades polytopes based on traversal cost
             %filler.FaceAlpha = polytopes(polys).cost;
-            polytopes(polys).filler_handle.FaceAlpha = fill_info(5);
+            h(end).FaceAlpha = fill_info(5);
             % Uncomment the following to write polytope cost on polytopes.
             % This is useful for debugging but cluttered
             % txt = sprintf('%.2f',round(polytopes(polys).cost,2));
@@ -138,11 +141,11 @@ if fill_info(1) == 1 % if fill is specified
 end
 if plots == 1 % basic plot with only polytopes, figure, line_spec, and line_width
     for polys = 1:size(polytopes,2) % plot each polytope
-        polytopes(polys).outline_handle = plot(polytopes(polys).vertices(:,1),polytopes(polys).vertices(:,2),line_spec,'linewidth',line_width);
+        h(end+1) = plot(polytopes(polys).vertices(:,1),polytopes(polys).vertices(:,2),line_spec,'linewidth',line_width);
     end
 else % plot with the specific color
     for polys = 1:size(polytopes,2) % plot each polytope
-        polytopes(polys).outline_handle = plot(polytopes(polys).vertices(:,1),polytopes(polys).vertices(:,2),line_spec,'Color',color,'linewidth',line_width);
+        h(end+1) = plot(polytopes(polys).vertices(:,1),polytopes(polys).vertices(:,2),line_spec,'Color',color,'linewidth',line_width);
     end
 end
 
