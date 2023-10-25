@@ -1,4 +1,4 @@
-function [shrunk_polytopes,point_polys] = fcn_polytope_editing_shrink_evenly_no_pt_polys(polytopes,dist)
+function shrunk_polytopes = fcn_polytope_editing_shrink_evenly_no_pt_polys(polytopes,dist)
 % FCN_POLYTOPE_EDITING_SHRINK_EVENLY shrinks each polytope in poltyopes 
 % specified evenly on all sides by dist
 %
@@ -50,7 +50,6 @@ num_poly = size(polytopes,2); % number of polytopes
 shrunk_polytopes = polytopes([]);
 cnt_poly = 1; % number of output polytopes
 
-point_polys = []; % variable to store indices of single point polytopes
 for poly = 1:size(polytopes,2) % shrink each polytope
     shrinkable = 0; % assume the obstacle can't be shrunk by the amount until shown otherwise
     rad = polytopes(poly).max_radius; % starting radius of the polytope
@@ -156,6 +155,7 @@ for poly = 1:size(polytopes,2) % shrink each polytope
         shrunk_polytopes(cnt_poly).distances = fcn_general_calculation_euclidean_point_to_point_distance(shrunk_polytopes(cnt_poly).vertices(1:end-1,:),shrunk_polytopes(cnt_poly).vertices(2:end,:));
         % calculate the maximum distance from center to a vertex
         shrunk_polytopes(cnt_poly).max_radius = max(fcn_general_calculation_euclidean_point_to_point_distance(shrunk_polytopes(cnt_poly).vertices(1:end-1,:),ones(length(xv),1)*shrunk_polytopes(cnt_poly).mean));
+        shrunk_polytopes(cnt_poly).min_radius = min(fcn_general_calculation_euclidean_point_to_point_distance(shrunk_polytopes(cnt_poly).vertices(1:end-1,:),ones(length(xv),1)*shrunk_polytopes(cnt_poly).mean));
 
         % increment polytope count
         cnt_poly = cnt_poly+1;
