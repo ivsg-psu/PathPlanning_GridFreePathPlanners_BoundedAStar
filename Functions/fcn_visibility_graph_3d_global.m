@@ -132,4 +132,24 @@ function vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfe
         end_id = all_pts(term,4);
         vgraph(start_id,end_id) = 0;
     end
+
+    %% check for edges entirely contained by polytopes
+    % first, we need polytopes at intermediate positions
+    [~, double_time_space_polytopes] = fcn_interpolate_polytopes_in_time(time_space_polytopes,dt/2);
+    % for each edge that is allowed
+    linear_idx = find(vgraph); % find 1s in vgraph
+    [rows_of_1s, cols_of_1s] = ind2sub(size(vgraph),linear_idx); % convert linear idx to r,c
+    num_1s = length(rows_of_1s);
+    for e = 1:num_1s
+        if row_of_e == col_of_e
+            continue
+        end
+        start_pt = all_pts(rows_of_1s(e),1:3);
+        end_pt = all_pts(cols_of_1s(e),1:3);
+        mid_time = end_pt(3)-start_pt(3);
+        mid_x =
+    end
+    % at time t2-t1, what is the x and y position?
+    % then find each polytope vertices at this time
+    % check, is the point inside any polytope?
 end
