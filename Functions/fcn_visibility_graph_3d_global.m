@@ -1,4 +1,4 @@
-function vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit)
+function vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit, time_space_polytopes, dt)
 % fcn_visibility_graph_3d_global
 %
 % Forms the 3D visibility graph, the edges of which connect nodes that are connected by straight,
@@ -137,19 +137,54 @@ function vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfe
     % first, we need polytopes at intermediate positions
     [~, double_time_space_polytopes] = fcn_interpolate_polytopes_in_time(time_space_polytopes,dt/2);
     % for each edge that is allowed
-    linear_idx = find(vgraph); % find 1s in vgraph
-    [rows_of_1s, cols_of_1s] = ind2sub(size(vgraph),linear_idx); % convert linear idx to r,c
+    vgraph_without_self_visible = vgraph - eye(size(vgraph,1));
+    linear_idx = find(vgraph_without_self_visible); % find 1s in vgraph
+    [rows_of_1s, cols_of_1s] = ind2sub(size(vgraph_without_self_visible),linear_idx); % convert linear idx to r,c
     num_1s = length(rows_of_1s);
     for e = 1:num_1s
-        if row_of_e == col_of_e
-            continue
-        end
         start_pt = all_pts(rows_of_1s(e),1:3);
         end_pt = all_pts(cols_of_1s(e),1:3);
-        mid_time = end_pt(3)-start_pt(3);
-        mid_x =
+        % parametric equation for line in 3D: https://math.stackexchange.com/questions/404440/what-is-the-equation-for-a-3d-line
+        % [x y z]' = [a b c]'*t + [x0 y0 z0]'
+        abc_vec = end_pt - start_pt;
+        mid_pt = start_pt + 0.5*abc_vec; % find the middle of the edge
+        % for each polytope...
+        num_polys = length(double_time_space_polytopes);
+        p = 1;
+        while p <= num_polys
+            % first check that the obstacle exists at the time of the midpoint
+            tmax = max(double_time_space_polytopes(p).dense_vertices(:,3));
+            tmin = min(double_time_space_polytopes(p).dense_vertices(:,3));
+            if mid_pt(3) > tmax || mid_pt(3) < tmin
+                % if not, it implies the edge is above or below the obstacle but not inside
+                p = p+1;
+                continue
+            end
+            % get verts only at this time
+            verts_this_time = double_time_space_polytopes(p).dense_vertices(find(double_time_space_polytopes(p).dense_vertices(:,3)==mid_pt(3)),:);
+            verts_this_time = sortrows(verts_this_time,4);
+            % get xmin and xmax also ymin and ymax
+            xmax = max(verts_this_time(:,1));
+            xmin = min(verts_this_time(:,1));
+            ymax = max(verts_this_time(:,2));
+            ymin = min(verts_this_time(:,2));
+            in_AABB = (mid_pt(1) < xmax && mid_pt(1) > xmin) && (mid_pt(2) < ymax && mid_pt(2) > ymin);
+            % is point between xmin xmax and ymin max? if not continue
+            if ~in_AABB
+                p = p+1;
+                continue
+            end
+            % if point is in AABB make polyshape from these verts
+            polyshape_p = polyshape(verts_this_time(:,1:2));
+            % is point in but not on polyshape?
+            [is_in,is_on] = isinterior(polyshape_p,mid_pt(1:2));
+            % if so, remove the edge, and stop trying polytopes
+            if is_in && ~ is_on
+                vgraph(rows_of_1s(e),cols_of_1s(e)) = 0;
+                p = num_polys+1;
+            end
+            % if not, continue
+            p = p + 1;
+        end
     end
-    % at time t2-t1, what is the x and y position?
-    % then find each polytope vertices at this time
-    % check, is the point inside any polytope?
 end
