@@ -70,7 +70,7 @@ end
 
 %% create visibility graph
 speed_limit = 100;
-vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit);
+vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit,time_space_polytopes, dt);
 start = all_pts(num_verts+1,:);
 finish = all_pts(num_verts+2:end,:);
 [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start,finish);
