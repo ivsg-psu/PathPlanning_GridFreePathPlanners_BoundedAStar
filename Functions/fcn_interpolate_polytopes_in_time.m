@@ -91,5 +91,5 @@ function dense_verts = INTERNAL_fcn_interpolate_polytope_in_time(verts,dt)
         this_vert_id_repeated = this_vert_id*ones(num_dense_times,1);
         verts = [verts; this_vert_dense_x this_vert_dense_y dense_times this_vert_id_repeated];
     end
-    dense_verts = verts;
+    dense_verts = unique(verts,'rows');
 end
