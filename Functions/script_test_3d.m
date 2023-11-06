@@ -13,8 +13,8 @@ flag_do_plot = 1;
 flag_do_animation = 0;
 
 facets = [];
-
 verts = [1 1 0; 2 1 0;  3 1 20; 2 1 20]; % a line that translates its length in x over the course of 20 seconds
+% verts = [1 1 0; 2 1 0;  3 1 20; 2 1 20; 1 1.2 0; 2 1.2 0;  3 1.2 20; 2 1.2 20]; % make the line a box
 start = [2 0 0];
 finish = [2*ones(6,1) 2*ones(6,1) (11:2:21)']; % multiple time static finish
 % finish = [2 2 11; 1.25 1.25 21]; % moving finish
@@ -158,7 +158,7 @@ if flag_do_plot
         end
         plot3([all_pts(beg,1), all_pts(term,1)],[all_pts(beg,2), all_pts(term,2)],[all_pts(beg,3), all_pts(term,3)],color,'LineWidth',2)
     end
-    view([1 0 0])
+    view([154 12])
 end
 
 route_dense = fcn_interpolate_route_in_time(route,dt);
@@ -170,25 +170,25 @@ end
 
 function INTERNAL_fcn_format_timespace_plot()
     % define figure properties
-    opts.width      = 8;
-    opts.height     = 6;
-    opts.fontType   = 'Times';
-    opts.fontSize   = 9;
+    opts.width      = 12;
+    opts.height     = 9;
+    opts.fontType   = 'Times New Roman';
+    opts.fontSize   = 12;
     fig = gcf;
     % scaling
     fig.Units               = 'centimeters';
     fig.Position(3)         = opts.width;
     fig.Position(4)         = opts.height;
-
+    set(gcf,'color','white')
     % set text properties
     set(fig.Children, ...
-        'FontName',     'Times', ...
-        'FontSize',     9);
+        'FontName',     'Times New Roman', ...
+        'FontSize',     12);
 
     % remove unnecessary white space
     set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
-    xlabel('x [m]')
-    ylabel('y [m]')
-    zlabel('t [s]')
+    xlabel('x [km]')
+    ylabel('y [km]')
+    zlabel('t [min]')
     view([36 30])
 end
