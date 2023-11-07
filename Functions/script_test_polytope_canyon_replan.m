@@ -121,8 +121,11 @@ for i = 1:length(edge_deletion)
     costs = [costs; cost];
 end
 figure(2);plot(edge_deletion,costs);
-legend('with vis/reach cost');
-xlabel('portion of edges removed')
+plot(reachable_edge_deletion, reach_cost_incl_mid,'LineWidth',2.5);
+box on; hold on;
+plot(nominal_edge_deletion(1:length(nom_cost_incl_mid)), nom_cost_incl_mid,'LineWidth',2.5);
+legend('with vis/reach cost','without vis/reach cost');
+xlabel('portion of vgraph edges removed')
 ylabel('path length cost [km]')
 
 if flag_do_plot
