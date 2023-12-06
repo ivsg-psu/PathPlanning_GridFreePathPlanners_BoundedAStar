@@ -1,27 +1,27 @@
 % %% add necessary directories
-addpath([pwd '\Example_Map_Generation_Code'])
-addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
-addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
+addpath([pwd '\..\Example_Map_Generation_Code'])
+addpath([pwd '\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
+addpath([pwd '\..\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 %
 % %% initialize loop params and storage arrays for plotting
-% des_gap_size = linspace(0.0001,0.08,30);
+des_gap_size = linspace(0.0001,0.08,30);
 all_rd = [];
 %
 flag_do_plot = 0;
 %
 % %% initialize loop params and storage arrays for plotting
-% measured_unoccupancy = [];
-% est_from_sqrt_area_ratio_all = [];
-% est_from_gap_size_all = [];
-% est_from_AABB_all = [];
-% est_from_slant_AABB_all = [];
-% est_from_gap_size_normal_all = [];
-% est_from_poly_fit_all = [];
-% est_avg_circ_min_rad = [];
+measured_unoccupancy = [];
+est_from_sqrt_area_ratio_all = [];
+est_from_gap_size_all = [];
+est_from_AABB_all = [];
+est_from_slant_AABB_all = [];
+est_from_gap_size_normal_all = [];
+est_from_poly_fit_all = [];
+est_avg_circ_min_rad = [];
 est_avg_circ_min_rad_est1 = [];
-% est_avg_circ_min_rad_est2 = [];
-% r_D_for_meas = [];
-% straight_path_costs = [];
+est_avg_circ_min_rad_est2 = [];
+r_D_for_meas = [];
+straight_path_costs = [];
 est_d_eff = [];
 est_d_eff2 = [];
 est_d_eff3 = [];
@@ -30,52 +30,52 @@ est_d_eff5 = [];
 est_d_eff6 = [];
 est_d_eff7 = [];
 %
-% % generate Voronoi tiling from Halton points
-%
+% generate Voronoi tiling from Halton points
+
 % for halton_seeds = 0:2000:10000
-%     low_pt = 1+halton_seeds; high_pt = 1000+halton_seeds; % range of Halton points to use to generate the tiling
-%     trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
-%     for gap_idx = 1:length(des_gap_size)
-%         % shink the polytopes so that they are no longer tiled
-%         gap_size = des_gap_size(gap_idx); % desired average maximum radius
-%         shrunk_polytopes = fcn_MapGen_polytopesShrinkFromEdges(trim_polytopes,gap_size);
-%
-%         %% polytope stats to create inputs for predictor code
-%         field_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes);
-%         field_stats_pre_shrink = fcn_MapGen_polytopesStatistics(trim_polytopes);
-%         % extract parameters of interest
-%         field_avg_r_D = field_stats.avg_r_D;
-%         field_avg_r_D_pre_shrink = field_stats_pre_shrink.avg_r_D;
-%         shrunk_distance = field_stats_pre_shrink.average_max_radius - field_stats.average_max_radius;
-%         shrink_ang = field_stats_pre_shrink.average_vertex_angle;
-%         R_bar_initial = field_stats_pre_shrink.average_max_radius;
-%
-%         %% find measured occupancy
-%         % set polytope traversal cost. it doesn't matter what this is, as long as it's known.
-%         des_cost = 0.2;
-%         shrunk_polytopes_known_cost = fcn_polytope_editing_set_all_costs(shrunk_polytopes,des_cost);
-%         % find measured occupancy at different heights
-%         for height_of_path = 0.1:0.2:0.9
-%             %% plan path
-%             A.x = 0; A.y = height_of_path; B.x = 1; B.y = height_of_path;
-%             [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes_known_cost,A,B,"straight through");
-%             % total_path_cost = dist_outside + dist_inside * (1+traversal_cost)
-%             % => total_path_cost = (path_length - dist_inside) + dist_inside * (1+traversal_cost)
-%             % => if path_length = 1: (total_path_cost - 1)/traversal_cost = dist_inside
-%             dist_inside = (cost-1)/des_cost;
-%             % because the path length is 1, dist_inside is linear occupancy
-%             measured_unoccupancy = [measured_unoccupancy, (1-dist_inside)];
-%             %% polytope stats to create inputs for predictor code
-%             field_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes_known_cost);
-%             % extract parameters of interest
-%             field_avg_r_D = field_stats.avg_r_D;
-%             r_D_for_meas = [r_D_for_meas, field_avg_r_D];
-%             straight_path_costs = [straight_path_costs, cost];
-%         end
-%     end
+    low_pt = 1; high_pt = 100%1000+halton_seeds; % range of Halton points to use to generate the tiling
+    trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
+    for gap_idx = 1:14%length(des_gap_size)
+        % shink the polytopes so that they are no longer tiled
+        gap_size = des_gap_size(gap_idx); % desired average maximum radius
+        shrunk_polytopes = fcn_MapGen_polytopesShrinkFromEdges(trim_polytopes,gap_size);
+
+        %% polytope stats to create inputs for predictor code
+        field_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes);
+        field_stats_pre_shrink = fcn_MapGen_polytopesStatistics(trim_polytopes);
+        % extract parameters of interest
+        field_avg_r_D = field_stats.avg_r_D;
+        field_avg_r_D_pre_shrink = field_stats_pre_shrink.avg_r_D;
+        shrunk_distance = field_stats_pre_shrink.average_max_radius - field_stats.average_max_radius;
+        shrink_ang = field_stats_pre_shrink.average_vertex_angle;
+        R_bar_initial = field_stats_pre_shrink.average_max_radius;
+
+        %% find measured occupancy
+        % set polytope traversal cost. it doesn't matter what this is, as long as it's known.
+        des_cost = 0.2;
+        shrunk_polytopes_known_cost = fcn_polytope_editing_set_all_costs(shrunk_polytopes,des_cost);
+        % find measured occupancy at different heights
+        for height_of_path = 0.1:0.2:0.9
+            %% plan path
+            A.x = 0; A.y = height_of_path; B.x = 1; B.y = height_of_path;
+            [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes_known_cost,A,B,"straight through");
+            % total_path_cost = dist_outside + dist_inside * (1+traversal_cost)
+            % => total_path_cost = (path_length - dist_inside) + dist_inside * (1+traversal_cost)
+            % => if path_length = 1: (total_path_cost - 1)/traversal_cost = dist_inside
+            dist_inside = (cost-1)/des_cost;
+            % because the path length is 1, dist_inside is linear occupancy
+            measured_unoccupancy = [measured_unoccupancy, (1-dist_inside)];
+            %% polytope stats to create inputs for predictor code
+            field_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes_known_cost);
+            % extract parameters of interest
+            field_avg_r_D = field_stats.avg_r_D;
+            r_D_for_meas = [r_D_for_meas, field_avg_r_D];
+            straight_path_costs = [straight_path_costs, cost];
+        end
+    end
 % end
 
-low_pt = 1; high_pt = 1000; % range of Halton points to use to generate the tiling
+low_pt = 1; high_pt = 100; % range of Halton points to use to generate the tiling
 trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
 
 %% begin loop of departure ratios
@@ -89,7 +89,7 @@ for gap_idx = 1:1:14%1:length(des_gap_size)
     est_d_eff_this_rd5 = [];
 %     est_d_eff_this_rd7 = [];
     rd_this_rd = [];
-    for halton_seeds = 0:2000:10000
+    % for halton_seeds = 0:2000:10000
         low_pt = 1+halton_seeds; high_pt = 1000+halton_seeds; % range of Halton points to use to generate the tiling
         trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
         % shink the polytopes so that they are no longer tiled
@@ -130,7 +130,7 @@ for gap_idx = 1:1:14%1:length(des_gap_size)
         est_d_eff_this_rd5 = [est_d_eff_this_rd5, unocc_ests.L_unocc_est_d_eff5];
 %         est_d_eff_this_rd6 = [est_d_eff_this_rd3, unocc_ests.L_unocc_est_d_eff6];
 %         est_d_eff_this_rd7 = [est_d_eff_this_rd7, unocc_ests.L_unocc_est_d_eff7];
-    end
+    % end
     %% find estimated values
 
 %     est_from_sqrt_area_ratio_all = [est_from_sqrt_area_ratio_all, (unocc_ests.A_unocc_meas).^0.5];
