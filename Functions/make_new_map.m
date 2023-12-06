@@ -1,0 +1,12 @@
+verts = [1 1 0 1; 1.5 2 0 2; 2 1 0 3; 2 2 20 1; 2.5 3 20 2; 3 2 20 3;1 1 30 1; 1.5 2 30 2; 2 1 30 3]; % a line that translates its length in x over the course of 20 seconds
+verts(:,1:2) = 10*verts(:,1:2);
+time_space_polytopes(1).vertices = verts;
+verts = [1 1 0 1; 1 3 0 2; 1.25 4 0 3; 1 2 20 1; 1 4 20 2; 1.25 5 20 3;1 1 30 1; 1 3 30 2; 1.25 4 30 3]; % a line that translates its length in x over the course of 20 seconds
+verts(:,1:2) = 10*verts(:,1:2);
+time_space_polytopes(2).vertices = verts;
+verts = [2 4 0 1; 2 5 0 2; 2.5 5 0 3; 2 6 20 1; 2 7 20 2; 2.5 7 20 3; 2 4 30 1; 2 5 30 2; 2.5 5 30 3]; % a line that translates its length in x over the course of 20 seconds
+verts(:,1:2) = 10*verts(:,1:2);
+time_space_polytopes(3).vertices = verts;
+verts = [1.6 4 0 1; 2.4 4 0 2; 2 3 0 3; 4 2 30 1; 4 1 30 2; 3 1 30 3]; % a line that translates its length in x over the course of 20 seconds
+verts(:,1:2) = 10*verts(:,1:2);
+time_space_polytopes(4).vertices = verts;

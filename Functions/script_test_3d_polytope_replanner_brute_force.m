@@ -22,6 +22,9 @@ time_space_polytopes(2).vertices = verts;
 verts = [2 4 0 1; 2 5 0 2; 2.5 5 0 3; 2 6 20 1; 2 7 20 2; 2.5 7 20 3; 2 4 30 1; 2 5 30 2; 2.5 5 30 3]; % a line that translates its length in x over the course of 20 seconds
 time_space_polytopes(3).vertices = verts;
 
+clear time_sapce_polytopes
+
+run('make_new_map')
 %% turn polytopes from vertices into facets
 time_space_polytopes = fcn_make_facets_from_verts(time_space_polytopes);
 
@@ -41,6 +44,11 @@ start = [2.5 7 0];
 % finish = [1.5*ones(6,1) -1*ones(6,1) (21:2:31)']; % multiple time static finish
 finish = [1.5 -1 21; 2 -1 31]; % moving finish
 dt = 1;
+
+start = [25 60 0];
+finish = [1.5 -1 21; 2 -1 31]; % moving finish
+dt = 2;
+
 finish = fcn_interpolate_route_in_time(finish,dt);
 num_finish_pts = size(finish,1);
 starts = [2*ones(num_finish_pts,1) 2*ones(num_finish_pts,1) zeros(num_finish_pts,1)];
@@ -71,7 +79,7 @@ start_with_ids = all_pts(num_verts+1:num_verts+num_starts,:);
 finish_with_ids = all_pts(num_verts+num_starts+1:num_verts+num_starts+num_finishes,:);
 
 %% make vgraph
-speed_limit = 1/1.25;
+speed_limit = 3;
 vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit);
 
 %% make rgraph
@@ -94,7 +102,7 @@ title(metrics_title);
 %% plot path on surfels
 if flag_do_plot
     figure; hold on; box on; title(metrics_title);
-    plot3(route(:,1),route(:,2),route(:,3),'-r','LineWidth',3);
+    plot3(route(:,1),route(:,2),route(:,3),'b','LineWidth',3);
     fig = gcf;
     for i = 1:size(all_surfels,1)
         X = [all_surfels(i,1), all_surfels(i,4), all_surfels(i,7)];
@@ -106,8 +114,8 @@ if flag_do_plot
     plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
     INTERNAL_fcn_format_timespace_plot();
 end
-
-route_dense = fcn_interpolate_route_in_time(route,dt);
+% return
+route_dense = fcn_interpolate_route_in_time(route,dt/10);
 %% dense route plot
 if flag_do_plot
     plot3(route_dense(:,1), route_dense(:,2), route_dense(:,3), 'xr')
@@ -126,13 +134,6 @@ all_pts = [all_pts all_pts_idx']; % add pt ID column to all_pts
 num_starts = size(start,1);
 num_finishes = size(finish,1);
 
-if flag_do_plot
-    figure; hold on; box on; title('all vertices and start and finish')
-    INTERNAL_fcn_format_timespace_plot();
-    plot3(start(1),start(2),start(3),'gx');
-    plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
-    plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
-end
 verts_with_ids = all_pts(1:num_verts,:);
 start_with_ids = all_pts(num_verts+1:num_verts+num_starts,:);
 finish_with_ids = all_pts(num_verts+num_starts+1:num_verts+num_starts+num_finishes,:);
@@ -147,20 +148,9 @@ new_vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, s
 %% plan route
 [cost, route] = fcn_algorithm_Astar3d(new_vgraph, verts_with_ids, start_with_ids, finish_with_ids, new_rgraph);
 
-total_time = max(route(:,3));
-route_x = route(:,1);
-route_y = route(:,2);
-route_t = route(:,3);
-lengths = diff([route_x(:) route_y(:)]);
-total_length = sum(sqrt(sum(lengths.*lengths,2)));
-lengths_3d = diff([route_x(:) route_y(:) route_t(:)]);
-total_length_3d = sum(sqrt(sum(lengths_3d.*lengths_3d,2)));
-metrics_title = sprintf('2nd pass route \n route duration [s]: %.3f \n route length [m]: %.3f \n route length 3D: %.3f',total_time,total_length,total_length_3d);
-title(metrics_title);
-
 %% plot path on surfels
 if flag_do_plot
-    hold on; box on; title(metrics_title);
+    figure; hold on; box on; title(metrics_title);
     plot3(route(:,1),route(:,2),route(:,3),':r','LineWidth',3);
     fig = gcf;
     for i = 1:size(all_surfels,1)
@@ -173,9 +163,62 @@ if flag_do_plot
     plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
     INTERNAL_fcn_format_timespace_plot();
 end
+total_time = max(route(:,3));
+route_x = route(:,1);
+route_y = route(:,2);
+route_t = route(:,3);
+lengths = diff([route_x(:) route_y(:)]);
+total_length = sum(sqrt(sum(lengths.*lengths,2)));
+lengths_3d = diff([route_x(:) route_y(:) route_t(:)]);
+total_length_3d = sum(sqrt(sum(lengths_3d.*lengths_3d,2)));
+metrics_title = sprintf('2nd pass route \n route duration [s]: %.3f \n route length [m]: %.3f \n route length 3D: %.3f',total_time,total_length,total_length_3d);
+title(metrics_title);
 
-%% replan with new vgraph and new all_pts array
+%% threadpulling
 
+route_dense_no_id = route_dense(:,1:3);
+num_pts = size(route_dense_no_id,1);
+all_pts_idx = 1:1:num_pts; % array of all possible pt idx
+all_pts = [route_dense_no_id all_pts_idx']; % add pt ID column to all_pts
+
+start = all_pts(1,:);
+finish = all_pts(end,:);
+
+num_starts = size(start,1);
+num_finishes = size(finish,1);
+
+verts_with_ids = all_pts(2:end-1,:);
+
+new_vgraph = fcn_visibility_graph_3d_global(verts_with_ids(:,1:3), start(:,1:3), finish(:,1:3), all_surfels, speed_limit);
+
+[is_reachable, num_steps, new_rgraph] = fcn_check_reachability(new_vgraph, start, finish);
+
+[cost, route] = fcn_algorithm_Astar3d(new_vgraph, verts_with_ids, start, finish, new_rgraph);
+
+if flag_do_plot
+    figure; hold on; box on; title(metrics_title);
+    plot3(route(:,1),route(:,2),route(:,3),':g','LineWidth',3);
+    fig = gcf;
+    for i = 1:size(all_surfels,1)
+        X = [all_surfels(i,1), all_surfels(i,4), all_surfels(i,7)];
+        Y = [all_surfels(i,2), all_surfels(i,5), all_surfels(i,8)];
+        Z = [all_surfels(i,3), all_surfels(i,6), all_surfels(i,9)];
+        fill3(X,Y,Z,rand(3,1),'FaceAlpha',0.3);
+    end
+    plot3(start(1),start(2),start(3),'gx');
+    plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
+    INTERNAL_fcn_format_timespace_plot();
+end
+total_time = max(route(:,3));
+route_x = route(:,1);
+route_y = route(:,2);
+route_t = route(:,3);
+lengths = diff([route_x(:) route_y(:)]);
+total_length = sum(sqrt(sum(lengths.*lengths,2)));
+lengths_3d = diff([route_x(:) route_y(:) route_t(:)]);
+total_length_3d = sum(sqrt(sum(lengths_3d.*lengths_3d,2)));
+metrics_title = sprintf('thread-pulling route \n route duration [s]: %.3f \n route length [m]: %.3f \n route length 3D: %.3f',total_time,total_length,total_length_3d);
+title(metrics_title);
 %% vgraph plot
 if flag_do_slow_plot
     figure; hold on; box on; title('visibility graph');
