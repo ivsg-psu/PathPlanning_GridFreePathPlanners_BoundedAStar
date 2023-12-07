@@ -97,7 +97,6 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, r
     inv_vis_cost = 10*1./(visible_nodes_from_each_node);
     inv_vis_cost = 0*inv_vis_cost';
 
-
     % make heuristic matrix, h - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
     % xs - finish(:,1)' gives a matrix where each row is a point and each
     % column is a finish point so the element in 3,4 is the difference of
@@ -129,7 +128,6 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, r
         % find the node with the least f on
         % the open list, call it "q"
         nodes_expanded = nodes_expanded + 1;
-
         [f_of_q, idx_of_q] = min(open_set_fs);
         q = all_pts_plus_start_and_fin(idx_of_q,:);
 
@@ -156,7 +154,6 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, r
             successor = all_pts_plus_start_and_fin(successor_idxs(i),:);
 
             % check if this successor is the goal, if so we're done
-
             if ismember(successor(4), finish(:,4))
                 %% execute code to recover path
                 % total path cost is the cost so far to reach q, plus the distance

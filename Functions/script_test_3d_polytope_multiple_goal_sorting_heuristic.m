@@ -100,7 +100,7 @@ for finish_idx = 1:5
 
     %% set speed limit and form visibility graph
     speed_limit = 0.12;
-    vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit);
+    vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit, time_space_polytopes, dt);
 
     num_starts = size(start,1);
     num_finishes = size(finish,1);

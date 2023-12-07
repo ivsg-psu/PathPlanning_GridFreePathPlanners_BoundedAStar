@@ -72,7 +72,7 @@ finish_with_ids = all_pts(num_verts+num_starts+1:num_verts+num_starts+num_finish
 
 %% make vgraph
 speed_limit = 1/1.25;
-vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit);
+vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit, time_space_polytopes, dt);
 
 %% make rgraph
 % [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph, start_with_ids, finish_with_ids);

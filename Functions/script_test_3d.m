@@ -91,8 +91,8 @@ total_length_3d = sum(sqrt(sum(lengths_3d.*lengths_3d,2)));
 if flag_do_plot
     metrics_title = sprintf('route duration [s]: %.3f \n route length [m]: %.3f \n route length 3D: %.3f',total_time,total_length,total_length_3d);
     title(metrics_title);
-    fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b','FaceAlpha',0.3);
-    fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'b','FaceAlpha',0.3);
+    fill3(verts_orig(1:3,1),verts_orig(1:3,2),verts_orig(1:3,3),'b','FaceAlpha',0.3);
+    fill3(verts_orig([1,3,4],1),verts_orig([1,3,4],2),verts_orig([1,3,4],3),'b','FaceAlpha',0.3);
     plot3(route(:,1),route(:,2),route(:,3),'-b','LineWidth',3);
     plot3(start(:,1),start(:,2),start(:,3),'gx');
     plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
@@ -139,8 +139,8 @@ if flag_do_plot
     my_title = sprintf('example of speed limit enforcement,\n speed limit %0.1f m/s',speed_limit);
     figure; hold on; box on; title(my_title);
     INTERNAL_fcn_format_timespace_plot();
-    fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b','FaceAlpha',0.3);
-    fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'b','FaceAlpha',0.3);
+    fill3(verts_orig(1:3,1),verts_orig(1:3,2),verts_orig(1:3,3),'b','FaceAlpha',0.3);
+    fill3(verts_orig([1,3,4],1),verts_orig([1,3,4],2),verts_orig([1,3,4],3),'b','FaceAlpha',0.3);
     beg = 10;
     example_vgraph_row = vgraph(beg,:);
     cone_apex = [0 0 0];
