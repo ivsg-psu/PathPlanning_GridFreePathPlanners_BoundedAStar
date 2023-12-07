@@ -97,46 +97,6 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, r
     inv_vis_cost = 10*1./(visible_nodes_from_each_node);
     inv_vis_cost = 0*inv_vis_cost';
 
-    % % vectors going up
-    % delta_x = (xs - xs');
-    % delta_y = (ys - ys');
-    % delta_z = (zs - zs');
-    % delta_y_is_up = delta_y > 0;
-    % weight = delta_y_is_up*0.5;
-    % possible_gs = possible_gs.*weight;
-
-    % weight = fcn_make_potential_field_weight_matrix(vgraph, all_pts_plus_start_and_fin,'numeric');
-    weight = ones(num_nodes,num_nodes);
-    % for i = 1:num_nodes
-    %     start_vec = [xs(i) ys(i) zs(i)];
-    %     for j = 1:num_nodes
-    %         dir_vec = [xs(j) ys(j) zs(j)] - start_vec;
-    %         field_vec = [-(start_vec(1)-0.4) -(start_vec(2)-0.4) start_vec(3)*0];
-    %         product = dot(dir_vec,field_vec);
-    %         if product < 0
-    %             weight(i,j) = 1;
-    %         end
-    %         if product > 0
-    %             weight(i,j) = 0.2;
-    %         end
-    %     end
-    % end
-    possible_gs = possible_gs.*weight;
-
-    % % source
-    % [startx,starty] = meshgrid(0:0.05:1, 0:0.05:1);
-    % startz = zeros(21);
-    % u = (startx-0.4);
-    % v = (starty-0.4);
-    % w = startz*0;
-    % quiver3(startx,starty,startz,u,v,w)
-    % % sink
-    % [startx,starty] = meshgrid(0.3:0.05:0.5, 0.3:0.05:0.5);
-    % startz = zeros(5,5);
-    % u = (startx-0.4);
-    % v = (starty-0.4);
-    % w = startz*0;
-    % quiver3(startx,starty,startz,u,v,w)
 
     % make heuristic matrix, h - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
     % xs - finish(:,1)' gives a matrix where each row is a point and each
