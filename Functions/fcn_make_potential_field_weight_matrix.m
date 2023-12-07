@@ -93,4 +93,20 @@ function weight_matrix = fcn_make_potential_field_weight_matrix(vgraph, all_pts,
     % dr = diff(r(t),t);
     % integrand = dot(Fr,dr);
     % work = int(integrand,t,[0,2*pi])
+
+    %% some plotting code
+    % % source
+    % [startx,starty] = meshgrid(0:0.05:1, 0:0.05:1);
+    % startz = zeros(21);
+    % u = (startx-0.4);
+    % v = (starty-0.4);
+    % w = startz*0;
+    % quiver3(startx,starty,startz,u,v,w)
+    % % sink
+    % [startx,starty] = meshgrid(0.3:0.05:0.5, 0.3:0.05:0.5);
+    % startz = zeros(5,5);
+    % u = (startx-0.4);
+    % v = (starty-0.4);
+    % w = startz*0;
+    % quiver3(startx,starty,startz,u,v,w)
 end
