@@ -59,8 +59,8 @@ function fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, ro
         % define figure properties
         opts.width      = 8;
         opts.height     = 6;
-        opts.fontType   = 'Times';
-        opts.fontSize   = 9;
+        opts.fontType   = 'Times New Roman';
+        opts.fontSize   = 10;
         fig = gcf;
         % scaling
         fig.Units               = 'centimeters';
@@ -69,13 +69,13 @@ function fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, ro
         set(gcf,'color','white')
         % set text properties
         set(fig.Children, ...
-            'FontName',     'Times', ...
-            'FontSize',     9);
+            'FontName',     'Times New Roman', ...
+            'FontSize',     10);
 
         % remove unnecessary white space
         set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
-        xlabel('x [m]')
-        ylabel('y [m]')
+        xlabel('x [km]')
+        ylabel('y [km]')
         ylim(ylims)
         xlim(xlims)
         % for each polytope,

@@ -152,8 +152,8 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, r
         for i = 1:length(successor_idxs)
             nodes_explored = nodes_explored + 1;
             successor = all_pts_plus_start_and_fin(successor_idxs(i),:);
-            % check if this successor is the goal, if so we're done
 
+            % check if this successor is the goal, if so we're done
             if ismember(successor(4), finish(:,4))
                 %% execute code to recover path
                 % total path cost is the cost so far to reach q, plus the distance

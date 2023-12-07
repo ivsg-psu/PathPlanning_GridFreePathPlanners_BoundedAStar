@@ -31,8 +31,8 @@ flag_do_animation = 0;
 if flag_do_plot
     %% plot the map
     figure; hold on; box on;
-    xlabel('x [km]');
-    ylabel('y [km]');
+    xlabel('x [m]');
+    ylabel('y [m]');
     title('polytope map in x-y plane at time 0')
     for i = 1:length(shrunk_polytopes)
          fill(shrunk_polytopes(i).vertices(:,1)',shrunk_polytopes(i).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
@@ -112,7 +112,7 @@ lengths = diff([route_x(:) route_y(:)]);
 total_length = sum(sqrt(sum(lengths.*lengths,2)));
 lengths_3d = diff([route_x(:) route_y(:) route_t(:)]);
 total_length_3d = sum(sqrt(sum(lengths_3d.*lengths_3d,2)));
-metrics_title = sprintf('route duration [min]: %.3f \n route length [km]: %.3f \n route length 3D: %.3f',total_time,total_length,total_length_3d);
+metrics_title = sprintf('route duration [s]: %.3f \n route length [m]: %.3f \n route length 3D: %.3f',total_time,total_length,total_length_3d);
 
 %% plot path on surfels
 if flag_do_plot
@@ -128,6 +128,25 @@ if flag_do_plot
     plot3(start(1),start(2),start(3),'gx');
     plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
     INTERNAL_fcn_format_timespace_plot();
+    % vectors going up
+    % [startx,starty] = meshgrid(0:0.1:1, 0:0.1:1);
+    % startz = zeros(11,11);
+    % u = ones(11,11)*0;v = ones(11,11)*1;w = ones(11,11)*0;
+    % quiver3(startx,starty,startz,u,v,w)
+    % source
+    % [startx,starty] = meshgrid(0.3:0.05:0.5, 0.3:0.05:0.5);
+    % startz = zeros(5,5);
+    % u = (startx-0.4);
+    % v = (starty-0.4);
+    % w = startz*0;
+    % quiver3(startx,starty,startz,u,v,w)
+    % sink
+    % [startx,starty] = meshgrid(0.3:0.05:0.5, 0.3:0.05:0.5);
+    % startz = zeros(5,5);
+    % u = -(startx-0.4);
+    % v = -(starty-0.4);
+    % w = startz*0;
+    % quiver3(startx,starty,startz,u,v,w)
 end
 
 if flag_do_slow_plot
@@ -159,7 +178,7 @@ end
 
 if flag_do_slow_plot
 %% example of speed limit inforcement
-    my_title = sprintf('example of speed limit enforcement,\n speed limit %0.1f km/min',speed_limit);
+    my_title = sprintf('example of speed limit enforcement,\n speed limit %0.1f m/s',speed_limit);
     figure; hold on; box on; title(my_title);
     INTERNAL_fcn_format_timespace_plot();
     fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b','FaceAlpha',0.3);
@@ -192,10 +211,10 @@ end
 
 function INTERNAL_fcn_format_timespace_plot()
     % define figure properties
-    opts.width      = 8.8;
+    opts.width      = 8;
     opts.height     = 6;
-    opts.fontType   = 'Times New Roman';
-    opts.fontSize   = 8;
+    opts.fontType   = 'Times';
+    opts.fontSize   = 9;
     fig = gcf;
     % scaling
     fig.Units               = 'centimeters';
@@ -204,13 +223,13 @@ function INTERNAL_fcn_format_timespace_plot()
 
     % set text properties
     set(fig.Children, ...
-        'FontName',     'Times New Roman', ...
-        'FontSize',     8);
+        'FontName',     'Times', ...
+        'FontSize',     9);
 
     % remove unnecessary white space
     set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
-    xlabel('x [km]')
-    ylabel('y [km]')
-    zlabel('t [min]')
+    xlabel('x [m]')
+    ylabel('y [m]')
+    zlabel('t [s]')
     view([36 30])
 end

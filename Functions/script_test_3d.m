@@ -13,8 +13,8 @@ flag_do_plot = 1;
 flag_do_animation = 0;
 
 facets = [];
-
 verts = [1 1 0; 2 1 0;  3 1 20; 2 1 20]; % a line that translates its length in x over the course of 20 seconds
+% verts = [1 1 0; 2 1 0;  3 1 20; 2 1 20; 1 1.2 0; 2 1.2 0;  3 1.2 20; 2 1.2 20]; % make the line a box
 start = [2 0 0];
 finish = [2*ones(6,1) 2*ones(6,1) (11:2:21)']; % multiple time static finish
 % finish = [2 2 11; 1.25 1.25 21]; % moving finish
@@ -70,7 +70,7 @@ end
 
 %% create visibility graph
 speed_limit = 100;
-vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit);
+vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit,time_space_polytopes, dt);
 start = all_pts(num_verts+1,:);
 finish = all_pts(num_verts+2:end,:);
 [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start,finish);
@@ -91,8 +91,8 @@ total_length_3d = sum(sqrt(sum(lengths_3d.*lengths_3d,2)));
 if flag_do_plot
     metrics_title = sprintf('route duration [s]: %.3f \n route length [m]: %.3f \n route length 3D: %.3f',total_time,total_length,total_length_3d);
     title(metrics_title);
-    fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b','FaceAlpha',0.3);
-    fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'b','FaceAlpha',0.3);
+    fill3(verts_orig(1:3,1),verts_orig(1:3,2),verts_orig(1:3,3),'b','FaceAlpha',0.3);
+    fill3(verts_orig([1,3,4],1),verts_orig([1,3,4],2),verts_orig([1,3,4],3),'b','FaceAlpha',0.3);
     plot3(route(:,1),route(:,2),route(:,3),'-b','LineWidth',3);
     plot3(start(:,1),start(:,2),start(:,3),'gx');
     plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
@@ -139,8 +139,8 @@ if flag_do_plot
     my_title = sprintf('example of speed limit enforcement,\n speed limit %0.1f m/s',speed_limit);
     figure; hold on; box on; title(my_title);
     INTERNAL_fcn_format_timespace_plot();
-    fill3(verts(1:3,1),verts(1:3,2),verts(1:3,3),'b','FaceAlpha',0.3);
-    fill3(verts([1,3,4],1),verts([1,3,4],2),verts([1,3,4],3),'b','FaceAlpha',0.3);
+    fill3(verts_orig(1:3,1),verts_orig(1:3,2),verts_orig(1:3,3),'b','FaceAlpha',0.3);
+    fill3(verts_orig([1,3,4],1),verts_orig([1,3,4],2),verts_orig([1,3,4],3),'b','FaceAlpha',0.3);
     beg = 10;
     example_vgraph_row = vgraph(beg,:);
     cone_apex = [0 0 0];
@@ -158,7 +158,7 @@ if flag_do_plot
         end
         plot3([all_pts(beg,1), all_pts(term,1)],[all_pts(beg,2), all_pts(term,2)],[all_pts(beg,3), all_pts(term,3)],color,'LineWidth',2)
     end
-    view([1 0 0])
+    view([154 12])
 end
 
 route_dense = fcn_interpolate_route_in_time(route,dt);
@@ -170,25 +170,25 @@ end
 
 function INTERNAL_fcn_format_timespace_plot()
     % define figure properties
-    opts.width      = 8;
-    opts.height     = 6;
-    opts.fontType   = 'Times';
-    opts.fontSize   = 9;
+    opts.width      = 12;
+    opts.height     = 9;
+    opts.fontType   = 'Times New Roman';
+    opts.fontSize   = 12;
     fig = gcf;
     % scaling
     fig.Units               = 'centimeters';
     fig.Position(3)         = opts.width;
     fig.Position(4)         = opts.height;
-
+    set(gcf,'color','white')
     % set text properties
     set(fig.Children, ...
-        'FontName',     'Times', ...
-        'FontSize',     9);
+        'FontName',     'Times New Roman', ...
+        'FontSize',     12);
 
     % remove unnecessary white space
     set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
-    xlabel('x [m]')
-    ylabel('y [m]')
-    zlabel('t [s]')
+    xlabel('x [km]')
+    ylabel('y [km]')
+    zlabel('t [min]')
     view([36 30])
 end
