@@ -1,4 +1,4 @@
-function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, rgraph)
+function [cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, all_pts, start, finish, rgraph)
 % fcn_algorithm_Astar3d
 %
 % A minimal version of the A* algorithm for graph searching.  Designed to contain minimal subproceses e.g. visibility graph
@@ -76,17 +76,12 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, r
 
     % make new all pts list including start and end
     all_pts_plus_start_and_fin = [all_pts; start; finish];
-    xs = all_pts_plus_start_and_fin(:,1); % vector of all x coords
-    ys = all_pts_plus_start_and_fin(:,2); % vector of all y coords
-    zs = all_pts_plus_start_and_fin(:,3); % vector of all y coords
 
     % make cost matrix, g - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
-    possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2 + (zs - zs').^2)'; % distance of every pt from all other pts
-    possible_gs = sqrt((zs - zs').^2)'; % distance of every pt from all other pts
-    possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2)'; % distance of every pt from all other pts
+    possible_gs = cgraph;
     open_set_gs = inf*ones(1,num_nodes); % initialize costs of open set to infinity
     open_set_gs(start(4)) = possible_gs(start(4),start(4)); % g-value for nodes in open set.  g is the movement cost to
-
+    % TODO you are here
     % new experimental cost function prioritizing reachability
     reachable_nodes_from_each_node = sum(rgraph,2);
     inv_reach_cost = 10*1./reachable_nodes_from_each_node;
