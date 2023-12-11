@@ -96,7 +96,23 @@ finish_for_reachability(4) = finish(3);
 
 [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start_for_reachability,finish_for_reachability);
 
-[cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish, rgraph);
+% new experimental cost function prioritizing reachability
+reachable_nodes_from_each_node = sum(rgraph,2);
+inv_reach_cost = 10*(1./reachable_nodes_from_each_node)';
+
+% new experimental cost function prioritizing visibility
+visible_nodes_from_each_node = sum(vgraph,2);
+inv_vis_cost = 10*(1./(visible_nodes_from_each_node))';
+
+%% make cgraph
+mode = "xy spatial only";
+% mode = 'time or z only';
+% mode = "xyz or xyt";
+[cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
+
+hvec = hvec + inv_reach_cost + inv_vis_cost;
+
+[cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
 
 if flag_do_plot
     hold on

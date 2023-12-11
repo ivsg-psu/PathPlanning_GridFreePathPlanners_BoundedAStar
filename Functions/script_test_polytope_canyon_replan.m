@@ -105,19 +105,35 @@ for i = 1:length(edge_deletion)
     new_vgraph(idx_of_edges_for_removal) = 0;
     num_edges_after = sum(sum(new_vgraph));
     pct_edges_removed = (num_edges_initially - num_edges_after)/num_edges_initially*100;
-    
+
     start_for_reachability = start;
     start_for_reachability(4) = start(3);
     finish_for_reachability = finish;
     finish_for_reachability(4) = finish(3);
-    
-    
+
     [is_reachable, num_steps, rgraph] = fcn_check_reachability(new_vgraph,start_for_reachability,finish_for_reachability);
+
+    % new experimental cost function prioritizing reachability
+    reachable_nodes_from_each_node = sum(rgraph,2);
+    inv_reach_cost = 10*(1./(reachable_nodes_from_each_node))';
+
+    % new experimental cost function prioritizing visibility
+    visible_nodes_from_each_node = sum(vgraph,2);
+    inv_vis_cost = 10*(1./(visible_nodes_from_each_node))';
+
+    %% make cgraph
+    mode = "xy spatial only";
+    % mode = 'time or z only';
+    % mode = "xyz or xyt";
+    [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
+
+    hvec = hvec + inv_reach_cost + inv_vis_cost;
+
     if ~is_reachable
         costs = [costs; NaN];
         continue
     end
-    [cost, route] = fcn_algorithm_Astar(new_vgraph, all_pts, start, finish, rgraph);
+    [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
     costs = [costs; cost];
 end
 figure(2);plot(edge_deletion,costs);
