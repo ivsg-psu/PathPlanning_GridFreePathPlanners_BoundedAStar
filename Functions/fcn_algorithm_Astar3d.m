@@ -51,6 +51,8 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, all_pts, st
 %
 % 2023, summer by Steve Harnett
 % -- first write of function
+% 2023, December by Steve Harnett
+% -- remove cost graph generation code and place in fcn_algorithm_generate_cost_graph
 %
 % TO DO:
 %
