@@ -21,9 +21,14 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, star
 %   vgraph: the visibility graph as an nxn matrix where n is the number of points (nodes) in the map.
 %       A 1 is in position i,j if point j is visible from point i.  0 otherwise.
 %
-%   rgraph: the total reachability graph as an nxn matrix where n is the number of pointes (nodes) in the map.
-%         A 1 is in position i,j if j is reachable from point i in a path with n or fewer steps (path segments). 0 otherwise.
+%    cgraph: the cost graph matrix. A cost matrix is an nxn matrix where n is
+%      the number of points (nodes) in the map including the start and goal.
+%      The value of element i-j is the cost of routing from i to j.
 %
+%    hvec: the heuristic cost vector. A 1xn vector where n is
+%      the number of points (nodes) in the map including the start and goal.
+%      The value of element k is the estimated cost of routing from point k to
+%      the finish based on a heuristic cost estimation method.
 %
 % OUTPUTS:
 %
@@ -35,7 +40,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, star
 %
 % DEPENDENCIES:
 %
-% none but several functions exist to create visibility matrices and fcn_check_reachability can create reachability matrices
+% none but several functions exist to create visibility matrices and fcn_algorithm_generate_cost_graph can create cost matrices (cgraph) and heuristic cost vectors (hvec)
 %
 % EXAMPLES:
 %
