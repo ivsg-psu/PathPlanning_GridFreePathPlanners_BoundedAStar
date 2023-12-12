@@ -245,7 +245,7 @@ if threadpulling
     [new_cgraph, new_hvec] = fcn_algorithm_generate_cost_graph(verts_with_ids, start, finish, mode);
 
     %% plan route
-    [new_cost, new_route] = fcn_algorithm_Astar3d(new_vgraph, new_cgraph, new_hvec, verts_with_ids, start, finish);
+    [cost, new_route] = fcn_algorithm_Astar3d(new_vgraph, new_cgraph, new_hvec, verts_with_ids, start, finish);
 
     if flag_do_plot
         figure; hold on; box on;
