@@ -1,4 +1,4 @@
-function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish, rgraph)
+function [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish)
 % fcn_algorithm_Astar
 %
 % A minimal version of the A* algorithm for graph searching.  Designed to contain minimal subproceses e.g. visibility graph
@@ -75,30 +75,16 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish, rgr
 
     % make new all pts list including start and end
     all_pts_plus_start_and_fin = [all_pts; start; finish];
-    xs = all_pts_plus_start_and_fin(:,1); % vector of all x coords
-    ys = all_pts_plus_start_and_fin(:,2); % vector of all y coords
 
     % make cost matrix, g - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
-    possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2)'; % distance of every pt from all other pts
+    possible_gs = cgraph;
     open_set_gs = inf*ones(1,num_nodes); % initialize costs of open set to infinity
     open_set_gs(start(3)) = possible_gs(start(3),start(3)); % assign g value from possible_gs to open_set_gs for the start
 
-    % new experimental cost function prioritizing reachability
-    reachable_nodes_from_each_node = sum(rgraph,2);
-    inv_reach_cost = 10*1./reachable_nodes_from_each_node;
-    inv_reach_cost = 0*inv_reach_cost';
-
-    % new experimental cost function prioritizing visibility
-    visible_nodes_from_each_node = sum(vgraph,2);
-    inv_vis_cost = 10*1./(visible_nodes_from_each_node);
-    inv_vis_cost = 0*inv_vis_cost';
-
-    % here it is the distance from each point to the finish
-    % make heuristic matrix, h - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
-    hs = sqrt((xs - finish(1)).^2 + (ys - finish(2)).^2)' + inv_vis_cost;
+    hs = hvec;
 
     % total cost f, is g for the open set nodes plus the corresponding h
-    open_set_fs = open_set_gs + hs + inv_reach_cost + inv_vis_cost; % f-vlaue for nodes in the open set.
+    open_set_fs = open_set_gs + hs; % f-vlaue for nodes in the open set.
 
     % Initialize the closed list
     closed_set = nan(1,num_nodes);
@@ -165,7 +151,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish, rgr
             if tentative_cost < open_set_gs(successor(3))
                 parents(successor(3)) = idx_of_q;
                 open_set_gs(successor(3)) = tentative_cost;
-                open_set_fs(successor(3)) = tentative_cost + hs(successor(3)) + inv_reach_cost(successor(3)) + inv_vis_cost(successor(3));
+                open_set_fs(successor(3)) = tentative_cost + hs(successor(3));
                 open_set(successor(3)) = successor(3);
             end % end tentative cost comparison check
         end % end looping through successors

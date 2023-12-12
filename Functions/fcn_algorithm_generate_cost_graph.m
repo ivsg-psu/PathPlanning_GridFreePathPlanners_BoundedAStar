@@ -12,7 +12,7 @@ function [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, fini
 %
 %
 % FORMAT:
-% [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, rgraph)
+% [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode)
 %
 %
 % INPUTS:
@@ -34,7 +34,7 @@ function [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, fini
 %
 % OUTPUTS:
 %
-%    cgrpah: the cost graph matrix. A cost matrix is an nxn matrix where n is
+%    cgraph: the cost graph matrix. A cost matrix is an nxn matrix where n is
 %      the number of points (nodes) in the map including the start and goal.
 %      The value of element i-j is the cost of routing from i to j.
 %
