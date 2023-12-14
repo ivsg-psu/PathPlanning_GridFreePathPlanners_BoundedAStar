@@ -77,8 +77,14 @@ vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed
 %% make rgraph
 [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph, start_with_ids, finish_with_ids);
 
+%% make cgraph
+% mode = "xy spatial only";
+% mode = 'time or z only';
+mode = "xyz or xyt";
+[cgraph, hvec] = fcn_algorithm_generate_cost_graph(verts_with_ids, start_with_ids, finish_with_ids, mode);
+
 %% plan route
-[cost, route] = fcn_algorithm_Astar3d(vgraph, verts_with_ids, start_with_ids, finish_with_ids, rgraph);
+[cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, verts_with_ids, start_with_ids, finish_with_ids);
 % route metrics follow
 total_time = max(route(:,3));
 route_x = route(:,1);

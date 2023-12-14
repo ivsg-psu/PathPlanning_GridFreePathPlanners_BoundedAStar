@@ -135,7 +135,7 @@ The following are the top level directories within the repository:
 
 
 <pre align="center">
-<img src=".\Images\call_flow.png">
+<img src=".\Images\call_flow_v2.png">
 <figcaption>This is the basic flow of data and function calls to get from a 2D polytope map and a maximum translation distance for each polytope, to a route through 3D timespace.  Not all parts of this call flow are necessary (e.g. obstacles could be manually defined, interpolation of polytopes in time could be skipped, etc.) but the general flow remains unchanged.</figcaption>
 </pre>
 
@@ -163,6 +163,8 @@ The following are the core algorithms that make 3D planning possible:
 <img src=".\Images\speed_limit.png">
 <figcaption>An example of a speed limit being enforced on edges leaving a single node.  The black edges have been pruned while the green ones are still valid.  The speed limit is shown as a rainbow cone that the edges must fall within to avoid pruning.</figcaption>
 </pre>
+
+`fcn_algorithm_generate_cost_graph` : The visibility graph indicates which points can be reached from which other points.  The cost graph indicates the cost of going from each point to each other point.  This function generates these costs based on a user input to indicate if cost should be x-y spatial distance, t or z distance only, or both.  In addition to producing the cost from each point to each other point as a matrix, this function also produces the heuristic cost from each point to the lowest cost finish point as a vector.  This heuristic cost is what A* uses to search more quickly.  Running A* with the heuristic cost set to 0 is equivalent to running Dijkstra's algorithm.
 
 `fcn_check_reachability.m` : Raises the visibility graph to the powers 1 through N where N is the number of nodes.  The visibility graph raised to the Nth power describes nodes reachable in N steps.  Thus this function can tell whether or not the goal is reachable from the start, and the minimum number of steps to perform this mission.
 

@@ -76,7 +76,10 @@ for rep = 1:repetitions
     starts = [all_pts; start; finish];
     [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes);
 
-    [cost, path] = fcn_algorithm_Astar(vgraph, all_pts, start, finish)
+    mode = 'xy spatial only';
+    [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode)
+
+    [cost, path] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
     % path: series of points [x y point_id obs_id beg_end]
     % cost: path length
     % err: marker indicating if there was an error in setup (1) or not (0)

@@ -75,8 +75,11 @@ start = all_pts(num_verts+1,:);
 finish = all_pts(num_verts+2:end,:);
 [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start,finish);
 
+mode = 'time or z only';
+[cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts(1:num_verts,:), all_pts(num_verts+1,:), all_pts(num_verts+2:end,:), mode);
+
 %% plan route
-[cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts(1:num_verts,:), all_pts(num_verts+1,:), all_pts(num_verts+2:end,:),rgraph);
+[cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, all_pts(1:num_verts,:), all_pts(num_verts+1,:), all_pts(num_verts+2:end,:));
 % route metrics follow
 total_time = max(route(:,3));
 route_x = route(:,1);

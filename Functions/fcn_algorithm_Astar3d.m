@@ -1,4 +1,4 @@
-function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, rgraph)
+function [cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, all_pts, start, finish)
 % fcn_algorithm_Astar3d
 %
 % A minimal version of the A* algorithm for graph searching.  Designed to contain minimal subproceses e.g. visibility graph
@@ -22,9 +22,14 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, r
 %   vgraph: the visibility graph as an nxn matrix where n is the number of points (nodes) in the map.
 %       A 1 is in position i,j if point j is visible from point i.  0 otherwise.
 %
-%   rgraph: the total reachability graph as an nxn matrix where n is the number of pointes (nodes) in the map.
-%         A 1 is in position i,j if j is reachable from point i in a path with n or fewer steps (path segments). 0 otherwise.
+%    cgraph: the cost graph matrix. A cost matrix is an nxn matrix where n is
+%      the number of points (nodes) in the map including the start and goal.
+%      The value of element i-j is the cost of routing from i to j.
 %
+%    hvec: the heuristic cost vector. A 1xn vector where n is
+%      the number of points (nodes) in the map including the start and goal.
+%      The value of element k is the estimated cost of routing from point k to
+%      the finish based on a heuristic cost estimation method.
 %
 % OUTPUTS:
 %
@@ -36,7 +41,7 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, r
 %
 % DEPENDENCIES:
 %
-% none but several functions exist to create visibility matrices and fcn_check_reachability can create reachability matrices
+% none but several functions exist to create visibility matrices and fcn_algorithm_generate_cost_graph can create cost matrices (cgraph) and heuristic cost vectors (hvec)
 %
 % EXAMPLES:
 %
@@ -51,6 +56,8 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, r
 %
 % 2023, summer by Steve Harnett
 % -- first write of function
+% 2023, December by Steve Harnett
+% -- remove cost graph generation code and place in fcn_algorithm_generate_cost_graph
 %
 % TO DO:
 %
@@ -58,7 +65,7 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, r
 
     % vgraph is nxn matrix of 1s and 0s where n is the number of points including the start and goal
     % 1 implies reachability and 0 implies blocked
-    % vgrah is indexed from row to col (i.e. vgrpah(3,4) is the reachability of 4 from 3)
+    % vgrah is indexed from row to col (i.e. vgraph(3,4) is the reachability of 4 from 3)
 
     % all_pts is (n-2)x3 matrix where each row is a point and the columns are x,y, and point ID
 
@@ -76,41 +83,17 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, r
 
     % make new all pts list including start and end
     all_pts_plus_start_and_fin = [all_pts; start; finish];
-    xs = all_pts_plus_start_and_fin(:,1); % vector of all x coords
-    ys = all_pts_plus_start_and_fin(:,2); % vector of all y coords
-    zs = all_pts_plus_start_and_fin(:,3); % vector of all y coords
 
     % make cost matrix, g - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
-    possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2 + (zs - zs').^2)'; % distance of every pt from all other pts
-    possible_gs = sqrt((zs - zs').^2)'; % distance of every pt from all other pts
-    possible_gs = sqrt((xs - xs').^2 + (ys - ys').^2)'; % distance of every pt from all other pts
+    possible_gs = cgraph; % the cost graph is all the possible g values that can be added to the open set
     open_set_gs = inf*ones(1,num_nodes); % initialize costs of open set to infinity
     open_set_gs(start(4)) = possible_gs(start(4),start(4)); % g-value for nodes in open set.  g is the movement cost to
 
-    % new experimental cost function prioritizing reachability
-    reachable_nodes_from_each_node = sum(rgraph,2);
-    inv_reach_cost = 10*1./reachable_nodes_from_each_node;
-    inv_reach_cost = 0*inv_reach_cost';
-
-    % new experimental cost function prioritizing visibility
-    visible_nodes_from_each_node = sum(vgraph,2);
-    inv_vis_cost = 10*1./(visible_nodes_from_each_node);
-    inv_vis_cost = 0*inv_vis_cost';
-
-    % make heuristic matrix, h - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
-    % xs - finish(:,1)' gives a matrix where each row is a point and each
-    % column is a finish point so the element in 3,4 is the difference of
-    % point 3 and finish 4
-    % then performing min(M,[],2) on this matrix gives a vector with the
-    % minimum of each row, i.e. for each point the lowest heuristic cost to
-    % a goal.  This is important for the multiple goal case as A* must have
-    % a heuristic that underestimtes actual cost
-    hs = min(sqrt((xs - finish(:,1)').^2 + (ys - finish(:,2)').^2 + (zs - finish(:,3)').^2),[],2)';
-    hs = min(sqrt((zs - finish(:,3)').^2),[],2)';
-    hs = min(sqrt((xs - finish(:,1)').^2 + (ys - finish(:,2)').^2),[],2)';
+    % make heuristic vector, h - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
+    hs = hvec;
 
    % total cost f, is g for the open set nodes plus the corresponding h
-    open_set_fs = open_set_gs + hs + inv_reach_cost; % f-vlaue for nodes in the open set.
+    open_set_fs = open_set_gs + hs; % f-vlaue for nodes in the open set.
 
     % Initialize the closed list
     closed_set = nan(1,num_nodes);
@@ -194,7 +177,7 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts, start, finish, r
                 if tentative_cost < open_set_gs(successor(4))
                     parents(successor(4)) = idx_of_q;
                     open_set_gs(successor(4)) = tentative_cost;
-                    open_set_fs(successor(4)) = tentative_cost + hs(successor(4)) + inv_reach_cost(successor(4));
+                    open_set_fs(successor(4)) = tentative_cost + hs(successor(4));
                     open_set(successor(4)) = successor(4);
                 end % end tentative cost comparison check
         end % end looping through successors

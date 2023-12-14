@@ -107,9 +107,14 @@ all_pts_with_ids_no_start_and_fin = all_pts(1:num_verts,:);
 %% form reachability graph
 [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph, start_with_ids, finish_with_ids);
 
-%% plan route
-[cost, route] = fcn_algorithm_Astar3d(vgraph, all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids,rgraph);
+%% make cgraph
+mode = "xy spatial only";
+% mode = 'time or z only';
+% mode = "xyz or xyt";
+[cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids, mode);
 
+%% plan route
+[cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids);
 % route metrics follow
 total_time = max(route(:,3));
 route_x = route(:,1);
@@ -176,8 +181,14 @@ if second_pass_with_new_verts
     %% make rgraph
     [is_reachable, num_steps, new_rgraph] = fcn_check_reachability(new_vgraph, start_with_ids, finish_with_ids);
 
+    %% make cgraph
+    mode = "xy spatial only";
+    % mode = 'time or z only';
+    % mode = "xyz or xyt";
+    [new_cgraph, new_hvec] = fcn_algorithm_generate_cost_graph(verts_with_ids, start_with_ids, finish_with_ids, mode);
+
     %% plan route
-    [cost, route] = fcn_algorithm_Astar3d(new_vgraph, verts_with_ids, start_with_ids, finish_with_ids, new_rgraph);
+    [cost, route] = fcn_algorithm_Astar3d(new_vgraph, new_cgraph, new_hvec, verts_with_ids, start_with_ids, finish_with_ids);
 
     %% plot path on surfels
     if flag_do_plot
@@ -223,11 +234,18 @@ if threadpulling
     num_finishes = size(finish,1);
 
     verts_with_ids = all_pts(2:end-1,:);
-
+    %% make vgraph
     new_vgraph = fcn_visibility_graph_3d_global(verts_with_ids(:,1:3), start(:,1:3), finish(:,1:3), all_surfels, speed_limit, time_space_polytopes,dt);
+    %% make rgraph
     [is_reachable, num_steps, new_rgraph] = fcn_check_reachability(new_vgraph, start, finish);
+    %% make cgraph
+    mode = "xy spatial only";
+    % mode = 'time or z only';
+    % mode = "xyz or xyt";
+    [new_cgraph, new_hvec] = fcn_algorithm_generate_cost_graph(verts_with_ids, start, finish, mode);
 
-    [cost, new_route] = fcn_algorithm_Astar3d(new_vgraph, verts_with_ids, start, finish, new_rgraph);
+    %% plan route
+    [cost, new_route] = fcn_algorithm_Astar3d(new_vgraph, new_cgraph, new_hvec, verts_with_ids, start, finish);
 
     if flag_do_plot
         figure; hold on; box on;

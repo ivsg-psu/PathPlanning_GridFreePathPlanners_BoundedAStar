@@ -36,7 +36,6 @@ function vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfe
 %
 %   vgraph: the visibility graph as an nxn matrix where n is the number of points (nodes) in the map.
 %       A 1 is in position i,j if point j is visible from point i.  0 otherwise.
-%     is_reachable: binary set to 1 if the finish is reachable from the start in any number of steps.  0 otherwise.
 %
 % DEPENDENCIES:
 %
