@@ -22,7 +22,7 @@ flag_do_animation = 0;
 % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
 %%%
 data = []; % initialize array for storing results
-for map_idx = 1%:5
+for map_idx = 2%1:5
     if map_idx == 1
         %% load test fixtures for polytope map rather than creating it here
         % load distribution north of canyon
@@ -63,6 +63,8 @@ for map_idx = 1%:5
     elseif map_idx == 2
         load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_1.mat'));
         shrunk_polytopes = flood_plain_1;
+        start_init = [-78.3 40.88];
+        finish_init = [-78.1 40.9];
     elseif map_idx == 3
     elseif map_idx == 4
     elseif map_idx == 5
@@ -112,7 +114,6 @@ for map_idx = 1%:5
         % mode = 'time or z only';
         % mode = "xyz or xyt";
         [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
-
         if nominal_or_reachable == 2
             hvec = hvec + inv_reach_cost + inv_vis_cost;
         end
@@ -131,13 +132,14 @@ for map_idx = 1%:5
         start_midway = [1 1.008]; % from_mid_pt_of_reachable_path
         start_midway = [1 1.276]; % from_mid_pt_of_nominal_path
         start_midway = [0.6 1.276]; % from_mid_pt_of_nominal_path
+        start_midway = [start_init];
         navigated_distance = 0;
         % traversal = fcn_Path_convertPathToTraversalStructure(path,varargin);
         % [distance,location,path_segment, t, u] = fcn_Path_findProjectionHitOntoPath(path,sensor_vector_start,sensor_vector_end,varargin);
 
         %% delete vgraph edges randomly
         edge_deletion = 0:0.05:0.9;
-        for i = 16%:length(edge_deletion)
+        for i = 16%1:length(edge_deletion)
 
             %% plan the new path
             start = [start_midway size(all_pts,1)+1 -1 1]
