@@ -139,7 +139,7 @@ for map_idx = 2%1:5
 
         %% delete vgraph edges randomly
         edge_deletion = 0:0.05:0.9;
-        for i = 16%1:length(edge_deletion)
+        for i = 1%1:length(edge_deletion)
 
             %% plan the new path
             start = [start_midway size(all_pts,1)+1 -1 1]
