@@ -12,7 +12,7 @@ addpath 'C:\Users\sjhar\Desktop\gif\gif'
 addpath 'C:\Users\sjh6473\Desktop\gif\gif'
 addpath 'C:\Users\sjh6473\Desktop\TriangleRayIntersection'
 
-addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary'));
+addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
 
 flag_do_plot = 1;
 flag_do_slow_plot = 0;
