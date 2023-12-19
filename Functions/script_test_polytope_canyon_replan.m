@@ -132,10 +132,16 @@ for map_idx = 2%1:5
         start_midway = [1 1.008]; % from_mid_pt_of_reachable_path
         start_midway = [1 1.276]; % from_mid_pt_of_nominal_path
         start_midway = [0.6 1.276]; % from_mid_pt_of_nominal_path
-        start_midway = [start_init];
-        navigated_distance = 0;
-        % traversal = fcn_Path_convertPathToTraversalStructure(path,varargin);
-        % [distance,location,path_segment, t, u] = fcn_Path_findProjectionHitOntoPath(path,sensor_vector_start,sensor_vector_end,varargin);
+        start_midway = [start_init]; % start at the original start
+
+        navigated_distance = init_route_length/2;
+
+        % assume you get halfway
+        St_points_input = [navigated_distance 0];
+        referencePath = init_route(:,1:2);
+        flag_snap_type = 1;
+        fig_num = 666;
+        start_midway = fcn_Path_convertSt2XY(referencePath,St_points_input, flag_snap_type,fig_num);
 
         %% delete vgraph edges randomly
         edge_deletion = 0:0.05:0.9;
