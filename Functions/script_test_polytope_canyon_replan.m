@@ -84,8 +84,8 @@ for map_idx = 2%1:5
     all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
 
     %% plan the initial path
-    start = [start_init size(all_pts,1)+1 -1 1]
-    finish = [finish_init size(all_pts,1)+2 -1 1]
+    start = [start_init size(all_pts,1)+1 -1 1];
+    finish = [finish_init size(all_pts,1)+2 -1 1];
     finishes = [all_pts; start; finish];
     starts = [all_pts; start; finish];
     [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes);
@@ -148,8 +148,8 @@ for map_idx = 2%1:5
         for i = 1%1:length(edge_deletion)
 
             %% plan the new path
-            start = [start_midway size(all_pts,1)+1 -1 1]
-            finish = [finish_init size(all_pts,1)+2 -1 1]
+            start = [start_midway size(all_pts,1)+1 -1 1];
+            finish = [finish_init size(all_pts,1)+2 -1 1];
             finishes = [all_pts; start; finish];
             starts = [all_pts; start; finish];
             [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes);
