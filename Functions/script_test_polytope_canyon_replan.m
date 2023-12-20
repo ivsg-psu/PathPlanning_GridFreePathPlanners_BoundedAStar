@@ -22,7 +22,7 @@ flag_do_animation = 0;
 % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
 %%%
 data = []; % initialize array for storing results
-for map_idx = 2%1:5
+for map_idx = 3%1:5
     if map_idx == 1
         %% load test fixtures for polytope map rather than creating it here
         % load distribution north of canyon
@@ -71,6 +71,10 @@ for map_idx = 2%1:5
         start_init = [-78.02 40.96];
         finish_init = [-77.86 40.93];
     elseif map_idx == 4
+        load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_3.mat'));
+        shrunk_polytopes = flood_plain_3;
+        start_init = [-77.49 40.84];
+        finish_init = [-77.58 40.845];
     elseif map_idx == 5
     end % if conditions for different map test fixtures
 
