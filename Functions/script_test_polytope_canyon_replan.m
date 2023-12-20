@@ -66,6 +66,10 @@ for map_idx = 2%1:5
         start_init = [-78.3 40.88];
         finish_init = [-78.1 40.9];
     elseif map_idx == 3
+        load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_2.mat'));
+        shrunk_polytopes = flood_plain_2;
+        start_init = [-78.02 40.96];
+        finish_init = [-77.86 40.93];
     elseif map_idx == 4
     elseif map_idx == 5
     end % if conditions for different map test fixtures
