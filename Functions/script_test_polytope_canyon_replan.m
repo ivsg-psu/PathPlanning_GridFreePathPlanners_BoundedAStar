@@ -22,7 +22,7 @@ flag_do_animation = 0;
 % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
 %%%
 data = []; % initialize array for storing results
-for map_idx = 3%1:5
+for map_idx = 1:4
     if map_idx == 1
         %% load test fixtures for polytope map rather than creating it here
         % load distribution north of canyon
@@ -75,7 +75,6 @@ for map_idx = 3%1:5
         shrunk_polytopes = flood_plain_3;
         start_init = [-77.49 40.84];
         finish_init = [-77.58 40.845];
-    elseif map_idx == 5
     end % if conditions for different map test fixtures
 
     %% all_pts array creation
@@ -91,24 +90,24 @@ for map_idx = 3%1:5
     obs_id = [shrunk_polytopes.obs_id];
     all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
 
-    %% plan the initial path
-    start = [start_init size(all_pts,1)+1 -1 1];
-    finish = [finish_init size(all_pts,1)+2 -1 1];
-    finishes = [all_pts; start; finish];
-    starts = [all_pts; start; finish];
-    [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes);
+    for nominal_or_reachable = [1,2]
+        %% plan the initial path
+        start = [start_init size(all_pts,1)+1 -1 1];
+        finish = [finish_init size(all_pts,1)+2 -1 1];
+        finishes = [all_pts; start; finish];
+        starts = [all_pts; start; finish];
+        [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes);
 
-    start_for_reachability = start;
-    start_for_reachability(4) = start(3);
-    finish_for_reachability = finish;
-    finish_for_reachability(4) = finish(3);
+        start_for_reachability = start;
+        start_for_reachability(4) = start(3);
+        finish_for_reachability = finish;
+        finish_for_reachability(4) = finish(3);
 
-    [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start_for_reachability,finish_for_reachability);
-    if ~is_reachable
-        error('initial mission, prior to edge deletion, is not possible')
-    end
+        [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start_for_reachability,finish_for_reachability);
+        if ~is_reachable
+            error('initial mission, prior to edge deletion, is not possible')
+        end
 
-    for nominal_or_reachable = 1%[1,2]
         % new experimental cost function prioritizing reachability
         reachable_nodes_from_each_node = sum(rgraph,2);
         inv_reach_cost = 10*(1./(reachable_nodes_from_each_node))';
@@ -137,10 +136,10 @@ for map_idx = 3%1:5
         %% find midpoint of route
         % mid_pt_x = 1;
         % mid_pt_y = interp1(route(:,1),route(:,2),mid_pt_x);
-        start_midway = [1 1.008]; % from_mid_pt_of_reachable_path
-        start_midway = [1 1.276]; % from_mid_pt_of_nominal_path
-        start_midway = [0.6 1.276]; % from_mid_pt_of_nominal_path
-        start_midway = [start_init]; % start at the original start
+        % start_midway = [1 1.008]; % from_mid_pt_of_reachable_path
+        % start_midway = [1 1.276]; % from_mid_pt_of_nominal_path
+        % start_midway = [0.6 1.276]; % from_mid_pt_of_nominal_path
+        % start_midway = [start_init]; % start at the original start
 
         navigated_distance = init_route_length/2;
 
@@ -148,12 +147,11 @@ for map_idx = 3%1:5
         St_points_input = [navigated_distance 0];
         referencePath = init_route(:,1:2);
         flag_snap_type = 1;
-        fig_num = 666;
-        start_midway = fcn_Path_convertSt2XY(referencePath,St_points_input, flag_snap_type,fig_num);
+        start_midway = fcn_Path_convertSt2XY(referencePath,St_points_input, flag_snap_type);
 
         %% delete vgraph edges randomly
         edge_deletion = 0:0.05:0.9;
-        for i = 1%1:length(edge_deletion)
+        for i = 1:13%length(edge_deletion)
 
             %% plan the new path
             start = [start_midway size(all_pts,1)+1 -1 1];
@@ -183,6 +181,8 @@ for map_idx = 3%1:5
                 warning('mission replanning is impossible')
                 replan_cost = NaN;
                 replan_route_length = NaN;
+                data = [data; map_idx nominal_or_reachable edge_deletion(i) pct_edges_removed init_route_length navigated_distance replan_route_length];
+                continue
             end
 
             % new experimental cost function prioritizing reachability
@@ -212,28 +212,39 @@ for map_idx = 3%1:5
             replan_route_length = sum(sqrt(sum(lengths.*lengths,2)));
 
 % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
-            data = [data; map_idx nominal_or_reachable edge_deletion(i) init_route_length navigated_distance replan_route_length];
-        end % end edge deletion portion loop
-        % plot field, initial path, replan path, and midway point
-        if flag_do_plot
-            figure; hold on; box on;
-            xlabel('x [km]');
-            ylabel('y [km]');
-            for i = 1:length(shrunk_polytopes)
-                 fill(shrunk_polytopes(i).vertices(:,1)',shrunk_polytopes(i).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+            data = [data; map_idx nominal_or_reachable edge_deletion(i) pct_edges_removed init_route_length navigated_distance replan_route_length];
+            % plot field, initial path, replan path, and midway point
+            if flag_do_plot
+                figure; hold on; box on;
+                xlabel('x [km]');
+                ylabel('y [km]');
+                plot(start(1),start(2),'xg','MarkerSize',3);
+                plot(finish(1),finish(2),'xr');
+                plot(init_route(:,1),init_route(:,2),'k','LineWidth',2);
+                plot(start_midway(1),start_midway(2),'dm','MarkerSize',3)
+                plot(replan_route(:,1),replan_route(:,2),'--g','LineWidth',2);
+                for j = 1:length(shrunk_polytopes)
+                     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+                end
+                title_string = sprintf('map idx: %i, nominal or reachable: %i, pct edges removed: %.1f',map_idx, nominal_or_reachable,pct_edges_removed);
+                title(title_string);
+                legend('start','finish','initial route','replanning point','replanned route','obstacles');
             end
-            hold on
-            plot(init_route(:,1),init_route(:,2),'k','LineWidth',2);
-            plot(replan_route(:,1),replan_route(:,2),'--g','LineWidth',2);
-            plot(start_midway(1),start_midway(2),'dm','MarkerSize',3)
-            plot(start(1),start(2),'xg');
-            plot(finish(1),finish(2),'xr');
-        end
+        end % end edge deletion portion loop
     end % end cost function loop
 end % end map loop
 
 figure; hold on; box on;
 box on; hold on;
+markers = {'x','d','o','+'};
+colors = {'r','b'};
+for data_idx = 1:size(data,1)
+    datum = data(data_idx,:);
+    if isnan(datum(7))
+        continue
+    end
+    plot(datum(4),(datum(6)+datum(7))/datum(5),"Color",colors{datum(nominal_or_reachable)},"Marker",markers{datum(1)});
+end
 legend('with vis/reach cost','without vis/reach cost');
 xlabel('portion of vgraph edges removed')
 ylabel('path length cost [km]')
