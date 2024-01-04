@@ -1,4 +1,4 @@
-function route_dense = fcn_interpolate_route_spatially(route,num_pts)
+function route_dense = fcn_interpolate_route_spatially(route, spacing)
 % fcn_interpolate_route_spatially
 %
 % Adds waypoints to the input route to increase the density of points according to the number of
@@ -14,7 +14,8 @@ function route_dense = fcn_interpolate_route_spatially(route,num_pts)
 %     route: the matrix as produced by fcn_algorithm_Astar3d consisting of waypoints.  Each row is a
 %     waypoint, and each column is x, y, t, and point ID
 %
-%     num_pts: the desired number of points to add when creating the dense route by interpolating the route waypoints
+%     spacing: the desired spacing between points to achieve by adding waypoints
+%       when creating the dense route by interpolating the route waypoints
 %
 % OUTPUTS:
 %     route_dense: the matrix representing the interpolated route consisting of waypoints.  Each row is a
@@ -40,42 +41,40 @@ function route_dense = fcn_interpolate_route_spatially(route,num_pts)
 %
 % TO DO:
 
-    % loop through each pair of waypoints
-    % if the x's aren't the same, interpolate normally BASED ON DISTANCE
-    % if the x's are the same, interpolate in y instead
-    % assemble waypoints
-    % that's it
-    % see fcn_MapGen_increasePolytopeVertexCount
 
 
     %% interpolation code for a route
-    start = route(1,:);
-    finish = route(end,:);
-    route_dense_x = linspace(start(1),finish(2),num_pts);
-    % add the original x values to the interpolated x values so the original
-    % route waypoints are preserved.  Remove any duplicates that were introduced
-    % as a result of this concatenation.
-    route_dense_x = unique(sort([route_dense_x, (route(:,1))']));
-
     num_route_verts = size(route,1);
+    route_dense = [];
 
-    % first, linearly interpolated between existing timestamps
-    % dense_times = [];
-    % for i = 2:1:num_unique_times
-    %     new_times = unique_times(i-1):dt:unique_times(i);
-    %     dense_times = [dense_times; new_times'];
-    % end
-    % dense_times = unique(dense_times); % remove duplicates
-    % num_dense_times = length(dense_times);
+    % loop through each pair of waypoints
+    for i = 1:(num_route_verts-1)
 
+        % get pair of adjascent waypoints and distance between them
+        p1 = route(i,:);
+        p2 = route(i+1,:);
+        dist21 = sqrt((p2(2)-p1(2))^2+(p2(1)-p1(1))^2);
+        needed_points = dist21/spacing;
 
-    % for each waypoint, want to interpolate x and y position by the dense times
-    try
-        route_dense_y = interp1(route(:,1),route(:,2),route_dense_x);
-    catch
-        % interpolation may fail if the route has a stationary segment
-        error('route may have repeated waypoint')
+        % if the x's aren't the same, interpolate normally BASED ON DISTANCE
+        if p1(1) ~= p2(1)
+            route_dense_x = linspace(p1(1),p2(1),needed_points);
+            route_dense_y = interp1(route(i:(i+1),1),route(i:(i+1),2),route_dense_x);
+
+        % if the x's are the same, interpolate in y instead
+        elseif p1(1) == p2(1)
+            route_dense_y = linspace(p1(2),p2(2),needed_points);
+            route_dense_x = interp1(route(i:(i+1),2),route(i:(i+1),1),route_dense_y);
+
+        % this condition should not be hit
+        else
+            error('Waypoints may be malformed')
+        end
+        % For a similar conditional block, see fcn_MapGen_increasePolytopeVertexCount
+
+        % assemble new waypoints into dense route
+        route_dense = [route_dense; route_dense_x', route_dense_y'];
     end
-    % create a new route based on the more dense waypoints
-    route_dense = [route_dense_x route_dense_y];
+    % remove any duplicated points whilst preserving route order
+    route_dense = unique(route_dense,'stable','rows');
 end
