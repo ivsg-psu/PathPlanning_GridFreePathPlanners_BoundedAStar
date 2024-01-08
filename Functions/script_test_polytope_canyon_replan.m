@@ -317,9 +317,8 @@ for data_idx = 1:size(data,1)
     end
     plot(datum(4),(datum(6)+datum(7))/datum(5),"Color",colors{datum(nominal_or_reachable)},"Marker",markers{datum(1)});
 end
-legend('with vis/reach cost','without vis/reach cost');
-xlabel('portion of vgraph edges removed')
-ylabel('path length cost [km]')
+ylabel('ratio of replanned path length to initial path length')
+xlabel('portion of visibility graph edges blocked')
 
 function INTERNAL_fcn_format_timespace_plot()
     box on
