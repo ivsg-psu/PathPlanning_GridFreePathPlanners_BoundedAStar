@@ -64,17 +64,20 @@ for map_idx = 2:4
         load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_1.mat'));
         shrunk_polytopes = flood_plain_1;
         start_init = [-78.3 40.88];
-        finish_init = [-78.1 40.9];
+        % finish_init = [-78.1 40.9];
+        finish_init = [-78.07 40.82];
     elseif map_idx == 3
         load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_2.mat'));
         shrunk_polytopes = flood_plain_2;
         start_init = [-78.02 40.96];
-        finish_init = [-77.86 40.93];
+        % finish_init = [-77.86 40.93];
+        finish_init = [-77.82 40.97];
     elseif map_idx == 4
         load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_3.mat'));
         shrunk_polytopes = flood_plain_3;
         start_init = [-77.49 40.84];
-        finish_init = [-77.58 40.845];
+        % finish_init = [-77.58 40.845];
+        finish_init = [-77.68 40.85];
     end % if conditions for different map test fixtures
 
     %% all_pts array creation
