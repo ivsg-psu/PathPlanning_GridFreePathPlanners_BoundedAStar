@@ -22,7 +22,7 @@ flag_do_animation = 0;
 % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
 %%%
 data = []; % initialize array for storing results
-for map_idx = 2:4
+for map_idx = 5%2:5
     if map_idx == 1
         %% load test fixtures for polytope map rather than creating it here
         % load distribution north of canyon
@@ -78,6 +78,11 @@ for map_idx = 2:4
         start_init = [-77.49 40.84];
         % finish_init = [-77.58 40.845];
         finish_init = [-77.68 40.85];
+    elseif map_idx == 5
+        load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_4.mat'));
+        shrunk_polytopes = flood_plain_4;
+        start_init = [-77.68 40.9];
+        finish_init = [-77.5 40.8];
     end % if conditions for different map test fixtures
 
     %% all_pts array creation
@@ -311,18 +316,32 @@ end % end map loop
 
 figure; hold on; box on;
 box on; hold on;
-markers = {'x','d','o','+'};
+markers = {'x','d','o','+','s'};
 colors = {'r','b'};
 for data_idx = 1:size(data,1)
     datum = data(data_idx,:);
     if isnan(datum(7))
         continue
     end
-    if datum(1) ==2
+    if datum(1) == 5
         plot(datum(4),(datum(6)+datum(7))/datum(5),"Color",colors{datum(2)},"Marker",markers{datum(1)});
     end
 end
 ylabel('ratio of replanned path length to initial path length')
+xlabel('portion of visibility graph edges blocked')
+
+figure; hold on; box on;
+box on; hold on;
+for data_idx = 1:size(data,1)
+    datum = data(data_idx,:);
+    if isnan(datum(7))
+        continue
+    end
+    if datum(1) == 5
+        plot(datum(4),(datum(6)+datum(7)),"Color",colors{datum(2)},"Marker",markers{datum(1)});
+    end
+end
+ylabel('total path length after replanning')
 xlabel('portion of visibility graph edges blocked')
 
 function INTERNAL_fcn_format_timespace_plot()
