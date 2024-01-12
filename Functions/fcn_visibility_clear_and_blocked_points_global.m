@@ -141,51 +141,53 @@ function [visibility_matrix, visibility_results] = fcn_visibility_clear_and_bloc
     %         end
     %    end
     % end
-    %% check for edges entirely contained by polytopes
-    % don't need to check self visible points as this will not change
-    visibility_matrix_without_self_visible = visibility_matrix - eye(size(visibility_matrix,1));
-    % find indeces of every other '1' or allowed edge...
-    linear_idx = find(visibility_matrix_without_self_visible); % find 1s in visibility_matrix
-    [rows_of_1s, cols_of_1s] = ind2sub(size(visibility_matrix_without_self_visible),linear_idx); % convert linear idx to r,c
-    num_1s = length(rows_of_1s);
-    for e = 1:num_1s
-        start_pt = starts(rows_of_1s(e),1:3);
-        end_pt = finishes(cols_of_1s(e),1:3);
-        % parametric equation for line in 3D: https://math.stackexchange.com/questions/404440/what-is-the-equation-for-a-3d-line
-        % [x y z]' = [a b c]'*t + [x0 y0 z0]'
-        % parametric equation for line in 2D: https://math.libretexts.org/Bookshelves/Calculus/CLP-3_Multivariable_Calculus_(Feldman_Rechnitzer_and_Yeager)/01%3A_Vectors_and_Geometry_in_Two_and_Three_Dimensions/1.03%3A_Equations_of_Lines_in_2d
-        % [x y]' = d'*t + [x0 y0]'
-        d_vec = end_pt - start_pt;
-        mid_pt = start_pt + 0.5*d_vec; % find the middle of the edge
-        % for each polytope...
-        num_polys = length(polytopes);
-        p = 1;
-        while p <= num_polys
-            verts = polytopes(p).vertices;
-            % get xmin and xmax also ymin and ymax
-            xmax = max(verts(:,1));
-            xmin = min(verts(:,1));
-            ymax = max(verts(:,2));
-            ymin = min(verts(:,2));
-            % check axis aligned bounding box before checking for polytope containment of the midpoint
-            in_AABB = (mid_pt(1) < xmax && mid_pt(1) > xmin) && (mid_pt(2) < ymax && mid_pt(2) > ymin);
-            % is point between xmin xmax and ymin max? if not continue
-            if ~in_AABB
-                p = p+1;
-                continue
+    if is_concave
+        %% check for edges entirely contained by polytopes
+        % don't need to check self visible points as this will not change
+        visibility_matrix_without_self_visible = visibility_matrix - eye(size(visibility_matrix,1));
+        % find indeces of every other '1' or allowed edge...
+        linear_idx = find(visibility_matrix_without_self_visible); % find 1s in visibility_matrix
+        [rows_of_1s, cols_of_1s] = ind2sub(size(visibility_matrix_without_self_visible),linear_idx); % convert linear idx to r,c
+        num_1s = length(rows_of_1s);
+        for e = 1:num_1s
+            start_pt = starts(rows_of_1s(e),1:3);
+            end_pt = finishes(cols_of_1s(e),1:3);
+            % parametric equation for line in 3D: https://math.stackexchange.com/questions/404440/what-is-the-equation-for-a-3d-line
+            % [x y z]' = [a b c]'*t + [x0 y0 z0]'
+            % parametric equation for line in 2D: https://math.libretexts.org/Bookshelves/Calculus/CLP-3_Multivariable_Calculus_(Feldman_Rechnitzer_and_Yeager)/01%3A_Vectors_and_Geometry_in_Two_and_Three_Dimensions/1.03%3A_Equations_of_Lines_in_2d
+            % [x y]' = d'*t + [x0 y0]'
+            d_vec = end_pt - start_pt;
+            mid_pt = start_pt + 0.5*d_vec; % find the middle of the edge
+            % for each polytope...
+            num_polys = length(polytopes);
+            p = 1;
+            while p <= num_polys
+                verts = polytopes(p).vertices;
+                % get xmin and xmax also ymin and ymax
+                xmax = max(verts(:,1));
+                xmin = min(verts(:,1));
+                ymax = max(verts(:,2));
+                ymin = min(verts(:,2));
+                % check axis aligned bounding box before checking for polytope containment of the midpoint
+                in_AABB = (mid_pt(1) < xmax && mid_pt(1) > xmin) && (mid_pt(2) < ymax && mid_pt(2) > ymin);
+                % is point between xmin xmax and ymin max? if not continue
+                if ~in_AABB
+                    p = p+1;
+                    continue
+                end
+                % if point is in AABB make polyshape from these verts
+                polyshape_p = polyshape(verts);
+                % is point in but not on polyshape?
+                [is_in,is_on] = isinterior(polyshape_p,mid_pt(1:2));
+                % if so, remove the edge, and stop trying polytopes
+                if is_in && ~ is_on
+                    visibility_matrix(rows_of_1s(e),cols_of_1s(e)) = 0;
+                    % if it is in one polytope, we needn't check any others
+                    p = num_polys+1;
+                end
+                % if not, continue to check the next polytope
+                p = p + 1;
             end
-            % if point is in AABB make polyshape from these verts
-            polyshape_p = polyshape(verts);
-            % is point in but not on polyshape?
-            [is_in,is_on] = isinterior(polyshape_p,mid_pt(1:2));
-            % if so, remove the edge, and stop trying polytopes
-            if is_in && ~ is_on
-                visibility_matrix(rows_of_1s(e),cols_of_1s(e)) = 0;
-                % if it is in one polytope, we needn't check any others
-                p = num_polys+1;
-            end
-            % if not, continue to check the next polytope
-            p = p + 1;
         end
     end
 end
