@@ -157,78 +157,6 @@ for map_idx = 5%2:5
         flag_snap_type = 1;
         start_midway = fcn_Path_convertSt2XY(referencePath,St_points_input, flag_snap_type);
 
-        %% attempt threadpulling to fix strange routes
-        % % create interpolated route of points
-        % desired_spacing = 0.005;
-        % route_dense = fcn_interpolate_route_spatially(init_route, desired_spacing);
-        % figure; hold on; box on;
-        % xlabel('x [km]');
-        % ylabel('y [km]');
-        % plot(start(1),start(2),'xg','MarkerSize',3);
-        % plot(finish(1),finish(2),'xr');
-        % plot(init_route(:,1),init_route(:,2),'k','LineWidth',2);
-        % plot(route_dense(:,1),route_dense(:,2),'md','LineWidth',1);
-        % for j = 1:length(shrunk_polytopes)
-        %         fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-        % end
-        % % add dense route points to all points
-        % new_point_tot = size(route_dense,1); % total number of new points
-        % new_beg_end = zeros(1,new_point_tot); % is the point the start/end of an obstacle
-        % new_obs_id = -1*ones(1,new_point_tot); % is the point the start/end of an obstacle
-        % new_all_pts = [route_dense';1:new_point_tot;1:new_point_tot;new_beg_end]'; % all points [x y point_id obs_id beg_end]
-        % % should be start, finish, and new route
-        % start = [start_init size(new_all_pts,1)+1 -1 1];
-        % finish = [finish_init size(new_all_pts,1)+2 -1 1];
-        % % recalculate vgraph with original polys and new points
-        % finishes = [new_all_pts; start; finish];
-        % starts = [new_all_pts; start; finish];
-        % [new_vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes);
-        % % replan given new vgraph and points
-        % start_for_reachability = start;
-        % start_for_reachability(4) = start(3);
-        % finish_for_reachability = finish;
-        % finish_for_reachability(4) = finish(3);
-        % [is_reachable, num_steps, rgraph] = fcn_check_reachability(new_vgraph,start_for_reachability,finish_for_reachability);
-        % if ~is_reachable
-        %     error('threadpulling mission, prior to edge deletion, is not possible')
-        % end
-        % % new experimental cost function prioritizing reachability
-        % reachable_nodes_from_each_node = sum(rgraph,2);
-        % inv_reach_cost = 10*(1./(reachable_nodes_from_each_node))';
-        % % new experimental cost function prioritizing visibility
-        % visible_nodes_from_each_node = sum(new_vgraph,2);
-        % inv_vis_cost = 10*(1./(visible_nodes_from_each_node))';
-        % %% make cgraph
-        % mode = "xy spatial only";
-        % % mode = 'time or z only';
-        % % mode = "xyz or xyt";
-        % [new_cgraph, new_hvec] = fcn_algorithm_generate_cost_graph(new_all_pts, start, finish, mode);
-        % if nominal_or_reachable == 2
-        %     new_hvec = new_hvec + inv_vis_cost + inv_reach_cost;
-        % end
-        % [init_cost, init_route] = fcn_algorithm_Astar(new_vgraph, new_cgraph, new_hvec, new_all_pts, start, finish);
-        % plot(init_route(:,1),init_route(:,2),'g','LineWidth',2);
-        % legend('start','finish','initial route','dense route','obstacles','','','threadpulling route')
-        % % vgraph plot code
-        % figure; hold on; box on; title('visibility graph');
-        % plot(start(1),start(2),'gx');
-        % plot(finish(1),finish(2),'rx');
-        % for j = 1:length(shrunk_polytopes)
-        %         fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-        % end
-        % for beg = 1:size(new_vgraph,1)
-        %     example_vgraph_row = new_vgraph(beg,:);
-        %     for term = 1:1:length(example_vgraph_row)
-        %         if example_vgraph_row(term)
-        %             color = 'g';
-        %         plot([starts(beg,1), starts(term,1)],[starts(beg,2), starts(term,2)],color,'LineWidth',2)
-        %         else
-        %             color = 'r';
-        %         end
-        %     end
-        % end
-        %% end threadpulling stuff
-
         %% delete vgraph edges randomly
         edge_deletion = 0:0.05:0.9;
         for i = 1:13%length(edge_deletion)
@@ -328,7 +256,7 @@ for data_idx = 1:size(data,1)
     end
 end
 ylabel('ratio of replanned path length to initial path length')
-xlabel('portion of visibility graph edges blocked')
+xlabel('percentage of visibility graph edges blocked')
 
 figure; hold on; box on;
 box on; hold on;
@@ -342,7 +270,7 @@ for data_idx = 1:size(data,1)
     end
 end
 ylabel('total path length after replanning')
-xlabel('portion of visibility graph edges blocked')
+xlabel('percentage of visibility graph edges blocked')
 
 function INTERNAL_fcn_format_timespace_plot()
     box on
