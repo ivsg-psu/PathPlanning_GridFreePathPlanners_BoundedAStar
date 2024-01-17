@@ -170,16 +170,20 @@ for map_idx = 5%2:5
 
             if nominal_or_reachable == 1
                 desired_portion_edge_deletion = edge_deletion(i);
-                valid_edges_initially = find(vgraph==1);
+                vgraph_without_start_and_fin = vgraph(1:end-2,1:end-2);
+                valid_edges_initially = find(vgraph_without_start_and_fin==1);
                 num_edges_initially = length(valid_edges_initially);
                 edge_lottery_draw = rand(num_edges_initially,1);
                 edges_for_removal = (edge_lottery_draw <= desired_portion_edge_deletion);
                 idx_of_edges_for_removal = valid_edges_initially(edges_for_removal);
+                [rows_for_removal, cols_for_removal], = ind2sub(size(vgraph_without_start_and_fin),idx_of_edges_for_removal);
             end
             new_vgraph = vgraph;
-            new_vgraph(idx_of_edges_for_removal) = 0;
+            num_edges_initally_updated = sum(sum(vgraph));
+            idx_of_edges_for_removal_updated = sub2ind(size(new_vgraph),rows_for_removal,cols_for_removal);
+            new_vgraph(idx_of_edges_for_removal_updated) = 0;
             num_edges_after = sum(sum(new_vgraph));
-            pct_edges_removed = (num_edges_initially - num_edges_after)/num_edges_initially*100;
+            pct_edges_removed = (num_edges_initally_updated - num_edges_after)/num_edges_initally_updated*100;
 
             start_for_reachability = start;
             start_for_reachability(4) = start(3);
