@@ -98,6 +98,9 @@ for map_idx = 5%2:5
     obs_id = [shrunk_polytopes.obs_id];
     all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
 
+        %% delete vgraph edges randomly
+        edge_deletion = 0:0.05:0.9;
+        for i = 1:13%length(edge_deletion)
     for nominal_or_reachable = [1,2]
         %% plan the initial path
         start = [start_init size(all_pts,1)+1 -1 1];
@@ -157,9 +160,6 @@ for map_idx = 5%2:5
         flag_snap_type = 1;
         start_midway = fcn_Path_convertSt2XY(referencePath,St_points_input, flag_snap_type);
 
-        %% delete vgraph edges randomly
-        edge_deletion = 0:0.05:0.9;
-        for i = 1:13%length(edge_deletion)
 
             %% plan the new path
             start = [start_midway size(all_pts,1)+1 -1 1];
@@ -168,12 +168,14 @@ for map_idx = 5%2:5
             starts = [all_pts; start; finish];
             [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes,1);
 
-            desired_portion_edge_deletion = edge_deletion(i);
-            valid_edges_initially = find(vgraph==1);
-            num_edges_initially = length(valid_edges_initially);
-            edge_lottery_draw = rand(num_edges_initially,1);
-            edges_for_removal = (edge_lottery_draw <= desired_portion_edge_deletion);
-            idx_of_edges_for_removal = valid_edges_initially(edges_for_removal);
+            if nominal_or_reachable == 1
+                desired_portion_edge_deletion = edge_deletion(i);
+                valid_edges_initially = find(vgraph==1);
+                num_edges_initially = length(valid_edges_initially);
+                edge_lottery_draw = rand(num_edges_initially,1);
+                edges_for_removal = (edge_lottery_draw <= desired_portion_edge_deletion);
+                idx_of_edges_for_removal = valid_edges_initially(edges_for_removal);
+            end
             new_vgraph = vgraph;
             new_vgraph(idx_of_edges_for_removal) = 0;
             num_edges_after = sum(sum(new_vgraph));
