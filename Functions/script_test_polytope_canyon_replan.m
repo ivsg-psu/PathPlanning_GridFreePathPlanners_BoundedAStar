@@ -269,7 +269,29 @@ plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},
 plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
 
 
-ylabel('ratio of replanned path length to initial path length')
+ylabel('ratio of replanned path length to reachable or nominal initial path length')
+xlabel('percentage of visibility graph edges blocked')
+legend({'nominal cost function','reachable cost function'},'Location','best');
+
+figure; hold on; box on;
+box on; hold on;
+markers = {'x','d','o','+','s'};
+colors = {'r','b'};
+idx_nominal = data(:,1)== map_idx & data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
+nominal_data = data(idx_nominal,:);
+idx_reachable = data(:,1)== map_idx & data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
+reachable_data = data(idx_reachable,:);
+plot(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5),"Color",colors{nominal_data(1,2)},"Marker",markers{nominal_data(1,1)},'LineStyle','none');
+plot(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./nominal_data(1,5),"Color",colors{reachable_data(1,2)},"Marker",markers{reachable_data(1,1)},'LineStyle','none');
+fit_order = 3;
+p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5),fit_order);
+p_reachable = polyfit(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./nominal_data(1,5),fit_order);
+x_for_poly = linspace(min(nominal_data(:,4)),max(nominal_data(:,4)),100);
+plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
+plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
+
+
+ylabel('ratio of replanned path length to nominal initial path length')
 xlabel('percentage of visibility graph edges blocked')
 legend({'nominal cost function','reachable cost function'},'Location','best');
 
@@ -318,3 +340,15 @@ function INTERNAL_fcn_format_timespace_plot()
     zlabel('t [s]')
     view([36 30])
 end
+
+% function LL2KM(lat1, lon1, lat2, lon2){  // generally used geo measurement function
+%     var R = 6378.137; // Radius of earth in KM
+%     var dLat = lat2 * Math.PI / 180 - lat1 * Math.PI / 180;
+%     var dLon = lon2 * Math.PI / 180 - lon1 * Math.PI / 180;
+%     var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+%     Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+%     Math.sin(dLon/2) * Math.sin(dLon/2);
+%     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+%     var d = R * c;
+%     return d * 1000; // meters
+% }
