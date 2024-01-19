@@ -97,10 +97,11 @@ for map_idx = 5%2:5
     end
     obs_id = [shrunk_polytopes.obs_id];
     all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
-    for repeats = 1:5
+    pts_along_nominal = [];
+    for repeats = 1%:3
     %% delete vgraph edges randomly
     edge_deletion = 0:0.05:0.9;
-    for i = 1:13%length(edge_deletion)
+    for i = 10%1:13%length(edge_deletion)
         for nominal_or_reachable = [1,2]
             %% plan the initial path
             start = [start_init size(all_pts,1)+1 -1 1];
@@ -138,6 +139,12 @@ for map_idx = 5%2:5
 
             [init_cost, init_route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
 
+            if nominal_or_reachable == 1
+                init_route_nominal = init_route;
+            end
+            if nominal_or_reachable == 2
+                init_route_reachable = init_route;
+            end
             % find route length
             route_x = init_route(:,1);
             route_y = init_route(:,2);
@@ -151,7 +158,9 @@ for map_idx = 5%2:5
             % start_midway = [1 1.276]; % from_mid_pt_of_nominal_path
             % start_midway = [0.6 1.276]; % from_mid_pt_of_nominal_path
             % start_midway = [start_init]; % start at the original start
-            for navigated_portion = 0:0.1:0.9
+            navigated_portions = 0:0.05:0.85;
+            for navigated_portion_idx = 1:length(navigated_portions)
+                navigated_portion = navigated_portions(navigated_portion_idx);
                 navigated_distance = init_route_length*navigated_portion;
 
                 % assume you get halfway
@@ -160,6 +169,9 @@ for map_idx = 5%2:5
                 flag_snap_type = 1;
                 start_midway = fcn_Path_convertSt2XY(referencePath,St_points_input, flag_snap_type);
 
+                if nominal_or_reachable == 1
+                    pts_along_nominal = [pts_along_nominal; start_midway];
+                end
 
                 %% plan the new path
                 start = [start_midway size(all_pts,1)+1 -1 1];
@@ -168,7 +180,7 @@ for map_idx = 5%2:5
                 starts = [all_pts; start; finish];
                 [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes,1);
 
-                if nominal_or_reachable == 1
+                if nominal_or_reachable == 1 && navigated_portion ==0
                     desired_portion_edge_deletion = edge_deletion(i);
                     vgraph_without_start_and_fin = vgraph(1:end-2,1:end-2);
                     valid_edges_initially = find(vgraph_without_start_and_fin==1);
@@ -227,7 +239,6 @@ for map_idx = 5%2:5
                 lengths = diff([route_x(:) route_y(:)]);
                 replan_route_length = sum(sqrt(sum(lengths.*lengths,2)));
 
-                % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
                 data = [data; map_idx nominal_or_reachable edge_deletion(i) pct_edges_removed init_route_length navigated_distance replan_route_length];
                 % plot field, initial path, replan path, and midway point
                 if flag_do_plot
@@ -242,7 +253,7 @@ for map_idx = 5%2:5
                     for j = 1:length(shrunk_polytopes)
                          fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
                     end
-                    title_string = sprintf('map idx: %i, nominal or reachable: %i, pct edges removed: %.1f',map_idx, nominal_or_reachable,pct_edges_removed);
+                    title_string = sprintf('map idx: %i, nominal or reachable: %i,\npct edges removed: %.1f, navigated portion: %.2f',map_idx, nominal_or_reachable,pct_edges_removed,navigated_portion);
                     title(title_string);
                     legend('start','finish','initial route','replanning point','replanned route','obstacles');
                 end % end flag_do_plot condition
@@ -252,58 +263,42 @@ for map_idx = 5%2:5
 end % end repeats loop
 end % end map loop
 
-figure; hold on; box on;
-box on; hold on;
 markers = {'x','d','o','+','s'};
 colors = {'r','b'};
 idx_nominal = data(:,1)== map_idx & data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
 nominal_data = data(idx_nominal,:);
 idx_reachable = data(:,1)== map_idx & data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
 reachable_data = data(idx_reachable,:);
+fit_order = 3;
+
+figure; hold on; box on;
+box on; hold on;
 plot(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(:,5),"Color",colors{nominal_data(1,2)},"Marker",markers{nominal_data(1,1)},'LineStyle','none');
 plot(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./reachable_data(:,5),"Color",colors{reachable_data(1,2)},"Marker",markers{reachable_data(1,1)},'LineStyle','none');
-fit_order = 3;
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(:,5),fit_order);
 p_reachable = polyfit(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./reachable_data(:,5),fit_order);
 x_for_poly = linspace(min(nominal_data(:,4)),max(nominal_data(:,4)),100);
 plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
 plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
-
-
 ylabel('ratio of replanned path length to reachable or nominal initial path length')
 xlabel('percentage of visibility graph edges blocked')
 legend({'nominal cost function','reachable cost function'},'Location','best');
 
 figure; hold on; box on;
 box on; hold on;
-markers = {'x','d','o','+','s'};
-colors = {'r','b'};
-idx_nominal = data(:,1)== map_idx & data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
-nominal_data = data(idx_nominal,:);
-idx_reachable = data(:,1)== map_idx & data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
-reachable_data = data(idx_reachable,:);
 plot(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5),"Color",colors{nominal_data(1,2)},"Marker",markers{nominal_data(1,1)},'LineStyle','none');
 plot(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./nominal_data(1,5),"Color",colors{reachable_data(1,2)},"Marker",markers{reachable_data(1,1)},'LineStyle','none');
-fit_order = 3;
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5),fit_order);
 p_reachable = polyfit(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./nominal_data(1,5),fit_order);
 x_for_poly = linspace(min(nominal_data(:,4)),max(nominal_data(:,4)),100);
 plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
 plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
-
-
 ylabel('ratio of replanned path length to nominal initial path length')
 xlabel('percentage of visibility graph edges blocked')
 legend({'nominal cost function','reachable cost function'},'Location','best');
 
 figure; hold on; box on;
 box on; hold on;
-markers = {'x','d','o','+','s'};
-colors = {'r','b'};
-idx_nominal = data(:,1)== map_idx & data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
-nominal_data = data(idx_nominal,:);
-idx_reachable = data(:,1)== map_idx & data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
-reachable_data = data(idx_reachable,:);
 plot(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7)),"Color",colors{nominal_data(1,2)},"Marker",markers{nominal_data(1,1)},'LineStyle','none');
 plot(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7)),"Color",colors{reachable_data(1,2)},"Marker",markers{reachable_data(1,1)},'LineStyle','none');
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7)),fit_order);
@@ -311,10 +306,40 @@ p_reachable = polyfit(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,
 x_for_poly = linspace(min(nominal_data(:,4)),max(nominal_data(:,4)),100);
 plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
 plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
-
 xlabel('percentage of visibility graph edges blocked')
 ylabel('total path length after replanning')
 legend({'nominal cost function','reachable cost function'},'Location','best');
+
+figure; hold on; box on;
+box on; hold on;
+plot(nominal_data(:,6)/nominal_data(1,5)*100,(nominal_data(:,6)+nominal_data(:,7)),"Color",colors{nominal_data(1,2)},"Marker",markers{nominal_data(1,1)},'LineStyle','none');
+plot(reachable_data(:,6)/reachable_data(1,5)*100,(reachable_data(:,6)+reachable_data(:,7)),"Color",colors{reachable_data(1,2)},"Marker",markers{reachable_data(1,1)},'LineStyle','none');
+p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7)),fit_order);
+p_reachable = polyfit(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7)),fit_order);
+x_for_poly = linspace(min(nominal_data(:,4)),max(nominal_data(:,4)),100);
+% plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
+% plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
+xlabel('percentage of initial path completed before rerouting')
+ylabel('total path length after replanning')
+legend({'nominal cost function','reachable cost function'},'Location','best');
+
+[closest_path_points,...
+    s_coordinates,...
+    first_path_point_indicies,...
+    second_path_point_indicies,...
+    percent_along_length,...
+    distances_real,...
+    distances_imaginary] = ...
+    fcn_Path_snapPointOntoNearestPath(pts_along_nominal, init_route_reachable(:,1:2));
+
+figure; hold on; box on;plot(navigated_portions,abs(distances_real),'xb','MarkerSize',2);
+xlabel('percentage of initial path completed before rerouting')
+ylabel(sprintf('distnce from position on nominal initial path \n to closes point on reachable initial path'))
+
+distance_between_points = ((closest_path_points(:,1)-pts_along_nominal(:,1)).^2+(closest_path_points(:,2)-pts_along_nominal(:,2)).^2).^0.5;
+figure; hold on; box on;plot(navigated_portions,distance_between_points,'xk','MarkerSize',2);
+xlabel('percentage of initial path completed before rerouting')
+ylabel(sprintf('distnce from position on nominal initial path \n to closes point on reachable initial path'))
 
 function INTERNAL_fcn_format_timespace_plot()
     box on
