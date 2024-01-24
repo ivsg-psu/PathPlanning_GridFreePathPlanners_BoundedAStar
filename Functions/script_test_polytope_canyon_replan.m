@@ -18,6 +18,7 @@ addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'))
 flag_do_plot = 1;
 flag_do_slow_plot = 0;
 flag_do_animation = 0;
+flag_do_plot_slow = 1;
 
 %%%
 % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
@@ -121,7 +122,7 @@ for map_idx = 5%2:5
     end
     obs_id = [shrunk_polytopes.obs_id];
     all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
-    for repeats = 1:5
+    for repeats = 1%:5
     %% delete vgraph edges randomly
     edge_deletion = 0:0.05:0.9;
     for i = 1:13%length(edge_deletion)
@@ -269,6 +270,12 @@ for map_idx = 5%2:5
                 title_string = sprintf('map idx: %i, nominal or reachable: %i, pct edges removed: %.1f',map_idx, nominal_or_reachable,pct_edges_removed);
                 title(title_string);
                 legend('start','finish','initial route','replanning point','replanned route','obstacles');
+                if flag_do_plot_slow
+                    for vi = 1:size(rows_for_removal,1)
+
+                        plot([all_pts(rows_for_removal(vi),1),all_pts(cols_for_removal(vi),1)],[all_pts(rows_for_removal(vi),2),all_pts(cols_for_removal(vi),2)],'--r','LineWidth',1)
+                    end
+                end
             end % end flag_do_plot condition
         end % end nominal or reachable cost function loop
     end % end edge deletion portion loop
