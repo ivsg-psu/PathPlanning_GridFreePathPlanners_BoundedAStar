@@ -271,9 +271,15 @@ for map_idx = 5%2:5
                 title(title_string);
                 legend('start','finish','initial route','replanning point','replanned route','obstacles');
                 if flag_do_plot_slow
-                    for vi = 1:size(rows_for_removal,1)
+                    for waypoint_id = 1:(size(init_route,1)-1)
+                        route_segment_start = init_route(waypoint_id,:);
+                        route_segment_end = init_route(waypoint_id+1,:);
 
-                        plot([all_pts(rows_for_removal(vi),1),all_pts(cols_for_removal(vi),1)],[all_pts(rows_for_removal(vi),2),all_pts(cols_for_removal(vi),2)],'--r','LineWidth',1)
+                        route_start_idx = all_pts(:,1) == route_segment_start(1) & all_pts(:,2) == route_segment_start(2);
+                        route_end_idx = all_pts(:,1) == route_segment_end(1) & all_pts(:,2) == route_segment_end(2);
+                        if ~new_vgraph(route_start_idx,route_end_idx)
+                            plot([route_segment_start(1),route_segment_end(1)],[route_segment_start(2),route_segment_end(2)],"Color",'r',"LineWidth",3)
+                        end
                     end
                 end
             end % end flag_do_plot condition
