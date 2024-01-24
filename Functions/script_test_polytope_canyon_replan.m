@@ -275,66 +275,95 @@ for map_idx = 5%2:5
 end % end repeats loop
 end % end map loop
 
-figure; hold on; box on;
-box on; hold on;
+% sort data and define plot options
 markers = {'x','d','o','+','s'};
 colors = {'r','b'};
 idx_nominal = data(:,1)== map_idx & data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
 nominal_data = data(idx_nominal,:);
 idx_reachable = data(:,1)== map_idx & data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
 reachable_data = data(idx_reachable,:);
+
+% plot ratio of each path relative to its own initial path
+figure; hold on; box on;
+box on; hold on;
 plot(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(:,5),"Color",colors{nominal_data(1,2)},"Marker",markers{nominal_data(1,1)},'LineStyle','none');
 plot(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./reachable_data(:,5),"Color",colors{reachable_data(1,2)},"Marker",markers{reachable_data(1,1)},'LineStyle','none');
+% add polynominal fit
 fit_order = 3;
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(:,5),fit_order);
 p_reachable = polyfit(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./reachable_data(:,5),fit_order);
 x_for_poly = linspace(min(nominal_data(:,4)),max(nominal_data(:,4)),100);
 plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
 plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
-
-
+% add convex hull
+P_nominal = [nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5)];
+P_reachable = [reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./reachable_data(1,5)];
+k_nominal = convhull(P_nominal);
+k_reachable = convhull(P_reachable);
+fill(P_nominal(k_nominal,1),P_nominal(k_nominal,2),colors{nominal_data(1,2)},'FaceAlpha',0.3);
+fill(P_reachable(k_reachable,1),P_reachable(k_reachable,2),colors{reachable_data(1,2)},'FaceAlpha',0.3);
+% add tight non-convex boundary
+k_nominal_nonconvex = boundary(P_nominal);
+k_reachable_nonconvex = boundary(P_reachable);
+fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
+fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
+% legends and labels
 ylabel(sprintf('ratio of replanned path length to reachable \nor nominal initial path length'))
 xlabel('percentage of visibility graph edges blocked [%]')
 legend({'nominal cost function','reachable cost function'},'Location','best');
 
+% plot ratio of each path relative to nominal initial path
 figure; hold on; box on;
 box on; hold on;
-markers = {'x','d','o','+','s'};
-colors = {'r','b'};
-idx_nominal = data(:,1)== map_idx & data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
-nominal_data = data(idx_nominal,:);
-idx_reachable = data(:,1)== map_idx & data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
-reachable_data = data(idx_reachable,:);
 plot(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5),"Color",colors{nominal_data(1,2)},"Marker",markers{nominal_data(1,1)},'LineStyle','none');
 plot(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./nominal_data(1,5),"Color",colors{reachable_data(1,2)},"Marker",markers{reachable_data(1,1)},'LineStyle','none');
-fit_order = 3;
+% add polynominal fit
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5),fit_order);
 p_reachable = polyfit(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./nominal_data(1,5),fit_order);
 x_for_poly = linspace(min(nominal_data(:,4)),max(nominal_data(:,4)),100);
 plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
 plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
-
-
+% add convex hull
+P_nominal = [nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5)];
+P_reachable = [reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./nominal_data(1,5)];
+k_nominal = convhull(P_nominal);
+k_reachable = convhull(P_reachable);
+fill(P_nominal(k_nominal,1),P_nominal(k_nominal,2),colors{nominal_data(1,2)},'FaceAlpha',0.3);
+fill(P_reachable(k_reachable,1),P_reachable(k_reachable,2),colors{reachable_data(1,2)},'FaceAlpha',0.3);
+% add tight non-convex boundary
+k_nominal_nonconvex = boundary(P_nominal);
+k_reachable_nonconvex = boundary(P_reachable);
+fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
+fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
+% legends and labels
 ylabel('ratio of replanned path length to nominal initial path length')
 xlabel('percentage of visibility graph edges blocked [%]')
 legend({'nominal cost function','reachable cost function'},'Location','best');
 
+% plot absolute length
 figure; hold on; box on;
 box on; hold on;
-markers = {'x','d','o','+','s'};
-colors = {'r','b'};
-idx_nominal = data(:,1)== map_idx & data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
-nominal_data = data(idx_nominal,:);
-idx_reachable = data(:,1)== map_idx & data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
-reachable_data = data(idx_reachable,:);
 plot(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7)),"Color",colors{nominal_data(1,2)},"Marker",markers{nominal_data(1,1)},'LineStyle','none');
 plot(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7)),"Color",colors{reachable_data(1,2)},"Marker",markers{reachable_data(1,1)},'LineStyle','none');
+% add polynominal fit
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7)),fit_order);
 p_reachable = polyfit(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7)),fit_order);
 x_for_poly = linspace(min(nominal_data(:,4)),max(nominal_data(:,4)),100);
 plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
 plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
-
+% add convex hull
+P_nominal = [nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))];
+P_reachable = [reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))];
+k_nominal = convhull(P_nominal);
+k_reachable = convhull(P_reachable);
+fill(P_nominal(k_nominal,1),P_nominal(k_nominal,2),colors{nominal_data(1,2)},'FaceAlpha',0.3);
+fill(P_reachable(k_reachable,1),P_reachable(k_reachable,2),colors{reachable_data(1,2)},'FaceAlpha',0.3);
+% add tight non-convex boundary
+k_nominal_nonconvex = boundary(P_nominal);
+k_reachable_nonconvex = boundary(P_reachable);
+fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
+fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
+% legends and labels
 xlabel('percentage of visibility graph edges blocked [%]')
 ylabel('total path length after replanning [km]')
 legend({'nominal cost function','reachable cost function'},'Location','best');
