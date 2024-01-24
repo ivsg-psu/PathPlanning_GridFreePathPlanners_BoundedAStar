@@ -13,6 +13,7 @@ addpath 'C:\Users\sjh6473\Desktop\gif\gif'
 addpath 'C:\Users\sjh6473\Desktop\TriangleRayIntersection'
 
 addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
+addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
 
 flag_do_plot = 1;
 flag_do_slow_plot = 0;
@@ -85,6 +86,29 @@ for map_idx = 5%2:5
         finish_init = [-77.5 40.8];
     end % if conditions for different map test fixtures
 
+    %% convert from LLA to QGS84
+    centre_co_avg_alt = 351.7392;
+    start_init = INTERNAL_WGSLLA2xyz(start_init(2),start_init(1),centre_co_avg_alt);
+    start_init = start_init(1:2)';
+    start_init = start_init/1000;
+    finish_init = INTERNAL_WGSLLA2xyz(finish_init(2),finish_init(1),centre_co_avg_alt);
+    finish_init = finish_init(1:2)';
+    finish_init = finish_init/1000;
+    new_polytopes = [];
+    for i = 1:length(shrunk_polytopes)
+        poly = shrunk_polytopes(i);
+        lats = poly.vertices(:,2);
+        longs = poly.vertices(:,1);
+        alts = centre_co_avg_alt*ones(size(lats));
+        wgs_verts = [];
+        for j = 1:length(lats)
+            xyz = INTERNAL_WGSLLA2xyz(lats(j),longs(j),alts(j));
+            xyz = xyz/1000;
+            wgs_verts(j,:) = [xyz(1),xyz(2)];
+        end
+        new_polytopes(i).vertices = wgs_verts;
+    end
+    shrunk_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(new_polytopes);
     %% all_pts array creation
     point_tot = length([shrunk_polytopes.xv]); % total number of vertices in the polytopes
     beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
@@ -121,11 +145,11 @@ for map_idx = 5%2:5
 
             % new experimental cost function prioritizing reachability
             reachable_nodes_from_each_node = sum(rgraph,2);
-            inv_reach_cost = 100*(1./(reachable_nodes_from_each_node))';
+            inv_reach_cost = 10000*(1./(reachable_nodes_from_each_node))';
 
             % new experimental cost function prioritizing visibility
             visible_nodes_from_each_node = sum(vgraph,2);
-            inv_vis_cost = 100*(1./(visible_nodes_from_each_node))';
+            inv_vis_cost = 10000*(1./(visible_nodes_from_each_node))';
 
             %% make cgraph
             mode = "xy spatial only";
@@ -203,11 +227,11 @@ for map_idx = 5%2:5
 
             % new experimental cost function prioritizing reachability
             reachable_nodes_from_each_node = sum(rgraph,2);
-            inv_reach_cost = 100*(1./(reachable_nodes_from_each_node))';
+            inv_reach_cost = 10000*(1./(reachable_nodes_from_each_node))';
 
             % new experimental cost function prioritizing visibility
             visible_nodes_from_each_node = sum(vgraph,2);
-            inv_vis_cost = 100*(1./(visible_nodes_from_each_node))';
+            inv_vis_cost = 10000*(1./(visible_nodes_from_each_node))';
 
             %% make cgraph
             mode = "xy spatial only";
@@ -234,10 +258,10 @@ for map_idx = 5%2:5
                 figure; hold on; box on;
                 xlabel('x [km]');
                 ylabel('y [km]');
-                plot(start(1),start(2),'xg','MarkerSize',3);
-                plot(finish(1),finish(2),'xr');
+                plot(start_init(1),start_init(2),'xg','MarkerSize',6);
+                plot(finish(1),finish(2),'xr','MarkerSize',6);
                 plot(init_route(:,1),init_route(:,2),'k','LineWidth',2);
-                plot(start_midway(1),start_midway(2),'dm','MarkerSize',3)
+                plot(start_midway(1),start_midway(2),'dm','MarkerSize',6)
                 plot(replan_route(:,1),replan_route(:,2),'--g','LineWidth',2);
                 for j = 1:length(shrunk_polytopes)
                      fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
@@ -269,8 +293,8 @@ plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},
 plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
 
 
-ylabel('ratio of replanned path length to reachable or nominal initial path length')
-xlabel('percentage of visibility graph edges blocked')
+ylabel(sprintf('ratio of replanned path length to reachable \nor nominal initial path length'))
+xlabel('percentage of visibility graph edges blocked [%]')
 legend({'nominal cost function','reachable cost function'},'Location','best');
 
 figure; hold on; box on;
@@ -292,7 +316,7 @@ plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,
 
 
 ylabel('ratio of replanned path length to nominal initial path length')
-xlabel('percentage of visibility graph edges blocked')
+xlabel('percentage of visibility graph edges blocked [%]')
 legend({'nominal cost function','reachable cost function'},'Location','best');
 
 figure; hold on; box on;
@@ -311,8 +335,8 @@ x_for_poly = linspace(min(nominal_data(:,4)),max(nominal_data(:,4)),100);
 plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
 plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
 
-xlabel('percentage of visibility graph edges blocked')
-ylabel('total path length after replanning')
+xlabel('percentage of visibility graph edges blocked [%]')
+ylabel('total path length after replanning [km]')
 legend({'nominal cost function','reachable cost function'},'Location','best');
 
 function INTERNAL_fcn_format_timespace_plot()
@@ -352,3 +376,31 @@ end
 %     var d = R * c;
 %     return d * 1000; // meters
 % }
+function xyz = INTERNAL_WGSLLA2xyz(wlat, wlon, walt)
+    %Function xyz = wgslla2xyz(lat, lon, alt) returns the
+    %equivalent WGS84 XYZ coordinates (in meters) for a
+    %given geodetic latitude "lat" (degrees), longitude "lon"
+    %(degrees), and altitude above the WGS84 ellipsoid
+    %in meters.  Note: N latitude is positive, S latitude
+    %is negative, E longitude is positive, W longitude is
+    %negative.
+    %
+    %Ref: Decker, B. L., World Geodetic System 1984,
+    %Defense Mapping Agency Aerospace Center.
+
+    A_EARTH = 6378137;
+    flattening = 1/298.257223563;
+    NAV_E2 = (2-flattening)*flattening; % also e^2
+    deg2rad = pi/180;
+
+    slat = sin(wlat*deg2rad);
+    clat = cos(wlat*deg2rad);
+    r_n = A_EARTH/sqrt(1 - NAV_E2*slat*slat);
+    xyz = [ (r_n + walt)*clat*cos(wlon*deg2rad);
+            (r_n + walt)*clat*sin(wlon*deg2rad);
+            (r_n*(1 - NAV_E2) + walt)*slat ];
+
+    if ((wlat < -90.0) | (wlat > +90.0) | (wlon < -180.0) | (wlon > +360.0))
+        error('WGS lat or WGS lon out of range');
+    end
+end
