@@ -269,7 +269,12 @@ for map_idx = 5%2:5
                 end
                 title_string = sprintf('map idx: %i, nominal or reachable: %i, pct edges removed: %.1f',map_idx, nominal_or_reachable,pct_edges_removed);
                 title(title_string);
-                legend('start','finish','initial route','replanning point','replanned route','obstacles');
+                leg_str = {'start','finish','initial route','replanning point','replanned route','obstacles'};
+                for i = 1:length(shrunk_polytopes)-1
+                    leg_str{end+1} = '';
+                end
+                leg_str{end+1} = 'blocked initial path segment';
+                legend(leg_str,'Location','best');
                 if flag_do_plot_slow
                     for waypoint_id = 1:(size(init_route,1)-1)
                         route_segment_start = init_route(waypoint_id,:);

@@ -25,7 +25,7 @@ flag_do_plot_slow = 1;
 % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
 %%%
 data = []; % initialize array for storing results
-for map_idx = 5%2:5
+for map_idx = 3%2:5
     if map_idx == 1
         %% load test fixtures for polytope map rather than creating it here
         % load distribution north of canyon
@@ -124,7 +124,7 @@ for map_idx = 5%2:5
     obs_id = [shrunk_polytopes.obs_id];
     all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
     for repeats = 1%:5
-    for polytope_size_increases = [0.1 0.2 0.3 0.4 0.5]%[20, 50, 100, 200]
+    for polytope_size_increases = [0.01 0.02 0.05 0.1 0.2 0.3 0.4 0.5]%[20, 50, 100, 200]
         for nominal_or_reachable = [1,2]
             %% plan the initial path
             start = [start_init size(all_pts,1)+1 -1 1];
@@ -179,7 +179,7 @@ for map_idx = 5%2:5
             navigated_distance = init_route_length/2;
 
             % assume you get halfway
-            St_points_input = [navigated_distance 0];
+            St_points_input = [navigated_distance*1.1 0];
             referencePath = init_route(:,1:2);
             flag_snap_type = 1;
             start_midway = fcn_Path_convertSt2XY(referencePath,St_points_input, flag_snap_type);
@@ -197,12 +197,12 @@ for map_idx = 5%2:5
                 curpt = curpt+verts;
             end
             obs_id = [enlarged_polytopes.obs_id];
-            all_pts = [[enlarged_polytopes.xv];[enlarged_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
-            start = [start_midway size(all_pts,1)+1 -1 1];
-            finish = [finish_init size(all_pts,1)+2 -1 1];
-            finishes = [all_pts; start; finish];
-            starts = [all_pts; start; finish];
-            [new_vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(enlarged_polytopes, starts, finishes,1);
+            all_pts_new = [[enlarged_polytopes.xv];[enlarged_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
+            start = [start_midway size(all_pts_new,1)+1 -1 1];
+            finish = [finish_init size(all_pts_new,1)+2 -1 1];
+            finishes = [all_pts_new; start; finish];
+            starts = [all_pts_new; start; finish];
+            [new_vgraph, visibility_results_all_pts_new] = fcn_visibility_clear_and_blocked_points_global(enlarged_polytopes, starts, finishes,1);
 
             num_edges_initially = sum(sum(vgraph));
             num_edges_finally = sum(sum(new_vgraph));
@@ -235,13 +235,13 @@ for map_idx = 5%2:5
             mode = "xy spatial only";
             % mode = 'time or z only';
             % mode = "xyz or xyt";
-            [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
+            [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts_new, start, finish, mode);
 
             % if nominal_or_reachable == 2
                 % hvec = hvec + inv_reach_cost + inv_vis_cost;
             % end
 
-            [replan_cost, replan_route] = fcn_algorithm_Astar(new_vgraph, cgraph, hvec, all_pts, start, finish);
+            [replan_cost, replan_route] = fcn_algorithm_Astar(new_vgraph, cgraph, hvec, all_pts_new, start, finish);
 
             % find route length
             route_x = replan_route(:,1);
@@ -267,9 +267,18 @@ for map_idx = 5%2:5
                 for j = 1:length(enlarged_polytopes)
                      fill(enlarged_polytopes(j).vertices(:,1)',enlarged_polytopes(j).vertices(:,2),[0 0 1],'FaceColor','r','FaceAlpha',0.3)
                 end
-                title_string = sprintf('map idx: %i, nominal or reachable: %i, pct edges removed: %.1f',map_idx, nominal_or_reachable,pct_edges_removed);
+                title_string = sprintf('map idx: %i, nominal or reachable: %i, polytope size increase [km]: %.1f',map_idx, nominal_or_reachable,polytope_size_increases);
                 title(title_string);
-                legend('start','finish','initial route','replanning point','replanned route','obstacles');
+                leg_str = {'start','finish','initial route','replanning point','replanned route','obstacles'};
+                for i = 1:length(shrunk_polytopes)-1
+                    leg_str{end+1} = '';
+                end
+                leg_str{end+1} = 'enlarged obstacles';
+                for i = 1:length(shrunk_polytopes)-1
+                    leg_str{end+1} = '';
+                end
+                leg_str{end+1} = 'blocked initial path segment';
+                legend(leg_str,'Location','best');
                 if flag_do_plot_slow
                     for waypoint_id = 1:(size(init_route,1)-1)
                         route_segment_start = init_route(waypoint_id,:);
@@ -322,7 +331,7 @@ fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{no
 fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
 % legends and labels
 ylabel(sprintf('ratio of replanned path length to reachable \nor nominal initial path length'))
-xlabel('percentage of visibility graph edges blocked [%]')
+xlabel('obstacle size increase [km]')
 legend({'nominal cost function','reachable cost function'},'Location','best');
 
 % plot ratio of each path relative to nominal initial path
@@ -350,7 +359,7 @@ fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{no
 fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
 % legends and labels
 ylabel('ratio of replanned path length to nominal initial path length')
-xlabel('percentage of visibility graph edges blocked [%]')
+xlabel('obstacle size increase [km]')
 legend({'nominal cost function','reachable cost function'},'Location','best');
 
 % plot absolute length
@@ -377,7 +386,7 @@ k_reachable_nonconvex = boundary(P_reachable);
 fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
 fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
 % legends and labels
-xlabel('percentage of visibility graph edges blocked [%]')
+xlabel('obstacle size increase [km]')
 ylabel('total path length after replanning [km]')
 legend({'nominal cost function','reachable cost function'},'Location','best');
 
