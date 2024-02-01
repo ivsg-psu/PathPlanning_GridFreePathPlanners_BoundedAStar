@@ -24,6 +24,10 @@ polytopes(2).vertices = [0 -1; 4, -1; 5 -2; 3 -10; 0 -1];
 polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(polytopes);
 fcn_MapGen_plotPolytopes(polytopes,fig_num,'b-',line_width);
 hold on; box on;
+xlabel('x [m]');
+ylabel('y [m]');
+title('dilation robustness')
+
 
 start = ones(1,2)*(-0.5);
 finish = start;
@@ -67,4 +71,33 @@ if flag_do_plot_slow
     end
 end
 mode = '2d';
-[dilation_robustness_matrix, dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode)
+dilation_robustness_matrix = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode)
+% check that all zeros are in the same place
+vgraph = vgraph - eye(size(vgraph));
+zero_vgraph_edge_idx = find(vgraph==0);
+zero_dilation_robustness_matrix_idx = find(vgraph==0);
+assert(isequal(zero_vgraph_edge_idx, zero_dilation_robustness_matrix_idx));
+
+dilation_robustness_values = dilation_robustness_matrix';
+dilation_robustness_values = dilation_robustness_values(:)';
+max_dilation_robustness_excluding_inf = max(dilation_robustness_values(~isinf(dilation_robustness_values)));
+
+% plot visibility graph edges
+if flag_do_plot
+    for i = 1:size(vgraph,1)
+        for j = 1:size(vgraph,1)
+            if vgraph(i,j) == 1
+                alpha = dilation_robustness_matrix(i,j)/max_dilation_robustness_excluding_inf;
+                if alpha == inf
+                    continue
+                end
+                plot([starts(i,1),starts(j,1)],[starts(i,2),starts(j,2)],'--','Color',[alpha 0 1-alpha],'LineWidth',2)
+            end
+        end
+    end
+end
+map = [(linspace(0,1,100))' zeros(100,1) (linspace(1,0,100))'];
+colormap(map)
+set(gca,'CLim',[0 1]*max_dilation_robustness_excluding_inf);
+c = colorbar
+c.Label.String = 'dilation robustness'
