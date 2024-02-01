@@ -93,7 +93,7 @@ function [dilation_robustness_matrix_right, dilation_robustness_matrix_left] = f
         end
         normal_mag = norm(normal_dir);
         unit_normal_right = normal_dir/normal_mag;
-        unit_normal_left = normal_dir/normal_mag;
+        unit_normal_left = -1*unit_normal_right;
         % find all visibility graph edges with same origin
         other_edge_ends_idx = find(vgraph(edge_start_idx(i), :)==1);
         other_edge_ends_idx(find(other_edge_ends_idx==edge_end_idx(i))) = [];
@@ -106,6 +106,19 @@ function [dilation_robustness_matrix_right, dilation_robustness_matrix_left] = f
         end
         % this line removes the currently considered edge end from the other edge end list
         other_edge_dirs = other_edge_ends - edge_start;
+        % we want to discard edges that either have no component in the direction of the original vector
+        % or that end at a point too far away to cut off the original vector
+        if strcmp(mode, "2d") || strcmp(mode,"2D")
+            dot_products = other_edge_dirs(:,1)*edge_dir(1) + other_edge_dirs(:,2)*edge_dir(2);
+        elseif strcmp(mode, "3d") || strcmp(mode,"3D")
+            dot_products = other_edge_dirs(:,1)*edge_dir(1) + other_edge_dirs(:,2)*edge_dir(2) + other_edge_dirs(:,3)*edge_dir(3);
+        else
+            error(strcat("Mode argument must be a string containing '2d' or '3d' (case insensitive) mode was instead given as: ",mode))
+        end
+        other_edge_projected_to_edge = dot_products/norm(edge_dir);
+        other_edge_dirs(find(other_edge_projected_to_edge <= 0 | other_edge_projected_to_edge > norm(edge_dir)),:) = [];
+
+        % dot the other edges with the unit normal to find the corridor width defined by each vgraph edge
         if strcmp(mode, "2d") || strcmp(mode,"2D")
             dot_products_right = other_edge_dirs(:,1)*unit_normal_right(1) + other_edge_dirs(:,2)*unit_normal_right(2);
             dot_products_left = other_edge_dirs(:,1)*unit_normal_left(1) + other_edge_dirs(:,2)*unit_normal_left(2);
@@ -117,7 +130,13 @@ function [dilation_robustness_matrix_right, dilation_robustness_matrix_left] = f
         end
         corridor_width_right = min(abs(dot_products_right));
         corridor_width_left = min(abs(dot_products_left));
-        dilation_robustness_matrix_right(edge_start_idx, edge_end_idx) = corridor_width_right;
-        dilation_robustness_matrix_left(edge_start_idx, edge_end_idx) = corridor_width_left;
+        if isempty(corridor_width_right)
+            corridor_width_right = inf;
+        end
+        if isempty(corridor_width_left)
+            corridor_width_left = inf;
+        end
+        dilation_robustness_matrix_right(edge_start_idx(i), edge_end_idx(i)) = corridor_width_right;
+        dilation_robustness_matrix_left(edge_start_idx(i), edge_end_idx(i)) = corridor_width_left;
     end
 end
