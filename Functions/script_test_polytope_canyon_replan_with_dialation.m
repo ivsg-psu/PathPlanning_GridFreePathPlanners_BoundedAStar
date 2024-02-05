@@ -124,7 +124,7 @@ for map_idx = 3%2:5
     obs_id = [shrunk_polytopes.obs_id];
     all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
     for repeats = 1%:5
-    for polytope_size_increases = [0.01 0.02 0.05 0.1 0.2 0.3 0.4 0.5]%[20, 50, 100, 200]
+    for polytope_size_increases = [0.1]%[0.01 0.02] 0.05 0.1 0.2 0.3 0.4 0.5]%[20, 50, 100, 200]
         for nominal_or_reachable = [1,2]
             %% plan the initial path
             start = [start_init size(all_pts,1)+1 -1 1];
@@ -179,14 +179,14 @@ for map_idx = 3%2:5
             navigated_distance = init_route_length/2;
 
             % assume you get halfway
-            St_points_input = [navigated_distance*1.1 0];
+            St_points_input = [navigated_distance 0];
             referencePath = init_route(:,1:2);
             flag_snap_type = 1;
             start_midway = fcn_Path_convertSt2XY(referencePath,St_points_input, flag_snap_type);
 
 
             %% plan the new path
-            enlarged_polytopes = fcn_MapGen_polytopesExpandEvenly(shrunk_polytopes,polytope_size_increases);
+            enlarged_polytopes = fcn_MapGen_polytopesExpandEvenlyForConcave(shrunk_polytopes,polytope_size_increases);
             point_tot = length([enlarged_polytopes.xv]); % total number of vertices in the polytopes
             beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
             curpt = 0;
@@ -291,6 +291,7 @@ for map_idx = 3%2:5
                         end
                     end
                 end
+                legend(leg_str,'Location','best');
             end % end flag_do_plot condition
         end % end nominal or reachable cost function loop
     end % end edge deletion portion loop
