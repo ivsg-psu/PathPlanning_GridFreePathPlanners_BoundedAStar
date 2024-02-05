@@ -158,11 +158,14 @@ for map_idx = 5%2:5
             [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
 
             mode = '2d';
-            dilation_robustness_matrix = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode)
+            dilation_robustness_matrix = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode);
 
             if nominal_or_reachable == 2
                 % hvec = hvec + inv_reach_cost + inv_vis_cost;
-                cgraph = cgraph + dilation_robustness_matrix;
+                inv_corridor_width = 1./dilation_robustness_matrix;
+                infinite_idx = find(inv_corridor_width==inf);
+                inv_corridor_width(infinite_idx) = 10000;
+                cgraph = cgraph + inv_corridor_width;
             end
 
             [init_cost, init_route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
