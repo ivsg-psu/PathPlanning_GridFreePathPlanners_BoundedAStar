@@ -25,7 +25,7 @@ flag_do_plot_slow = 1;
 % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
 %%%
 data = []; % initialize array for storing results
-for map_idx = 5%2:5
+for map_idx = 6%2:6
     if map_idx == 1
         %% load test fixtures for polytope map rather than creating it here
         % load distribution north of canyon
@@ -86,6 +86,11 @@ for map_idx = 5%2:5
         shrunk_polytopes = flood_plain_4;
         start_init = [-77.68 40.9];
         finish_init = [-77.5 40.8];
+    elseif map_idx == 6
+        load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_5.mat'));
+        shrunk_polytopes = flood_plain_5;
+        start_init = [-78.01 41.06];
+        finish_init = [-77.75 40.93];
     end % if conditions for different map test fixtures
 
     %% convert from LLA to QGS84
@@ -124,7 +129,7 @@ for map_idx = 5%2:5
     obs_id = [shrunk_polytopes.obs_id];
     all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
     for repeats = 1%:5
-    for polytope_size_increases = [0.01 0.02 0.05]%0.1 0.2 0.3 0.4 0.5]%[20, 50, 100, 200]
+    for polytope_size_increases = [0.01 0.02 0.05 0.1 0.2 0.3 0.4 0.5]%[20, 50, 100, 200]
         for nominal_or_reachable = [1,2]
             %% plan the initial path
             start = [start_init size(all_pts,1)+1 -1 1];
@@ -165,7 +170,7 @@ for map_idx = 5%2:5
                 inv_corridor_width = 1./dilation_robustness_matrix;
                 infinite_idx = find(inv_corridor_width==inf);
                 inv_corridor_width(infinite_idx) = 10000;
-                cgraph = cgraph + inv_corridor_width;
+                cgraph = cgraph + 5*inv_corridor_width;
             end
 
             [init_cost, init_route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
@@ -184,10 +189,10 @@ for map_idx = 5%2:5
             % start_midway = [0.6 1.276]; % from_mid_pt_of_nominal_path
             % start_midway = [start_init]; % start at the original start
 
-            navigated_distance = init_route_length/2;
+            navigated_distance = init_route_length*0;
 
             % assume you get halfway
-            St_points_input = [navigated_distance*0.75 0];
+            St_points_input = [navigated_distance 0];
             referencePath = init_route(:,1:2);
             flag_snap_type = 1;
             start_midway = fcn_Path_convertSt2XY(referencePath,St_points_input, flag_snap_type);
@@ -244,9 +249,16 @@ for map_idx = 5%2:5
             % mode = "xyz or xyt";
             [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts_new, start, finish, mode);
 
-            % if nominal_or_reachable == 2
+            mode = '2d';
+            dilation_robustness_matrix = fcn_algorithm_generate_dilation_robustness_matrix(all_pts_new, start, finish, new_vgraph, mode);
+
+            if nominal_or_reachable == 2
                 % hvec = hvec + inv_reach_cost + inv_vis_cost;
-            % end
+                inv_corridor_width = 1./dilation_robustness_matrix;
+                infinite_idx = find(inv_corridor_width==inf);
+                inv_corridor_width(infinite_idx) = 10000;
+                cgraph = cgraph + 5*inv_corridor_width;
+            end
 
             [replan_cost, replan_route] = fcn_algorithm_Astar(new_vgraph, cgraph, hvec, all_pts_new, start, finish);
 
@@ -274,7 +286,7 @@ for map_idx = 5%2:5
                 for j = 1:length(enlarged_polytopes)
                      fill(enlarged_polytopes(j).vertices(:,1)',enlarged_polytopes(j).vertices(:,2),[0 0 1],'FaceColor','r','FaceAlpha',0.3)
                 end
-                title_string = sprintf('map idx: %i, nominal or reachable: %i, polytope size increase [km]: %.1f',map_idx, nominal_or_reachable,polytope_size_increases);
+                title_string = sprintf('map idx: %i, nominal or reachable: %i, polytope size increase [km]: %.2f',map_idx, nominal_or_reachable,polytope_size_increases);
                 title(title_string);
                 leg_str = {'start','finish','initial route','replanning point','replanned route','obstacles'};
                 for i = 1:length(shrunk_polytopes)-1
@@ -305,7 +317,7 @@ end % end repeats loop
 end % end map loop
 
 % sort data and define plot options
-markers = {'x','d','o','+','s'};
+markers = {'x','d','o','+','s','x'};
 colors = {'r','b'};
 idx_nominal = data(:,1)== map_idx & data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
 nominal_data = data(idx_nominal,:);
