@@ -188,8 +188,8 @@ for map_idx = 6%2:6
             % start_midway = [1 1.276]; % from_mid_pt_of_nominal_path
             % start_midway = [0.6 1.276]; % from_mid_pt_of_nominal_path
             % start_midway = [start_init]; % start at the original start
-
-            navigated_distance = init_route_length*0;
+            navigated_portion = 0.4;
+            navigated_distance = init_route_length*navigated_portion;
 
             % assume you get halfway
             St_points_input = [navigated_distance 0];
@@ -200,6 +200,24 @@ for map_idx = 6%2:6
 
             %% plan the new path
             enlarged_polytopes = fcn_MapGen_polytopesExpandEvenlyForConcave(shrunk_polytopes,polytope_size_increases);
+
+            % enlarging polytopes may have put the midway start inside a polytope
+            % for each polytope, check if this point is inside the polytope
+            for p = 1:length(enlarged_polytopes)
+                these_verts = enlarged_polytopes(p).vertices;
+                this_polyshape = polyshape(these_verts);
+                % is point in but not on polyshape?
+                [is_in,is_on] = isinterior(this_polyshape,start_midway);
+                if is_in
+                    % if it is, get distance to all vertices
+                    vert_to_start_deltas = these_verts - start_midway;
+                    vert_to_start_distances = vert_to_start_deltas(:,1).^2 + vert_to_start_deltas(:,2).^2;
+                    [min_value, idx_of_min] = min(vert_to_start_distances);
+                    % set this point to the nearest vertex
+                    start_midway = these_verts(idx_of_min,:);
+                end
+            end
+
             point_tot = length([enlarged_polytopes.xv]); % total number of vertices in the polytopes
             beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
             curpt = 0;
@@ -249,16 +267,16 @@ for map_idx = 6%2:6
             % mode = "xyz or xyt";
             [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts_new, start, finish, mode);
 
-            mode = '2d';
-            dilation_robustness_matrix = fcn_algorithm_generate_dilation_robustness_matrix(all_pts_new, start, finish, new_vgraph, mode);
-
-            if nominal_or_reachable == 2
+            % mode = '2d';
+            % dilation_robustness_matrix = fcn_algorithm_generate_dilation_robustness_matrix(all_pts_new, start, finish, new_vgraph, mode);
+%
+            % if nominal_or_reachable == 2
                 % hvec = hvec + inv_reach_cost + inv_vis_cost;
-                inv_corridor_width = 1./dilation_robustness_matrix;
-                infinite_idx = find(inv_corridor_width==inf);
-                inv_corridor_width(infinite_idx) = 10000;
-                cgraph = cgraph + 5*inv_corridor_width;
-            end
+                % inv_corridor_width = 1./dilation_robustness_matrix;
+                % infinite_idx = find(inv_corridor_width==inf);
+                % inv_corridor_width(infinite_idx) = 10000;
+                % cgraph = cgraph + 5*inv_corridor_width;
+            % end
 
             [replan_cost, replan_route] = fcn_algorithm_Astar(new_vgraph, cgraph, hvec, all_pts_new, start, finish);
 
