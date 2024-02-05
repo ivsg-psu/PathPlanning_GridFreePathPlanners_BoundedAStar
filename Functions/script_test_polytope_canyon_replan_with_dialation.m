@@ -25,7 +25,7 @@ flag_do_plot_slow = 1;
 % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
 %%%
 data = []; % initialize array for storing results
-for map_idx = 3%2:5
+for map_idx = 5%2:5
     if map_idx == 1
         %% load test fixtures for polytope map rather than creating it here
         % load distribution north of canyon
@@ -124,7 +124,7 @@ for map_idx = 3%2:5
     obs_id = [shrunk_polytopes.obs_id];
     all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
     for repeats = 1%:5
-    for polytope_size_increases = [0.1]%[0.01 0.02] 0.05 0.1 0.2 0.3 0.4 0.5]%[20, 50, 100, 200]
+    for polytope_size_increases = [0.01 0.02 0.05]%0.1 0.2 0.3 0.4 0.5]%[20, 50, 100, 200]
         for nominal_or_reachable = [1,2]
             %% plan the initial path
             start = [start_init size(all_pts,1)+1 -1 1];
@@ -156,8 +156,13 @@ for map_idx = 3%2:5
             % mode = 'time or z only';
             % mode = "xyz or xyt";
             [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
+
+            mode = '2d';
+            dilation_robustness_matrix = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode)
+
             if nominal_or_reachable == 2
-                hvec = hvec + inv_reach_cost + inv_vis_cost;
+                % hvec = hvec + inv_reach_cost + inv_vis_cost;
+                cgraph = cgraph + dilation_robustness_matrix;
             end
 
             [init_cost, init_route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
@@ -179,7 +184,7 @@ for map_idx = 3%2:5
             navigated_distance = init_route_length/2;
 
             % assume you get halfway
-            St_points_input = [navigated_distance 0];
+            St_points_input = [navigated_distance*0.75 0];
             referencePath = init_route(:,1:2);
             flag_snap_type = 1;
             start_midway = fcn_Path_convertSt2XY(referencePath,St_points_input, flag_snap_type);
@@ -230,7 +235,6 @@ for map_idx = 3%2:5
             % new experimental cost function prioritizing visibility
             visible_nodes_from_each_node = sum(vgraph,2);
             inv_vis_cost = 10000*(1./(visible_nodes_from_each_node))';
-
             %% make cgraph
             mode = "xy spatial only";
             % mode = 'time or z only';
@@ -278,7 +282,6 @@ for map_idx = 3%2:5
                     leg_str{end+1} = '';
                 end
                 leg_str{end+1} = 'blocked initial path segment';
-                legend(leg_str,'Location','best');
                 if flag_do_plot_slow
                     for waypoint_id = 1:(size(init_route,1)-1)
                         route_segment_start = init_route(waypoint_id,:);
