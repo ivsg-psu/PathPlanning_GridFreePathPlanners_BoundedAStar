@@ -39,7 +39,7 @@
 %     end
 % end
 
-% tic
+outer_time = tic;
 % %% make 2D spatial polytopes into 3D timespace polytopes with velocities, then break into triangular surfels
 % max_translation_distance = 0.15;
 % final_time = 20;
@@ -108,10 +108,13 @@ mode = "xy spatial only";
 [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids, mode);
 
 %% plan route
-[vgraph_phantom, cgraph_phantom, hvec_phantom, finish_phantom, all_pts_with_ids_no_start_and_fin_phantom] = fcn_algorithm_create_phantom_goal(vgraph, cgraph, hvec, finish_with_ids, all_pts_with_ids_no_start_and_fin);
-[cost, route] = fcn_algorithm_Astar3d(vgraph_phantom, cgraph_phantom, hvec_phantom, all_pts_with_ids_no_start_and_fin_phantom, start_with_ids, finish_phantom);
-assert(isnan(route(end,1)))
-route = route(1:end-1,:);
+% [vgraph_phantom, cgraph_phantom, hvec_phantom, finish_phantom, all_pts_with_ids_no_start_and_fin_phantom] = fcn_algorithm_create_phantom_goal(vgraph, cgraph, hvec, finish_with_ids, all_pts_with_ids_no_start_and_fin);
+inner_time = tic;
+% [cost, route] = fcn_algorithm_Astar3d(vgraph_phantom, cgraph_phantom, hvec_phantom, all_pts_with_ids_no_start_and_fin_phantom, start_with_ids, finish_phantom);
+[cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids);
+toc(inner_time);
+% assert(isnan(route(end,1)))
+% route = route(1:end-1,:);
 % route metrics follow
 total_time = max(route(:,3));
 route_x = route(:,1);
@@ -194,7 +197,7 @@ if flag_do_slow_plot
 end
 
 route_dense = fcn_interpolate_route_in_time(route,dt);
-toc
+toc(outer_time)
 if flag_do_animation
     fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, route_dense, dt, [0 1], [0 1]);
 end
