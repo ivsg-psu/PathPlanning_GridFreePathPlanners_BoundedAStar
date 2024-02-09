@@ -116,6 +116,11 @@ for map_idx = 6%2:6
         new_polytopes(i).vertices = wgs_verts;
     end
     shrunk_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(new_polytopes);
+    start_inits = [start_init; 1015,-4704; 1000,-4722; 1017 -4721]
+    finish_inits = [finish_init; 1010, -4722 ; 1027, -4704; 1007 -4707]
+    for mission_idx = 1:size(start_inits,1)
+        start_init = start_inits(mission_idx,:);
+        finish_init = finish_inits(mission_idx,:);
     %% all_pts array creation
     point_tot = length([shrunk_polytopes.xv]); % total number of vertices in the polytopes
     beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
@@ -332,6 +337,7 @@ for map_idx = 6%2:6
         end % end nominal or reachable cost function loop
     end % end edge deletion portion loop
 end % end repeats loop
+end % end mission (i.e., start goal pair) loop
 end % end map loop
 
 % sort data and define plot options
@@ -352,8 +358,8 @@ fit_order = 3;
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(:,5),fit_order);
 p_reachable = polyfit(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./reachable_data(:,5),fit_order);
 x_for_poly = linspace(min(nominal_data(:,4)),max(nominal_data(:,4)),100);
-plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
-plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
+% plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
+% plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
 % add convex hull
 P_nominal = [nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5)];
 P_reachable = [reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./reachable_data(1,5)];
@@ -364,8 +370,8 @@ fill(P_reachable(k_reachable,1),P_reachable(k_reachable,2),colors{reachable_data
 % add tight non-convex boundary
 k_nominal_nonconvex = boundary(P_nominal);
 k_reachable_nonconvex = boundary(P_reachable);
-fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
-fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
+% fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
+% fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
 % legends and labels
 ylabel(sprintf('ratio of replanned path length to reachable \nor nominal initial path length'))
 xlabel('obstacle size increase [km]')
@@ -380,8 +386,8 @@ plot(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./nominal_data
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5),fit_order);
 p_reachable = polyfit(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./nominal_data(1,5),fit_order);
 x_for_poly = linspace(min(nominal_data(:,4)),max(nominal_data(:,4)),100);
-plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
-plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
+% plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
+% plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
 % add convex hull
 P_nominal = [nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5)];
 P_reachable = [reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./nominal_data(1,5)];
@@ -392,8 +398,8 @@ fill(P_reachable(k_reachable,1),P_reachable(k_reachable,2),colors{reachable_data
 % add tight non-convex boundary
 k_nominal_nonconvex = boundary(P_nominal);
 k_reachable_nonconvex = boundary(P_reachable);
-fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
-fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
+% fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
+% fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
 % legends and labels
 ylabel('ratio of replanned path length to nominal initial path length')
 xlabel('obstacle size increase [km]')
@@ -408,8 +414,8 @@ plot(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7)),"Color",color
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7)),fit_order);
 p_reachable = polyfit(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7)),fit_order);
 x_for_poly = linspace(min(nominal_data(:,4)),max(nominal_data(:,4)),100);
-plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
-plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
+% plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
+% plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
 % add convex hull
 P_nominal = [nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))];
 P_reachable = [reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))];
@@ -420,8 +426,8 @@ fill(P_reachable(k_reachable,1),P_reachable(k_reachable,2),colors{reachable_data
 % add tight non-convex boundary
 k_nominal_nonconvex = boundary(P_nominal);
 k_reachable_nonconvex = boundary(P_reachable);
-fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
-fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
+% fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
+% fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
 % legends and labels
 xlabel('obstacle size increase [km]')
 ylabel('total path length after replanning [km]')

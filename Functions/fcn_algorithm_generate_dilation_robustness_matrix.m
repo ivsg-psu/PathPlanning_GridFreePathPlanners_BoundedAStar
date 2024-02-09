@@ -88,7 +88,10 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
             normal_dir(2) = 1;
             normal_dir(1) = -(edge_dir(2)*normal_dir(2))./edge_dir(1);
         else
-            error("visibility graph edge has zero length")
+            warning("visibility graph edge has zero length")
+            corridor_width = inf;
+            dilation_robustness_matrix(edge_start_idx(i), edge_end_idx(i)) = corridor_width;
+            continue
         end
         normal_mag = norm(normal_dir);
         unit_normal = normal_dir/normal_mag;
