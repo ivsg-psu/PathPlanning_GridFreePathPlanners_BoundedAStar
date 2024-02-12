@@ -24,7 +24,7 @@ flag_do_plot_slow = 1;
 % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
 %%%
 data = []; % initialize array for storing results
-for map_idx = 5%2:5
+for map_idx = 6%2:5
     if map_idx == 1
         %% load test fixtures for polytope map rather than creating it here
         % load distribution north of canyon
@@ -85,6 +85,11 @@ for map_idx = 5%2:5
         shrunk_polytopes = flood_plain_4;
         start_init = [-77.68 40.9];
         finish_init = [-77.5 40.8];
+    elseif map_idx == 6
+        load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_5.mat'));
+        shrunk_polytopes = flood_plain_5;
+        start_init = [-78.01 41.06];
+        finish_init = [-77.75 40.93];
     end % if conditions for different map test fixtures
 
     %% convert from LLA to QGS84
@@ -110,6 +115,11 @@ for map_idx = 5%2:5
         new_polytopes(i).vertices = wgs_verts;
     end
     shrunk_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(new_polytopes);
+    start_inits = [start_init; 1015,-4704; 1000,-4722]%; 1017 -4721]
+    finish_inits = [finish_init; 1010, -4722 ; 1027, -4704]%; 1007 -4707]
+    for mission_idx = 1:size(start_inits,1)
+        start_init = start_inits(mission_idx,:);
+        finish_init = finish_inits(mission_idx,:);
     %% all_pts array creation
     point_tot = length([shrunk_polytopes.xv]); % total number of vertices in the polytopes
     beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
@@ -125,7 +135,7 @@ for map_idx = 5%2:5
     for repeats = 1%:5
     %% delete vgraph edges randomly
     edge_deletion = 0:0.05:0.9;
-    for i = 1:13%length(edge_deletion)
+    for edge_deletion_idx = 1:13%length(edge_deletion)
         for nominal_or_reachable = [1,2]
             %% plan the initial path
             start = [start_init size(all_pts,1)+1 -1 1];
@@ -194,7 +204,7 @@ for map_idx = 5%2:5
             [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes,1);
 
             if nominal_or_reachable == 1
-                desired_portion_edge_deletion = edge_deletion(i);
+                desired_portion_edge_deletion = edge_deletion(edge_deletion_idx);
                 vgraph_without_start_and_fin = vgraph(1:end-2,1:end-2);
                 valid_edges_initially = find(vgraph_without_start_and_fin==1);
                 num_edges_initially = length(valid_edges_initially);
@@ -222,7 +232,7 @@ for map_idx = 5%2:5
                 warning('mission replanning is impossible')
                 replan_cost = NaN;
                 replan_route_length = NaN;
-                data = [data; map_idx nominal_or_reachable edge_deletion(i) pct_edges_removed init_route_length navigated_distance replan_route_length];
+                data = [data; mission_idx nominal_or_reachable edge_deletion(edge_deletion_idx) pct_edges_removed init_route_length navigated_distance replan_route_length];
                 continue
             end % end is_reachable condition for replanning
 
@@ -253,7 +263,7 @@ for map_idx = 5%2:5
             replan_route_length = sum(sqrt(sum(lengths.*lengths,2)));
 
             % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
-            data = [data; map_idx nominal_or_reachable edge_deletion(i) pct_edges_removed init_route_length navigated_distance replan_route_length];
+            data = [data; mission_idx nominal_or_reachable edge_deletion(edge_deletion_idx) pct_edges_removed init_route_length navigated_distance replan_route_length];
             % plot field, initial path, replan path, and midway point
             if flag_do_plot
                 figure; hold on; box on;
@@ -291,14 +301,17 @@ for map_idx = 5%2:5
         end % end nominal or reachable cost function loop
     end % end edge deletion portion loop
 end % end repeats loop
+end % end mission loop
 end % end map loop
 
 % sort data and define plot options
-markers = {'x','d','o','+','s'};
+markers = {'x','d','o','+','s','x','d'};
 colors = {'r','b'};
-idx_nominal = data(:,1)== map_idx & data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
+% idx_nominal = data(:,1)== map_idx & data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
+idx_nominal = data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
 nominal_data = data(idx_nominal,:);
-idx_reachable = data(:,1)== map_idx & data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
+% idx_reachable = data(:,1)== map_idx & data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
+idx_reachable = data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
 reachable_data = data(idx_reachable,:);
 
 % plot ratio of each path relative to its own initial path
@@ -311,8 +324,8 @@ fit_order = 3;
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(:,5),fit_order);
 p_reachable = polyfit(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./reachable_data(:,5),fit_order);
 x_for_poly = linspace(min(nominal_data(:,4)),max(nominal_data(:,4)),100);
-plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
-plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
+% plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
+% plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
 % add convex hull
 P_nominal = [nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5)];
 P_reachable = [reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./reachable_data(1,5)];
@@ -323,8 +336,8 @@ fill(P_reachable(k_reachable,1),P_reachable(k_reachable,2),colors{reachable_data
 % add tight non-convex boundary
 k_nominal_nonconvex = boundary(P_nominal);
 k_reachable_nonconvex = boundary(P_reachable);
-fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
-fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
+% fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
+% fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
 % legends and labels
 ylabel(sprintf('ratio of replanned path length to reachable \nor nominal initial path length'))
 xlabel('percentage of visibility graph edges blocked [%]')
@@ -339,8 +352,8 @@ plot(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./nominal_data
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5),fit_order);
 p_reachable = polyfit(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./nominal_data(1,5),fit_order);
 x_for_poly = linspace(min(nominal_data(:,4)),max(nominal_data(:,4)),100);
-plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
-plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
+% plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
+% plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
 % add convex hull
 P_nominal = [nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5)];
 P_reachable = [reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./nominal_data(1,5)];
@@ -351,8 +364,8 @@ fill(P_reachable(k_reachable,1),P_reachable(k_reachable,2),colors{reachable_data
 % add tight non-convex boundary
 k_nominal_nonconvex = boundary(P_nominal);
 k_reachable_nonconvex = boundary(P_reachable);
-fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
-fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
+% fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
+% fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
 % legends and labels
 ylabel('ratio of replanned path length to nominal initial path length')
 xlabel('percentage of visibility graph edges blocked [%]')
@@ -367,8 +380,8 @@ plot(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7)),"Color",color
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7)),fit_order);
 p_reachable = polyfit(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7)),fit_order);
 x_for_poly = linspace(min(nominal_data(:,4)),max(nominal_data(:,4)),100);
-plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
-plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
+% plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
+% plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
 % add convex hull
 P_nominal = [nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))];
 P_reachable = [reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))];
@@ -379,8 +392,8 @@ fill(P_reachable(k_reachable,1),P_reachable(k_reachable,2),colors{reachable_data
 % add tight non-convex boundary
 k_nominal_nonconvex = boundary(P_nominal);
 k_reachable_nonconvex = boundary(P_reachable);
-fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
-fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
+% fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
+% fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
 % legends and labels
 xlabel('percentage of visibility graph edges blocked [%]')
 ylabel('total path length after replanning [km]')
