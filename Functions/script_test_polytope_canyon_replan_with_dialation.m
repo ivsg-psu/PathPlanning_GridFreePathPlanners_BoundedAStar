@@ -118,7 +118,7 @@ for map_idx = 6%2:6
     shrunk_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(new_polytopes);
     start_inits = [start_init; 1015,-4704; 1000,-4722; 1017 -4721]
     finish_inits = [finish_init; 1010, -4722 ; 1027, -4704; 1007 -4707]
-    for mission_idx = 1:size(start_inits,1)
+    for mission_idx = 1%:size(start_inits,1)
         start_init = start_inits(mission_idx,:);
         finish_init = finish_inits(mission_idx,:);
     %% all_pts array creation
@@ -142,7 +142,7 @@ for map_idx = 6%2:6
             finishes = [all_pts; start; finish];
             starts = [all_pts; start; finish];
             [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes,1);
-
+            orig_vgraph = vgraph;
             start_for_reachability = start;
             start_for_reachability(4) = start(3);
             finish_for_reachability = finish;
@@ -168,8 +168,9 @@ for map_idx = 6%2:6
             [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
 
             mode = '2d';
+            dilationtimer = tic;
             dilation_robustness_matrix = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode);
-
+            my_time = toc(dilationtimer)
             if nominal_or_reachable == 2
                 % hvec = hvec + inv_reach_cost + inv_vis_cost;
                 inv_corridor_width = 1./dilation_robustness_matrix;
@@ -239,7 +240,7 @@ for map_idx = 6%2:6
             finishes = [all_pts_new; start; finish];
             starts = [all_pts_new; start; finish];
             [new_vgraph, visibility_results_all_pts_new] = fcn_visibility_clear_and_blocked_points_global(enlarged_polytopes, starts, finishes,1);
-
+            reduced_vgraph = new_vgraph;
             num_edges_initially = sum(sum(vgraph));
             num_edges_finally = sum(sum(new_vgraph));
             num_edges_removed = num_edges_initially - num_edges_finally;
@@ -333,6 +334,20 @@ for map_idx = 6%2:6
                     end
                 end
                 legend(leg_str,'Location','best');
+                figure; hold on; box on;
+                blues = zeros(size(orig_vgraph));
+                num_orig_nodes = size(orig_vgraph,1);
+                reduced_vgraph_concat = reduced_vgraph(1:num_orig_nodes,1:num_orig_nodes);
+                reds = orig_vgraph & ~reduced_vgraph_concat;
+                greens = reduced_vgraph_concat;
+                vgraph_image(:,:,1) = reds;
+                vgraph_image(:,:,2) = greens;
+                vgraph_image(:,:,3) = blues;
+                imshow(vgraph_image*255);
+                num_edges_initially = sum(sum(orig_vgraph));
+                num_edges_ultimately = sum(sum(reduced_vgraph_concat));
+                pct_edges_removed = (num_edges_initially - num_edges_ultimately)/num_edges_initially;
+                title(sprintf("%.2f pct. of edges removed, obstacle dilation",pct_edges_removed));
             end % end flag_do_plot condition
         end % end nominal or reachable cost function loop
     end % end edge deletion portion loop

@@ -93,6 +93,9 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
             dilation_robustness_matrix(edge_start_idx(i), edge_end_idx(i)) = corridor_width;
             continue
         end
+        % TODO (@sjharnett) cross edge with candidate edge - get pile of positive edges (lefts) and negatives (rights)
+        % TODO set cost as sum of min of left set and min of right set
+        % TODO (@sjharentt) need a tool to look up if edge is a polytope side wall
         normal_mag = norm(normal_dir);
         unit_normal = normal_dir/normal_mag;
         % find all visibility graph edges with same origin

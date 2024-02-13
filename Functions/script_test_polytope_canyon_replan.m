@@ -135,7 +135,7 @@ for map_idx = 6%2:5
     for repeats = 1%:5
     %% delete vgraph edges randomly
     edge_deletion = 0:0.05:0.9;
-    for edge_deletion_idx = 1:13%length(edge_deletion)
+    for edge_deletion_idx = 13%1:13%length(edge_deletion)
         for nominal_or_reachable = [1,2]
             %% plan the initial path
             start = [start_init size(all_pts,1)+1 -1 1];
@@ -143,7 +143,7 @@ for map_idx = 6%2:5
             finishes = [all_pts; start; finish];
             starts = [all_pts; start; finish];
             [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes,1);
-
+            orig_vgraph = vgraph;
             start_for_reachability = start;
             start_for_reachability(4) = start(3);
             finish_for_reachability = finish;
@@ -202,7 +202,6 @@ for map_idx = 6%2:5
             finishes = [all_pts; start; finish];
             starts = [all_pts; start; finish];
             [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes,1);
-
             if nominal_or_reachable == 1
                 desired_portion_edge_deletion = edge_deletion(edge_deletion_idx);
                 vgraph_without_start_and_fin = vgraph(1:end-2,1:end-2);
@@ -221,6 +220,7 @@ for map_idx = 6%2:5
             new_vgraph(idx_of_edges_for_removal_updated) = 0;
             num_edges_after = sum(sum(new_vgraph));
             pct_edges_removed_updated = (num_edges_initally_updated - num_edges_after)/num_edges_initally_updated*100;
+            reduced_vgraph = new_vgraph;
 
             start_for_reachability = start;
             start_for_reachability(4) = start(3);
@@ -297,6 +297,15 @@ for map_idx = 6%2:5
                         end
                     end
                 end
+                figure; hold on; box on;
+                blues = zeros(size(vgraph));
+                reds = orig_vgraph & ~reduced_vgraph;
+                greens = reduced_vgraph;
+                vgraph_image(:,:,1) = reds;
+                vgraph_image(:,:,2) = greens;
+                vgraph_image(:,:,3) = blues;
+                imshow(vgraph_image*255);
+                title(sprintf("%.2f pct. of edges removed, random edge blocking",pct_edges_removed));
             end % end flag_do_plot condition
         end % end nominal or reachable cost function loop
     end % end edge deletion portion loop
