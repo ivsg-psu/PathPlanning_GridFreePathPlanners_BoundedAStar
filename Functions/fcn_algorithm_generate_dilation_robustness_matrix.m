@@ -64,7 +64,7 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
     vgraph = vgraph - eye(size(vgraph)); % we don't want to consider self interactions here
     all_pts = [all_pts; start; finish];
     % initialize to zero value for each edge (zero implying the edge has no corridor width, i.e. is blocked)
-    dilation_robustness_matrix = zeros(size(vgraph));
+    dilation_robustness_matrix = zeros(size(vgraph,1),size(vgraph,2),2);
     % only need to perform this operation for 1's in vgraph, 0's are blocked edges and have 0 corridor width
     idx_of_valid_edges = find(vgraph==1);
     num_edges = length(idx_of_valid_edges);
@@ -100,7 +100,7 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
             corridor_width = inf; % for an edge of zero length, routing down the edge
             % is equivalent to staying still which should have no corridor width restriction as
             % staying still is "free" kinematically
-            dilation_robustness_matrix(edge_start_idx(i), edge_end_idx(i)) = corridor_width;
+            dilation_robustness_matrix(edge_start_idx(i), edge_end_idx(i),:) = corridor_width;
             continue % skip to next edge if this edge had zero length
         end
 
@@ -158,10 +158,17 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
         else
             error(strcat("Mode argument must be a string containing '2d' or '3d' (case insensitive) mode was instead given as: ",mode))
         end
-        corridor_width = min(abs(dot_secondary_with_unit_normal));
-        if isempty(corridor_width)
-            corridor_width = inf;
+        dot_secondary_with_unit_normal_left = dot_secondary_with_unit_normal(dot_secondary_with_unit_normal>0);
+        dot_secondary_with_unit_normal_right = dot_secondary_with_unit_normal(dot_secondary_with_unit_normal<0);
+        corridor_width_left = min(dot_secondary_with_unit_normal_left);
+        corridor_width_right = max(dot_secondary_with_unit_normal_right);
+        if isempty(corridor_width_left)
+            corridor_width_left = inf;
         end
-        dilation_robustness_matrix(edge_start_idx(i), edge_end_idx(i)) = corridor_width;
+        if isempty(corridor_width_right)
+            corridor_width_right = inf;
+        end
+        dilation_robustness_matrix(edge_start_idx(i), edge_end_idx(i), 1) = corridor_width_left;
+        dilation_robustness_matrix(edge_start_idx(i), edge_end_idx(i), 2) = corridor_width_right;
     end
 end
