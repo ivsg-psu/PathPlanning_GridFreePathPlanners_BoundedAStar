@@ -176,7 +176,7 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
         % first want to find if unit vector points left or right of primary vector
         primary_edge_mid_point = primary_edge_start + 0.5*primary_edge_dir; % find the middle of the edge
         cross_primary_with_normal = cross([primary_edge_dir 0],[unit_normal 0]);
-        my_eps = 100000*eps;
+        my_eps = 1e-7;
         if cross_primary_with_normal(3) > 0
             point_to_left = primary_edge_mid_point + my_eps*unit_normal;
             point_to_right = primary_edge_mid_point - my_eps*unit_normal;

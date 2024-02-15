@@ -118,7 +118,7 @@ for map_idx = 6%2:6
     shrunk_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(new_polytopes);
     start_inits = [start_init; 1015,-4704; 1000,-4722; 1017 -4721]
     finish_inits = [finish_init; 1010, -4722 ; 1027, -4704; 1007 -4707]
-    for mission_idx = 1%:size(start_inits,1)
+    for mission_idx = 1:size(start_inits,1)
         start_init = start_inits(mission_idx,:);
         finish_init = finish_inits(mission_idx,:);
     %% all_pts array creation
@@ -169,7 +169,8 @@ for map_idx = 6%2:6
 
             mode = '2d';
             dilationtimer = tic;
-            dilation_robustness_matrix = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode);
+            dilation_robustness_tensor = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode, shrunk_polytopes);
+            dilation_robustness_matrix = max(dilation_robustness_tensor(:,:,1) , dilation_robustness_tensor(:,:,2));
             my_time = toc(dilationtimer)
             if nominal_or_reachable == 2
                 % hvec = hvec + inv_reach_cost + inv_vis_cost;
@@ -274,7 +275,8 @@ for map_idx = 6%2:6
             [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts_new, start, finish, mode);
 
             % mode = '2d';
-            % dilation_robustness_matrix = fcn_algorithm_generate_dilation_robustness_matrix(all_pts_new, start, finish, new_vgraph, mode);
+            % dilation_robustness_tensor = fcn_algorithm_generate_dilation_robustness_matrix(all_pts_new, start, finish, new_vgraph, mode, enlarged_polytopes);
+            % dilation_robustness_matrix = dilation_robustness_tensor(:,:,1) + dilation_robustness_tensor(:,:,2);
 %
             % if nominal_or_reachable == 2
                 % hvec = hvec + inv_reach_cost + inv_vis_cost;
@@ -376,8 +378,8 @@ x_for_poly = linspace(min(nominal_data(:,4)),max(nominal_data(:,4)),100);
 % plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
 % plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
 % add convex hull
-P_nominal = [nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5)];
-P_reachable = [reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./reachable_data(1,5)];
+P_nominal = [nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(:,5)];
+P_reachable = [reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./reachable_data(:,5)];
 k_nominal = convhull(P_nominal);
 k_reachable = convhull(P_reachable);
 fill(P_nominal(k_nominal,1),P_nominal(k_nominal,2),colors{nominal_data(1,2)},'FaceAlpha',0.3);
@@ -388,9 +390,9 @@ k_reachable_nonconvex = boundary(P_reachable);
 % fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
 % fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
 % legends and labels
-ylabel(sprintf('ratio of replanned path length to reachable \nor nominal initial path length'))
+ylabel(sprintf('ratio of replanned path length to width incentive \nor nominal initial path length'))
 xlabel('obstacle size increase [km]')
-legend({'nominal cost function','reachable cost function'},'Location','best');
+legend({'nominal cost function','corridor width function'},'Location','best');
 
 % plot ratio of each path relative to nominal initial path
 figure; hold on; box on;
@@ -418,7 +420,7 @@ k_reachable_nonconvex = boundary(P_reachable);
 % legends and labels
 ylabel('ratio of replanned path length to nominal initial path length')
 xlabel('obstacle size increase [km]')
-legend({'nominal cost function','reachable cost function'},'Location','best');
+legend({'nominal cost function','corridor width cost function'},'Location','best');
 
 % plot absolute length
 figure; hold on; box on;
@@ -446,7 +448,7 @@ k_reachable_nonconvex = boundary(P_reachable);
 % legends and labels
 xlabel('obstacle size increase [km]')
 ylabel('total path length after replanning [km]')
-legend({'nominal cost function','reachable cost function'},'Location','best');
+legend({'nominal cost function','corridor width function'},'Location','best');
 
 function INTERNAL_fcn_format_timespace_plot()
     box on
