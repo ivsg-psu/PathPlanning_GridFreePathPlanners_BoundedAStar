@@ -126,6 +126,7 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
         % find the secondary edge direction vectors
         secondary_edge_dirs = secondary_edge_ends - primary_edge_start;
 
+
         %% discard irrelevant secondary edges
         % we want to discard edges that either have no component in the direction of the original vector
         % or that end at a point too far away to cut off the original vector
@@ -149,6 +150,10 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
         % both cases are discarded
         secondary_edge_dirs(find(secondary_component_in_dir_of_primary <= 0 | secondary_component_in_dir_of_primary > norm(primary_edge_dir)),:) = [];
 
+        num_secondary_edges = size(secondary_edge_dirs,1);
+        primary_edge_dir_repeated = repmat(primary_edge_dir,num_secondary_edges,1);
+        cross_primary_with_secondary = cross([primary_edge_dir_repeated,zeros(num_secondary_edges,1)], [secondary_edge_dirs,zeros(num_secondary_edges,1)], 2);
+
         % dot the other edges with the unit normal to find the corridor width defined by each vgraph edge
         if strcmp(mode, "2d") || strcmp(mode,"2D")
             dot_secondary_with_unit_normal = secondary_edge_dirs(:,1)*unit_normal(1) + secondary_edge_dirs(:,2)*unit_normal(2);
@@ -157,10 +162,12 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
         else
             error(strcat("Mode argument must be a string containing '2d' or '3d' (case insensitive) mode was instead given as: ",mode))
         end
-        dot_secondary_with_unit_normal_left = dot_secondary_with_unit_normal(dot_secondary_with_unit_normal>0);
-        dot_secondary_with_unit_normal_right = dot_secondary_with_unit_normal(dot_secondary_with_unit_normal<0);
-        corridor_width_left = min(dot_secondary_with_unit_normal_left);
-        corridor_width_right = min(-dot_secondary_with_unit_normal_right); % these are negative so switch to positive before taking min
+        % dot_secondary_with_unit_normal_left = dot_secondary_with_unit_normal(dot_secondary_with_unit_normal>0);
+        % dot_secondary_with_unit_normal_right = dot_secondary_with_unit_normal(dot_secondary_with_unit_normal<0);
+        dot_secondary_with_unit_normal_left = dot_secondary_with_unit_normal(find(cross_primary_with_secondary(:,3)>0));
+        dot_secondary_with_unit_normal_right = dot_secondary_with_unit_normal(find(cross_primary_with_secondary(:,3)<0));
+        corridor_width_left = min(abs(dot_secondary_with_unit_normal_left));
+        corridor_width_right = min(abs(dot_secondary_with_unit_normal_right)); % these are negative so switch to positive before taking min
         if isempty(corridor_width_left)
             corridor_width_left = 0;
         end
