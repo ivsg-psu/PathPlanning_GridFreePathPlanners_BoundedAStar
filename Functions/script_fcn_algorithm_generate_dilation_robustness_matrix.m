@@ -207,7 +207,7 @@ if flag_do_plot_slow
     end
 end
 mode = '2d';
-dilation_robustness_matrix = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode);
+dilation_robustness_matrix = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode, polytopes);
 % check that all zeros are in the same place
 
 % vgraph = vgraph - eye(size(vgraph));

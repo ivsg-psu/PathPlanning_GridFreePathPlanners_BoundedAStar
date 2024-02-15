@@ -1,4 +1,4 @@
-function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode)
+function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode, polytopes)
 % fcn_algorithm_generate_dilation_robustness_matrix
 %
 % A function for generating a cost matrix and heuristic cost vector.  The cost matrix describes the
@@ -150,6 +150,7 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
         % both cases are discarded
         secondary_edge_dirs(find(secondary_component_in_dir_of_primary <= 0 | secondary_component_in_dir_of_primary > norm(primary_edge_dir)),:) = [];
 
+        %% find if dot product is right or left
         num_secondary_edges = size(secondary_edge_dirs,1);
         primary_edge_dir_repeated = repmat(primary_edge_dir,num_secondary_edges,1);
         cross_primary_with_secondary = cross([primary_edge_dir_repeated,zeros(num_secondary_edges,1)], [secondary_edge_dirs,zeros(num_secondary_edges,1)], 2);
@@ -168,11 +169,74 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
         dot_secondary_with_unit_normal_right = dot_secondary_with_unit_normal(find(cross_primary_with_secondary(:,3)<0));
         corridor_width_left = min(abs(dot_secondary_with_unit_normal_left));
         corridor_width_right = min(abs(dot_secondary_with_unit_normal_right)); % these are negative so switch to positive before taking min
+        %% check for polytope walls
+        % if there are no dot products, there's either nothing to that side, so the space is infinte
+        % or there's a polytope to that side so the width is zero
+
+        % first want to find if unit vector points left or right of primary vector
+        primary_edge_mid_point = primary_edge_start + 0.5*primary_edge_dir; % find the middle of the edge
+        cross_primary_with_normal = cross([primary_edge_dir 0],[unit_normal 0]);
+        my_eps = 100000*eps;
+        if cross_primary_with_normal(3) > 0
+            point_to_left = primary_edge_mid_point + my_eps*unit_normal;
+            point_to_right = primary_edge_mid_point - my_eps*unit_normal;
+        elseif cross_primary_with_normal(3) < 0
+            point_to_right = primary_edge_mid_point + my_eps*unit_normal;
+            point_to_left = primary_edge_mid_point - my_eps*unit_normal;
+        else
+            error('primary edge crossed with unit normal is 0')
+            % just make the midpoint the point in this case
+        end
+
+        num_polys = length(polytopes);
+        p = 1;
+        is_in_left = 0;
+        is_in_right = 0;
+        while p <= num_polys
+            verts = polytopes(p).vertices;
+            % get xmin and xmax also ymin and ymax
+            xmax = max(verts(:,1));
+            xmin = min(verts(:,1));
+            ymax = max(verts(:,2));
+            ymin = min(verts(:,2));
+            % check axis aligned bounding box before checking for polytope containment of the midpoint
+            in_AABB = (primary_edge_mid_point(1) <= xmax && primary_edge_mid_point(1) >= xmin) && (primary_edge_mid_point(2) <= ymax && primary_edge_mid_point(2) >= ymin);
+            % is point between xmin xmax and ymin max? if not continue
+            if ~in_AABB
+                p = p+1;
+                continue
+            end
+            % if point is in AABB make polyshape from these verts
+            polyshape_p = polyshape(verts);
+            % is point in but not on polyshape?
+            [is_in,is_on] = isinterior(polyshape_p,primary_edge_mid_point);
+            % if so, remove the edge, and stop trying polytopes
+            if is_on
+                [is_in_left,is_on_left] = isinterior(polyshape_p,point_to_left);
+                [is_in_right,is_on_right] = isinterior(polyshape_p,point_to_right);
+                if is_in_left && is_in_right
+                    error('the point is somehow left and right of the polytope')
+                end
+                % if it is in one polytope, we needn't check any others
+                p = num_polys+1;
+            end
+            % if not, continue to check the next polytope
+            p = p + 1;
+        end
+
         if isempty(corridor_width_left)
-            corridor_width_left = 0;
+            if is_in_left
+                corridor_width_left = 0;
+            else
+                corridor_width_left = inf;
+            end
         end
         if isempty(corridor_width_right)
-            corridor_width_right = 0;
+            if is_in_right
+                corridor_width_right = 0;
+            else
+                corridor_width_right = inf;
+            end
         end
         dilation_robustness_matrix(edge_start_idx(i), edge_end_idx(i), 1) = corridor_width_left;
         dilation_robustness_matrix(edge_start_idx(i), edge_end_idx(i), 2) = corridor_width_right;
