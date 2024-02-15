@@ -157,8 +157,11 @@ ylabel('y [m]');
 title('polytope map')
 
 
-start = zeros(1,2);
-finish = start + [1 0];
+% start = zeros(1,2);
+% finish = start + [1 0];
+
+start = [0,9];
+finish = start + [10,0];
 
 plot(start(1),start(2),'xg','MarkerSize',6);
 plot(finish(1),finish(2),'xr','MarkerSize',6);
@@ -204,20 +207,19 @@ if flag_do_plot_slow
     end
 end
 mode = '2d';
-dilation_robustness_matrix = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode)
+dilation_robustness_matrix = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode);
 % check that all zeros are in the same place
-vgraph = vgraph - eye(size(vgraph));
-zero_vgraph_edge_idx = find(vgraph==0);
-zero_dilation_robustness_matrix_idx = find(vgraph==0);
-assert(isequal(zero_vgraph_edge_idx, zero_dilation_robustness_matrix_idx));
+
+% vgraph = vgraph - eye(size(vgraph));
+% zero_vgraph_edge_idx = find(vgraph==0);
+% zero_dilation_robustness_matrix_idx_left = find(dilation_robustness_matrix(:,:,1)==0);
+% zero_dilation_robustness_matrix_idx_right = find(dilation_robustness_matrix(:,:,2)==0);
+% assert(isequal(zero_vgraph_edge_idx, zero_dilation_robustness_matrix_idx_left));
+% assert(isequal(zero_vgraph_edge_idx, zero_dilation_robustness_matrix_idx_right));
 
 dilation_robustness_values = dilation_robustness_matrix(:,:,left_or_right)';
 dilation_robustness_values = dilation_robustness_values(:)';
-if left_or_right == 1
-    max_dilation_robustness_excluding_inf = max(dilation_robustness_values(~isinf(dilation_robustness_values) & ~isinf(-dilation_robustness_values)));
-elseif left_or_right == 2
-    max_dilation_robustness_excluding_inf = min(dilation_robustness_values(~isinf(dilation_robustness_values) & ~isinf(-dilation_robustness_values)));
-end
+max_dilation_robustness_excluding_inf = max(dilation_robustness_values(~isinf(dilation_robustness_values) & ~isinf(-dilation_robustness_values)));
 
 
 % plot corridor width approximation graph edges
@@ -232,7 +234,7 @@ if flag_do_plot
         for j = 1:size(vgraph,1)
             if vgraph(i,j) == 1
                 alpha = dilation_robustness_matrix(i,j,left_or_right)/max_dilation_robustness_excluding_inf;
-                if alpha == inf | alpha == -inf
+                if alpha == inf %| alpha == -inf
                     continue
                 end
                 plot([starts(i,1),starts(j,1)],[starts(i,2),starts(j,2)],'--','Color',[alpha 0 1-alpha],'LineWidth',2)
@@ -249,7 +251,38 @@ end
 % plot corridor width approximation values
 if flag_do_plot
     fig_num = fig_num + 1;
-    fcn_MapGen_plotPolytopes(polytopes,fig_num,'g-',line_width);
+    figure(fig_num); hold on; box on;
+    for j = 1:length(polytopes)
+         fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+    end
+    hold on; box on;
+    xlabel('x [m]');
+    ylabel('y [m]');
+    l_or_r_string = {'left','right'};
+    title(strcat('dilation robustness: ',l_or_r_string{left_or_right}));
+    vgraph = triu(vgraph); % only want to plot upper triangle so bidirectional edges don't plot over each other.
+    for i = 1:size(vgraph,1)
+        for j = 1:size(vgraph,1)
+            % plot only start and finish for assymetry checking
+            if ~(i == start(3) && j == finish(3)) && ~(i == 7 && j == 8)
+                continue
+            end
+            if vgraph(i,j) == 1
+                % plot a nice gray line
+                % plot([starts(i,1),starts(j,1)],[starts(i,2),starts(j,2)],'--','Color',0.4*ones(1,3),'LineWidth',2);
+                quiver(starts(i,1),starts(i,2),starts(j,1)-starts(i,1),starts(j,2)-starts(i,2),'--','Color',0.4*ones(1,3),'LineWidth',2);
+                text((starts(i,1)+starts(j,1))/2 ,(starts(i,2)+starts(j,2))/2, string(dilation_robustness_matrix(i,j,left_or_right)));
+            end
+        end
+    end
+end
+% plot corridor width approximation values
+if flag_do_plot
+    fig_num = fig_num + 1;
+    figure(fig_num); hold on; box on;
+    for j = 1:length(polytopes)
+         fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+    end
     hold on; box on;
     xlabel('x [m]');
     ylabel('y [m]');
@@ -259,12 +292,11 @@ if flag_do_plot
     for i = 1:size(vgraph,1)
         for j = 1:size(vgraph,1)
             % skip start and finish for plotting clarity
-            if i == start(3) || j == start(3) || i == finish(3) || j == finish(3)
+            if (i == start(3) || j == finish(3) || i == finish(3) || j == start(3))
                 continue
             end
             if vgraph(i,j) == 1
                 % plot a nice gray line
-                % plot([starts(i,1),starts(j,1)],[starts(i,2),starts(j,2)],'--','Color',0.4*ones(1,3),'LineWidth',2);
                 quiver(starts(i,1),starts(i,2),starts(j,1)-starts(i,1),starts(j,2)-starts(i,2),'--','Color',0.4*ones(1,3),'LineWidth',2);
                 text((starts(i,1)+starts(j,1))/2 ,(starts(i,2)+starts(j,2))/2, string(dilation_robustness_matrix(i,j,left_or_right)));
             end

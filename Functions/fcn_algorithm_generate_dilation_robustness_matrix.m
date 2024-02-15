@@ -130,7 +130,6 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
         % we want to discard edges that either have no component in the direction of the original vector
         % or that end at a point too far away to cut off the original vector
 
-        % TODO (@sjharnett) cross edge with candidate edge - get pile of positive edges (lefts) and negatives (rights)
         % TODO set cost as sum of min of left set and min of right set
         % TODO (@sjharentt) need a tool to look up if edge is a polytope side wall
 
@@ -161,12 +160,12 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
         dot_secondary_with_unit_normal_left = dot_secondary_with_unit_normal(dot_secondary_with_unit_normal>0);
         dot_secondary_with_unit_normal_right = dot_secondary_with_unit_normal(dot_secondary_with_unit_normal<0);
         corridor_width_left = min(dot_secondary_with_unit_normal_left);
-        corridor_width_right = max(dot_secondary_with_unit_normal_right);
+        corridor_width_right = min(-dot_secondary_with_unit_normal_right); % these are negative so switch to positive before taking min
         if isempty(corridor_width_left)
-            corridor_width_left = inf;
+            corridor_width_left = 0;
         end
         if isempty(corridor_width_right)
-            corridor_width_right = inf;
+            corridor_width_right = 0;
         end
         dilation_robustness_matrix(edge_start_idx(i), edge_end_idx(i), 1) = corridor_width_left;
         dilation_robustness_matrix(edge_start_idx(i), edge_end_idx(i), 2) = corridor_width_right;
