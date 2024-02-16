@@ -19,7 +19,7 @@ flag_do_plot = 1;
 flag_do_slow_plot = 0;
 flag_do_animation = 0;
 flag_do_plot_slow = 1;
-
+random_delete = 0; % toggle on random edge deletion vs length based deletion where long edges are deleted first (assumed to be more likely to be blocked)
 %%%
 % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
 %%%
@@ -207,8 +207,20 @@ for map_idx = 6%2:5
                 vgraph_without_start_and_fin = vgraph(1:end-2,1:end-2);
                 valid_edges_initially = find(vgraph_without_start_and_fin==1);
                 num_edges_initially = length(valid_edges_initially);
-                edge_lottery_draw = rand(num_edges_initially,1);
-                edges_for_removal = (edge_lottery_draw <= desired_portion_edge_deletion);
+                if random_delete
+                    edge_lottery_draw = rand(num_edges_initially,1);
+                    edges_for_removal = (edge_lottery_draw <= desired_portion_edge_deletion);
+                else
+                    % get the length based cgraph
+                    mode = "xy spatial only";
+                    [cgraph, ~] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
+                    cgraph_without_start_and_fin = cgraph(1:end-2,1:end-2);
+                    costs_of_valid_edges = cgraph_without_start_and_fin(valid_edges_initially); % cost of every 1 in vgraph
+                    vgraph_edge_idx_to_cost_table = [valid_edges_initially, costs_of_valid_edges]; % associate in a table
+                    vgraph_edge_idx_sorted = sortrows(vgraph_edge_idx_to_cost_table,2,'descend'); % sort the table by edge length
+                    num_edges_for_removal = num_edges_initially*edge_deletion(edge_deletion_idx); % find out how many edges to remove
+                    edges_for_removal = vgraph_edge_idx_sorted(1:num_edges_for_removal,1); % take that many edges from top of sorted list
+                end
                 idx_of_edges_for_removal = valid_edges_initially(edges_for_removal);
                 [rows_for_removal, cols_for_removal] = ind2sub(size(vgraph_without_start_and_fin),idx_of_edges_for_removal);
                 num_edges_removed = length(rows_for_removal);
