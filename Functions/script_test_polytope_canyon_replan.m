@@ -24,7 +24,7 @@ random_delete = 0; % toggle on random edge deletion vs length based deletion whe
 % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
 %%%
 data = []; % initialize array for storing results
-for map_idx = 6%2:5
+for map_idx = 5%2:5
     if map_idx == 1
         %% load test fixtures for polytope map rather than creating it here
         % load distribution north of canyon
@@ -117,7 +117,7 @@ for map_idx = 6%2:5
     shrunk_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(new_polytopes);
     start_inits = [start_init; 1015,-4704; 1000,-4722]%; 1017 -4721]
     finish_inits = [finish_init; 1010, -4722 ; 1027, -4704]%; 1007 -4707]
-    for mission_idx = 1:size(start_inits,1)
+    for mission_idx = 1%:size(start_inits,1)
         start_init = start_inits(mission_idx,:);
         finish_init = finish_inits(mission_idx,:);
     %% all_pts array creation
@@ -135,7 +135,7 @@ for map_idx = 6%2:5
     for repeats = 1%:5
     %% delete vgraph edges randomly
     edge_deletion = 0:0.05:0.9;
-    for edge_deletion_idx = 13%1:13%length(edge_deletion)
+    for edge_deletion_idx = 1:13%length(edge_deletion)
         for nominal_or_reachable = [1,2]
             %% plan the initial path
             start = [start_init size(all_pts,1)+1 -1 1];
@@ -195,7 +195,6 @@ for map_idx = 6%2:5
             flag_snap_type = 1;
             start_midway = fcn_Path_convertSt2XY(referencePath,St_points_input, flag_snap_type);
 
-
             %% plan the new path
             start = [start_midway size(all_pts,1)+1 -1 1];
             finish = [finish_init size(all_pts,1)+2 -1 1];
@@ -210,6 +209,7 @@ for map_idx = 6%2:5
                 if random_delete
                     edge_lottery_draw = rand(num_edges_initially,1);
                     edges_for_removal = (edge_lottery_draw <= desired_portion_edge_deletion);
+                    idx_of_edges_for_removal = valid_edges_initially(edges_for_removal);
                 else
                     % get the length based cgraph
                     mode = "xy spatial only";
@@ -219,9 +219,8 @@ for map_idx = 6%2:5
                     vgraph_edge_idx_to_cost_table = [valid_edges_initially, costs_of_valid_edges]; % associate in a table
                     vgraph_edge_idx_sorted = sortrows(vgraph_edge_idx_to_cost_table,2,'descend'); % sort the table by edge length
                     num_edges_for_removal = num_edges_initially*edge_deletion(edge_deletion_idx); % find out how many edges to remove
-                    edges_for_removal = vgraph_edge_idx_sorted(1:num_edges_for_removal,1); % take that many edges from top of sorted list
+                    idx_of_edges_for_removal = vgraph_edge_idx_sorted(1:num_edges_for_removal,1); % take that many edges from top of sorted list
                 end
-                idx_of_edges_for_removal = valid_edges_initially(edges_for_removal);
                 [rows_for_removal, cols_for_removal] = ind2sub(size(vgraph_without_start_and_fin),idx_of_edges_for_removal);
                 num_edges_removed = length(rows_for_removal);
                 pct_edges_removed = (num_edges_removed)/num_edges_initially*100;
