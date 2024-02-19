@@ -264,7 +264,7 @@ if flag_do_plot
     for i = 1:size(vgraph,1)
         for j = 1:size(vgraph,1)
             % plot only start and finish for assymetry checking
-            if ~(i == start(3) && j == finish(3)) && ~(i == 7 && j == 8)
+            if ~(i == start(3) && j == finish(3)) && ~(i == 7 && j == 8) &&  ~(i == 15 && j == 16)
                 continue
             end
             if vgraph(i,j) == 1

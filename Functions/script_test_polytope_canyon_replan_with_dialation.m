@@ -306,19 +306,19 @@ for map_idx = 6%2:6
                 plot(init_route(:,1),init_route(:,2),'k','LineWidth',2);
                 plot(start_midway(1),start_midway(2),'dm','MarkerSize',6)
                 plot(replan_route(:,1),replan_route(:,2),'--g','LineWidth',2);
-                for j = 1:length(shrunk_polytopes)
-                     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-                end
                 for j = 1:length(enlarged_polytopes)
                      fill(enlarged_polytopes(j).vertices(:,1)',enlarged_polytopes(j).vertices(:,2),[0 0 1],'FaceColor','r','FaceAlpha',0.3)
                 end
-                title_string = sprintf('map idx: %i, nominal or reachable: %i, polytope size increase [km]: %.2f',map_idx, nominal_or_reachable,polytope_size_increases);
+                for j = 1:length(shrunk_polytopes)
+                     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
+                end
+                title_string = sprintf('map idx: %i, nominal or corridor-width-based: %i,\npolytope size increase [km]: %.2f',map_idx, nominal_or_reachable,polytope_size_increases);
                 title(title_string);
-                leg_str = {'start','finish','initial route','replanning point','replanned route','obstacles'};
+                leg_str = {'start','finish','initial route','replanning point','replanned route','enlarged obstacles'};
                 for i = 1:length(shrunk_polytopes)-1
                     leg_str{end+1} = '';
                 end
-                leg_str{end+1} = 'enlarged obstacles';
+                leg_str{end+1} = 'obstacles';
                 for i = 1:length(shrunk_polytopes)-1
                     leg_str{end+1} = '';
                 end
