@@ -170,6 +170,13 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
         corridor_width_left = min(abs(dot_secondary_with_unit_normal_left));
         corridor_width_right = min(abs(dot_secondary_with_unit_normal_right)); % these are negative so switch to positive before taking min
         %% check for polytope walls
+        % this check is based on the definition of an interior point: https://wiki.math.ntnu.no/linearmethods/basicspaces/openandclosed
+        % i.e. that a point is interior if all points within an epsilon sized ball centered at that point is also in the set
+        % this may break due to numerical precision issues but it is more robust than the other way of checking for interior points:
+        % assuming adjascent vertices in the vertex list define a polytope side.  This has two issues:
+        %   1) we can't tell if the polytope is defined CCW or CW so the wall can be on the left or right
+        %   2) if the polytope is not formed by drawing lines between vertecies and instead by taking the convex hull
+        %      of the vertices, then adjascent points in the vertex list may not be a polytope wall
         % if there are no dot products, there's either nothing to that side, so the space is infinte
         % or there's a polytope to that side so the width is zero
 
