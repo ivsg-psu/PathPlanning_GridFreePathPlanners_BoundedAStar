@@ -19,14 +19,14 @@ addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 flag_do_plot = 1;
 flag_do_slow_plot = 0;
 flag_do_animation = 0;
-flag_do_plot_slow = 1;
+flag_do_plot_slow = 0;
 
 %%%
 % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
 %%%
 data = []; % initialize array for storing results
 for map_idx = 6%2:6
-    if map_idx == 1
+    if map_idx == 1 % generic canyon map
         %% load test fixtures for polytope map rather than creating it here
         % load distribution north of canyon
         load(strcat(pwd,'\..\Test_Fixtures\shrunk_polytopes1.mat'));
@@ -63,61 +63,74 @@ for map_idx = 6%2:6
         %% define start and finish
         start_init = [0 1.25];
         finish_init = [2 1.25];
-    elseif map_idx == 2
+    elseif map_idx == 2 % the lower triangular flood plain
         load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_1.mat'));
         shrunk_polytopes = flood_plain_1;
         start_init = [-78.3 40.88];
         % finish_init = [-78.1 40.9];
         finish_init = [-78.07 40.82];
-    elseif map_idx == 3
+    elseif map_idx == 3 % the mustafar mining rig map (the comb)
         load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_2.mat'));
         shrunk_polytopes = flood_plain_2;
         start_init = [-78.02 40.96];
         % finish_init = [-77.86 40.93];
         finish_init = [-77.82 40.97];
-    elseif map_idx == 4
+    elseif map_idx == 4 % also good for edge deletion case (the long river valleys)
         load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_3.mat'));
         shrunk_polytopes = flood_plain_3;
         start_init = [-77.49 40.84];
         % finish_init = [-77.58 40.845];
         finish_init = [-77.68 40.85];
-    elseif map_idx == 5
+    elseif map_idx == 5 % bridge map, good for random edge deletion case
         load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_4.mat'));
         shrunk_polytopes = flood_plain_4;
         start_init = [-77.68 40.9];
         finish_init = [-77.5 40.8];
-    elseif map_idx == 6
+    elseif map_idx == 6 % large map, good for dilation case, nearly fully tiled
         load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_5.mat'));
         shrunk_polytopes = flood_plain_5;
         start_init = [-78.01 41.06];
         finish_init = [-77.75 40.93];
+    elseif map_idx == 7 % generic polytope map
+        Halton_range = [1 100];
+        tiled_polytopes = fcn_MapGen_haltonVoronoiTiling(Halton_range,[1 1]);
+        des_rad = 0.05; sigma_radius = 0.02; min_rad = 0.001;
+        [shrunk_polytopes,mu_final,sigma_final] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes,des_rad,sigma_radius,min_rad);%,fig_num);
+        start_init = [0 0.5];
+        finish_init = [1 0.5];
     end % if conditions for different map test fixtures
-
-    %% convert from LLA to QGS84
-    centre_co_avg_alt = 351.7392;
-    start_init = INTERNAL_WGSLLA2xyz(start_init(2),start_init(1),centre_co_avg_alt);
-    start_init = start_init(1:2)';
-    start_init = start_init/1000;
-    finish_init = INTERNAL_WGSLLA2xyz(finish_init(2),finish_init(1),centre_co_avg_alt);
-    finish_init = finish_init(1:2)';
-    finish_init = finish_init/1000;
-    new_polytopes = [];
-    for i = 1:length(shrunk_polytopes)
-        poly = shrunk_polytopes(i);
-        lats = poly.vertices(:,2);
-        longs = poly.vertices(:,1);
-        alts = centre_co_avg_alt*ones(size(lats));
-        wgs_verts = [];
-        for j = 1:length(lats)
-            xyz = INTERNAL_WGSLLA2xyz(lats(j),longs(j),alts(j));
-            xyz = xyz/1000;
-            wgs_verts(j,:) = [xyz(1),xyz(2)];
+    if map_idx <=6 && map_idx >= 2 % for the floodplain maps we have to convert from LLA to km
+        %% convert from LLA to QGS84
+        centre_co_avg_alt = 351.7392;
+        start_init = INTERNAL_WGSLLA2xyz(start_init(2),start_init(1),centre_co_avg_alt);
+        start_init = start_init(1:2)';
+        start_init = start_init/1000;
+        finish_init = INTERNAL_WGSLLA2xyz(finish_init(2),finish_init(1),centre_co_avg_alt);
+        finish_init = finish_init(1:2)';
+        finish_init = finish_init/1000;
+        new_polytopes = [];
+        for i = 1:length(shrunk_polytopes)
+            poly = shrunk_polytopes(i);
+            lats = poly.vertices(:,2);
+            longs = poly.vertices(:,1);
+            alts = centre_co_avg_alt*ones(size(lats));
+            wgs_verts = [];
+            for j = 1:length(lats)
+                xyz = INTERNAL_WGSLLA2xyz(lats(j),longs(j),alts(j));
+                xyz = xyz/1000;
+                wgs_verts(j,:) = [xyz(1),xyz(2)];
+            end
+            new_polytopes(i).vertices = wgs_verts;
         end
-        new_polytopes(i).vertices = wgs_verts;
+        shrunk_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(new_polytopes);
     end
-    shrunk_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(new_polytopes);
-    start_inits = [start_init; 1015,-4704; 1000,-4722; 1017 -4721]
-    finish_inits = [finish_init; 1010, -4722 ; 1027, -4704; 1007 -4707]
+    if map_idx == 6 % for map 6 we can loop over many start goal pairs
+        start_inits = [start_init; 1015,-4704; 1000,-4722; 1017 -4721; 995, -4714; 1025, -4704; 1030, -4708];
+        finish_inits = [finish_init; 1010, -4722 ; 1027, -4704; 1007 -4707; 1030, -4712; 1005, -4722; 995 -4722];
+    else % if we only have one start goal pair
+        start_inits = start_init;
+        finish_inits = finish_init;
+    end
     for mission_idx = 1:size(start_inits,1)
         start_init = start_inits(mission_idx,:);
         finish_init = finish_inits(mission_idx,:);
@@ -336,20 +349,22 @@ for map_idx = 6%2:6
                     end
                 end
                 legend(leg_str,'Location','best');
-                figure; hold on; box on;
-                blues = zeros(size(orig_vgraph));
-                num_orig_nodes = size(orig_vgraph,1);
-                reduced_vgraph_concat = reduced_vgraph(1:num_orig_nodes,1:num_orig_nodes);
-                reds = orig_vgraph & ~reduced_vgraph_concat;
-                greens = reduced_vgraph_concat;
-                vgraph_image(:,:,1) = reds;
-                vgraph_image(:,:,2) = greens;
-                vgraph_image(:,:,3) = blues;
-                imshow(vgraph_image*255);
-                num_edges_initially = sum(sum(orig_vgraph));
-                num_edges_ultimately = sum(sum(reduced_vgraph_concat));
-                pct_edges_removed = (num_edges_initially - num_edges_ultimately)/num_edges_initially;
-                title(sprintf("%.2f pct. of edges removed, obstacle dilation",pct_edges_removed));
+                if flag_do_plot_slow
+                    figure; hold on; box on;
+                    blues = zeros(size(orig_vgraph));
+                    num_orig_nodes = size(orig_vgraph,1);
+                    reduced_vgraph_concat = reduced_vgraph(1:num_orig_nodes,1:num_orig_nodes);
+                    reds = orig_vgraph & ~reduced_vgraph_concat;
+                    greens = reduced_vgraph_concat;
+                    vgraph_image(:,:,1) = reds;
+                    vgraph_image(:,:,2) = greens;
+                    vgraph_image(:,:,3) = blues;
+                    imshow(vgraph_image*255);
+                    num_edges_initially = sum(sum(orig_vgraph));
+                    num_edges_ultimately = sum(sum(reduced_vgraph_concat));
+                    pct_edges_removed = (num_edges_initially - num_edges_ultimately)/num_edges_initially;
+                    title(sprintf("%.2f pct. of edges removed, obstacle dilation",pct_edges_removed));
+                end
             end % end flag_do_plot condition
         end % end nominal or reachable cost function loop
     end % end edge deletion portion loop
