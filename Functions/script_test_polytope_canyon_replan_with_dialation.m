@@ -296,15 +296,6 @@ for map_idx = 6%2:6
 
             % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
             data = [data; map_idx nominal_or_reachable polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length];
-            nandata = data(find(isnan(data(:,7))),:); % find nan replan cost rows
-            nandata_nominal = nandata(nandata(:,2)==1,:); % of those, find nominal ones
-            nandata_reachable = nandata(nandata(:,2)==2,:); % of those, find reachable ones
-            polytope_size_bins = length(polytope_size_increases);
-
-            h1 = histogram(nandata_nominal(:,3), polytope_size_bins); % polytope dilations for nan data
-            hold on; box on;
-            h2 = histogram(nandata_nominal(:,3), polytope_size_bins); % polytope dilations for nan data
-
             % plot field, initial path, replan path, and midway point
             if flag_do_plot
                 figure; hold on; box on;
@@ -457,6 +448,22 @@ k_reachable_nonconvex = boundary(P_reachable);
 % legends and labels
 xlabel('obstacle size increase [km]')
 ylabel('total path length after replanning [km]')
+legend({'nominal cost function','corridor width function'},'Location','best');
+
+% plot histogram of failed trials
+nandata = data(find(isnan(data(:,7))),:); % find nan replan cost rows
+nandata_nominal = nandata(nandata(:,2)==1,:); % of those, find nominal ones
+nandata_reachable = nandata(nandata(:,2)==2,:); % of those, find reachable ones
+polytope_size_bins = [0.005 0.015 0.03 0.075 0.15 0.25 0.35 0.45 0.55];
+% polytope_size_increases = [0.01 0.02 0.05 0.1 0.2 0.3 0.4 0.5]%[20, 50, 100, 200]
+
+h1 = histogram(nandata_nominal(:,4), polytope_size_bins); % polytope dilations for nan data
+hold on; box on;
+h2 = histogram(nandata_reachable(:,4), polytope_size_bins); % polytope dilations for nan data
+h1.FaceColor = 'r';
+h2.FaceColor = 'b';
+xlabel('obstacle size increase [km]')
+ylabel('count of failed replanning attempts');
 legend({'nominal cost function','corridor width function'},'Location','best');
 
 function INTERNAL_fcn_format_timespace_plot()

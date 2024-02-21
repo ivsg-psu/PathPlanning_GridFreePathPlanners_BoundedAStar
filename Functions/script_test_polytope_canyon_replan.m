@@ -419,6 +419,22 @@ xlabel('percentage of visibility graph edges blocked [%]')
 ylabel('total path length after replanning [km]')
 legend({'nominal cost function','reachable cost function'},'Location','best');
 
+% plot histogram of failed trials
+nandata = data(find(isnan(data(:,7))),:); % find nan replan cost rows
+nandata_nominal = nandata(nandata(:,2)==1,:); % of those, find nominal ones
+nandata_reachable = nandata(nandata(:,2)==2,:); % of those, find reachable ones
+edge_deletion_delta = edge_deletion(2) - edge_deletion(1);
+edge_deletion_bins = 100*[edge_deletion - edge_deletion_delta, edge_deletion(end)+ edge_deletion_delta];
+h1 = histogram(nandata_nominal(:,3), edge_deletion_bins); % polytope dilations for nan data
+hold on; box on;
+h2 = histogram(nandata_reachable(:,3), edge_deletion_bins); % polytope dilations for nan data
+h1.FaceColor = 'r';
+h2.FaceColor = 'b';
+xlabel('percentage of visibility graph edges blocked [%]')
+ylabel('count of failed replanning attempts');
+legend({'nominal cost function','reachable cost function'},'Location','best');
+
+
 function INTERNAL_fcn_format_timespace_plot()
     box on
     % define figure properties
