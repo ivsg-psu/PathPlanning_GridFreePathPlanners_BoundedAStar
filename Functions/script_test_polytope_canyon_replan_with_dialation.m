@@ -296,6 +296,15 @@ for map_idx = 6%2:6
 
             % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
             data = [data; map_idx nominal_or_reachable polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length];
+            nandata = data(find(isnan(data(:,7))),:); % find nan replan cost rows
+            nandata_nominal = nandata(nandata(:,2)==1,:); % of those, find nominal ones
+            nandata_reachable = nandata(nandata(:,2)==2,:); % of those, find reachable ones
+            polytope_size_bins = length(polytope_size_increases);
+
+            h1 = histogram(nandata_nominal(:,3), polytope_size_bins); % polytope dilations for nan data
+            hold on; box on;
+            h2 = histogram(nandata_nominal(:,3), polytope_size_bins); % polytope dilations for nan data
+
             % plot field, initial path, replan path, and midway point
             if flag_do_plot
                 figure; hold on; box on;
