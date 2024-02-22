@@ -472,8 +472,8 @@ nandata_reachable = nandata(nandata(:,2)==2,:); % of those, find reachable ones
 polytope_size_bins = [0.005 0.015 0.03 0.075 0.15 0.25 0.35 0.45 0.55];
 % polytope_size_increases = [0.01 0.02 0.05 0.1 0.2 0.3 0.4 0.5]%[20, 50, 100, 200]
 
+figure; hold on; box on;
 h1 = histogram(nandata_nominal(:,4), polytope_size_bins); % polytope dilations for nan data
-hold on; box on;
 h2 = histogram(nandata_reachable(:,4), polytope_size_bins); % polytope dilations for nan data
 h1.FaceColor = 'r';
 h2.FaceColor = 'b';
