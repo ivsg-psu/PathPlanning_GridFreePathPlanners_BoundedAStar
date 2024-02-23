@@ -25,7 +25,7 @@ flag_do_plot_slow = 0;
 % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
 %%%
 data = []; % initialize array for storing results
-for map_idx = 6%2:6
+for map_idx = 7%2:6
     if map_idx == 1 % generic canyon map
         %% load test fixtures for polytope map rather than creating it here
         % load distribution north of canyon
@@ -96,8 +96,8 @@ for map_idx = 6%2:6
         tiled_polytopes = fcn_MapGen_haltonVoronoiTiling(Halton_range,[1 1]);
         des_rad = 0.05; sigma_radius = 0.02; min_rad = 0.001;
         [shrunk_polytopes,mu_final,sigma_final] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes,des_rad,sigma_radius,min_rad);%,fig_num);
-        start_init = [0 0.5];
-        finish_init = [1 0.5];
+        start_init = [-0.2 0.5];
+        finish_init = [1.2 0.5];
     end % if conditions for different map test fixtures
     if map_idx <=6 && map_idx >= 2 % for the floodplain maps we have to convert from LLA to km
         %% convert from LLA to QGS84
@@ -144,10 +144,18 @@ for map_idx = 6%2:6
         beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
         curpt = curpt+verts;
     end
+
     obs_id = [shrunk_polytopes.obs_id];
     all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
     for repeats = 1%:5
-    for polytope_size_increases = [0.01 0.02 0.05 0.1 0.2 0.3 0.4 0.5]%[20, 50, 100, 200]
+    if map_idx == 7
+        % small polytopes in this map so need smaller polytope size increase
+        polytope_size_increases_values = [0.01 0.02 0.05 0.1 0.2];% 0.3 0.4 0.5]%[20, 50, 100, 200]
+    else
+        % flood plain maps are large so can tolerate large dilation
+        polytope_size_increases_values = [0.01 0.02 0.05 0.1 0.2 0.3 0.4 0.5];%[20, 50, 100, 200]
+    end
+    for polytope_size_increases = polytope_size_increases_values
         for nominal_or_reachable = [1,2]
             %% plan the initial path
             start = [start_init size(all_pts,1)+1 -1 1];
@@ -184,7 +192,10 @@ for map_idx = 6%2:6
             dilationtimer = tic;
             dilation_robustness_tensor = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode, shrunk_polytopes);
             dilation_robustness_matrix = max(dilation_robustness_tensor(:,:,1) , dilation_robustness_tensor(:,:,2));
-            variance_of_corridor_widths = var(dilation_robustness_matrix(:)');
+            dilation_robustness_matrix_for_variance = dilation_robustness_matrix(:)';
+            dilation_robustness_matrix_for_variance(dilation_robustness_matrix_for_variance == 0) = [];
+            dilation_robustness_matrix_for_variance(isinf(dilation_robustness_matrix_for_variance)) = [];
+            variance_of_corridor_widths = var(dilation_robustness_matrix_for_variance);
             my_time = toc(dilationtimer)
             if nominal_or_reachable == 2
                 % hvec = hvec + inv_reach_cost + inv_vis_cost;
@@ -374,7 +385,7 @@ end % end mission (i.e., start goal pair) loop
 end % end map loop
 
 % sort data and define plot options
-markers = {'x','d','o','+','s','x'};
+markers = {'x','d','o','+','s','x','d'};
 colors = {'r','b'};
 idx_nominal = data(:,1)== map_idx & data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
 nominal_data = data(idx_nominal,:);
