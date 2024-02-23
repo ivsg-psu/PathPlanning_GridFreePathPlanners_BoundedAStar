@@ -184,6 +184,7 @@ for map_idx = 6%2:6
             dilationtimer = tic;
             dilation_robustness_tensor = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode, shrunk_polytopes);
             dilation_robustness_matrix = max(dilation_robustness_tensor(:,:,1) , dilation_robustness_tensor(:,:,2));
+            variance_of_corridor_widths = var(dilation_robustness_matrix(:)');
             my_time = toc(dilationtimer)
             if nominal_or_reachable == 2
                 % hvec = hvec + inv_reach_cost + inv_vis_cost;
