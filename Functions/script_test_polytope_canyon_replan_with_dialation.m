@@ -93,11 +93,11 @@ for map_idx = 7%2:6
         finish_init = [-77.75 40.93];
     elseif map_idx == 7 % generic polytope map
         Halton_range = [1 100];
-        tiled_polytopes = fcn_MapGen_haltonVoronoiTiling(Halton_range,[1 1]);
-        des_rad = 0.05; sigma_radius = 0.02; min_rad = 0.001;
+        tiled_polytopes = fcn_MapGen_haltonVoronoiTiling(Halton_range,[30 20]);
+        des_rad = 1; sigma_radius = 0.5; min_rad = 0.1;
         [shrunk_polytopes,mu_final,sigma_final] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes,des_rad,sigma_radius,min_rad);%,fig_num);
-        start_init = [-0.2 0.5];
-        finish_init = [1.2 0.5];
+        start_init = [-1 10];
+        finish_init = [31 10];
     end % if conditions for different map test fixtures
     if map_idx <=6 && map_idx >= 2 % for the floodplain maps we have to convert from LLA to km
         %% convert from LLA to QGS84
@@ -148,7 +148,7 @@ for map_idx = 7%2:6
     obs_id = [shrunk_polytopes.obs_id];
     all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
     for repeats = 1%:5
-    if map_idx == 7
+    if map_idx == 10
         % small polytopes in this map so need smaller polytope size increase
         polytope_size_increases_values = [0.01 0.02 0.05 0.1 0.2];% 0.3 0.4 0.5]%[20, 50, 100, 200]
     else
