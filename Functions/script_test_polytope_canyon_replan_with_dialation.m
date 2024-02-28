@@ -99,7 +99,7 @@ for map_idx = 7%2:6
         tiled_polytopes = fcn_MapGen_generatePolysFromVoronoiAABBWithTiling(seed_points,AABB, stretch);
 
         % stretch polytopes to cover more area
-        new_stretch = [30 20];
+        new_stretch = [30 40];
         stretched_polytopes = [];
         for poly = 1:length(tiled_polytopes) % pull each cell from the voronoi diagram
             stretched_polytopes(poly).vertices  = tiled_polytopes(poly).vertices.*new_stretch;
@@ -110,30 +110,12 @@ for map_idx = 7%2:6
         des_rad = 0.8; sigma_radius = 0.4; min_rad = 0.1;
         [shrunk_polytopes,mu_final,sigma_final] = fcn_MapGen_polytopesShrinkToRadius(stretched_polytopes,des_rad,sigma_radius,min_rad);
 
-        % duplicate field and tile vertically
-        second_field_vertical_translation = new_stretch(2);
-        shrunk_polytopes2 = shrunk_polytopes;
-        for i = 1:length(shrunk_polytopes2)
-            num_verts_this_poly = length(shrunk_polytopes2(i).yv);
-            shrunk_polytopes2(i).yv = shrunk_polytopes2(i).yv + second_field_vertical_translation;
-            shrunk_polytopes2(i).vertices = shrunk_polytopes2(i).vertices + [zeros(num_verts_this_poly+1,1) second_field_vertical_translation*ones(num_verts_this_poly+1,1)];
-        end
-        second_field_vertical_translation = second_field_vertical_translation*-1;
-        shrunk_polytopes3 = shrunk_polytopes;
-        for i = 1:length(shrunk_polytopes3)
-            num_verts_this_poly = length(shrunk_polytopes3(i).yv);
-            shrunk_polytopes3(i).yv = shrunk_polytopes3(i).yv + second_field_vertical_translation;
-            shrunk_polytopes3(i).vertices = shrunk_polytopes3(i).vertices + [zeros(num_verts_this_poly+1,1) second_field_vertical_translation*ones(num_verts_this_poly+1,1)];
-        end
-
-        % combine polytope fields into one field
-        shrunk_polytopes = [shrunk_polytopes, shrunk_polytopes2, shrunk_polytopes3];
         clear Halton_range
         clear halton_points
         clear points_scrambled
 
-        start_init = [-2 10];
-        finish_init = [32 10];
+        start_init = [-2 20];
+        finish_init = [32 20];
         % tile field to hedgerow by making a set above and a set below
     end % if conditions for different map test fixtures
     if map_idx <=6 && map_idx >= 2 % for the floodplain maps we have to convert from LLA to km
@@ -172,6 +154,7 @@ for map_idx = 7%2:6
         start_init = start_inits(mission_idx,:);
         finish_init = finish_inits(mission_idx,:);
     %% all_pts array creation
+    % TODO @sjharnett make a function for all pts creation
     point_tot = length([shrunk_polytopes.xv]); % total number of vertices in the polytopes
     beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
     curpt = 0;
@@ -210,14 +193,6 @@ for map_idx = 7%2:6
             if ~is_reachable
                 error('initial mission, prior to edge deletion, is not possible')
             end
-
-            % new experimental cost function prioritizing reachability
-            reachable_nodes_from_each_node = sum(rgraph,2);
-            inv_reach_cost = 10000*(1./(reachable_nodes_from_each_node))';
-
-            % new experimental cost function prioritizing visibility
-            visible_nodes_from_each_node = sum(vgraph,2);
-            inv_vis_cost = 10000*(1./(visible_nodes_from_each_node))';
 
             %% make cgraph
             mode = "xy spatial only";
@@ -270,6 +245,7 @@ for map_idx = 7%2:6
             %% plan the new path
             enlarged_polytopes = fcn_MapGen_polytopesExpandEvenlyForConcave(shrunk_polytopes,polytope_size_increases);
 
+            % TODO @sjharnett make function for snapping point to nearest vertex of polytope
             % enlarging polytopes may have put the midway start inside a polytope
             % for each polytope, check if this point is inside the polytope
             for p = 1:length(enlarged_polytopes)
@@ -286,7 +262,7 @@ for map_idx = 7%2:6
                     start_midway = these_verts(idx_of_min,:);
                 end
             end
-
+            % TODO @sjharnett call all_pts function here again
             point_tot = length([enlarged_polytopes.xv]); % total number of vertices in the polytopes
             beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
             curpt = 0;
@@ -323,13 +299,6 @@ for map_idx = 7%2:6
                 continue
             end % end is_reachable condition for replanning
 
-            % new experimental cost function prioritizing reachability
-            reachable_nodes_from_each_node = sum(rgraph,2);
-            inv_reach_cost = 10000*(1./(reachable_nodes_from_each_node))';
-
-            % new experimental cost function prioritizing visibility
-            visible_nodes_from_each_node = sum(vgraph,2);
-            inv_vis_cost = 10000*(1./(visible_nodes_from_each_node))';
             %% make cgraph
             mode = "xy spatial only";
             % mode = 'time or z only';
@@ -416,7 +385,6 @@ for map_idx = 7%2:6
                 end
             end % end flag_do_plot condition
         end % end nominal or reachable cost function loop
-        return
     end % end edge deletion portion loop
 end % end repeats loop
 end % end mission (i.e., start goal pair) loop
