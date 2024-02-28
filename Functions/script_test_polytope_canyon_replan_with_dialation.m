@@ -3,15 +3,6 @@ clear; close all; clc
 % example of routing through a field of polytopes with a large chokepoint in the middle
 % reachability and visibilty incentive cost functions can be used to route around the choke point
 
-addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
-addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
-
-addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
-addpath 'C:\Users\sjhar\Desktop\gif\gif'
-
-addpath 'C:\Users\sjh6473\Desktop\gif\gif'
-addpath 'C:\Users\sjh6473\Desktop\TriangleRayIntersection'
-
 addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
 addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
 addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
@@ -92,12 +83,58 @@ for map_idx = 7%2:6
         start_init = [-78.01 41.06];
         finish_init = [-77.75 40.93];
     elseif map_idx == 7 % generic polytope map
-        Halton_range = [1 100];
-        tiled_polytopes = fcn_MapGen_haltonVoronoiTiling(Halton_range,[30 20]);
-        des_rad = 1; sigma_radius = 0.5; min_rad = 0.1;
-        [shrunk_polytopes,mu_final,sigma_final] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes,des_rad,sigma_radius,min_rad);%,fig_num);
-        start_init = [-1 10];
-        finish_init = [31 10];
+        % pull halton set
+        halton_points = haltonset(2);
+        points_scrambled = scramble(halton_points,'RR2'); % scramble values
+
+        % pick values from halton set
+        Halton_range = [1801 1901];
+        low_pt = Halton_range(1,1);
+        high_pt = Halton_range(1,2);
+        seed_points = points_scrambled(low_pt:high_pt,:);
+
+        % fill polytopes from tiling
+        AABB = [0 0 1 1];
+        stretch = AABB(3:4);
+        tiled_polytopes = fcn_MapGen_generatePolysFromVoronoiAABBWithTiling(seed_points,AABB, stretch);
+
+        % stretch polytopes to cover more area
+        new_stretch = [30 20];
+        stretched_polytopes = [];
+        for poly = 1:length(tiled_polytopes) % pull each cell from the voronoi diagram
+            stretched_polytopes(poly).vertices  = tiled_polytopes(poly).vertices.*new_stretch;
+        end % Ends for loop for stretch
+        stretched_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(stretched_polytopes);
+
+        % shrink polytopes to desired radius
+        des_rad = 0.8; sigma_radius = 0.4; min_rad = 0.1;
+        [shrunk_polytopes,mu_final,sigma_final] = fcn_MapGen_polytopesShrinkToRadius(stretched_polytopes,des_rad,sigma_radius,min_rad);
+
+        % duplicate field and tile vertically
+        second_field_vertical_translation = new_stretch(2);
+        shrunk_polytopes2 = shrunk_polytopes;
+        for i = 1:length(shrunk_polytopes2)
+            num_verts_this_poly = length(shrunk_polytopes2(i).yv);
+            shrunk_polytopes2(i).yv = shrunk_polytopes2(i).yv + second_field_vertical_translation;
+            shrunk_polytopes2(i).vertices = shrunk_polytopes2(i).vertices + [zeros(num_verts_this_poly+1,1) second_field_vertical_translation*ones(num_verts_this_poly+1,1)];
+        end
+        second_field_vertical_translation = second_field_vertical_translation*-1;
+        shrunk_polytopes3 = shrunk_polytopes;
+        for i = 1:length(shrunk_polytopes3)
+            num_verts_this_poly = length(shrunk_polytopes3(i).yv);
+            shrunk_polytopes3(i).yv = shrunk_polytopes3(i).yv + second_field_vertical_translation;
+            shrunk_polytopes3(i).vertices = shrunk_polytopes3(i).vertices + [zeros(num_verts_this_poly+1,1) second_field_vertical_translation*ones(num_verts_this_poly+1,1)];
+        end
+
+        % combine polytope fields into one field
+        shrunk_polytopes = [shrunk_polytopes, shrunk_polytopes2, shrunk_polytopes3];
+        clear Halton_range
+        clear halton_points
+        clear points_scrambled
+
+        start_init = [-2 10];
+        finish_init = [32 10];
+        % tile field to hedgerow by making a set above and a set below
     end % if conditions for different map test fixtures
     if map_idx <=6 && map_idx >= 2 % for the floodplain maps we have to convert from LLA to km
         %% convert from LLA to QGS84
@@ -379,6 +416,7 @@ for map_idx = 7%2:6
                 end
             end % end flag_do_plot condition
         end % end nominal or reachable cost function loop
+        return
     end % end edge deletion portion loop
 end % end repeats loop
 end % end mission (i.e., start goal pair) loop
