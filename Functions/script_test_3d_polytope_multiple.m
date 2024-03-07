@@ -1,53 +1,57 @@
-% clear; close all; clc
-% % script_test_3d_polytope_multiple
-% % defacto example of 3D path planning scenario in timespace
-% % typical field of polytopes, each with a random velocity, that the planner routes around
+clear; close all; clc
+% script_test_3d_polytope_multiple
+% defacto example of 3D path planning scenario in timespace
+% typical field of polytopes, each with a random velocity, that the planner routes around
 
-% addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
-% addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
+addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
+addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
 
-% addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
-% addpath 'C:\Users\sjhar\Desktop\gif\gif'
+addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
+addpath 'C:\Users\sjhar\Desktop\gif\gif'
 
-% addpath 'C:\Users\sjh6473\Desktop\gif\gif'
-% addpath 'C:\Users\sjh6473\Desktop\TriangleRayIntersection'
+addpath 'C:\Users\sjh6473\Desktop\gif\gif'
+addpath 'C:\Users\sjh6473\Desktop\TriangleRayIntersection'
 
-% %% load test fixtures for polytope map rather than creating it here
-% % load distribution north of canyon
-% load(strcat(pwd,'\..\Test_Fixtures\shrunk_polytopes.mat'));
-% % this test fixture was made with the following block of code using functions from the MapGen repo
-% % tiled_polytopes = fcn_MapGen_haltonVoronoiTiling([1,20],[1 1]);
-% % % remove the edge polytope that extend past the high and low points
-% % % shink the polytopes so that they are no longer tiled
-% % des_radius = 0.05; % desired average maximum radius
-% % sigma_radius = 0.002; % desired standard deviation in maximum radii
-% % min_rad = 0.0001; % minimum possible maximum radius for any obstacle
-% % [shrunk_polytopes,mu_final,sigma_final] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes,des_radius,sigma_radius,min_rad);
+%% load test fixtures for polytope map rather than creating it here
+% load distribution north of canyon
+load(strcat(pwd,'\..\Test_Fixtures\shrunk_polytopes.mat'));
+% this test fixture was made with the following block of code using functions from the MapGen repo
+% tiled_polytopes = fcn_MapGen_haltonVoronoiTiling([1,20],[1 1]);
+% % remove the edge polytope that extend past the high and low points
+% % shink the polytopes so that they are no longer tiled
+% des_radius = 0.05; % desired average maximum radius
+% sigma_radius = 0.002; % desired standard deviation in maximum radii
+% min_rad = 0.0001; % minimum possible maximum radius for any obstacle
+% [shrunk_polytopes,mu_final,sigma_final] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes,des_radius,sigma_radius,min_rad);
 
-% flag_do_plot = 1;
-% flag_do_slow_plot = 0;
-% flag_do_animation = 0;
+flag_do_plot = 1;
+flag_do_slow_plot = 0;
+flag_do_animation = 0;
 
-% if flag_do_plot
-%     %% plot the map
-%     figure; hold on; box on;
-%     xlabel('x [km]');
-%     ylabel('y [km]');
-%     title('polytope map in x-y plane at time 0')
-%     for i = 1:length(shrunk_polytopes)
-%          fill(shrunk_polytopes(i).vertices(:,1)',shrunk_polytopes(i).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-%     end
-% end
-
+if flag_do_plot
+    %% plot the map
+    figure; hold on; box on;
+    xlabel('x [km]');
+    ylabel('y [km]');
+    title('polytope map in x-y plane at time 0')
+    for i = 1:length(shrunk_polytopes)
+         fill(shrunk_polytopes(i).vertices(:,1)',shrunk_polytopes(i).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+    end
+end
+number_of_time_samples = 10;
+times1 = nan(1,number_of_time_samples);
+times2 = nan(1,number_of_time_samples);
+for time_sample_iter = 1:number_of_time_samples
+rng(number_of_time_samples)
 outer_time = tic;
-% %% make 2D spatial polytopes into 3D timespace polytopes with velocities, then break into triangular surfels
-% max_translation_distance = 0.15;
-% final_time = 20;
-% time_space_polytopes = fcn_make_timespace_polyhedra_from_polygons(shrunk_polytopes, max_translation_distance, final_time);
+%% make 2D spatial polytopes into 3D timespace polytopes with velocities, then break into triangular surfels
+max_translation_distance = 0.15;
+final_time = 20;
+time_space_polytopes = fcn_make_timespace_polyhedra_from_polygons(shrunk_polytopes, max_translation_distance, final_time);
 
-% time_space_polytopes = fcn_make_facets_from_verts(time_space_polytopes);
+time_space_polytopes = fcn_make_facets_from_verts(time_space_polytopes);
 
-% all_surfels = fcn_make_triangular_surfels_from_facets(time_space_polytopes);
+all_surfels = fcn_make_triangular_surfels_from_facets(time_space_polytopes);
 
 if flag_do_plot
     figure; hold on; box on; title('polytopes in timespace')
@@ -110,9 +114,10 @@ mode = "xy spatial only";
 %% plan route
 % [vgraph_phantom, cgraph_phantom, hvec_phantom, finish_phantom, all_pts_with_ids_no_start_and_fin_phantom] = fcn_algorithm_create_phantom_goal(vgraph, cgraph, hvec, finish_with_ids, all_pts_with_ids_no_start_and_fin);
 inner_time = tic;
-% [cost, route] = fcn_algorithm_Astar3d(vgraph_phantom, cgraph_phantom, hvec_phantom, all_pts_with_ids_no_start_and_fin_phantom, start_with_ids, finish_phantom);
+% [cost, route] = fcn_algorithm_Astar3d(vgraph_phantom, cgraph_phantom, 0*hvec_phantom, all_pts_with_ids_no_start_and_fin_phantom, start_with_ids, finish_phantom);
 [cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids);
-toc(inner_time);
+time1 = toc(inner_time);
+times1(time_sample_iter) = time1;
 % assert(isnan(route(end,1)))
 % route = route(1:end-1,:);
 % route metrics follow
@@ -197,7 +202,9 @@ if flag_do_slow_plot
 end
 
 route_dense = fcn_interpolate_route_in_time(route,dt);
-toc(outer_time)
+time2 = toc(outer_time)
+times2(time_sample_iter) = time2;
+end
 if flag_do_animation
     fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, route_dense, dt, [0 1], [0 1]);
 end
