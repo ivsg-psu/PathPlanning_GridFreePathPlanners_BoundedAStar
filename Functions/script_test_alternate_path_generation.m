@@ -16,7 +16,7 @@ flag_do_plot_slow = 0;
 % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
 %%%
 data = []; % initialize array for storing results
-for map_idx = 6%2:6
+for map_idx = 7%2:6
     if map_idx == 1 % generic canyon map
         %% load test fixtures for polytope map rather than creating it here
         % load distribution north of canyon
@@ -143,7 +143,7 @@ for map_idx = 6%2:6
         end
         shrunk_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(new_polytopes);
     end
-    if map_idx == 7 % for map 6 we can loop over many start goal pairs
+    if map_idx == 6 % for map 6 we can loop over many start goal pairs
         start_inits = [start_init; 1015,-4704; 1000,-4722; 1017 -4721; 995, -4714; 1025, -4704; 1030, -4708];
         finish_inits = [finish_init; 1010, -4722 ; 1027, -4704; 1007 -4707; 1030, -4712; 1005, -4722; 995 -4722];
     else % if we only have one start goal pair
@@ -227,7 +227,7 @@ for map_idx = 6%2:6
                     route_segment_vis(waypoint_id) = vgraph(route_segment_start(3), route_segment_end(3));
                     route_segment_corridor_widths(waypoint_id) = dilation_robustness_matrix(route_segment_start(3), route_segment_end(3));
                 end
-                smallest_corridor_in_init_path = 1.5*min(route_segment_corridor_widths) % find smallest corridor in route
+                smallest_corridor_in_init_path = 1.3*min(route_segment_corridor_widths) % find smallest corridor in route
                 new_vgraph = vgraph; % copy vgraph
                 % set all vgraph edges where corridor width is smaller or equal to 0
                 new_vgraph(dilation_robustness_matrix <= smallest_corridor_in_init_path) = 0;
