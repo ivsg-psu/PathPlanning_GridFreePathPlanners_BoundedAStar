@@ -215,7 +215,10 @@ for map_idx = 7%2:6
             route_y = init_route(:,2);
             lengths = diff([route_x(:) route_y(:)]);
             init_route_length = sum(sqrt(sum(lengths.*lengths,2)));
-            for i = 1:4
+            num_paths = 5;
+            corridor_width_buffer = 1.3;
+            smallest_corridors = nan(1,num_paths)
+            for i = 1:num_paths
                 %% plan next best path given tighter constraints
                 route_segment_costs = nan(1,size(init_route,1)-1);
                 route_segment_vis  = nan(1,size(init_route,1)-1);
@@ -227,7 +230,8 @@ for map_idx = 7%2:6
                     route_segment_vis(waypoint_id) = vgraph(route_segment_start(3), route_segment_end(3));
                     route_segment_corridor_widths(waypoint_id) = dilation_robustness_matrix(route_segment_start(3), route_segment_end(3));
                 end
-                smallest_corridor_in_init_path = 1.3*min(route_segment_corridor_widths) % find smallest corridor in route
+                smallest_corridor_in_init_path = corridor_width_buffer*min(route_segment_corridor_widths); % find smallest corridor in route
+                smallest_corridors(i) = smallest_corridor_in_init_path;
                 new_vgraph = vgraph; % copy vgraph
                 % set all vgraph edges where corridor width is smaller or equal to 0
                 new_vgraph(dilation_robustness_matrix <= smallest_corridor_in_init_path) = 0;
@@ -267,10 +271,13 @@ for map_idx = 7%2:6
                 plot(start_init(1),start_init(2),'xg','MarkerSize',6);
                 plot(finish_init(1),finish_init(2),'xr','MarkerSize',6);
                 leg_str = {'start','finish'};
-                for i = 1:length(routes)
-                    route_to_plot = routes{i};
+                route_to_plot = routes{1};
+                plot(route_to_plot(:,1),route_to_plot(:,2),'LineWidth',2);
+                leg_str{end+1} = sprintf('route 1');
+                for i = 1:num_paths
+                    route_to_plot = routes{i+1};
                     plot(route_to_plot(:,1),route_to_plot(:,2),'LineWidth',2);
-                    leg_str{end+1} = sprintf('route choice %i',i);
+                    leg_str{end+1} = sprintf('route %i, corridors > %.3f [km]',i+1,smallest_corridors(i));
                 end
                 for j = 1:length(shrunk_polytopes)
                      fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
@@ -280,26 +287,13 @@ for map_idx = 7%2:6
                     leg_str{end+1} = '';
                 end
                 legend(leg_str,'Location','best');
+                title(sprintf('%i paths, each with corridors %2.0f%% larger',num_paths,(corridor_width_buffer-1)*100));
             end % end flag_do_plot condition
     end % end edge deletion portion loop
+
 end % end mission (i.e., start goal pair) loop
 end % end map loop
-return
-% plot histogram of failed trials
-nandata = data(find(isnan(data(:,7))),:); % find nan replan cost rows
-nandata_nominal = nandata(nandata(:,2)==1,:); % of those, find nominal ones
-nandata_reachable = nandata(nandata(:,2)==2,:); % of those, find reachable ones
-polytope_size_bins = [0.005 0.015 0.03 0.075 0.15 0.25 0.35 0.45 0.55];
-% polytope_size_increases = [0.01 0.02 0.05 0.1 0.2 0.3 0.4 0.5]%[20, 50, 100, 200]
 
-figure; hold on; box on;
-h1 = histogram(nandata_nominal(:,4), polytope_size_bins); % polytope dilations for nan data
-h2 = histogram(nandata_reachable(:,4), polytope_size_bins); % polytope dilations for nan data
-h1.FaceColor = 'r';
-h2.FaceColor = 'b';
-xlabel('obstacle size increase [km]')
-ylabel('count of failed replanning attempts');
-legend({'nominal cost function','corridor width function'},'Location','best');
 
 function INTERNAL_fcn_format_timespace_plot()
     box on
