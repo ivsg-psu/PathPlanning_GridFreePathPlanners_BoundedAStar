@@ -240,7 +240,8 @@ for mission_idx = 1:size(start_inits,1)
 
         [is_reachable, num_steps, rgraph] = fcn_check_reachability(new_vgraph,start_for_reachability,finish_for_reachability);
         if ~is_reachable
-            warning('mission replanning is impossible')
+            warning(sprintf('mission planning is impossible with > %3f size corridors',smallest_corridor_in_init_path));
+            routes{end+1} = nan;
             continue
         end % end is_reachable condition for replanning
 
@@ -268,6 +269,9 @@ for mission_idx = 1:size(start_inits,1)
         leg_str{end+1} = sprintf('route 1');
         for i = 1:num_paths
             route_to_plot = routes{i+1};
+            if isnan(route_to_plot) % if the route wasn't calculated, just remove it
+                continue
+            end
             plot(route_to_plot(:,1),route_to_plot(:,2),'LineWidth',2);
             leg_str{end+1} = sprintf('route %i, corridors > %.3f [km]',i+1,smallest_corridors(i));
         end
@@ -284,6 +288,75 @@ for mission_idx = 1:size(start_inits,1)
 
 end % end mission (i.e., start goal pair) loop
 
+%% enlarge polytopes and see if the same path results
+for enlarge_idx = 1:(num_paths)
+    enlarged_polytopes = fcn_MapGen_polytopesExpandEvenlyForConcave(shrunk_polytopes,(smallest_corridors(enlarge_idx))/2);
+
+    % TODO @sjharnett call all_pts function here again
+    point_tot = length([enlarged_polytopes.xv]); % total number of vertices in the polytopes
+    beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
+    curpt = 0;
+    for poly = 1:size(enlarged_polytopes,2) % check each polytope
+        verts = length(enlarged_polytopes(poly).xv);
+        enlarged_polytopes(poly).obs_id = ones(1,verts)*poly; % obs_id is the same for every vertex on a single polytope
+        beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
+        curpt = curpt+verts;
+    end
+    obs_id = [enlarged_polytopes.obs_id];
+    all_pts_new = [[enlarged_polytopes.xv];[enlarged_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
+    start = [start_init size(all_pts_new,1)+1 -1 1];
+    finish = [finish_init size(all_pts_new,1)+2 -1 1];
+    finishes = [all_pts_new; start; finish];
+    starts = [all_pts_new; start; finish];
+    [new_vgraph, visibility_results_all_pts_new] = fcn_visibility_clear_and_blocked_points_global(enlarged_polytopes, starts, finishes,1);
+    reduced_vgraph = new_vgraph;
+
+    start_for_reachability = start;
+    start_for_reachability(4) = start(3);
+    finish_for_reachability = finish;
+    finish_for_reachability(4) = finish(3);
+
+    [is_reachable, num_steps, rgraph] = fcn_check_reachability(new_vgraph,start_for_reachability,finish_for_reachability);
+    if ~is_reachable
+        warning(sprintf('mission planning impossible at enlargement %.3f',smallest_corridors(enlarge_idx)))
+        continue
+    end % end is_reachable condition for replanning
+
+    %% make cgraph
+    mode = "xy spatial only";
+    % mode = 'time or z only';
+    % mode = "xyz or xyt";
+    [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts_new, start, finish, mode);
+
+
+    [replan_cost, replan_route] = fcn_algorithm_Astar(new_vgraph, cgraph, hvec, all_pts_new, start, finish);
+
+
+    if flag_do_plot
+        figure; hold on; box on;
+        xlabel('x [km]');
+        ylabel('y [km]');
+        plot(start_init(1),start_init(2),'xg','MarkerSize',6);
+        plot(finish(1),finish(2),'xr','MarkerSize',6);
+        plot(replan_route(:,1),replan_route(:,2),'--g','LineWidth',2);
+        for j = 1:length(enlarged_polytopes)
+             fill(enlarged_polytopes(j).vertices(:,1)',enlarged_polytopes(j).vertices(:,2),[0 0 1],'FaceColor','r','FaceAlpha',0.3)
+        end
+        for j = 1:length(shrunk_polytopes)
+             fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
+        end
+        leg_str = {'start','finish','route','enlarged obstacles'};
+        for i = 1:length(shrunk_polytopes)-1
+            leg_str{end+1} = '';
+        end
+        leg_str{end+1} = 'obstacles';
+        for i = 1:length(shrunk_polytopes)-1
+            leg_str{end+1} = '';
+        end
+        title_string = sprintf('enlarged polytopes by %.3f',smallest_corridors(enlarge_idx));
+        title(title_string);
+    end % end plot flag
+end % end polytope enlarge loop
 
 function INTERNAL_fcn_format_timespace_plot()
     box on
