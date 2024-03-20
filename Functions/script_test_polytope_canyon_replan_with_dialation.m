@@ -16,7 +16,7 @@ flag_do_plot_slow = 0;
 % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
 %%%
 data = []; % initialize array for storing results
-for map_idx = 7%2:6
+for map_idx =5%2:6
     if map_idx == 1 % generic canyon map
         %% load test fixtures for polytope map rather than creating it here
         % load distribution north of canyon
@@ -146,6 +146,9 @@ for map_idx = 7%2:6
     if map_idx == 6 % for map 6 we can loop over many start goal pairs
         start_inits = [start_init; 1015,-4704; 1000,-4722; 1017 -4721; 995, -4714; 1025, -4704; 1030, -4708];
         finish_inits = [finish_init; 1010, -4722 ; 1027, -4704; 1007 -4707; 1030, -4712; 1005, -4722; 995 -4722];
+    elseif map_idx == 3
+        start_inits = [1002, -4715.9];
+        finish_inits = [1017, -4719];
     else % if we only have one start goal pair
         start_inits = start_init;
         finish_inits = finish_init;
@@ -253,6 +256,7 @@ for map_idx = 7%2:6
                 this_polyshape = polyshape(these_verts);
                 % is point in but not on polyshape?
                 [is_in,is_on] = isinterior(this_polyshape,start_midway);
+                [is_in_finish,~] = isinterior(this_polyshape,finish_init);
                 if is_in
                     % if it is, get distance to all vertices
                     vert_to_start_deltas = these_verts - start_midway;
@@ -260,6 +264,14 @@ for map_idx = 7%2:6
                     [min_value, idx_of_min] = min(vert_to_start_distances);
                     % set this point to the nearest vertex
                     start_midway = these_verts(idx_of_min,:);
+                end
+                if is_in_finish
+                    % if it is, get distance to all vertices
+                    vert_to_start_deltas = these_verts - finish_init;
+                    vert_to_start_distances = vert_to_start_deltas(:,1).^2 + vert_to_start_deltas(:,2).^2;
+                    [min_value, idx_of_min] = min(vert_to_start_distances);
+                    % set this point to the nearest vertex
+                    finish_init= these_verts(idx_of_min,:);
                 end
             end
             % TODO @sjharnett call all_pts function here again

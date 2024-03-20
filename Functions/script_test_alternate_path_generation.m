@@ -276,7 +276,7 @@ for mission_idx = 1:size(start_inits,1)
             leg_str{end+1} = sprintf('route %i, corridors > %.3f [km]',i+1,smallest_corridors(i));
         end
         for j = 1:length(shrunk_polytopes)
-             fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
+            fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
         end
         leg_str{end+1} = 'obstacles';
         for i = 1:length(shrunk_polytopes)-1
