@@ -133,7 +133,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, star
                 % at that nodes ID (i.e. parents(5) = 3 implies the best way to reach 5 is through 3,
                 % thus you could then look at parents(3) to find the best way to reach 3 until you have
                 % reached the start and therefore recovered the optimal path)
-                if cur_pt_idx == start(4)
+                if cur_pt_idx == start(3)
                     return
                 end
                 while parents(cur_pt_idx) ~= start(3)
