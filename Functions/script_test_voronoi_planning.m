@@ -142,7 +142,7 @@ min_distance_between_verts = min(sqrt(sum(distances.*distances,2)));
 % % want to ensure that a side with length of 2 std dev below mean is still interpolated at least in half
 % resolution = (poly_map_stats.average_side_length - 2*poly_map_stats.std_side_length)/2;
 resolution = min_distance_between_verts/2;
-shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, resolution);
+shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, 10*resolution);
 C = [];
 P = [];
 largest_idx = 0;
@@ -182,13 +182,32 @@ xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
 
 all_pts = [xcc, ycc, [1:length(xcc)]', -1*ones(length(xcc),1), zeros(length(xcc),1)];
 vgraph = zeros(length(xcc));
-vgraph(neigh(1,:),neigh(2,:)) = 1;
+neigh_orig = neighbors(tr);
+for i = 1:size(neigh_orig,1)
+    neigh_list = neigh_orig(i,:);
+    neigh_list = neigh_list(~isnan(neigh_list));
+    if ~(length(neigh_list) == 2)
+        continue
+    end
+    vgraph(neigh_list(1),neigh_list(2)) = 1;
+    vgraph(neigh_list(2),neigh_list(1)) = 1;
+end
 start = all_pts(end-1,:);
 start(end) = 1;
 finish = all_pts(end,:);
 finish(end) = 1;
 all_pts = all_pts(1:end-2,:);
 
+start_for_reachability = start;
+start_for_reachability(4) = start(3);
+finish_for_reachability = finish;
+finish_for_reachability(4) = finish(3);
+
+[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start_for_reachability,finish_for_reachability);
+if ~is_reachable
+    error('initial mission, prior to edge deletion, is not possible')
+end
+return
 
 mode = "xy spatial only";
 % mode = 'time or z only';
@@ -207,7 +226,7 @@ plot(finish(1),finish(2),'xr','MarkerSize',6);
 leg_str = {'start','finish'};
 plot(init_route(:,1),init_route(:,2),'LineWidth',2);
 leg_str{end+1} = sprintf('route');
-for j = 1:length(shrunk_polytopes)
+for j = 2:length(shrunk_polytopes)
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
 end
 leg_str{end+1} = 'obstacles';
