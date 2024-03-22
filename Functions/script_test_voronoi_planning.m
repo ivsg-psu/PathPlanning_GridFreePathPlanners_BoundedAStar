@@ -117,10 +117,101 @@ for map_idx =5
     end % if conditions for different map test fixtures
 end
 
-[vx,vy,h] = fcn_MapGen_generateVoronoiDiagramBetweenPolytopes(shrunk_polytopes,is_nonconvex)
-hold on; box on;
-for j = 1:length(shrunk_polytopes)
-     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.5)
+% [vx,vy,h] = fcn_MapGen_generateVoronoiDiagramBetweenPolytopes(shrunk_polytopes,is_nonconvex)
+% hold on; box on;
+% for j = 1:length(shrunk_polytopes)
+%      fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.5)
+% end
+% xlabel('x [km]')
+% ylabel('y [km]')
+
+close all; clc;
+my_poly = shrunk_polytopes;
+figure; hold on; box on;
+j = 2;fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.5)
+% boundary.vertices = [-77.7 40.87; -77.7 40.915; -77.63 40.914; -77.63 40.87];
+boundary.vertices = [-77.7 40.78; -77.7 40.92; -77.45 40.92; -77.45 40.78];
+boundary.vertices = [boundary.vertices; boundary.vertices(1,:)];
+boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary);
+boundary.parent_poly_id = nan;
+shrunk_polytopes = [boundary, my_poly];
+
+distances = diff([[shrunk_polytopes.xv]',[shrunk_polytopes.yv]']);
+min_distance_between_verts = min(sqrt(sum(distances.*distances,2)));
+% poly_map_stats = fcn_MapGen_polytopesStatistics(polytopes);
+% % want to ensure that a side with length of 2 std dev below mean is still interpolated at least in half
+% resolution = (poly_map_stats.average_side_length - 2*poly_map_stats.std_side_length)/2;
+resolution = min_distance_between_verts/2;
+shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, resolution);
+C = [];
+P = [];
+largest_idx = 0;
+for poly_idx = 1:length(shrunk_polytopes)
+    P = [P; shrunk_polytopes(poly_idx).vertices(1:end-1,:)];
+    num_verts = size(shrunk_polytopes(poly_idx).vertices,1)-1;
+    C1 = [1:num_verts]';
+    C2 = [C1(2:end);C1(1)];
+    Ccomb = [C1 C2];
+    Ccomb = Ccomb + largest_idx;
+    C = [C; Ccomb];
+    largest_idx = max(max(C));
 end
-xlabel('x [km]')
-ylabel('y [km]')
+x = P(:,1)
+y = P(:,2)
+DT = delaunayTriangulation(P,C)
+figure; triplot(DT); title('triangulation')
+inside = isInterior(DT);
+tr = triangulation(DT(inside,:),DT.Points);
+figure; triplot(tr); title('triangulation, no interior')
+numt = size(tr,1);
+T = (1:numt)';
+neigh = neighbors(tr);
+cc = circumcenter(tr);
+xcc = cc(:,1);
+ycc = cc(:,2);
+idx1 = T < neigh(:,1);
+idx2 = T < neigh(:,2);
+idx3 = T < neigh(:,3);
+neigh = [T(idx1) neigh(idx1,1); T(idx2) neigh(idx2,2); T(idx3) neigh(idx3,3)]';
+figure; hold on; box on;
+triplot(tr,'g')
+hold on
+plot(xcc(neigh), ycc(neigh), '-r','LineWidth',1.5)
+plot(x(C'),y(C'),'-b','LineWidth',1.5)
+xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
+
+all_pts = [xcc, ycc, [1:length(xcc)]', -1*ones(length(xcc),1), zeros(length(xcc),1)];
+vgraph = zeros(length(xcc));
+vgraph(neigh(1,:),neigh(2,:)) = 1;
+start = all_pts(end-1,:);
+start(end) = 1;
+finish = all_pts(end,:);
+finish(end) = 1;
+all_pts = all_pts(1:end-2,:);
+
+
+mode = "xy spatial only";
+% mode = 'time or z only';
+% mode = "xyz or xyt";
+[cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
+
+
+[init_cost, init_route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
+
+
+figure; hold on; box on;
+xlabel('x [km]');
+ylabel('y [km]');
+plot(start(1),start(2),'xg','MarkerSize',6);
+plot(finish(1),finish(2),'xr','MarkerSize',6);
+leg_str = {'start','finish'};
+plot(init_route(:,1),init_route(:,2),'LineWidth',2);
+leg_str{end+1} = sprintf('route');
+for j = 1:length(shrunk_polytopes)
+    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
+end
+leg_str{end+1} = 'obstacles';
+for i = 1:length(shrunk_polytopes)-1
+    leg_str{end+1} = '';
+end
+legend(leg_str,'Location','best');
