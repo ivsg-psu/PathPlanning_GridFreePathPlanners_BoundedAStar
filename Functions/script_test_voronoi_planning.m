@@ -134,6 +134,7 @@ boundary.vertices = [-77.7 40.78; -77.7 40.92; -77.45 40.92; -77.45 40.78];
 boundary.vertices = [boundary.vertices; boundary.vertices(1,:)];
 boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary);
 boundary.parent_poly_id = nan;
+% boundary = fcn_MapGen_increasePolytopeVertexCount(boundary, 0.02);
 shrunk_polytopes = [boundary, my_poly];
 
 distances = diff([[shrunk_polytopes.xv]',[shrunk_polytopes.yv]']);
@@ -142,7 +143,7 @@ min_distance_between_verts = min(sqrt(sum(distances.*distances,2)));
 % % want to ensure that a side with length of 2 std dev below mean is still interpolated at least in half
 % resolution = (poly_map_stats.average_side_length - 2*poly_map_stats.std_side_length)/2;
 resolution = min_distance_between_verts/2;
-shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, 10*resolution);
+shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, resolution);
 C = [];
 P = [];
 largest_idx = 0;
@@ -167,6 +168,8 @@ numt = size(tr,1);
 T = (1:numt)';
 neigh = neighbors(tr);
 cc = circumcenter(tr);
+% cc = incenter(tr);
+nodes = find(~isnan(sum(neigh, 2)));
 xcc = cc(:,1);
 ycc = cc(:,2);
 idx1 = T < neigh(:,1);
@@ -177,9 +180,18 @@ figure; hold on; box on;
 triplot(tr,'g')
 hold on
 plot(xcc(neigh), ycc(neigh), '-r','LineWidth',1.5)
+plot(xcc(nodes), ycc(nodes), '.k','MarkerSize',30)
 plot(x(C'),y(C'),'-b','LineWidth',1.5)
 xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
+% TODO @sjharnett
+% for each triangle, get each side length, keep max - data structure of tri max sides
 
+% for any two three connected nodes, get all tris in between - neigh()
+% recurse through all two connected nodes, pick any direction except where you came from
+% cont. until you've reached a 3 connected node noting node and all traversed triangles
+
+% for any set of tris, keep min of max edges
+return
 all_pts = [xcc, ycc, [1:length(xcc)]', -1*ones(length(xcc),1), zeros(length(xcc),1)];
 vgraph = zeros(length(xcc));
 neigh_orig = neighbors(tr);
@@ -207,7 +219,6 @@ finish_for_reachability(4) = finish(3);
 if ~is_reachable
     error('initial mission, prior to edge deletion, is not possible')
 end
-return
 
 mode = "xy spatial only";
 % mode = 'time or z only';
