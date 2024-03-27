@@ -143,7 +143,7 @@ min_distance_between_verts = min(sqrt(sum(distances.*distances,2)));
 % % want to ensure that a side with length of 2 std dev below mean is still interpolated at least in half
 % resolution = (poly_map_stats.average_side_length - 2*poly_map_stats.std_side_length)/2;
 resolution = min_distance_between_verts/2;
-shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, resolution);
+shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, 10*resolution);
 C = [];
 P = [];
 largest_idx = 0;
@@ -160,6 +160,7 @@ end
 x = P(:,1)
 y = P(:,2)
 DT = delaunayTriangulation(P,C)
+
 figure; triplot(DT); title('triangulation')
 inside = isInterior(DT);
 tr = triangulation(DT(inside,:),DT.Points);
@@ -192,6 +193,32 @@ xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
 
 % for any set of tris, keep min of max edges
 return
+close all; clear all; clc;
+load trimesh3d
+trisurf(tri,x,y,z)
+dt = delaunayTriangulation(x,y,z)
+tr = triangulation(dt(:,:),dt.Points)
+trisurf(tri,x,y,z)
+numt = size(tr,1);
+T = (1:numt)';
+neigh = neighbors(tr);
+cc = circumcenter(tr);
+% cc = incenter(tr);
+nodes = find(~isnan(sum(neigh, 2)));
+xcc = cc(:,1);
+ycc = cc(:,2);
+zcc = cc(:,3);
+idx1 = T < neigh(:,1);
+idx2 = T < neigh(:,2);
+idx3 = T < neigh(:,3);
+neigh = [T(idx1) neigh(idx1,1); T(idx2) neigh(idx2,2); T(idx3) neigh(idx3,3)]';
+figure(1); hold on; box on;
+trisurf(tri,x,y,z)
+hold on
+% plot3(xcc(neigh), ycc(neigh), zcc(neigh), '-r','LineWidth',1.5)
+plot3(xcc(nodes), ycc(nodes), zcc(nodes), '.k','MarkerSize',30)
+xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
+
 all_pts = [xcc, ycc, [1:length(xcc)]', -1*ones(length(xcc),1), zeros(length(xcc),1)];
 vgraph = zeros(length(xcc));
 neigh_orig = neighbors(tr);
