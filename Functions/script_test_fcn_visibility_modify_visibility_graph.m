@@ -21,7 +21,7 @@ flag_do_plot = 1;
 
 %% generate map
 Halton_seed = 10;
-low_pt = 1+Halton_seed; high_pt = 101+Halton_seed; % range of Halton points to use to generate the tiling
+low_pt = 1+Halton_seed; high_pt = 11+Halton_seed; % range of Halton points to use to generate the tiling
 trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
 % shink the polytopes so that they are no longer tiled
 gap_size = 0.025; % desired average maximum radius
@@ -80,8 +80,6 @@ end
 
 idx_of_polytope_for_removal = 8;
 polytope_for_removal = polytopes(idx_of_polytope_for_removal);
-new_polytopes = polytopes;
-new_polytopes(idx_of_polytope_for_removal) = [];
 if flag_do_plot
     fig = 99; % figure to plot on
     line_spec = 'r--'; % edge line plotting
@@ -91,7 +89,7 @@ end
 
 %% try removing an obstacle
 modify_vgraph_timer = tic;
-[vgraph_new, all_pts_new, start_new, finish_new] = fcn_visibility_modify_visibility_graph(vgraph, all_pts, [], [], new_polytopes, polytope_for_removal, 'remove');
+[vgraph_new, all_pts_new, start_new, finish_new, new_polytopes] = fcn_visibility_graph_remove_obstacle(vgraph, all_pts, [], [], polytopes, idx_of_polytope_for_removal);
 toc(modify_vgraph_timer)
 
 if flag_do_plot
@@ -110,6 +108,75 @@ if flag_do_plot
         for j = 1:size(vgraph_new,1)
             if vgraph_new(i,j) == 1
                 plot([all_pts_new(i,1),all_pts_new(j,1)],[all_pts_new(i,2),all_pts_new(j,2)],'-g')
+            end
+        end
+    end
+end
+%% try adding an obstacle
+polytope_to_add = polytope_for_removal;
+polytope_shift = 0.7;
+polytope_to_add.xv = polytope_to_add.xv + polytope_shift;
+polytope_to_add.vertices(:,1) = polytope_to_add.vertices(:,1) + polytope_shift;
+add_obs_timer = tic;
+[vgraph_new2, all_pts_new2, start_new2, finish_new2, new_polytopes2] = ...
+    fcn_visibility_graph_add_obstacle(...
+    vgraph_new, all_pts_new, start_new, finish_new, new_polytopes, polytope_to_add);
+toc(add_obs_timer)
+
+if flag_do_plot
+    fig = 9999; % figure to plot on
+    line_spec = 'b-'; % edge line plotting
+    line_width = 2; % linewidth of the edge
+    axes_limits = [0 1.5 0 1.5]; % x and y axes limits
+    axis_style = 'square'; % plot axes style
+    fcn_plot_polytopes(new_polytopes2,fig,line_spec,line_width,axes_limits,axis_style);
+    line_spec = 'r--'; % edge line plotting
+    fcn_plot_polytopes(polytope_to_add,fig,line_spec,line_width,axes_limits,axis_style);
+    title('original map with polytope for addition highlighed')
+    hold on
+    box on
+    xlabel('x [km]')
+    ylabel('y [km]')
+    title('vgraph and map after polytope addition')
+    for i = 1:size(vgraph_new2,1)
+        for j = 1:size(vgraph_new2,1)
+            if vgraph_new2(i,j) == 1
+                plot([all_pts_new2(i,1),all_pts_new2(j,1)],[all_pts_new2(i,2),all_pts_new2(j,2)],'-g')
+            end
+        end
+    end
+end
+
+%% try adding another obstacle
+polytope_to_add2.vertices = [1.09, 0.78; 1.17, 0.78; 1.17, 0.86; 1.09, 0.86; 1.09, 0.78];
+polytope_to_add2 = fcn_MapGen_fillPolytopeFieldsFromVertices(polytope_to_add2);
+polytope_to_add2.obs_id = nan;
+polytope_to_add2.perimeter = sum(polytope_to_add2.distances);
+add_obs_timer = tic;
+[vgraph_new3, all_pts_new3, start_new3, finish_new3, new_polytopes3] = ...
+    fcn_visibility_graph_add_obstacle(...
+    vgraph_new2, all_pts_new2, start_new2, finish_new2, new_polytopes2, polytope_to_add2);
+toc(add_obs_timer)
+
+if flag_do_plot
+    fig = 99999; % figure to plot on
+    line_spec = 'b-'; % edge line plotting
+    line_width = 2; % linewidth of the edge
+    axes_limits = [0 1.5 0 1.5]; % x and y axes limits
+    axis_style = 'square'; % plot axes style
+    fcn_plot_polytopes(new_polytopes3,fig,line_spec,line_width,axes_limits,axis_style);
+    line_spec = 'r--'; % edge line plotting
+    fcn_plot_polytopes(polytope_to_add2,fig,line_spec,line_width,axes_limits,axis_style);
+    title('original map with polytope for addition highlighed')
+    hold on
+    box on
+    xlabel('x [km]')
+    ylabel('y [km]')
+    title('vgraph and map after blocking polytope addition')
+    for i = 1:size(vgraph_new3,1)
+        for j = 1:size(vgraph_new3,1)
+            if vgraph_new3(i,j) == 1
+                plot([all_pts_new3(i,1),all_pts_new3(j,1)],[all_pts_new3(i,2),all_pts_new3(j,2)],'-g')
             end
         end
     end

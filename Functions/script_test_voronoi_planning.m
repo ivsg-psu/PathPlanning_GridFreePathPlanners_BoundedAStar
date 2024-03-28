@@ -143,7 +143,7 @@ min_distance_between_verts = min(sqrt(sum(distances.*distances,2)));
 % % want to ensure that a side with length of 2 std dev below mean is still interpolated at least in half
 % resolution = (poly_map_stats.average_side_length - 2*poly_map_stats.std_side_length)/2;
 resolution = min_distance_between_verts/2;
-shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, 10*resolution);
+shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, resolution);
 C = [];
 P = [];
 largest_idx = 0;
@@ -185,13 +185,14 @@ plot(xcc(nodes), ycc(nodes), '.k','MarkerSize',30)
 plot(x(C'),y(C'),'-b','LineWidth',1.5)
 xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
 % TODO @sjharnett
+% fcn make graph from triangles
+% identify the 3 connected triangles
+% pick one
+% pick a direction
+% march down direction until hit a 3 connected triangle, noting every triangle on the way
+%
 % for each triangle, get each side length, keep max - data structure of tri max sides
-
-% for any two three connected nodes, get all tris in between - neigh()
-% recurse through all two connected nodes, pick any direction except where you came from
-% cont. until you've reached a 3 connected node noting node and all traversed triangles
-
-% for any set of tris, keep min of max edges
+% for each series of 2 connected triangles between two 3 connected triangles, keep min
 return
 close all; clear all; clc;
 load trimesh3d
