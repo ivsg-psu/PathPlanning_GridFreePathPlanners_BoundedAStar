@@ -176,24 +176,74 @@ ycc = cc(:,2);
 idx1 = T < neigh(:,1);
 idx2 = T < neigh(:,2);
 idx3 = T < neigh(:,3);
-neigh = [T(idx1) neigh(idx1,1); T(idx2) neigh(idx2,2); T(idx3) neigh(idx3,3)]';
+neigh_for_plotting = [T(idx1) neigh(idx1,1); T(idx2) neigh(idx2,2); T(idx3) neigh(idx3,3)]';
 figure; hold on; box on;
 triplot(tr,'g')
 hold on
-plot(xcc(neigh), ycc(neigh), '-r','LineWidth',1.5)
+plot(xcc(neigh_for_plotting), ycc(neigh_for_plotting), '-r','LineWidth',1.5)
 plot(xcc(nodes), ycc(nodes), '.k','MarkerSize',30)
 plot(x(C'),y(C'),'-b','LineWidth',1.5)
 xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
+return
 % TODO @sjharnett
 % fcn make graph from triangles
 % identify the 3 connected triangles
-% pick one
-% pick a direction
-% march down direction until hit a 3 connected triangle, noting every triangle on the way
-%
+adjascency_matrix = nan(length(nodes)); % set to 1 if chain of 2 connected triangles exists between three connected triangle node(i) and node(j)
+triangle_chains = {}; % each row contains (i,1) start 3 connected tri, (i,2) end 3 connected tri, and (i,3) array of 2 connected tris between them
+path_is_explored = zeros(length(nodes),3); % set to 1 when a direction is explored when node(i) neighbor(i,j) is explored
+% while there is still a 0 in the path explored list...
+while ~isnan(find(path_is_explored == 0))
+    % TODO find the first 0...it will be at i,j so we want nodes(i) in direction neigh(i,j)
+    tris_visited = [];
+    % pick one starting node
+    tris_visited = [nodes(i)];
+    % pick a direction
+    % TODO don't need this line, direction is j
+    direction = min(find(path_is_explored(i,:)==0)); % this is an index between 1 and 3, inclusive
+    % TODO don't need this line, direction is j
+    if isnan(direction)
+        continue % if all directions have already been explored, go to next possible starting node
+    end
+    % TODO don't need this line, direction is j
+    direction_choices = neigh(nodes(i),:); % there should be two directions leaving nodes(i)
+    % next tri should just be neigh(node(i),j) the jth neightbor of node(i)
+    next_tri = direction_choices(direction); % go a direction that hasn't been explored yet
+    tris_visited = [tris_visited, next_tri];
+    % want to keep looking while the current triangle is not a 3 connected one
+    while ~ismember(tris_visited(end),nodes)
+        % march down direction until hit a 3 connected triangle, noting every triangle on the way
+        neighbors = neigh(next_tri,:); % find the neighbors of the current triangle
+        next_dir = find(~isnan(neighbors)&~ismember(neighbors,tris_visited)); % whichever of the two neighbors we haven't visited, is the direction we didn't come from
+        % if there is no next neighbor satisfying (not nan) && (not already visited)
+        % we can assume we hit a dead end and this whole chain can be removed
+        if isnan(next_dir)
+            % set the flag that indicates this was a dead end as this has special handling
+            is_dead_end = 1;
+            % break out of the while loop
+            break
+        end
+        next_tri = neighbors(next_dir);
+        tris_visited = [tris_visited, next_tri];
+    end % end triangle chain while loop
+    % special dead end handling
+    if is_dead_end
+        % don't store the triangles
+        % mark the direction as explored
+        % don't udpate adjacency
+        % reset dead end flag
+        is_dead_end = 0;
+    end
+    % TODO store tris visited in the triangle chains thing
+    find(result{:,1}==2 & result{:,2}==23)
+    % store the reverse
+    % store adjascency values
+    % store the reverse
+    % flag the direction as explored
+end % end direction while loop
 % for each triangle, get each side length, keep max - data structure of tri max sides
 % for each series of 2 connected triangles between two 3 connected triangles, keep min
 return
+
 close all; clear all; clc;
 load trimesh3d
 trisurf(tri,x,y,z)
