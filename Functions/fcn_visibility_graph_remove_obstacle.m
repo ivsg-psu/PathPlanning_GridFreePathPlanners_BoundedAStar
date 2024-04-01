@@ -54,7 +54,7 @@ function [visibility_matrix_new, all_pts_new, start_new, finish_new, polytopes_a
     % 2021_10_28
     % -- first written by Steve Harnett
     % Questions? sjh6473@psu.edu
-    outer = tic;
+    % outer = tic;
     visibility_matrix_new = visibility_matrix;
     all_pts_new = all_pts;
     start_new = start;
@@ -91,8 +91,8 @@ function [visibility_matrix_new, all_pts_new, start_new, finish_new, polytopes_a
     % only want possible edges that are not already edges as deleting the obstacle adds edges, it does
     % not remove existing edges
     [r,c] = find(isInside & ~visibility_matrix_new);
-    toc(outer)
-    inner = tic
+    % toc(outer)
+    % inner = tic
     %% check only  specific edges method
     % TODO @sjharnett use global function and check from each start to all finishes for that start
     for i = 1:length(r)
@@ -103,6 +103,6 @@ function [visibility_matrix_new, all_pts_new, start_new, finish_new, polytopes_a
             visibility_matrix_new(r(i),c(i)) = 1;
         end
     end
-    toc(inner)
+    % toc(inner)
     sprintf('num checks was %i',length(r))
 end
