@@ -138,10 +138,16 @@ if flag_do_plot
     xlabel('x [km]')
     ylabel('y [km]')
     title('vgraph and map after polytope addition')
+    n_vgraph_new2 = size(vgraph_new2,2);
+    n_vgraph_new = size(vgraph_new,2);
+    vgraph_new_for_comparison = [vgraph_new, zeros(n_vgraph_new,n_vgraph_new2-n_vgraph_new); zeros(n_vgraph_new2-n_vgraph_new,n_vgraph_new2)];
     for i = 1:size(vgraph_new2,1)
         for j = 1:size(vgraph_new2,1)
-            if vgraph_new2(i,j) == 1
+            if vgraph_new2(i,j) == 1 && vgraph_new_for_comparison(i,j) ==1
                 plot([all_pts_new2(i,1),all_pts_new2(j,1)],[all_pts_new2(i,2),all_pts_new2(j,2)],'-g')
+            end
+            if vgraph_new2(i,j) == 1 && ~vgraph_new_for_comparison(i,j) ==1
+                plot([all_pts_new2(i,1),all_pts_new2(j,1)],[all_pts_new2(i,2),all_pts_new2(j,2)],'-m')
             end
         end
     end
@@ -173,10 +179,15 @@ if flag_do_plot
     xlabel('x [km]')
     ylabel('y [km]')
     title('vgraph and map after blocking polytope addition')
+    n_vgraph_new3 = size(vgraph_new3,2);
+    vgraph_new2_for_comparison = [vgraph_new2, zeros(n_vgraph_new2,n_vgraph_new3-n_vgraph_new2); zeros(n_vgraph_new3-n_vgraph_new2,n_vgraph_new3)];
     for i = 1:size(vgraph_new3,1)
         for j = 1:size(vgraph_new3,1)
             if vgraph_new3(i,j) == 1
                 plot([all_pts_new3(i,1),all_pts_new3(j,1)],[all_pts_new3(i,2),all_pts_new3(j,2)],'-g')
+            end
+            if vgraph_new3(i,j) == 1 && ~vgraph_new2_for_comparison(i,j) ==1
+                plot([all_pts_new3(i,1),all_pts_new3(j,1)],[all_pts_new3(i,2),all_pts_new3(j,2)],'-m')
             end
         end
     end
