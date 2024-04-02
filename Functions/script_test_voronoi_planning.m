@@ -117,27 +117,27 @@ for map_idx =5
     end % if conditions for different map test fixtures
 end
 
-% [vx,vy,h] = fcn_MapGen_generateVoronoiDiagramBetweenPolytopes(shrunk_polytopes,is_nonconvex)
-% hold on; box on;
-% for j = 1:length(shrunk_polytopes)
-%      fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.5)
-% end
-% xlabel('x [km]')
-% ylabel('y [km]')
-
-close all; clc;
-my_poly = shrunk_polytopes;
+%% make a boundary around the polytope field
 figure; hold on; box on;
-j = 2;fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.5)
-% boundary.vertices = [-77.7 40.87; -77.7 40.915; -77.63 40.914; -77.63 40.87];
+% find AABB
+polytopes_AABB = [min([shrunk_polytopes.xv]'), min([shrunk_polytopes.yv]'), max([shrunk_polytopes.xv]'), max([shrunk_polytopes.yv]')];
+% if the max or min is positive, we need to shrink the min and grow the max
+positive_box = polytopes_AABB.*(polytopes_AABB >= 0);
+positive_box_scaled = positive_box.*[0.99 0.99 1.01 1.01];
+% if the max or min is negative, we need to grow the min and shrink the max
+negative_box = polytopes_AABB.*(polytopes_AABB < 0);
+negative_box_scaled = negative_box.*[1.01 1.01 0.99 0.99];
+% combine the positive and negative parts of the AABB by adding
+polytopes_AABB_scaled = positive_box_scaled + negative_box_scaled;
 boundary.vertices = [-77.7 40.78; -77.7 40.92; -77.45 40.92; -77.45 40.78];
-boundary.vertices = [boundary.vertices; boundary.vertices(1,:)];
-boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary);
-boundary.parent_poly_id = nan;
-% boundary = fcn_MapGen_increasePolytopeVertexCount(boundary, 0.02);
-shrunk_polytopes = [boundary, my_poly];
+% boundary.vertices = [polytopes_AABB_scaled(1), polytopes_AABB_scaled(2); polytopes_AABB_scaled(1), polytopes_AABB_scaled(4); polytopes_AABB_scaled(3), polytopes_AABB_scaled(4); polytopes_AABB_scaled(3), polytopes_AABB_scaled(2)];
+boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
+boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
+boundary.parent_poly_id = nan; % ignore parend ID
+shrunk_polytopes = [boundary, shrunk_polytopes]; % put the boundary polytope as the first polytope
 
-distances = diff([[shrunk_polytopes.xv]',[shrunk_polytopes.yv]']);
+%% interpolate polytope vertices
+distances = diff([[shrunk_polytopes.xv]',[shrunk_polytopes.yv]']); % find side lengths in whole field
 min_distance_between_verts = min(sqrt(sum(distances.*distances,2)));
 % poly_map_stats = fcn_MapGen_polytopesStatistics(polytopes);
 % % want to ensure that a side with length of 2 std dev below mean is still interpolated at least in half
