@@ -143,7 +143,7 @@ min_distance_between_verts = min(sqrt(sum(distances.*distances,2)));
 % % want to ensure that a side with length of 2 std dev below mean is still interpolated at least in half
 % resolution = (poly_map_stats.average_side_length - 2*poly_map_stats.std_side_length)/2;
 resolution = min_distance_between_verts/2;
-shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, resolution);
+shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, 10*resolution);
 C = [];
 P = [];
 largest_idx = 0;
@@ -184,26 +184,28 @@ plot(xcc(neigh_for_plotting), ycc(neigh_for_plotting), '-r','LineWidth',1.5)
 plot(xcc(nodes), ycc(nodes), '.k','MarkerSize',30)
 plot(x(C'),y(C'),'-b','LineWidth',1.5)
 xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
-return
 % TODO @sjharnett
 % fcn make graph from triangles
 % identify the 3 connected triangles
-adjascency_matrix = nan(length(nodes)); % set to 1 if chain of 2 connected triangles exists between three connected triangle node(i) and node(j)
+adjascency_matrix = zeros(length(nodes)); % set to 1 if chain of 2 connected triangles exists between three connected triangle node(i) and node(j)
 triangle_chains = {}; % each row contains (i,1) start 3 connected tri, (i,2) end 3 connected tri, and (i,3) array of 2 connected tris between them
 path_is_explored = zeros(length(nodes),3); % set to 1 when a direction is explored when node(i) neighbor(i,j) is explored
 % while there is still a 0 in the path explored list...
-while ~isnan(find(path_is_explored == 0))
+while ~isempty(find(path_is_explored == 0))
     % TODO find the first 0...it will be at i,j so we want nodes(i) in direction neigh(i,j)
+    [r,c] = find(path_is_explored == 0);
+    i = r(1);
+    direction = c(1);
     tris_visited = [];
     % pick one starting node
     tris_visited = [nodes(i)];
     % pick a direction
     % TODO don't need this line, direction is j
-    direction = min(find(path_is_explored(i,:)==0)); % this is an index between 1 and 3, inclusive
+    % direction = min(find(path_is_explored(i,:)==0)); % this is an index between 1 and 3, inclusive
     % TODO don't need this line, direction is j
-    if isnan(direction)
-        continue % if all directions have already been explored, go to next possible starting node
-    end
+    % if isnan(direction)
+        % continue % if all directions have already been explored, go to next possible starting node
+    % end
     % TODO don't need this line, direction is j
     direction_choices = neigh(nodes(i),:); % there should be two directions leaving nodes(i)
     % next tri should just be neigh(node(i),j) the jth neightbor of node(i)
@@ -216,11 +218,13 @@ while ~isnan(find(path_is_explored == 0))
         next_dir = find(~isnan(neighbors)&~ismember(neighbors,tris_visited)); % whichever of the two neighbors we haven't visited, is the direction we didn't come from
         % if there is no next neighbor satisfying (not nan) && (not already visited)
         % we can assume we hit a dead end and this whole chain can be removed
-        if isnan(next_dir)
+        if isempty(next_dir)
             % set the flag that indicates this was a dead end as this has special handling
             is_dead_end = 1;
             % break out of the while loop
             break
+        else
+            is_dead_end =0;
         end
         next_tri = neighbors(next_dir);
         tris_visited = [tris_visited, next_tri];
@@ -229,21 +233,40 @@ while ~isnan(find(path_is_explored == 0))
     if is_dead_end
         % don't store the triangles
         % mark the direction as explored
+        path_is_explored(i,direction) = 1;
         % don't udpate adjacency
         % reset dead end flag
         is_dead_end = 0;
+        continue
     end
     % TODO store tris visited in the triangle chains thing
-    find(result{:,1}==2 & result{:,2}==23)
+    triangle_chains{end+1,1} = find(nodes==tris_visited(1)); % index of start in nodes
+    triangle_chains{end,2} = find(nodes==tris_visited(end)); % index of end in nodes
+    triangle_chains{end,3} = tris_visited; % list of triangles between them
     % store the reverse
+    triangle_chains{end+1,2} = find(nodes==tris_visited(1)); % index of start in nodes
+    triangle_chains{end,1} = find(nodes==tris_visited(end)); % index of end in nodes
+    triangle_chains{end,3} = flip(tris_visited); % list of triangles between them
     % store adjascency values
+    adjascency_matrix(find(nodes==tris_visited(1)),find(nodes==tris_visited(end))) = 1;
     % store the reverse
+    adjascency_matrix(find(nodes==tris_visited(end)),find(nodes==tris_visited(1))) = 1;
     % flag the direction as explored
+    path_is_explored(i,direction) = 1;
 end % end direction while loop
+colors = {"#A2142F","#7E2F8E","#EDB120","#0072BD"};
+color_idx = 1;
+for i = 1:4:(size(triangle_chains,1))
+    chain_of_note = triangle_chains{i,3};
+    beg_end = [chain_of_note(1) chain_of_note(end)];
+    plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
+    plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
+    color_idx = color_idx + 1;
+end
 % for each triangle, get each side length, keep max - data structure of tri max sides
 % for each series of 2 connected triangles between two 3 connected triangles, keep min
 return
-
+%% attempt 3d
 close all; clear all; clc;
 load trimesh3d
 trisurf(tri,x,y,z)
