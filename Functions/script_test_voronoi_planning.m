@@ -119,18 +119,7 @@ end
 
 %% make a boundary around the polytope field
 figure; hold on; box on;
-% find AABB
-polytopes_AABB = [min([shrunk_polytopes.xv]'), min([shrunk_polytopes.yv]'), max([shrunk_polytopes.xv]'), max([shrunk_polytopes.yv]')];
-% if the max or min is positive, we need to shrink the min and grow the max
-positive_box = polytopes_AABB.*(polytopes_AABB >= 0);
-positive_box_scaled = positive_box.*[0.99 0.99 1.01 1.01];
-% if the max or min is negative, we need to grow the min and shrink the max
-negative_box = polytopes_AABB.*(polytopes_AABB < 0);
-negative_box_scaled = negative_box.*[1.01 1.01 0.99 0.99];
-% combine the positive and negative parts of the AABB by adding
-polytopes_AABB_scaled = positive_box_scaled + negative_box_scaled;
 boundary.vertices = [-77.7 40.78; -77.7 40.92; -77.45 40.92; -77.45 40.78];
-% boundary.vertices = [polytopes_AABB_scaled(1), polytopes_AABB_scaled(2); polytopes_AABB_scaled(1), polytopes_AABB_scaled(4); polytopes_AABB_scaled(3), polytopes_AABB_scaled(4); polytopes_AABB_scaled(3), polytopes_AABB_scaled(2)];
 boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
 boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
 boundary.parent_poly_id = nan; % ignore parend ID
@@ -138,84 +127,82 @@ shrunk_polytopes = [boundary, shrunk_polytopes]; % put the boundary polytope as 
 
 %% interpolate polytope vertices
 distances = diff([[shrunk_polytopes.xv]',[shrunk_polytopes.yv]']); % find side lengths in whole field
-min_distance_between_verts = min(sqrt(sum(distances.*distances,2)));
-% poly_map_stats = fcn_MapGen_polytopesStatistics(polytopes);
-% % want to ensure that a side with length of 2 std dev below mean is still interpolated at least in half
-% resolution = (poly_map_stats.average_side_length - 2*poly_map_stats.std_side_length)/2;
-resolution = min_distance_between_verts/2;
-shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, 10*resolution);
-C = [];
-P = [];
+min_distance_between_verts = min(sqrt(sum(distances.*distances,2))); % the min of this is the smallest space between features
+resolution = min_distance_between_verts/2; % want even the smallest feature to be bisected
+shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, resolution); % interpolate sides
+
+%% constrained delaunay triangulation
+C = []; % initialize constriant matrix
+P = []; % initialize points matrix
 largest_idx = 0;
 for poly_idx = 1:length(shrunk_polytopes)
-    P = [P; shrunk_polytopes(poly_idx).vertices(1:end-1,:)];
+    P = [P; shrunk_polytopes(poly_idx).vertices(1:end-1,:)]; % add poly verts to points
+    % want to list every pair of points representing a polytope side as a constraint
     num_verts = size(shrunk_polytopes(poly_idx).vertices,1)-1;
-    C1 = [1:num_verts]';
-    C2 = [C1(2:end);C1(1)];
-    Ccomb = [C1 C2];
-    Ccomb = Ccomb + largest_idx;
-    C = [C; Ccomb];
-    largest_idx = max(max(C));
+    C1 = [1:num_verts]'; % this will be points 1 through n
+    C2 = [C1(2:end);C1(1)]; % C2 is equal to C1 with the order shifted by 1
+    Ccomb = [C1 C2]; % this will be a table saying point 1 to 2 is a side, 2 to 3, etc.
+    Ccomb = Ccomb + largest_idx; % shift the whole thing by the largest ID already in C so point IDs are global, not unique to this polytope onlyk
+    C = [C; Ccomb]; % add constriants for this polytope to total constraint list
+    largest_idx = max(max(C)); % update largest point ID in this polytope for use offsetting next polytope
 end
-x = P(:,1)
-y = P(:,2)
-DT = delaunayTriangulation(P,C)
+x = P(:,1); % all x's
+y = P(:,2); % all y's
+DT = delaunayTriangulation(P,C) % perform constrained triangulation
 
 figure; triplot(DT); title('triangulation')
-inside = isInterior(DT);
-tr = triangulation(DT(inside,:),DT.Points);
+inside = isInterior(DT); % identify triangles statisfying constriants C (i.e. tris within the boundary and outside polytopes, i.e. free space)
+tr = triangulation(DT(inside,:),DT.Points); % keep only the triangles of free space, not the ones in polytopes
 figure; triplot(tr); title('triangulation, no interior')
-numt = size(tr,1);
-T = (1:numt)';
-neigh = neighbors(tr);
-cc = circumcenter(tr);
-% cc = incenter(tr);
-nodes = find(~isnan(sum(neigh, 2)));
-xcc = cc(:,1);
-ycc = cc(:,2);
+numt = size(tr,1); % numbe of triangles
+T = (1:numt)'; % list of triangle idx
+neigh = neighbors(tr); % this indicates which triangles are connected to which other triangles
+cc = circumcenter(tr); % get all circumcenters (centers of circumscribed circles)
+nodes = find(~isnan(sum(neigh, 2))); % identify all 3 connected triangles (tris with no nan neighbor)
+xcc = cc(:,1); % x coords of circumcenters
+ycc = cc(:,2); % y coords of circumcenters
+% the following code rearranges the numtx3 'neigh' matrix where row i is the three neighbors of tri i,
+% into a 2xm matrix where each columb is a pair of neighboring triangles
+% this is useful for plotting as neigh_for_plotting has no nan values while neigh does
 idx1 = T < neigh(:,1);
 idx2 = T < neigh(:,2);
 idx3 = T < neigh(:,3);
 neigh_for_plotting = [T(idx1) neigh(idx1,1); T(idx2) neigh(idx2,2); T(idx3) neigh(idx3,3)]';
+% plotting code
 figure; hold on; box on;
 triplot(tr,'g')
 hold on
-plot(xcc(neigh_for_plotting), ycc(neigh_for_plotting), '-r','LineWidth',1.5)
-plot(xcc(nodes), ycc(nodes), '.k','MarkerSize',30)
-plot(x(C'),y(C'),'-b','LineWidth',1.5)
+plot(xcc(neigh_for_plotting), ycc(neigh_for_plotting), '-r','LineWidth',1.5) % plot approx. medial axis
+plot(xcc(nodes), ycc(nodes), '.k','MarkerSize',30) % plot 3 connected triangle circumcenters
+plot(x(C'),y(C'),'-b','LineWidth',1.5) % plot constriants (i.e. polytopes)
 xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
-% TODO @sjharnett
-% fcn make graph from triangles
+
+% make a plannable graph from triangulation
 % identify the 3 connected triangles
 adjascency_matrix = zeros(length(nodes)); % set to 1 if chain of 2 connected triangles exists between three connected triangle node(i) and node(j)
 triangle_chains = {}; % each row contains (i,1) start 3 connected tri, (i,2) end 3 connected tri, and (i,3) array of 2 connected tris between them
 path_is_explored = zeros(length(nodes),3); % set to 1 when a direction is explored when node(i) neighbor(i,j) is explored
 % while there is still a 0 in the path explored list...
 while ~isempty(find(path_is_explored == 0))
-    % TODO find the first 0...it will be at i,j so we want nodes(i) in direction neigh(i,j)
+    % find the first 0...it will be at i,j so we want nodes(i) in direction neigh(i,j)
     [r,c] = find(path_is_explored == 0);
     i = r(1);
     direction = c(1);
-    tris_visited = [];
-    % pick one starting node
-    tris_visited = [nodes(i)];
-    % pick a direction
-    % TODO don't need this line, direction is j
-    % direction = min(find(path_is_explored(i,:)==0)); % this is an index between 1 and 3, inclusive
-    % TODO don't need this line, direction is j
-    % if isnan(direction)
-        % continue % if all directions have already been explored, go to next possible starting node
-    % end
-    % TODO don't need this line, direction is j
-    direction_choices = neigh(nodes(i),:); % there should be two directions leaving nodes(i)
+
+    tris_visited = []; % initialize triangles visited list
+    tris_visited = [nodes(i)]; % pick one starting node
+    % pick a direction from neighbors of the node triangle
+    direction_choices = neigh(nodes(i),:); % there should be three directions leaving nodes(i)
     % next tri should just be neigh(node(i),j) the jth neightbor of node(i)
     next_tri = direction_choices(direction); % go a direction that hasn't been explored yet
     tris_visited = [tris_visited, next_tri];
     % want to keep looking while the current triangle is not a 3 connected one
+    % i.e. while the last triangle visited is not a node
     while ~ismember(tris_visited(end),nodes)
         % march down direction until hit a 3 connected triangle, noting every triangle on the way
-        neighbors = neigh(next_tri,:); % find the neighbors of the current triangle
-        next_dir = find(~isnan(neighbors)&~ismember(neighbors,tris_visited)); % whichever of the two neighbors we haven't visited, is the direction we didn't come from
+        neighbors = neigh(next_tri,:); % find the neighbors of the current triangle, this is a 1x3 list of tri idx
+        % whichever of the two neighbors we haven't visited, is the direction we didn't come from
+        next_dir = find(~isnan(neighbors)&~ismember(neighbors,tris_visited)); % this will be an ID between 1 and 3
         % if there is no next neighbor satisfying (not nan) && (not already visited)
         % we can assume we hit a dead end and this whole chain can be removed
         if isempty(next_dir)
@@ -224,10 +211,11 @@ while ~isempty(find(path_is_explored == 0))
             % break out of the while loop
             break
         else
+            % otherwise we must have selected a 2 or three connected triangle
             is_dead_end =0;
         end
-        next_tri = neighbors(next_dir);
-        tris_visited = [tris_visited, next_tri];
+        next_tri = neighbors(next_dir); % update the next tiangle based on the valid direction ID
+        tris_visited = [tris_visited, next_tri]; % append to the triangle visited list
     end % end triangle chain while loop
     % special dead end handling
     if is_dead_end
@@ -237,62 +225,70 @@ while ~isempty(find(path_is_explored == 0))
         % don't udpate adjacency
         % reset dead end flag
         is_dead_end = 0;
-        continue
+        continue % to next unexplored direction
     end
-    % TODO store tris visited in the triangle chains thing
+    % store tris visited list in the triangle chains lookup table
     triangle_chains{end+1,1} = find(nodes==tris_visited(1)); % index of start in nodes
     triangle_chains{end,2} = find(nodes==tris_visited(end)); % index of end in nodes
     triangle_chains{end,3} = tris_visited; % list of triangles between them
-    % store the reverse
+    % store the reverse of this as well
     triangle_chains{end+1,2} = find(nodes==tris_visited(1)); % index of start in nodes
     triangle_chains{end,1} = find(nodes==tris_visited(end)); % index of end in nodes
     triangle_chains{end,3} = flip(tris_visited); % list of triangles between them
-    % store adjascency values
+    % note that the start and end of the triangle chain are "adjascent" in a graph sense
     adjascency_matrix(find(nodes==tris_visited(1)),find(nodes==tris_visited(end))) = 1;
     % store the reverse
     adjascency_matrix(find(nodes==tris_visited(end)),find(nodes==tris_visited(1))) = 1;
     % flag the direction as explored
     path_is_explored(i,direction) = 1;
 end % end direction while loop
-colors = {"#A2142F","#7E2F8E","#EDB120","#0072BD"};
+
+% plot the graph
+colors = {"#A2142F","#7E2F8E","#EDB120","#0072BD"}; % some different colors
 color_idx = 1;
-for i = 1:4:(size(triangle_chains,1))
+for i = 1:(size(triangle_chains,1))
+    % pop off a triangle chain
     chain_of_note = triangle_chains{i,3};
+    % pot big markers for the start and end node
     beg_end = [chain_of_note(1) chain_of_note(end)];
+    % plot a straight line between them (this is the adjascency graph connection)
     plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
+    % plot the medial axis path between them (this is the curved path from the triangle chain)
     plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
     color_idx = color_idx + 1;
 end
-% for each triangle, get each side length, keep max - data structure of tri max sides
-% for each series of 2 connected triangles between two 3 connected triangles, keep min
+% TODO for each triangle, get each side length, keep max - data structure of tri max sides, per triangle
+% for each triangle chain, keep min of the triangle sides as this is the choke point
 return
-%% attempt 3d
-close all; clear all; clc;
-load trimesh3d
-trisurf(tri,x,y,z)
-dt = delaunayTriangulation(x,y,z)
-tr = triangulation(dt(:,:),dt.Points)
-trisurf(tri,x,y,z)
-numt = size(tr,1);
-T = (1:numt)';
-neigh = neighbors(tr);
-cc = circumcenter(tr);
-% cc = incenter(tr);
-nodes = find(~isnan(sum(neigh, 2)));
-xcc = cc(:,1);
-ycc = cc(:,2);
-zcc = cc(:,3);
-idx1 = T < neigh(:,1);
-idx2 = T < neigh(:,2);
-idx3 = T < neigh(:,3);
-neigh = [T(idx1) neigh(idx1,1); T(idx2) neigh(idx2,2); T(idx3) neigh(idx3,3)]';
-figure(1); hold on; box on;
-trisurf(tri,x,y,z)
-hold on
-% plot3(xcc(neigh), ycc(neigh), zcc(neigh), '-r','LineWidth',1.5)
-plot3(xcc(nodes), ycc(nodes), zcc(nodes), '.k','MarkerSize',30)
-xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
 
+%% attempt 3d
+% close all; clear all; clc;
+% load trimesh3d
+% trisurf(tri,x,y,z)
+% dt = delaunayTriangulation(x,y,z)
+% tr = triangulation(dt(:,:),dt.Points)
+% trisurf(tri,x,y,z)
+% numt = size(tr,1);
+% T = (1:numt)';
+% neigh = neighbors(tr);
+% cc = circumcenter(tr);
+cc = incenter(tr);
+% nodes = find(~isnan(sum(neigh, 2)));
+% xcc = cc(:,1);
+% ycc = cc(:,2);
+% zcc = cc(:,3);
+% idx1 = T < neigh(:,1);
+% idx2 = T < neigh(:,2);
+% idx3 = T < neigh(:,3);
+% neigh = [T(idx1) neigh(idx1,1); T(idx2) neigh(idx2,2); T(idx3) neigh(idx3,3)]';
+% figure(1); hold on; box on;
+% trisurf(tri,x,y,z)
+% hold on
+plot3(xcc(neigh), ycc(neigh), zcc(neigh), '-r','LineWidth',1.5)
+% plot3(xcc(nodes), ycc(nodes), zcc(nodes), '.k','MarkerSize',30)
+% xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
+%
+%% attepmt planning through triangle graph
 all_pts = [xcc, ycc, [1:length(xcc)]', -1*ones(length(xcc),1), zeros(length(xcc),1)];
 vgraph = zeros(length(xcc));
 neigh_orig = neighbors(tr);
