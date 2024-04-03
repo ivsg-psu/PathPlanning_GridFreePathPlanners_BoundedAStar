@@ -278,24 +278,96 @@ for i = 1:(size(triangle_chains,1))
     color_idx = color_idx + 1;
 end
 
-%% remove through-put nodes
+%% compute branching factor (connectivity)
+% branching factor is the number of nodes connected to each node
 branching_factor_outbound = sum(adjascency_matrix,2)-1; % number of destination nodes per node (excluding self)
 branching_factor_inbound = [sum(adjascency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
-% need to compare the sum of the rows and the sum of the columns.   if it has 2 in but 3 out we
-% would want to keep it even though it is in some sense 1 connected
-% i.e. a nodes connectedness is determined by it's max connectedness of max{in,out}
+% need to compare the sum of the rows and the sum of the columns.
+% This will tell us inbound and outbound connections per node in an asymmetric graph
+% if a node has 2 in but 3 out we would want to treat it as 3-connected becuase it does serve that role in one direction
+% i.e. a nodes connectedness is determined by its max connectedness of max{in,out}
 max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
-% for every row in the adjascency_matrix whos sum is 3 % this implies the row can only reach two nodes and itself
-    %
+
+%% remove through-put nodes
+idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
+% TODO this should be a while loop
+while ~isempty(idx_2_connected_nodes)
+    % for each through node, t...
+    t = idx_2_connected_nodes(1);
+    adjascent_to_t = adjascency_matrix(t,:); % find t's adjascent nodes
+    adjascent_to_t(t) = 0; % don't need self adjascency for this
+    % find the node on either side...call these d and b
+    d_and_b = find(adjascent_to_t==1);
+    d = d_and_b(1);
+    b = d_and_b(1);
+    % connect those two nodes in the adjascency matrix
+    adjascency_matrix(d_and_b, d_and_b) = 1; % note this line makes Adb, Abd, Add, and Abb =1
+    % need to find triangle chains for d to t and t to b...
+    idx_chain_dt = find([triangle_chains{:,1}]'== d & [triangle_chains{:,2}]'== t);
+    idx_chain_tb = find([triangle_chains{:,1}]'== t & [triangle_chains{:,2}]'== b);
+    chain_dt = triangle_chains{idx_chain_dt,3};
+    chain_tb = triangle_chains{idx_chain_tb,3};
+    % do this again for reverse direction
+    idx_chain_bt = find([triangle_chains{:,1}]'== b & [triangle_chains{:,2}]'== t);
+    idx_chain_td = find([triangle_chains{:,1}]'== t & [triangle_chains{:,2}]'== d);
+    chain_bt = triangle_chains{idx_chain_bt,3};
+    chain_td = triangle_chains{idx_chain_td,3};
+    % make an entry for d to b and set tri list to the other two tri lists
+    triangle_chains{end+1,1} = d; % index of start in nodes
+    triangle_chains{end,2} = b; % index of end in nodes
+    triangle_chains{end,3} = [chain_dt, chain_tb]; % list of triangles between them
+    % do this again for reverse direction
+    triangle_chains{end+1,1} = b; % index of start in nodes
+    triangle_chains{end,2} = d; % index of end in nodes
+    triangle_chains{end,3} = [chain_bt, chain_td]; % list of triangles between them
+    % delete the rows for d to t and t to b
+    [triangle_chains{idx_chain_dt,3}] = deal([]);
+    [triangle_chains{idx_chain_tb,3}] = deal([]);
+    % do this again for reverse direction
+    [triangle_chains{idx_chain_bt,3}] = deal([]);
+    [triangle_chains{idx_chain_td,3}] = deal([]);
+    %  remove the t node from the adjascency matrix
+    adjascency_matrix(t, :) = zeros(1, size(adjascency_matrix,1));
+    adjascency_matrix(:, t) = zeros(size(adjascency_matrix,2), 1);
+    % remove from node list
+    nodes(t) = nan;
+
+    %% re-compute branching factor (connectivity)
+    branching_factor_outbound = sum(adjascency_matrix,2)-1; % number of destination nodes per node (excluding self)
+    branching_factor_inbound = [sum(adjascency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
+    max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
+    idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
+end
+% plot the graph without through nodes
+figure; hold on; box on;
+for i = 1:(size(triangle_chains,1))
+    % pop off a triangle chain
+    chain_of_note = triangle_chains{i,3};
+    if isempty(chain_of_note)
+        continue
+    end
+    % pot big markers for the start and end node
+    beg_end = [chain_of_note(1) chain_of_note(end)];
+    % plot a straight line between them (this is the adjascency graph connection)
+    plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
+    % plot the medial axis path between them (this is the curved path from the triangle chain)
+    plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
+    color_idx = color_idx + 1;
+end
+
+return
+% TODO @sjharnett do we want to set these to zero/empty or actually remove them? Removing would require re-indexing
 %% remove dead ends
 idx_1_connected_nodes = find(max_branching_factor == 1); % all one connected nodes are dead ends
 % remove the node from the adjacency matrix
 adjascency_matrix(idx_1_connected_nodes, :) = zeros(length(idx_1_connected_nodes), size(adjascency_matrix,1));
 adjascency_matrix(:, idx_1_connected_nodes) = zeros(size(adjascency_matrix,2), length(idx_1_connected_nodes));
-% remove the node from the node list?
+% remove the node from the node list
 nodes(idx_1_connected_nodes) = nan;
+% find triangle chains that start and end at this node
 idx_chain_starts_at_1_connected_node = find(ismember([triangle_chains{:,1}]', idx_1_connected_nodes));
 idx_chain_ends_at_1_connected_node = find(ismember([triangle_chains{:,2}]', idx_1_connected_nodes));
+% remove these triangle chains
 [triangle_chains{idx_chain_ends_at_1_connected_node,3}] = deal([]);
 [triangle_chains{idx_chain_starts_at_1_connected_node,3}] = deal([]);
 
