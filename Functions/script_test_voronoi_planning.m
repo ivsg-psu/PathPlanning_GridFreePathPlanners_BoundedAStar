@@ -279,23 +279,42 @@ for i = 1:(size(triangle_chains,1))
 end
 
 %% remove through-put nodes
-branching_factor = sum(adjascency_matrix,2)-1; % number of destination nodes per node (excluding self)
+branching_factor_outbound = sum(adjascency_matrix,2)-1; % number of destination nodes per node (excluding self)
+branching_factor_inbound = [sum(adjascency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
+% need to compare the sum of the rows and the sum of the columns.   if it has 2 in but 3 out we
+% would want to keep it even though it is in some sense 1 connected
+% i.e. a nodes connectedness is determined by it's max connectedness of max{in,out}
+max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
 % for every row in the adjascency_matrix whos sum is 3 % this implies the row can only reach two nodes and itself
     %
 %% remove dead ends
-idx_1_connected_nodes = find(branching_factor == 1); % all one connected nodes are dead ends
-% assert that adjascency is symmetric
-% need to compare the sum of the rwos and the sum of the columns.   if it has 2 in but 3 out we
-% would want to keep it even though it is in some sense 1 connected
-% i.e. a nodes connectedness is determined by it's max connectedness of max{in,out}
-idx_1_connected_nodes
-for i = 1:length(idx_1_connected_nodes)
-    % remove the node from the adjacency matrix
+idx_1_connected_nodes = find(max_branching_factor == 1); % all one connected nodes are dead ends
+% remove the node from the adjacency matrix
+adjascency_matrix(idx_1_connected_nodes, :) = zeros(length(idx_1_connected_nodes), size(adjascency_matrix,1));
+adjascency_matrix(:, idx_1_connected_nodes) = zeros(size(adjascency_matrix,2), length(idx_1_connected_nodes));
+% remove the node from the node list?
+nodes(idx_1_connected_nodes) = nan;
+idx_chain_starts_at_1_connected_node = find(ismember([triangle_chains{:,1}]', idx_1_connected_nodes));
+idx_chain_ends_at_1_connected_node = find(ismember([triangle_chains{:,2}]', idx_1_connected_nodes));
+[triangle_chains{idx_chain_ends_at_1_connected_node,3}] = deal([]);
+[triangle_chains{idx_chain_starts_at_1_connected_node,3}] = deal([]);
 
-    % remove the triangle chain
-    % remove the node from the node list?
+% plot the graph without dead ends
+figure; hold on; box on;
+for i = 1:(size(triangle_chains,1))
+    % pop off a triangle chain
+    chain_of_note = triangle_chains{i,3};
+    if isempty(chain_of_note)
+        continue
+    end
+    % pot big markers for the start and end node
+    beg_end = [chain_of_note(1) chain_of_note(end)];
+    % plot a straight line between them (this is the adjascency graph connection)
+    plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
+    % plot the medial axis path between them (this is the curved path from the triangle chain)
+    plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
+    color_idx = color_idx + 1;
 end
-
 % TODO for each triangle, get each side length, keep max - data structure of tri max sides, per triangle
 % for each triangle chain, keep min of the triangle sides as this is the choke point
 return
