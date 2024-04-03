@@ -168,7 +168,7 @@ idx1 = T < neigh(:,1);
 idx2 = T < neigh(:,2);
 idx3 = T < neigh(:,3);
 neigh_for_plotting = [T(idx1) neigh(idx1,1); T(idx2) neigh(idx2,2); T(idx3) neigh(idx3,3)]';
-% plotting code
+% plot the triangulation and approximate medial axis
 figure; hold on; box on;
 triplot(tr,'g')
 hold on
@@ -179,7 +179,7 @@ xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
 
 % make a plannable graph from triangulation
 % identify the 3 connected triangles
-adjascency_matrix = zeros(length(nodes)); % set to 1 if chain of 2 connected triangles exists between three connected triangle node(i) and node(j)
+adjascency_matrix = eye(length(nodes)); % set to 1 if chain of 2 connected triangles exists between three connected triangle node(i) and node(j)
 triangle_chains = {}; % each row contains (i,1) start 3 connected tri, (i,2) end 3 connected tri, and (i,3) array of 2 connected tris between them
 path_is_explored = zeros(length(nodes),3); % set to 1 when a direction is explored when node(i) neighbor(i,j) is explored
 % while there is still a 0 in the path explored list...
@@ -243,7 +243,14 @@ while ~isempty(find(path_is_explored == 0))
     path_is_explored(i,direction) = 1;
 end % end direction while loop
 
-% plot the graph
+% plot the graph on the triangles
+figure; hold on; box on;
+triplot(tr,'g')
+hold on
+plot(xcc(neigh_for_plotting), ycc(neigh_for_plotting), '-r','LineWidth',1.5) % plot approx. medial axis
+plot(xcc(nodes), ycc(nodes), '.k','MarkerSize',30) % plot 3 connected triangle circumcenters
+plot(x(C'),y(C'),'-b','LineWidth',1.5) % plot constriants (i.e. polytopes)
+xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
 colors = {"#A2142F","#7E2F8E","#EDB120","#0072BD"}; % some different colors
 color_idx = 1;
 for i = 1:(size(triangle_chains,1))
@@ -257,10 +264,41 @@ for i = 1:(size(triangle_chains,1))
     plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
     color_idx = color_idx + 1;
 end
+% plot the graph
+figure; hold on; box on;
+for i = 1:(size(triangle_chains,1))
+    % pop off a triangle chain
+    chain_of_note = triangle_chains{i,3};
+    % pot big markers for the start and end node
+    beg_end = [chain_of_note(1) chain_of_note(end)];
+    % plot a straight line between them (this is the adjascency graph connection)
+    plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
+    % plot the medial axis path between them (this is the curved path from the triangle chain)
+    plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
+    color_idx = color_idx + 1;
+end
+
+%% remove through-put nodes
+branching_factor = sum(adjascency_matrix,2)-1; % number of destination nodes per node (excluding self)
+% for every row in the adjascency_matrix whos sum is 3 % this implies the row can only reach two nodes and itself
+    %
+%% remove dead ends
+idx_1_connected_nodes = find(branching_factor == 1); % all one connected nodes are dead ends
+% assert that adjascency is symmetric
+% need to compare the sum of the rwos and the sum of the columns.   if it has 2 in but 3 out we
+% would want to keep it even though it is in some sense 1 connected
+% i.e. a nodes connectedness is determined by it's max connectedness of max{in,out}
+idx_1_connected_nodes
+for i = 1:length(idx_1_connected_nodes)
+    % remove the node from the adjacency matrix
+
+    % remove the triangle chain
+    % remove the node from the node list?
+end
+
 % TODO for each triangle, get each side length, keep max - data structure of tri max sides, per triangle
 % for each triangle chain, keep min of the triangle sides as this is the choke point
 return
-
 %% attempt 3d
 % close all; clear all; clc;
 % load trimesh3d
