@@ -8,7 +8,7 @@ addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 flag_do_plot = 1;
 flag_do_animation = 0;
-flag_do_plot_slow = 0;
+flag_do_plot_slow = 1;
 
 for map_idx =5
     if map_idx == 1 % generic canyon map
@@ -230,14 +230,8 @@ while ~isempty(find(path_is_explored == 0))
     triangle_chains{end+1,1} = find(nodes==tris_visited(1)); % index of start in nodes
     triangle_chains{end,2} = find(nodes==tris_visited(end)); % index of end in nodes
     triangle_chains{end,3} = tris_visited; % list of triangles between them
-    % store the reverse of this as well
-    triangle_chains{end+1,2} = find(nodes==tris_visited(1)); % index of start in nodes
-    triangle_chains{end,1} = find(nodes==tris_visited(end)); % index of end in nodes
-    triangle_chains{end,3} = flip(tris_visited); % list of triangles between them
     % note that the start and end of the triangle chain are "adjascent" in a graph sense
     adjascency_matrix(find(nodes==tris_visited(1)),find(nodes==tris_visited(end))) = 1;
-    % store the reverse
-    adjascency_matrix(find(nodes==tris_visited(end)),find(nodes==tris_visited(1))) = 1;
     % flag the direction as explored
     path_is_explored(i,direction) = 1;
 end % end direction while loop
@@ -291,9 +285,26 @@ max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
     % it means has three departing triangle paths
     % if it means "has three destinations" you can accidentally prune an edge that
     % it has two connections
+
+%% compute number of connected chains
+num_chains_per_node = nan(1,length(nodes));
+for node = 1:length(nodes)
+    % if the node has been removed, don't calculate it's connectedness
+    if isnan(nodes(node))
+        continue
+    end
+    % if the node isn't nan, sum all the outbound and inbound triangle chains
+    num_outbound_chains = sum([triangle_chains{:,1}]'== node);
+    num_inbound_chains = sum([triangle_chains{:,2}]'== node);
+    % look at the max of this as this is the maximum connectedness of the node
+    max_connected_chains = max(num_outbound_chains, num_inbound_chains);
+    num_chains_per_node(node) = max_connected_chains';
+end
+idx_2_connected_nodes = find(num_chains_per_node == 2); % all two connected nodes are through nodes
+plot(xcc(nodes(idx_2_connected_nodes)),ycc(nodes(idx_2_connected_nodes)),'.g','MarkerSize',30)
+
+return
 %% remove through-put nodes
-idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
-% TODO this should be a while loop
 while ~isempty(idx_2_connected_nodes)
     % for each through node, t...
     t = idx_2_connected_nodes(1);
@@ -330,22 +341,33 @@ while ~isempty(idx_2_connected_nodes)
     triangle_chains{end,2} = d; % index of end in nodes
     triangle_chains{end,3} = [chain_bt, chain_td]; % list of triangles between them
     % delete the rows for d to t and t to b
-    [triangle_chains{idx_chain_dt,3}] = deal([]);
-    [triangle_chains{idx_chain_tb,3}] = deal([]);
+    [triangle_chains{idx_chain_dt,:}] = deal([]);
+    [triangle_chains{idx_chain_tb,:}] = deal([]);
     % do this again for reverse direction
-    [triangle_chains{idx_chain_bt,3}] = deal([]);
-    [triangle_chains{idx_chain_td,3}] = deal([]);
+    [triangle_chains{idx_chain_bt,:}] = deal([]);
+    [triangle_chains{idx_chain_td,:}] = deal([]);
     %  remove the t node from the adjascency matrix
     adjascency_matrix(t, :) = zeros(1, size(adjascency_matrix,1));
     adjascency_matrix(:, t) = zeros(size(adjascency_matrix,2), 1);
     % remove from node list
     nodes(t) = nan;
 
-    %% re-compute branching factor (connectivity)
-    branching_factor_outbound = sum(adjascency_matrix,2)-1; % number of destination nodes per node (excluding self)
-    branching_factor_inbound = [sum(adjascency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
-    max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
-    idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
+    %% compute number of connected chains
+    num_chains_per_node = nan(1,length(nodes));
+    for node = 1:length(nodes)
+        % if the node has been removed, don't calculate it's connectedness
+        if isnan(nodes(node))
+            continue
+        end
+        % if the node isn't nan, sum all the outbound and inbound triangle chains
+        num_outbound_chains = sum([triangle_chains{:,1}]'== node);
+        num_inbound_chains = sum([triangle_chains{:,2}]'== node);
+        % look at the max of this as this is the maximum connectedness of the node
+        max_connected_chains = max(num_outbound_chains, num_inbound_chains);
+        num_chains_per_node(node) = max_connected_chains;
+    end
+    idx_2_connected_nodes = find(num_chains_per_node == 2); % all two connected nodes are through nodes
+
     if flag_do_plot_slow
         % plot the graph after this through node removal
         figure; hold on; box on;
@@ -383,6 +405,12 @@ for i = 1:(size(triangle_chains,1))
 end
 
 return
+
+%% re-compute branching factor (connectivity)
+branching_factor_outbound = sum(adjascency_matrix,2)-1; % number of destination nodes per node (excluding self)
+branching_factor_inbound = [sum(adjascency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
+max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
+
 % TODO @sjharnett do we want to set these to zero/empty or actually remove them? Removing would require re-indexing
 %% remove dead ends
 idx_1_connected_nodes = find(max_branching_factor == 1); % all one connected nodes are dead ends
