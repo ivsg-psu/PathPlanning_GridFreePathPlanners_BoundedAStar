@@ -230,14 +230,8 @@ while ~isempty(find(path_is_explored == 0))
     triangle_chains{end+1,1} = find(nodes==tris_visited(1)); % index of start in nodes
     triangle_chains{end,2} = find(nodes==tris_visited(end)); % index of end in nodes
     triangle_chains{end,3} = tris_visited; % list of triangles between them
-    % store the reverse of this as well
-    triangle_chains{end+1,2} = find(nodes==tris_visited(1)); % index of start in nodes
-    triangle_chains{end,1} = find(nodes==tris_visited(end)); % index of end in nodes
-    triangle_chains{end,3} = flip(tris_visited); % list of triangles between them
     % note that the start and end of the triangle chain are "adjascent" in a graph sense
     adjascency_matrix(find(nodes==tris_visited(1)),find(nodes==tris_visited(end))) = 1;
-    % store the reverse
-    adjascency_matrix(find(nodes==tris_visited(end)),find(nodes==tris_visited(1))) = 1;
     % flag the direction as explored
     path_is_explored(i,direction) = 1;
 end % end direction while loop
