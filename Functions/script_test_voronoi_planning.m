@@ -318,11 +318,11 @@ while ~isempty(idx_2_connected_nodes)
     % make an entry for d to b and set tri list to the other two tri lists
     triangle_chains{end+1,1} = d; % index of start in nodes
     triangle_chains{end,2} = b; % index of end in nodes
-    triangle_chains{end,3} = [chain_dt, chain_tb]; % list of triangles between them
+    triangle_chains{end,3} = [chain_dt(1:end-1), chain_tb]; % list of triangles between them
     % do this again for reverse direction
     triangle_chains{end+1,1} = b; % index of start in nodes
     triangle_chains{end,2} = d; % index of end in nodes
-    triangle_chains{end,3} = [chain_bt, chain_td]; % list of triangles between them
+    triangle_chains{end,3} = [chain_bt(1:end-1), chain_td]; % list of triangles between them
     % delete the rows for d to t and t to b
     [triangle_chains{idx_chain_dt,3}] = deal([]);
     [triangle_chains{idx_chain_tb,3}] = deal([]);
