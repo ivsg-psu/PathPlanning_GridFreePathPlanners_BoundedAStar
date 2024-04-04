@@ -7,7 +7,6 @@ addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'))
 addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 flag_do_plot = 1;
-flag_do_slow_plot = 0;
 flag_do_animation = 0;
 flag_do_plot_slow = 0;
 
@@ -287,7 +286,11 @@ branching_factor_inbound = [sum(adjascency_matrix,1)-1]'; % number of departing 
 % if a node has 2 in but 3 out we would want to treat it as 3-connected becuase it does serve that role in one direction
 % i.e. a nodes connectedness is determined by its max connectedness of max{in,out}
 max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
-
+% TODO fix the bug...
+    % the problem is that "three connected" doesn't mean has three destinations
+    % it means has three departing triangle paths
+    % if it means "has three destinations" you can accidentally prune an edge that
+    % it has two connections
 %% remove through-put nodes
 idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
 % TODO this should be a while loop
@@ -299,7 +302,13 @@ while ~isempty(idx_2_connected_nodes)
     % find the node on either side...call these d and b
     d_and_b = find(adjascent_to_t==1);
     d = d_and_b(1);
-    b = d_and_b(1);
+    b = d_and_b(2);
+    if flag_do_plot_slow
+        % plot the through node being removed and its neighbors
+        plot(xcc(nodes(t)), ycc(nodes(t)), '.b','MarkerSize',30) % plot 3 connected triangle circumcenters
+        plot(xcc(nodes(b)), ycc(nodes(b)), '.g','MarkerSize',30) % plot 3 connected triangle circumcenters
+        plot(xcc(nodes(d)), ycc(nodes(d)), '.g','MarkerSize',30) % plot 3 connected triangle circumcenters
+    end
     % connect those two nodes in the adjascency matrix
     adjascency_matrix(d_and_b, d_and_b) = 1; % note this line makes Adb, Abd, Add, and Abb =1
     % need to find triangle chains for d to t and t to b...
@@ -337,6 +346,24 @@ while ~isempty(idx_2_connected_nodes)
     branching_factor_inbound = [sum(adjascency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
     max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
     idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
+    if flag_do_plot_slow
+        % plot the graph after this through node removal
+        figure; hold on; box on;
+        for i = 1:(size(triangle_chains,1))
+            % pop off a triangle chain
+            chain_of_note = triangle_chains{i,3};
+            if isempty(chain_of_note)
+                continue
+            end
+            % pot big markers for the start and end node
+            beg_end = [chain_of_note(1) chain_of_note(end)];
+            % plot a straight line between them (this is the adjascency graph connection)
+            plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
+            % plot the medial axis path between them (this is the curved path from the triangle chain)
+            plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
+            color_idx = color_idx + 1;
+        end
+    end
 end
 % plot the graph without through nodes
 figure; hold on; box on;
