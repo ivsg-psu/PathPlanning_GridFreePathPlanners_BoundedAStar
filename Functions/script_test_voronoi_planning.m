@@ -285,6 +285,10 @@ max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
     % it means has three departing triangle paths
     % if it means "has three destinations" you can accidentally prune an edge that
     % it has two connections
+% so before calling something "t", need to find if there are duplicated triangle chain entries for...
+% t to d and t to b
+% if so, add it to an allowlist
+% when checking for next "2 connected node" check the allowlist before proceeding
 %% remove through-put nodes
 idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
 % TODO this should be a while loop
