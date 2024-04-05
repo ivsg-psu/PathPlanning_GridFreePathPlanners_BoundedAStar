@@ -10,7 +10,7 @@ flag_do_plot = 1;
 flag_do_animation = 0;
 flag_do_plot_slow = 0;
 
-for map_idx =5
+    for map_idx =5
     if map_idx == 1 % generic canyon map
         %% load test fixtures for polytope map rather than creating it here
         % load distribution north of canyon
@@ -280,18 +280,15 @@ branching_factor_inbound = [sum(adjascency_matrix,1)-1]'; % number of departing 
 % if a node has 2 in but 3 out we would want to treat it as 3-connected becuase it does serve that role in one direction
 % i.e. a nodes connectedness is determined by its max connectedness of max{in,out}
 max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
-% TODO fix the bug...
-    % the problem is that "three connected" doesn't mean has three destinations
-    % it means has three departing triangle paths
-    % if it means "has three destinations" you can accidentally prune an edge that
-    % it has two connections
-% so before calling something "t", need to find if there are duplicated triangle chain entries for...
-% t to d and t to b
-% if so, add it to an allowlist
-% when checking for next "2 connected node" check the allowlist before proceeding
 %% remove through-put nodes
 idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
-% TODO this should be a while loop
+false_through_nodes = [];
+% a false through node has 2 possible destinations but more than 1 possible path to at least one of these destinations
+% it proved difficult to iterate over nodes with 2 connected triangle chains directly
+% so instead we iterate over nodes with 2 possible destinations and
+% allowlist the subset of these nodes with 2 possible destinations but more than 2 triangle chains
+% these are the so-called false through nodes that must be excluded from the through nodes that will be removed
+
 while ~isempty(idx_2_connected_nodes)
     % for each through node, t...
     t = idx_2_connected_nodes(1);
@@ -319,6 +316,11 @@ while ~isempty(idx_2_connected_nodes)
     idx_chain_td = find([triangle_chains{:,1}]'== t & [triangle_chains{:,2}]'== d);
     chain_bt = triangle_chains{idx_chain_bt,3};
     chain_td = triangle_chains{idx_chain_td,3};
+    % need to check for a false through node (a node with two possible destinations but more than two possible paths)
+    if (length(idx_chain_dt) > 1 | length(idx_chain_tb) > 1 | length(idx_chain_bt) > 1 | length(idx_chain_td) > 1)
+        false_through_nodes = [false_through_nodes, t];
+        continue % don't want to remove a false through node since it affords multiple paths to the same destination
+    end
     % make an entry for d to b and set tri list to the other two tri lists
     triangle_chains{end+1,1} = d; % index of start in nodes
     triangle_chains{end,2} = b; % index of end in nodes
@@ -344,6 +346,9 @@ while ~isempty(idx_2_connected_nodes)
     branching_factor_inbound = [sum(adjascency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
     max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
     idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
+    % need to remove the allowlisted false through nodes from the list of 2 connected nodes
+    is_false_through_node = ismember(idx_2_connected_nodes,false_through_nodes); % boolean array of which 2 connected nodes are false through nodes
+    idx_2_connected_nodes = idx_2_connected_nodes(~is_false_through_node); % only keep idx of 2 connected nodes that aren't false through nodes
     if flag_do_plot_slow
         % plot the graph after this through node removal
         figure; hold on; box on;
