@@ -319,6 +319,14 @@ while ~isempty(idx_2_connected_nodes)
     % need to check for a false through node (a node with two possible destinations but more than two possible paths)
     if (length(idx_chain_dt) > 1 | length(idx_chain_tb) > 1 | length(idx_chain_bt) > 1 | length(idx_chain_td) > 1)
         false_through_nodes = [false_through_nodes, t];
+        % re-compute branching factor (connectivity)
+        branching_factor_outbound = sum(adjascency_matrix,2)-1; % number of destination nodes per node (excluding self)
+        branching_factor_inbound = [sum(adjascency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
+        max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
+        idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
+        % need to remove the allowlisted false through nodes from the list of 2 connected nodes
+        is_false_through_node = ismember(idx_2_connected_nodes,false_through_nodes); % boolean array of which 2 connected nodes are false through nodes
+        idx_2_connected_nodes = idx_2_connected_nodes(~is_false_through_node); % only keep idx of 2 connected nodes that aren't false through nodes
         continue % don't want to remove a false through node since it affords multiple paths to the same destination
     end
     % make an entry for d to b and set tri list to the other two tri lists
@@ -349,6 +357,7 @@ while ~isempty(idx_2_connected_nodes)
     % need to remove the allowlisted false through nodes from the list of 2 connected nodes
     is_false_through_node = ismember(idx_2_connected_nodes,false_through_nodes); % boolean array of which 2 connected nodes are false through nodes
     idx_2_connected_nodes = idx_2_connected_nodes(~is_false_through_node); % only keep idx of 2 connected nodes that aren't false through nodes
+
     if flag_do_plot_slow
         % plot the graph after this through node removal
         figure; hold on; box on;
@@ -384,8 +393,7 @@ for i = 1:(size(triangle_chains,1))
     plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
     color_idx = color_idx + 1;
 end
-
-return
+% TODO @sjharnett need to loop until graph converges (store old graph structures and compare to new one)
 % TODO @sjharnett do we want to set these to zero/empty or actually remove them? Removing would require re-indexing
 %% remove dead ends
 idx_1_connected_nodes = find(max_branching_factor == 1); % all one connected nodes are dead ends
