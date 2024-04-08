@@ -432,8 +432,20 @@ while ~isequal(triangle_chains,prev_triangle_chains)
     iterand = iterand + 1;
 end % end outer while loop that loops until convergence occurs
 
-% TODO for each triangle, get each side length, keep max - data structure of tri max sides, per triangle
-% for each triangle chain, keep min of the triangle sides as this is the choke point
+%% get corridor widths for triangle chains
+% (1) need to get triangle side lengths
+% (2) need to store the max side length of each triangle
+% (3) need to store the min of these max side lengths for each triangle chain
+max_side_lengths_per_tri = nan(size(tr,1),1);
+for my_tri = 1:size(tr,1)
+    my_connectivity = tr.ConnectivityList(my_tri,:);
+    my_points = tr.Points(my_connectivity,:);
+    my_verts = [my_points; my_points(1,:)];
+    side_deltas = diff([my_verts(:,1) my_verts(:,2)]);
+    side_lengths = sqrt(side_deltas(:,1).^2 + side_deltas(:,2).^2);
+    max_side_lengths_per_tri(my_tri) = max(side_lengths);
+end
+
 return
 %% attempt 3d
 % close all; clear all; clc;
