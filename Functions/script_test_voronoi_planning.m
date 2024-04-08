@@ -487,7 +487,7 @@ c = colorbar;
 colormap(hsv)
 xlabel('x [km]')
 ylabel('y [km]')
-ylabel(c,'corridor with')
+ylabel(c,'corridor with [km]')
 for j = 2:length(shrunk_polytopes)
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
 end
