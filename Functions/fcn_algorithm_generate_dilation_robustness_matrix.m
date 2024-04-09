@@ -131,9 +131,6 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
         % we want to discard edges that either have no component in the direction of the original vector
         % or that end at a point too far away to cut off the original vector
 
-        % TODO set cost as sum of min of left set and min of right set
-        % TODO (@sjharentt) need a tool to look up if edge is a polytope side wall
-
         % vector of all the dot products between the primary edge and all secondary edges
         if strcmp(mode, "2d") || strcmp(mode,"2D")
             dot_secondary_with_unit_primary = secondary_edge_dirs(:,1)*primary_edge_dir(1) + secondary_edge_dirs(:,2)*primary_edge_dir(2);
