@@ -432,10 +432,12 @@ while ~isequal(triangle_chains,prev_triangle_chains)
     iterand = iterand + 1;
 end % end outer while loop that loops until convergence occurs
 
-%% get corridor widths for triangle chains
+%% get costs for navigating each triangle chain
+% to get corridor width:
 % (1) need to get triangle side lengths
 % (2) need to store the max side length of each triangle
 % (3) need to store the min of these max side lengths for each triangle chain
+%% get max length side for each triangle
 max_side_lengths_per_tri = nan(size(tr,1),1); % initialize array to store max side of each tri
 for my_tri = 1:size(tr,1) % loop over each triangle in the triangulation
     my_connectivity = tr.ConnectivityList(my_tri,:); % find the 3 point IDs forming the tri
@@ -445,16 +447,21 @@ for my_tri = 1:size(tr,1) % loop over each triangle in the triangulation
     side_lengths = sqrt(side_deltas(:,1).^2 + side_deltas(:,2).^2); % find length from deltaX and deltaY
     max_side_lengths_per_tri(my_tri) = max(side_lengths); % only need to store max length
 end
-
+%% store route segment length and corridor width for each triangle chain
 for i = 1:(size(triangle_chains,1)) % for each triangle chain
     % pop off a triangle chain
     chain_of_note = triangle_chains{i,3};
     if isempty(chain_of_note) % if the chain was deleted during pruning we skip it
         triangle_chains{i,4} = nan; % just store nan in the corridor width column
+        triangle_chains{i,5} = nan; % just store nan in the chain length column
         continue
     end
-    % the min of the triangle "sizes" should be the tighted choke in that triangle chain
+    % the min of the triangle "sizes" should be the tightest choke in that triangle chain
     triangle_chains{i,4} = min(max_side_lengths_per_tri(chain_of_note));
+    % the cumulative length of all the distance between circumcenters is the triangle chain length
+    delta_x_and_y = diff([xcc(chain_of_note) ycc(chain_of_note)]);
+    triangle_chain_length = sum(sqrt(sum(delta_x_and_y.*delta_x_and_y,2)));
+    triangle_chains{i,5} = triangle_chain_length;
 end
 
 figure; hold on; box on; title('medial axis graph with corridor width expressed')
@@ -467,7 +474,7 @@ for i = 1:(size(triangle_chains,1))
     % pop off a triangle chain
     chain_of_note = triangle_chains{i,3};
     width_of_note = triangle_chains{i,4};
-    width_portion = (width_of_note-min_corridor_width)/(max_corridor_width-min_corridor_width)
+    width_portion = (width_of_note-min_corridor_width)/(max_corridor_width-min_corridor_width);
     if isempty(chain_of_note)
         continue
     end
@@ -477,7 +484,6 @@ for i = 1:(size(triangle_chains,1))
     % plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',[1-width_portion width_portion 0])
     % % plot the medial axis path between them (this is the curved path from the triangle chain)
     % plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',[1-width_portion width_portion 0])
-    width_repeated = width_portion*ones(length(chain_of_note),1);
     width_repeated = width_of_note*ones(length(chain_of_note),1);
     data_for_scatter = [data_for_scatter; xcc(chain_of_note) ycc(chain_of_note) width_repeated];
 end
@@ -491,6 +497,48 @@ ylabel(c,'corridor with [km]')
 for j = 2:length(shrunk_polytopes)
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
 end
+
+figure; hold on; box on; title('medial axis graph with route segment length expressed')
+lengths = [triangle_chains{:,5}]';
+lengths(isnan(lengths)) = [];
+max_length = max(lengths);
+min_length = min(lengths);
+data_for_scatter = [];
+for i = 1:(size(triangle_chains,1))
+    % pop off a triangle chain
+    chain_of_note = triangle_chains{i,3};
+    length_of_note = triangle_chains{i,5};
+    length_portion = (length_of_note-min_length)/(max_length-min_length);
+    if isempty(chain_of_note)
+        continue
+    end
+    % % pot big markers for the start and end node
+    % beg_end = [chain_of_note(1) chain_of_note(end)];
+    % % plot a straight line between them (this is the adjascency graph connection)
+    % plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',[1-width_portion width_portion 0])
+    % % plot the medial axis path between them (this is the curved path from the triangle chain)
+    % plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',[1-width_portion width_portion 0])
+    length_repeated = length_portion*ones(length(chain_of_note),1);
+    data_for_scatter = [data_for_scatter; xcc(chain_of_note) ycc(chain_of_note) length_repeated];
+end
+table_for_scatter = array2table(data_for_scatter);
+s = scatter(table_for_scatter ,'data_for_scatter1','data_for_scatter2','filled','ColorVariable','data_for_scatter3');
+plot(xcc(nodes(~isnan(nodes))), ycc(nodes(~isnan(nodes))), '.k','MarkerSize',30) % plot 3 connected triangle circumcenters
+c = colorbar;
+colormap(hsv)
+xlabel('x [km]')
+ylabel('y [km]')
+ylabel(c,'corridor with [km]')
+for j = 2:length(shrunk_polytopes)
+    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
+end
+
+%% form cost graph from triangle_chains
+% for every one in the adjascency matrix,
+% find how many triangle chains go from i to j
+% if there is one, keep the length and corridor width, each in an A sized matrix
+% if there are multiple you'll have to sum width and length, keep that in the cost matrix and set
+%   all non-min cost chains to zero in the chain struct
 return
 %% attempt 3d
 % close all; clear all; clc;
