@@ -534,11 +534,29 @@ for j = 2:length(shrunk_polytopes)
 end
 
 %% form cost graph from triangle_chains
-% for every one in the adjascency matrix,
-% find how many triangle chains go from i to j
-% if there is one, keep the length and corridor width, each in an A sized matrix
-% if there are multiple you'll have to sum width and length, keep that in the cost matrix and set
-%   all non-min cost chains to zero in the chain struct
+% cost is of the form: total cost = w*length + (1-w)*corridor_width
+w = 0.5;
+cgraph = nan(size(adjascency_matrix)); % initialize cgraph
+% since there can be multiple chains between two nodes, we need to note which one we are using
+best_chain_idx_matrix = nan(size(adjascnecy_matrix));
+% for every one in the adjascency matrix, i.e., every connected pair of nodes
+[r, c] = find((adjascency_matrix-eye(size(adjascency_matrix))));
+for i = 1:length(r)
+    % if this is the self adjascent node...
+    if r(i) == c(i)
+        cgraph(r(i),c(i)) = 0; % it's always free to stay still
+        continue
+    end
+    % find all the chains connecting r and c in adjascency
+    idx_chain_rc = find([triangle_chains{:,1}]'== r(i) & [triangle_chains{:,2}]'== c(i));
+    % we want to only use the chain with the lowest total cost form r to c
+    corridor_widths = [triangle_chains{idx_chain_rc, 4}]; % the corridor width of all valid chains
+    lengths = [triangle_chains{idx_chain_rc, 5}]; % the length of all valid chains
+    possible_costs = w*lengths + (1-w)*corridor_widths; % vectorized total cost
+    [min_cost, min_cost_location] = min(possible_costs); % the min cost is what we use as cost
+    cgraph(r(i),c(i)) = min_cost;
+    best_chain_idx_matrix(r(i),c(i)) = idx_chain_rc(min_cost_location); % need to remember which chain we want to use
+end
 return
 %% attempt 3d
 % close all; clear all; clc;
