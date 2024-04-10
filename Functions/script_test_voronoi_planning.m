@@ -494,6 +494,7 @@ colormap(hsv)
 xlabel('x [km]')
 ylabel('y [km]')
 ylabel(c,'corridor with [km]')
+plot(xcc(nodes(~isnan(nodes))), ycc(nodes(~isnan(nodes))), '.k','MarkerSize',20) % plot 3 connected triangle circumcenters
 for j = 2:length(shrunk_polytopes)
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
 end
@@ -523,12 +524,12 @@ for i = 1:(size(triangle_chains,1))
 end
 table_for_scatter = array2table(data_for_scatter);
 s = scatter(table_for_scatter ,'data_for_scatter1','data_for_scatter2','filled','ColorVariable','data_for_scatter3');
-plot(xcc(nodes(~isnan(nodes))), ycc(nodes(~isnan(nodes))), '.k','MarkerSize',30) % plot 3 connected triangle circumcenters
+plot(xcc(nodes(~isnan(nodes))), ycc(nodes(~isnan(nodes))), '.k','MarkerSize',20) % plot 3 connected triangle circumcenters
 c = colorbar;
 colormap(hsv)
 xlabel('x [km]')
 ylabel('y [km]')
-ylabel(c,'corridor with [km]')
+ylabel(c,'path segment length [km]')
 for j = 2:length(shrunk_polytopes)
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
 end
@@ -538,9 +539,9 @@ end
 w = 0.5;
 cgraph = nan(size(adjascency_matrix)); % initialize cgraph
 % since there can be multiple chains between two nodes, we need to note which one we are using
-best_chain_idx_matrix = nan(size(adjascnecy_matrix));
+best_chain_idx_matrix = nan(size(adjascency_matrix));
 % for every one in the adjascency matrix, i.e., every connected pair of nodes
-[r, c] = find((adjascency_matrix-eye(size(adjascency_matrix))));
+[r, c] = find((adjascency_matrix));
 for i = 1:length(r)
     % if this is the self adjascent node...
     if r(i) == c(i)
