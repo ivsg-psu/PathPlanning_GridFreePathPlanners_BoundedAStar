@@ -516,30 +516,34 @@ end
 figure; hold on; box on; title('medial axis graph with corridor width expressed')
 corridor_widths = [triangle_chains{:,4}]';
 corridor_widths(isnan(corridor_widths)) = [];
-max_corridor_width = max(corridor_widths);
+max_corridor_width = 0.6*max(corridor_widths);
 min_corridor_width = min(corridor_widths);
-data_for_scatter = [];
+my_colormap = colormap(turbo);
+num_colors = size(my_colormap,1);
 for i = 1:(size(triangle_chains,1))
     % pop off a triangle chain
     chain_of_note = triangle_chains{i,3};
-    width_of_note = triangle_chains{i,4};
-    width_portion = (width_of_note-min_corridor_width)/(max_corridor_width-min_corridor_width);
     if isempty(chain_of_note)
         continue
     end
-    % % pot big markers for the start and end node
-    % beg_end = [chain_of_note(1) chain_of_note(end)];
-    % % plot a straight line between them (this is the adjacency graph connection)
-    % plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',[1-width_portion width_portion 0])
-    % % plot the medial axis path between them (this is the curved path from the triangle chain)
-    % plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',[1-width_portion width_portion 0])
-    width_repeated = width_of_note*ones(length(chain_of_note),1);
-    data_for_scatter = [data_for_scatter; xcc(chain_of_note) ycc(chain_of_note) width_repeated];
+    width_of_note = triangle_chains{i,4};
+    if width_of_note > max_corridor_width
+        width_of_note = max_corridor_width;
+    end
+    width_portion = (width_of_note-min_corridor_width)/(max_corridor_width-min_corridor_width);
+    if width_portion > 1
+        width_portion = 1;
+    end
+    width_portion_color_idx = round(width_portion*num_colors,0); % convert width_portion to an index in colormap
+    if width_portion_color_idx == 0
+        width_portion_color_idx = 1; % matlab is 1 indexed
+    end
+    width_color = my_colormap(width_portion_color_idx,:);
+    % plot the medial axis path between them (this is the curved path from the triangle chain)
+    plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',width_color)
 end
-table_for_scatter = array2table(data_for_scatter);
-s = scatter(table_for_scatter ,'data_for_scatter1','data_for_scatter2','filled','ColorVariable','data_for_scatter3');
+set(gca,'CLim',[min_corridor_width max_corridor_width]);
 c = colorbar;
-colormap(hsv)
 xlabel('x [km]')
 ylabel('y [km]')
 ylabel(c,'corridor with [km]')
@@ -553,31 +557,35 @@ lengths = [triangle_chains{:,5}]';
 lengths(isnan(lengths)) = [];
 max_length = max(lengths);
 min_length = min(lengths);
-data_for_scatter = [];
+my_colormap = colormap(turbo);
+num_colors = size(my_colormap,1);
 for i = 1:(size(triangle_chains,1))
     % pop off a triangle chain
     chain_of_note = triangle_chains{i,3};
-    length_of_note = triangle_chains{i,5};
-    length_portion = (length_of_note-min_length)/(max_length-min_length);
     if isempty(chain_of_note)
         continue
     end
-    % % pot big markers for the start and end node
-    % beg_end = [chain_of_note(1) chain_of_note(end)];
-    % % plot a straight line between them (this is the adjacency graph connection)
-    % plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',[1-width_portion width_portion 0])
-    % % plot the medial axis path between them (this is the curved path from the triangle chain)
-    % plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',[1-width_portion width_portion 0])
-    length_repeated = length_portion*ones(length(chain_of_note),1);
-    data_for_scatter = [data_for_scatter; xcc(chain_of_note) ycc(chain_of_note) length_repeated];
+    length_of_note = triangle_chains{i,5};
+    if width_of_note > max_corridor_width
+        width_of_note = max_corridor_width;
+    end
+    length_portion = (length_of_note-min_length)/(max_length-min_length);
+    if length_portion > 1
+        length_portion = 1;
+    end
+    length_portion_color_idx = round(length_portion*num_colors,0); % convert length_portion to an index in colormap
+    if length_portion_color_idx == 0
+        length_portion_color_idx = 1; % matlab is 1 indexed
+    end
+    length_color = my_colormap(length_portion_color_idx,:);
+    % plot the medial axis path between them (this is the curved path from the triangle chain)
+    plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',length_color)
 end
-table_for_scatter = array2table(data_for_scatter);
-s = scatter(table_for_scatter ,'data_for_scatter1','data_for_scatter2','filled','ColorVariable','data_for_scatter3');
-plot(xcc(nodes(~isnan(nodes))), ycc(nodes(~isnan(nodes))), '.k','MarkerSize',20) % plot 3 connected triangle circumcenters
+set(gca,'CLim',[min_length max_length]);
 c = colorbar;
-colormap(hsv)
 xlabel('x [km]')
 ylabel('y [km]')
+plot(xcc(nodes(~isnan(nodes))), ycc(nodes(~isnan(nodes))), '.k','MarkerSize',20) % plot 3 connected triangle circumcenters
 ylabel(c,'path segment length [km]')
 for j = 2:length(shrunk_polytopes)
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.5)
