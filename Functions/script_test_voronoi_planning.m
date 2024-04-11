@@ -178,7 +178,7 @@ title('Medial Axis, three connected nodes highlighted')
 
 % make a plannable graph from triangulation
 % identify the 3 connected triangles
-adjascency_matrix = eye(length(nodes)); % set to 1 if chain of 2 connected triangles exists between three connected triangle node(i) and node(j)
+adjacency_matrix = eye(length(nodes)); % set to 1 if chain of 2 connected triangles exists between three connected triangle node(i) and node(j)
 triangle_chains = {}; % each row contains (i,1) start 3 connected tri, (i,2) end 3 connected tri, and (i,3) array of 2 connected tris between them
 path_is_explored = zeros(length(nodes),3); % set to 1 when a direction is explored when node(i) neighbor(i,j) is explored
 % while there is still a 0 in the path explored list...
@@ -230,8 +230,8 @@ while ~isempty(find(path_is_explored == 0))
     triangle_chains{end+1,1} = find(nodes==tris_visited(1)); % index of start in nodes
     triangle_chains{end,2} = find(nodes==tris_visited(end)); % index of end in nodes
     triangle_chains{end,3} = tris_visited; % list of triangles between them
-    % note that the start and end of the triangle chain are "adjascent" in a graph sense
-    adjascency_matrix(find(nodes==tris_visited(1)),find(nodes==tris_visited(end))) = 1;
+    % note that the start and end of the triangle chain are "adjacent" in a graph sense
+    adjacency_matrix(find(nodes==tris_visited(1)),find(nodes==tris_visited(end))) = 1;
     % flag the direction as explored
     path_is_explored(i,direction) = 1;
 end % end direction while loop
@@ -251,7 +251,7 @@ for i = 1:(size(triangle_chains,1))
     chain_of_note = triangle_chains{i,3};
     % pot big markers for the start and end node
     beg_end = [chain_of_note(1) chain_of_note(end)];
-    % plot a straight line between them (this is the adjascency graph connection)
+    % plot a straight line between them (this is the adjacency graph connection)
     plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
     % plot the medial axis path between them (this is the curved path from the triangle chain)
     plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
@@ -264,7 +264,7 @@ for i = 1:(size(triangle_chains,1))
     chain_of_note = triangle_chains{i,3};
     % pot big markers for the start and end node
     beg_end = [chain_of_note(1) chain_of_note(end)];
-    % plot a straight line between them (this is the adjascency graph connection)
+    % plot a straight line between them (this is the adjacency graph connection)
     plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
     % plot the medial axis path between them (this is the curved path from the triangle chain)
     plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
@@ -276,8 +276,8 @@ iterand = 1;
 while ~isequal(triangle_chains,prev_triangle_chains)
     %% compute branching factor (connectivity)
     % branching factor is the number of nodes connected to each node
-    branching_factor_outbound = sum(adjascency_matrix,2)-1; % number of destination nodes per node (excluding self)
-    branching_factor_inbound = [sum(adjascency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
+    branching_factor_outbound = sum(adjacency_matrix,2)-1; % number of destination nodes per node (excluding self)
+    branching_factor_inbound = [sum(adjacency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
     % need to compare the sum of the rows and the sum of the columns.
     % This will tell us inbound and outbound connections per node in an asymmetric graph
     % if a node has 2 in but 3 out we would want to treat it as 3-connected becuase it does serve that role in one direction
@@ -295,10 +295,10 @@ while ~isequal(triangle_chains,prev_triangle_chains)
     while ~isempty(idx_2_connected_nodes)
         % for each through node, t...
         t = idx_2_connected_nodes(1);
-        adjascent_to_t = adjascency_matrix(t,:); % find t's adjascent nodes
-        adjascent_to_t(t) = 0; % don't need self adjascency for this
+        adjacent_to_t = adjacency_matrix(t,:); % find t's adjacent nodes
+        adjacent_to_t(t) = 0; % don't need self adjacency for this
         % find the node on either side...call these d and b
-        d_and_b = find(adjascent_to_t==1);
+        d_and_b = find(adjacent_to_t==1);
         d = d_and_b(1);
         b = d_and_b(2);
         if flag_do_plot_slow
@@ -321,8 +321,8 @@ while ~isequal(triangle_chains,prev_triangle_chains)
         if (length(idx_chain_dt) > 1 | length(idx_chain_tb) > 1 | length(idx_chain_bt) > 1 | length(idx_chain_td) > 1)
             false_through_nodes = [false_through_nodes, t];
             % re-compute branching factor (connectivity)
-            branching_factor_outbound = sum(adjascency_matrix,2)-1; % number of destination nodes per node (excluding self)
-            branching_factor_inbound = [sum(adjascency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
+            branching_factor_outbound = sum(adjacency_matrix,2)-1; % number of destination nodes per node (excluding self)
+            branching_factor_inbound = [sum(adjacency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
             max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
             idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
             % need to remove the allowlisted false through nodes from the list of 2 connected nodes
@@ -330,8 +330,8 @@ while ~isequal(triangle_chains,prev_triangle_chains)
             idx_2_connected_nodes = idx_2_connected_nodes(~is_false_through_node); % only keep idx of 2 connected nodes that aren't false through nodes
             continue % don't want to remove a false through node since it affords multiple paths to the same destination
         end
-        % connect those two nodes in the adjascency matrix
-        adjascency_matrix(d_and_b, d_and_b) = 1; % note this line makes Adb, Abd, Add, and Abb =1
+        % connect those two nodes in the adjacency matrix
+        adjacency_matrix(d_and_b, d_and_b) = 1; % note this line makes Adb, Abd, Add, and Abb =1
         % make an entry for d to b and set tri list to the other two tri lists
         triangle_chains{end+1,1} = d; % index of start in nodes
         triangle_chains{end,2} = b; % index of end in nodes
@@ -346,15 +346,15 @@ while ~isequal(triangle_chains,prev_triangle_chains)
         % do this again for reverse direction
         [triangle_chains{idx_chain_bt,3}] = deal([]);
         [triangle_chains{idx_chain_td,3}] = deal([]);
-        %  remove the t node from the adjascency matrix
-        adjascency_matrix(t, :) = zeros(1, size(adjascency_matrix,1));
-        adjascency_matrix(:, t) = zeros(size(adjascency_matrix,2), 1);
+        %  remove the t node from the adjacency matrix
+        adjacency_matrix(t, :) = zeros(1, size(adjacency_matrix,1));
+        adjacency_matrix(:, t) = zeros(size(adjacency_matrix,2), 1);
         % remove from node list
         nodes(t) = nan;
 
         %% re-compute branching factor (connectivity)
-        branching_factor_outbound = sum(adjascency_matrix,2)-1; % number of destination nodes per node (excluding self)
-        branching_factor_inbound = [sum(adjascency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
+        branching_factor_outbound = sum(adjacency_matrix,2)-1; % number of destination nodes per node (excluding self)
+        branching_factor_inbound = [sum(adjacency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
         max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
         idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
         % need to remove the allowlisted false through nodes from the list of 2 connected nodes
@@ -372,7 +372,7 @@ while ~isequal(triangle_chains,prev_triangle_chains)
                 end
                 % pot big markers for the start and end node
                 beg_end = [chain_of_note(1) chain_of_note(end)];
-                % plot a straight line between them (this is the adjascency graph connection)
+                % plot a straight line between them (this is the adjacency graph connection)
                 plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
                 % plot the medial axis path between them (this is the curved path from the triangle chain)
                 plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
@@ -390,7 +390,7 @@ while ~isequal(triangle_chains,prev_triangle_chains)
         end
         % pot big markers for the start and end node
         beg_end = [chain_of_note(1) chain_of_note(end)];
-        % plot a straight line between them (this is the adjascency graph connection)
+        % plot a straight line between them (this is the adjacency graph connection)
         plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
         % plot the medial axis path between them (this is the curved path from the triangle chain)
         plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
@@ -400,8 +400,8 @@ while ~isequal(triangle_chains,prev_triangle_chains)
     %% remove dead ends
     idx_1_connected_nodes = find(max_branching_factor == 1); % all one connected nodes are dead ends
     % remove the node from the adjacency matrix
-    adjascency_matrix(idx_1_connected_nodes, :) = zeros(length(idx_1_connected_nodes), size(adjascency_matrix,1));
-    adjascency_matrix(:, idx_1_connected_nodes) = zeros(size(adjascency_matrix,2), length(idx_1_connected_nodes));
+    adjacency_matrix(idx_1_connected_nodes, :) = zeros(length(idx_1_connected_nodes), size(adjacency_matrix,1));
+    adjacency_matrix(:, idx_1_connected_nodes) = zeros(size(adjacency_matrix,2), length(idx_1_connected_nodes));
     % remove the node from the node list
     nodes(idx_1_connected_nodes) = nan;
     % find triangle chains that start and end at this node
@@ -421,13 +421,13 @@ while ~isequal(triangle_chains,prev_triangle_chains)
         end
         % pot big markers for the start and end node
         beg_end = [chain_of_note(1) chain_of_note(end)];
-        % plot a straight line between them (this is the adjascency graph connection)
+        % plot a straight line between them (this is the adjacency graph connection)
         plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
         % plot the medial axis path between them (this is the curved path from the triangle chain)
         plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
         color_idx = color_idx + 1;
     end
-    [r, c] = find(adjascency_matrix);
+    [r, c] = find(adjacency_matrix);
     for j = 1:length(r)
         idx_chain_rc = find([triangle_chains{:,1}]'== r(j) & [triangle_chains{:,2}]'== c(j));
         if length(idx_chain_rc)>=1
@@ -488,7 +488,7 @@ for i = 1:(size(triangle_chains,1))
     end
     % % pot big markers for the start and end node
     % beg_end = [chain_of_note(1) chain_of_note(end)];
-    % % plot a straight line between them (this is the adjascency graph connection)
+    % % plot a straight line between them (this is the adjacency graph connection)
     % plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',[1-width_portion width_portion 0])
     % % plot the medial axis path between them (this is the curved path from the triangle chain)
     % plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',[1-width_portion width_portion 0])
@@ -523,7 +523,7 @@ for i = 1:(size(triangle_chains,1))
     end
     % % pot big markers for the start and end node
     % beg_end = [chain_of_note(1) chain_of_note(end)];
-    % % plot a straight line between them (this is the adjascency graph connection)
+    % % plot a straight line between them (this is the adjacency graph connection)
     % plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',[1-width_portion width_portion 0])
     % % plot the medial axis path between them (this is the curved path from the triangle chain)
     % plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',[1-width_portion width_portion 0])
@@ -545,18 +545,18 @@ end
 %% form cost graph from triangle_chains
 % cost is of the form: total cost = w*length + (1-w)*corridor_width
 w = 0.5;
-cgraph = nan(size(adjascency_matrix)); % initialize cgraph
+cgraph = nan(size(adjacency_matrix)); % initialize cgraph
 % since there can be multiple chains between two nodes, we need to note which one we are using
-best_chain_idx_matrix = nan(size(adjascency_matrix));
-% for every one in the adjascency matrix, i.e., every connected pair of nodes
-[r, c] = find((adjascency_matrix));
+best_chain_idx_matrix = nan(size(adjacency_matrix));
+% for every one in the adjacency matrix, i.e., every connected pair of nodes
+[r, c] = find((adjacency_matrix));
 for i = 1:length(r)
-    % if this is the self adjascent node...
+    % if this is the self adjacent node...
     if r(i) == c(i)
         cgraph(r(i),c(i)) = 0; % it's always free to stay still
         continue
     end
-    % find all the chains connecting r and c in adjascency
+    % find all the chains connecting r and c in adjacency
     idx_chain_rc = find([triangle_chains{:,1}]'== r(i) & [triangle_chains{:,2}]'== c(i));
     % we want to only use the chain with the lowest total cost form r to c
     corridor_widths = [triangle_chains{idx_chain_rc, 4}]; % the corridor width of all valid chains
