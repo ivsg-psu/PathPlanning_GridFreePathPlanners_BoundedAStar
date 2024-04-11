@@ -616,7 +616,7 @@ for i = 1:length(r)
     best_chain_idx_matrix(r(i),c(i)) = idx_chain_rc(min_cost_location); % need to remember which chain we want to use
 end
 
-%% attepmt planning through triangle graph
+%% planning through triangle graph
 % make all pts array from nodes
 num_nodes = length(nodes);
 all_pts = nan(num_nodes,3);
@@ -629,6 +629,54 @@ end
 % pick a start and finish
 start = all_pts(24,:);
 finish = all_pts(104,:);
+% find the xcc,ycc pair closest to start
+start_xy = [1031.5 -4715.4];
+start_delta_from_all_tris = start_xy - [xcc, ycc];
+start_dist_from_all_tris = (start_delta_from_all_tris(:,1).^2 + start_delta_from_all_tris(:,2).^2).^0.5;
+[~, start_closest_tri] = min(start_dist_from_all_tris);
+% find which chains the closest tri is in (should really only be 2)
+idx_chains_containing_start = [];
+for i = 1:(size(triangle_chains,1))
+    % pop off a triangle chain
+    chain_of_note = triangle_chains{i,3};
+    if ismember(start_closest_tri, chain_of_note)
+        idx_chains_containing_start = [idx_chains_containing_start i];
+    end
+end
+% make start closest tri a node
+nodes = [nodes; start_closest_tri];
+start_closest_node = find(nodes == start_closest_tri);
+% make a new adjacency matrix row and column for the start triangle
+adjacency_matrix = [adjacency_matrix, zeros(size(adjacency_matrix,2),1); zeros(1,size(adjacency_matrix,1)+1)];
+for i = 1:size(idx_chains_containing_start)
+    % pop off the triangle chain containing the start triangle
+    first_node = triangle_chains{idx_chains_containing_start(i),1};
+    last_node = triangle_chains{idx_chains_containing_start(i),2};
+    chain_of_note = triangle_chains{idx_chains_containing_start(i),3};
+    % find where the start triangle is in the chain
+    start_tri_location = find(chain_of_note == start_closest_tri);
+    % make two new chains from beginning to start tri and start tri to end
+    first_chain = chain_of_note(1:start_tri_location);
+    last_chain = chain_of_note(start_tri_location:end);
+    triangle_chains{end+1,1} = first_node;
+    triangle_chains{end,2} = start_closest_node;
+    triangle_chains{end,3} = first_chain;
+    triangle_chains{end+1,1} = start_closest_node;
+    triangle_chains{end,2} = last_node;
+    triangle_chains{end,3} = last_chain;
+    % remove the original triangle chain without the start triangle
+    triangle_chains{idx_chains_containing_start(i),3} = [];
+    % remove it from the adjacency matrix as well
+    adjacency_matrix(first_node,last_node) = 0;
+    % add the new chains to adjacency
+    adjacency_matrix(start_closest_node,start_closest_node) = 1;
+    adjacency_matrix(first_node,start_closest_node) = 1;
+    adjacency_matrix(start_closest_node,last_node) = 1;
+end
+% TODO do the same with the finish
+% TODO set the start for the planner as the start node not the startxy
+% append the straightline from startxy to start node to the beginning of the route when transforming the route to tri chains
+
 % adjacency matrix is vgraph
 vgraph = adjacency_matrix;
 % check reachability
