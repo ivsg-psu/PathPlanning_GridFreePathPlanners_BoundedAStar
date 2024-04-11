@@ -117,12 +117,29 @@ flag_do_plot_slow = 0;
 end
 
 %% make a boundary around the polytope field
-figure; hold on; box on;
 boundary.vertices = [-77.7 40.78; -77.7 40.92; -77.45 40.92; -77.45 40.78];
 boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
 boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
 boundary.parent_poly_id = nan; % ignore parend ID
 shrunk_polytopes = [boundary, shrunk_polytopes]; % put the boundary polytope as the first polytope
+
+%% convert from LLA to QGS84
+centre_co_avg_alt = 351.7392;
+new_polytopes = [];
+for i = 1:length(shrunk_polytopes)
+    poly = shrunk_polytopes(i);
+    lats = poly.vertices(:,2);
+    longs = poly.vertices(:,1);
+    alts = centre_co_avg_alt*ones(size(lats));
+    wgs_verts = [];
+    for j = 1:length(lats)
+        xyz = INTERNAL_WGSLLA2xyz(lats(j),longs(j),alts(j));
+        xyz = xyz/1000;
+        wgs_verts(j,:) = [xyz(1),xyz(2)];
+    end
+    new_polytopes(i).vertices = wgs_verts;
+end
+shrunk_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(new_polytopes);
 
 %% interpolate polytope vertices
 distances = diff([[shrunk_polytopes.xv]',[shrunk_polytopes.yv]']); % find side lengths in whole field
@@ -149,10 +166,16 @@ x = P(:,1); % all x's
 y = P(:,2); % all y's
 DT = delaunayTriangulation(P,C) % perform constrained triangulation
 
-figure; triplot(DT); title('triangulation')
+figure; box on; hold on; triplot(DT); title('triangulation')
 inside = isInterior(DT); % identify triangles statisfying constriants C (i.e. tris within the boundary and outside polytopes, i.e. free space)
 tr = triangulation(DT(inside,:),DT.Points); % keep only the triangles of free space, not the ones in polytopes
-figure; triplot(tr); title('triangulation, no interior')
+for j = 2:length(shrunk_polytopes)
+    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+end
+figure; box on; hold on; triplot(tr); title('triangulation, no interior')
+for j = 2:length(shrunk_polytopes)
+    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+end
 numt = size(tr,1); % numbe of triangles
 T = (1:numt)'; % list of triangle idx
 neigh = neighbors(tr); % this indicates which triangles are connected to which other triangles
@@ -169,6 +192,9 @@ idx3 = T < neigh(:,3);
 neigh_for_plotting = [T(idx1) neigh(idx1,1); T(idx2) neigh(idx2,2); T(idx3) neigh(idx3,3)]';
 % plot the triangulation and approximate medial axis
 figure; hold on; box on;
+for j = 2:length(shrunk_polytopes)
+    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+end
 triplot(tr,'g')
 hold on
 plot(xcc(neigh_for_plotting), ycc(neigh_for_plotting), '-r','LineWidth',1.5) % plot approx. medial axis
@@ -238,6 +264,9 @@ end % end direction while loop
 
 % plot the graph on the triangles
 figure; hold on; box on; title('medial axis graph overlaid on triangulation')
+for j = 2:length(shrunk_polytopes)
+    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+end
 triplot(tr,'g')
 hold on
 plot(xcc(neigh_for_plotting), ycc(neigh_for_plotting), '-r','LineWidth',1.5) % plot approx. medial axis
@@ -259,6 +288,9 @@ for i = 1:(size(triangle_chains,1))
 end
 % plot the graph
 figure; hold on; box on; title('medial axis graph')
+for j = 2:length(shrunk_polytopes)
+    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+end
 for i = 1:(size(triangle_chains,1))
     % pop off a triangle chain
     chain_of_note = triangle_chains{i,3};
@@ -364,6 +396,9 @@ while ~isequal(triangle_chains,prev_triangle_chains)
         if flag_do_plot_slow
             % plot the graph after this through node removal
             figure; hold on; box on;
+            for j = 2:length(shrunk_polytopes)
+                fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+            end
             for i = 1:(size(triangle_chains,1))
                 % pop off a triangle chain
                 chain_of_note = triangle_chains{i,3};
@@ -382,6 +417,9 @@ while ~isequal(triangle_chains,prev_triangle_chains)
     end
     % plot the graph without through nodes
     figure; hold on; box on; title('medial axis graph with through nodes removed')
+    for j = 2:length(shrunk_polytopes)
+        fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+    end
     for i = 1:(size(triangle_chains,1))
         % pop off a triangle chain
         chain_of_note = triangle_chains{i,3};
@@ -413,6 +451,9 @@ while ~isequal(triangle_chains,prev_triangle_chains)
 
     % plot the graph without dead ends
     figure; hold on; box on; title('medial axis graph with dead ends removed')
+    for j = 2:length(shrunk_polytopes)
+        fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+    end
     for i = 1:(size(triangle_chains,1))
         % pop off a triangle chain
         chain_of_note = triangle_chains{i,3};
@@ -504,7 +545,7 @@ ylabel('y [km]')
 ylabel(c,'corridor with [km]')
 plot(xcc(nodes(~isnan(nodes))), ycc(nodes(~isnan(nodes))), '.k','MarkerSize',20) % plot 3 connected triangle circumcenters
 for j = 2:length(shrunk_polytopes)
-    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
+    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.5)
 end
 
 figure; hold on; box on; title('medial axis graph with route segment length expressed')
@@ -539,7 +580,7 @@ xlabel('x [km]')
 ylabel('y [km]')
 ylabel(c,'path segment length [km]')
 for j = 2:length(shrunk_polytopes)
-    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
+    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.5)
 end
 
 %% form cost graph from triangle_chains
@@ -641,10 +682,39 @@ leg_str = {'start','finish'};
 plot(init_route(:,1),init_route(:,2),'LineWidth',2);
 leg_str{end+1} = sprintf('route');
 for j = 2:length(shrunk_polytopes)
-    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
+    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
 end
 leg_str{end+1} = 'obstacles';
 for i = 1:length(shrunk_polytopes)-1
     leg_str{end+1} = '';
 end
 legend(leg_str,'Location','best');
+
+function xyz = INTERNAL_WGSLLA2xyz(wlat, wlon, walt)
+    %Function xyz = wgslla2xyz(lat, lon, alt) returns the
+    %equivalent WGS84 XYZ coordinates (in meters) for a
+    %given geodetic latitude "lat" (degrees), longitude "lon"
+    %(degrees), and altitude above the WGS84 ellipsoid
+    %in meters.  Note: N latitude is positive, S latitude
+    %is negative, E longitude is positive, W longitude is
+    %negative.
+    %
+    %Ref: Decker, B. L., World Geodetic System 1984,
+    %Defense Mapping Agency Aerospace Center.
+
+    A_EARTH = 6378137;
+    flattening = 1/298.257223563;
+    NAV_E2 = (2-flattening)*flattening; % also e^2
+    deg2rad = pi/180;
+
+    slat = sin(wlat*deg2rad);
+    clat = cos(wlat*deg2rad);
+    r_n = A_EARTH/sqrt(1 - NAV_E2*slat*slat);
+    xyz = [ (r_n + walt)*clat*cos(wlon*deg2rad);
+            (r_n + walt)*clat*sin(wlon*deg2rad);
+            (r_n*(1 - NAV_E2) + walt)*slat ];
+
+    if ((wlat < -90.0) | (wlat > +90.0) | (wlon < -180.0) | (wlon > +360.0))
+        error('WGS lat or WGS lon out of range');
+    end
+end
