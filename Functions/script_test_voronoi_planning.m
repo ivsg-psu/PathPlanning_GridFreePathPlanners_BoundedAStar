@@ -615,6 +615,81 @@ for i = 1:length(r)
     cgraph(r(i),c(i)) = min_cost;
     best_chain_idx_matrix(r(i),c(i)) = idx_chain_rc(min_cost_location); % need to remember which chain we want to use
 end
+
+%% attepmt planning through triangle graph
+% make all pts array from nodes
+num_nodes = length(nodes);
+all_pts = nan(num_nodes,3);
+for i = 1:num_nodes
+    if isnan(nodes(i))
+        continue
+    end
+    all_pts(i,:) = [xcc(nodes(i)), ycc(nodes(i)), i];
+end
+% pick a start and finish
+start = all_pts(24,:);
+finish = all_pts(104,:);
+% adjacency matrix is vgraph
+vgraph = adjacency_matrix;
+% check reachability
+start_for_reachability = start;
+start_for_reachability(4) = start(3);
+finish_for_reachability = finish;
+finish_for_reachability(4) = finish(3);
+[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start_for_reachability,finish_for_reachability);
+if ~is_reachable
+    error('initial mission, prior to edge deletion, is not possible')
+end
+% run Dijkstra's algorithm (no heuristic)
+hvec = zeros(1,num_nodes);
+% plan a path
+[cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
+
+% take route and tri chains data structure
+% also take best path structure
+route_triangle_chain = [];
+for i = 1:(size(route,1)-1)
+    % for route to route + 1 get tri chain
+    beg_seg = route(i,3);
+    end_seg = route(i+1,3);
+    idx_chain = find([triangle_chains{:,1}]'== beg_seg & [triangle_chains{:,2}]'== end_seg);
+    % if there's none, error
+    if isempty(idx_chain)
+        error('no triangle chain exists for this route segment')
+    % elseif length(idx_chain) == 1
+    %     route_triangle_chain = [route_triangle_chain, triangle_chains{chain_idx,3}];
+    %     % coule extract length and min width here
+    % if there's two take best
+    % if there's one, take it
+    else
+        best_chain_idx = best_chain_idx_matrix(beg_seg,end_seg);
+        % append to list of triangle chains
+        route_triangle_chain = [route_triangle_chain, triangle_chains{best_chain_idx,3}];
+    end
+end
+% dedup
+route_triangle_chain = unique(route_triangle_chain,'stable');
+
+% plot result
+figure; hold on; box on;
+xlabel('x [km]');
+ylabel('y [km]');
+plot(start(1),start(2),'xg','MarkerSize',10);
+plot(finish(1),finish(2),'xr','MarkerSize',10);
+leg_str = {'start','finish'};
+plot(route(:,1),route(:,2),'.--k','MarkerSize',20,'LineWidth',1);
+leg_str{end+1} = sprintf('adjacency of nodes');
+for j = 2:length(shrunk_polytopes)
+    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+end
+leg_str{end+1} = 'obstacles';
+for i = 1:length(shrunk_polytopes)-1
+    leg_str{end+1} = '';
+end
+plot(xcc(route_triangle_chain), ycc(route_triangle_chain), '-k','LineWidth',1.5) % plot approx. medial axis
+leg_str{end+1} = 'medial axis route';
+legend(leg_str,'Location','best');
+
 return
 %% attempt 3d
 % close all; clear all; clc;
@@ -643,61 +718,6 @@ plot3(xcc(neigh), ycc(neigh), zcc(neigh), '-r','LineWidth',1.5)
 % plot3(xcc(nodes), ycc(nodes), zcc(nodes), '.k','MarkerSize',30)
 % xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
 %
-%% attepmt planning through triangle graph
-all_pts = [xcc, ycc, [1:length(xcc)]', -1*ones(length(xcc),1), zeros(length(xcc),1)];
-vgraph = zeros(length(xcc));
-neigh_orig = neighbors(tr);
-for i = 1:size(neigh_orig,1)
-    neigh_list = neigh_orig(i,:);
-    neigh_list = neigh_list(~isnan(neigh_list));
-    if ~(length(neigh_list) == 2)
-        continue
-    end
-    vgraph(neigh_list(1),neigh_list(2)) = 1;
-    vgraph(neigh_list(2),neigh_list(1)) = 1;
-end
-start = all_pts(end-1,:);
-start(end) = 1;
-finish = all_pts(end,:);
-finish(end) = 1;
-all_pts = all_pts(1:end-2,:);
-
-start_for_reachability = start;
-start_for_reachability(4) = start(3);
-finish_for_reachability = finish;
-finish_for_reachability(4) = finish(3);
-
-[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start_for_reachability,finish_for_reachability);
-if ~is_reachable
-    error('initial mission, prior to edge deletion, is not possible')
-end
-
-mode = "xy spatial only";
-% mode = 'time or z only';
-% mode = "xyz or xyt";
-[cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
-
-
-[init_cost, init_route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
-
-
-figure; hold on; box on;
-xlabel('x [km]');
-ylabel('y [km]');
-plot(start(1),start(2),'xg','MarkerSize',6);
-plot(finish(1),finish(2),'xr','MarkerSize',6);
-leg_str = {'start','finish'};
-plot(init_route(:,1),init_route(:,2),'LineWidth',2);
-leg_str{end+1} = sprintf('route');
-for j = 2:length(shrunk_polytopes)
-    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-end
-leg_str{end+1} = 'obstacles';
-for i = 1:length(shrunk_polytopes)-1
-    leg_str{end+1} = '';
-end
-legend(leg_str,'Location','best');
-
 function xyz = INTERNAL_WGSLLA2xyz(wlat, wlon, walt)
     %Function xyz = wgslla2xyz(lat, lon, alt) returns the
     %equivalent WGS84 XYZ coordinates (in meters) for a
