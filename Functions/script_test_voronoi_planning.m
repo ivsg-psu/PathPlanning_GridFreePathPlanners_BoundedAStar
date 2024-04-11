@@ -270,7 +270,6 @@ for i = 1:(size(triangle_chains,1))
     plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
     color_idx = color_idx + 1;
 end
-
 prev_triangle_chains = nan; % initialize the previous triangle_chains structure to nothing since there wasn't one before
 iterand = 1;
 % need to repeat the removal of through nodes and the pruning of dead ends until the triangle_chains structure stops changing
@@ -308,8 +307,6 @@ while ~isequal(triangle_chains,prev_triangle_chains)
             plot(xcc(nodes(b)), ycc(nodes(b)), '.g','MarkerSize',30) % plot 3 connected triangle circumcenters
             plot(xcc(nodes(d)), ycc(nodes(d)), '.g','MarkerSize',30) % plot 3 connected triangle circumcenters
         end
-        % connect those two nodes in the adjascency matrix
-        adjascency_matrix(d_and_b, d_and_b) = 1; % note this line makes Adb, Abd, Add, and Abb =1
         % need to find triangle chains for d to t and t to b...
         idx_chain_dt = find([triangle_chains{:,1}]'== d & [triangle_chains{:,2}]'== t);
         idx_chain_tb = find([triangle_chains{:,1}]'== t & [triangle_chains{:,2}]'== b);
@@ -333,6 +330,8 @@ while ~isequal(triangle_chains,prev_triangle_chains)
             idx_2_connected_nodes = idx_2_connected_nodes(~is_false_through_node); % only keep idx of 2 connected nodes that aren't false through nodes
             continue % don't want to remove a false through node since it affords multiple paths to the same destination
         end
+        % connect those two nodes in the adjascency matrix
+        adjascency_matrix(d_and_b, d_and_b) = 1; % note this line makes Adb, Abd, Add, and Abb =1
         % make an entry for d to b and set tri list to the other two tri lists
         triangle_chains{end+1,1} = d; % index of start in nodes
         triangle_chains{end,2} = b; % index of end in nodes
@@ -427,6 +426,15 @@ while ~isequal(triangle_chains,prev_triangle_chains)
         % plot the medial axis path between them (this is the curved path from the triangle chain)
         plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
         color_idx = color_idx + 1;
+    end
+    [r, c] = find(adjascency_matrix);
+    for j = 1:length(r)
+        idx_chain_rc = find([triangle_chains{:,1}]'== r(j) & [triangle_chains{:,2}]'== c(j));
+        if length(idx_chain_rc)>=1
+            % plot(xcc(nodes([r((j)) c((j))])), ycc(nodes([r((j)) c((j))])), '--.','MarkerSize',10,'Color','g')
+        else
+            plot(xcc(nodes([r((j)) c((j))])), ycc(nodes([r((j)) c((j))])), '--.','MarkerSize',10,'LineWidth',3,'Color','r')
+        end
     end
     sprintf('loop has iterated %i times',iterand)
     iterand = iterand + 1;
