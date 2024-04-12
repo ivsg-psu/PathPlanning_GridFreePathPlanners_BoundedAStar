@@ -753,6 +753,7 @@ end
 % run Dijkstra's algorithm (no heuristic)
 hvec = zeros(1,num_nodes);
 % plan a path
+return
 [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
 
 % take route and tri chains data structure
@@ -785,23 +786,6 @@ route_full = [start_xy; xcc(route_triangle_chain), ycc(route_triangle_chain); fi
 figure; hold on; box on;
 xlabel('x [km]');
 ylabel('y [km]');
-plot(start_xy(1),start_xy(2),'xg','MarkerSize',10);
-plot(finish_xy(1),finish_xy(2),'xr','MarkerSize',10);
-plot(start(1),start(2),'.g','MarkerSize',10);
-plot(finish(1),finish(2),'.r','MarkerSize',10);
-leg_str = {'start','finish'};
-plot(route(:,1),route(:,2),'.--k','MarkerSize',20,'LineWidth',1);
-leg_str{end+1} = sprintf('adjacency of nodes');
-for j = 2:length(shrunk_polytopes)
-    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-end
-leg_str{end+1} = 'obstacles';
-for i = 1:length(shrunk_polytopes)-1
-    leg_str{end+1} = '';
-end
-plot(route_full(:,1), route_full(:,2), '-k','LineWidth',1.5) % plot approx. medial axis
-leg_str{end+1} = 'medial axis route';
-legend(leg_str,'Location','best');
 for i = 1:(size(triangle_chains,1))
     % pop off a triangle chain
     chain_of_note = triangle_chains{i,3};
@@ -815,6 +799,24 @@ for i = 1:(size(triangle_chains,1))
     % plot the medial axis path between them (this is the curved path from the triangle chain)
     plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',[0.3 0.3 0.3])
 end
+plot(start_xy(1),start_xy(2),'xg','MarkerSize',10);
+plot(finish_xy(1),finish_xy(2),'xr','MarkerSize',10);
+plot(start(1),start(2),'.g','MarkerSize',10);
+plot(finish(1),finish(2),'.r','MarkerSize',10);
+leg_str{end+1} = {'start'};
+leg_str{end+1} = {'finish'};
+plot(route(:,1),route(:,2),'.--k','MarkerSize',20,'LineWidth',1);
+leg_str{end+1} = sprintf('adjacency of nodes');
+for j = 2:length(shrunk_polytopes)
+    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+end
+leg_str{end+1} = 'obstacles';
+for i = 1:length(shrunk_polytopes)-1
+    leg_str{end+1} = '';
+end
+plot(route_full(:,1), route_full(:,2), '-k','LineWidth',2.5) % plot approx. medial axis
+leg_str{end+1} = 'medial axis route';
+legend(leg_str,'Location','best');
 
 return
 %% attempt 3d

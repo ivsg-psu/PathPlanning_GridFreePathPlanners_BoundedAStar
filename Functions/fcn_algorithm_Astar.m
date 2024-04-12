@@ -149,8 +149,8 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, star
             else
             % if the finish is not a successor of q, find the cost of reaching the successor via q
             % this is the cost to reach q + the cost from q to successor
-            tentative_cost = open_set_gs(idx_of_q) + possible_gs(successor(3),q(3));
-            if isnan(possible_gs(successor(3),q(3)))
+            tentative_cost = open_set_gs(idx_of_q) + possible_gs(q(3),successor(3));
+            if isnan(possible_gs(q(3),successor(3)))
                 my_err = sprintf('cost to go from node %i to node %i is undefined or nan',q(3),successor(3));
                 error(my_err)
             end
