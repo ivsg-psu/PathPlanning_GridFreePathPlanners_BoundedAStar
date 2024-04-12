@@ -619,7 +619,7 @@ nodes = [nodes; start_closest_tri];
 start_closest_node = find(nodes == start_closest_tri);
 % make a new adjacency matrix row and column for the start triangle
 adjacency_matrix = [adjacency_matrix, zeros(size(adjacency_matrix,2),1); zeros(1,size(adjacency_matrix,1)+1)];
-for i = 1:size(idx_chains_containing_start)
+for i = 1:length(idx_chains_containing_start)
     % pop off the triangle chain containing the start triangle
     first_node = triangle_chains{idx_chains_containing_start(i),1};
     last_node = triangle_chains{idx_chains_containing_start(i),2};
@@ -669,7 +669,7 @@ nodes = [nodes; finish_closest_tri];
 finish_closest_node = find(nodes == finish_closest_tri);
 % make a new adjacency matrix row and column for the finish triangle
 adjacency_matrix = [adjacency_matrix, zeros(size(adjacency_matrix,2),1); zeros(1,size(adjacency_matrix,1)+1)];
-for i = 1:size(idx_chains_containing_finish)
+for i = 1:length(idx_chains_containing_finish)
     % pop off the triangle chain containing the finish triangle
     first_node = triangle_chains{idx_chains_containing_finish(i),1};
     last_node = triangle_chains{idx_chains_containing_finish(i),2};
