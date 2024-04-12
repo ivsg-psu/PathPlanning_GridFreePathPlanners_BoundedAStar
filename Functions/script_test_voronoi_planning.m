@@ -468,13 +468,15 @@ while ~isequal(triangle_chains,prev_triangle_chains)
         plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
         color_idx = color_idx + 1;
     end
-    [r, c] = find(adjacency_matrix);
-    for j = 1:length(r)
-        idx_chain_rc = find([triangle_chains{:,1}]'== r(j) & [triangle_chains{:,2}]'== c(j));
-        if length(idx_chain_rc)>=1
-            % plot(xcc(nodes([r((j)) c((j))])), ycc(nodes([r((j)) c((j))])), '--.','MarkerSize',10,'Color','g')
-        else
-            plot(xcc(nodes([r((j)) c((j))])), ycc(nodes([r((j)) c((j))])), '--.','MarkerSize',10,'LineWidth',3,'Color','r')
+    if flag_do_plot_slow % plot entire adjacency graph for debugging
+        [r, c] = find(adjacency_matrix);
+        for j = 1:length(r)
+            idx_chain_rc = find([triangle_chains{:,1}]'== r(j) & [triangle_chains{:,2}]'== c(j));
+            if length(idx_chain_rc)>=1
+                plot(xcc(nodes([r((j)) c((j))])), ycc(nodes([r((j)) c((j))])), '--.','MarkerSize',10,'Color','g')
+            else
+                plot(xcc(nodes([r((j)) c((j))])), ycc(nodes([r((j)) c((j))])), '--.','MarkerSize',10,'LineWidth',3,'Color','r')
+            end
         end
     end
     sprintf('loop has iterated %i times',iterand)
@@ -631,9 +633,12 @@ start = all_pts(24,:);
 finish = all_pts(104,:);
 % find the xcc,ycc pair closest to start
 start_xy = [1031.5 -4715.4];
-start_delta_from_all_tris = start_xy - [xcc, ycc];
+finish_xy = [1050 -4722];
+tris_in_graph = unique([triangle_chains{:,3}]');
+start_delta_from_all_tris = start_xy - [xcc(tris_in_graph), ycc(tris_in_graph)];
 start_dist_from_all_tris = (start_delta_from_all_tris(:,1).^2 + start_delta_from_all_tris(:,2).^2).^0.5;
-[~, start_closest_tri] = min(start_dist_from_all_tris);
+[~, start_closest_tri_loc] = min(start_dist_from_all_tris);
+start_closest_tri = tris_in_graph(start_closest_tri_loc);
 % find which chains the closest tri is in (should really only be 2)
 idx_chains_containing_start = [];
 for i = 1:(size(triangle_chains,1))
@@ -673,9 +678,53 @@ for i = 1:size(idx_chains_containing_start)
     adjacency_matrix(first_node,start_closest_node) = 1;
     adjacency_matrix(start_closest_node,last_node) = 1;
 end
-% TODO do the same with the finish
-% TODO set the start for the planner as the start node not the startxy
-% append the straightline from startxy to start node to the beginning of the route when transforming the route to tri chains
+% do the same with the finish
+finish_delta_from_all_tris = finish_xy - [xcc(tris_in_graph), ycc(tris_in_graph)];
+finish_dist_from_all_tris = (finish_delta_from_all_tris(:,1).^2 + finish_delta_from_all_tris(:,2).^2).^0.5;
+[~, finish_closest_tri_loc] = min(finish_dist_from_all_tris);
+finish_closest_tri = tris_in_graph(finish_closest_tri_loc);
+% find which chains the closest tri is in (should really only be 2)
+idx_chains_containing_finish = [];
+for i = 1:(size(triangle_chains,1))
+    % pop off a triangle chain
+    chain_of_note = triangle_chains{i,3};
+    if ismember(finish_closest_tri, chain_of_note)
+        idx_chains_containing_finish = [idx_chains_containing_finish i];
+    end
+end
+% make finish closest tri a node
+nodes = [nodes; finish_closest_tri];
+finish_closest_node = find(nodes == finish_closest_tri);
+% make a new adjacency matrix row and column for the finish triangle
+adjacency_matrix = [adjacency_matrix, zeros(size(adjacency_matrix,2),1); zeros(1,size(adjacency_matrix,1)+1)];
+for i = 1:size(idx_chains_containing_finish)
+    % pop off the triangle chain containing the finish triangle
+    first_node = triangle_chains{idx_chains_containing_finish(i),1};
+    last_node = triangle_chains{idx_chains_containing_finish(i),2};
+    chain_of_note = triangle_chains{idx_chains_containing_finish(i),3};
+    % find where the finish triangle is in the chain
+    finish_tri_location = find(chain_of_note == finish_closest_tri);
+    % make two new chains from beginning to finish tri and finish tri to end
+    first_chain = chain_of_note(1:finish_tri_location);
+    last_chain = chain_of_note(finish_tri_location:end);
+    triangle_chains{end+1,1} = first_node;
+    triangle_chains{end,2} = finish_closest_node;
+    triangle_chains{end,3} = first_chain;
+    triangle_chains{end+1,1} = finish_closest_node;
+    triangle_chains{end,2} = last_node;
+    triangle_chains{end,3} = last_chain;
+    % remove the original triangle chain without the finish triangle
+    triangle_chains{idx_chains_containing_finish(i),3} = [];
+    % remove it from the adjacency matrix as well
+    adjacency_matrix(first_node,last_node) = 0;
+    % add the new chains to adjacency
+    adjacency_matrix(finish_closest_node,finish_closest_node) = 1;
+    adjacency_matrix(first_node,finish_closest_node) = 1;
+    adjacency_matrix(finish_closest_node,last_node) = 1;
+end
+%  set the start for the planner as the start node not the startxy
+start = [xcc(start_closest_tri) ycc(start_closest_tri) start_closest_node];
+finish = [xcc(finish_closest_tri) ycc(finish_closest_tri) finish_closest_node];
 
 % adjacency matrix is vgraph
 vgraph = adjacency_matrix;
@@ -717,13 +766,16 @@ for i = 1:(size(route,1)-1)
 end
 % dedup
 route_triangle_chain = unique(route_triangle_chain,'stable');
-
+% append the straightline from startxy to start node to the beginning of the route when transforming the route to tri chains
+route_full = [start_xy; xcc(route_triangle_chain), ycc(route_triangle_chain); finish_xy];
 % plot result
 figure; hold on; box on;
 xlabel('x [km]');
 ylabel('y [km]');
-plot(start(1),start(2),'xg','MarkerSize',10);
-plot(finish(1),finish(2),'xr','MarkerSize',10);
+plot(start_xy(1),start_xy(2),'xg','MarkerSize',10);
+plot(finish_xy(1),finish_xy(2),'xr','MarkerSize',10);
+plot(start(1),start(2),'.g','MarkerSize',10);
+plot(finish(1),finish(2),'.r','MarkerSize',10);
 leg_str = {'start','finish'};
 plot(route(:,1),route(:,2),'.--k','MarkerSize',20,'LineWidth',1);
 leg_str{end+1} = sprintf('adjacency of nodes');
@@ -734,9 +786,22 @@ leg_str{end+1} = 'obstacles';
 for i = 1:length(shrunk_polytopes)-1
     leg_str{end+1} = '';
 end
-plot(xcc(route_triangle_chain), ycc(route_triangle_chain), '-k','LineWidth',1.5) % plot approx. medial axis
+plot(route_full(:,1), route_full(:,2), '-k','LineWidth',1.5) % plot approx. medial axis
 leg_str{end+1} = 'medial axis route';
 legend(leg_str,'Location','best');
+for i = 1:(size(triangle_chains,1))
+    % pop off a triangle chain
+    chain_of_note = triangle_chains{i,3};
+    if isempty(chain_of_note)
+        continue
+    end
+    % pot big markers for the start and end node
+    beg_end = [chain_of_note(1) chain_of_note(end)];
+    % plot a straight line between them (this is the adjacency graph connection)
+    plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',[0.3 0.3 0.3]);
+    % plot the medial axis path between them (this is the curved path from the triangle chain)
+    plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',[0.3 0.3 0.3])
+end
 
 return
 %% attempt 3d
