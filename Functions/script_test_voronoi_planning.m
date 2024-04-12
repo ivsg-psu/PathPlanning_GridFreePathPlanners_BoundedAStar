@@ -711,7 +711,7 @@ for i = 1:num_nodes
 end
 %% form cost graph from triangle_chains
 % cost is of the form: total cost = w*length + (1-w)*corridor_width
-w = 0.5;
+for w = 0.1:0.1:1
 cgraph = nan(size(adjacency_matrix)); % initialize cgraph
 % since there can be multiple chains between two nodes, we need to note which one we are using
 best_chain_idx_matrix = nan(size(adjacency_matrix));
@@ -759,6 +759,7 @@ hvec = zeros(1,num_nodes);
 % take route and tri chains data structure
 % also take best path structure
 route_triangle_chain = [];
+route_choke = inf;
 for i = 1:(size(route,1)-1)
     % for route to route + 1 get tri chain
     beg_seg = route(i,3);
@@ -776,12 +777,19 @@ for i = 1:(size(route,1)-1)
         best_chain_idx = best_chain_idx_matrix(beg_seg,end_seg);
         % append to list of triangle chains
         route_triangle_chain = [route_triangle_chain, triangle_chains{best_chain_idx,3}];
+        segment_choke = triangle_chains{best_chain_idx,4};
+        route_choke = min(route_choke, segment_choke);
     end
 end
 % dedup
 route_triangle_chain = unique(route_triangle_chain,'stable');
 % append the straightline from startxy to start node to the beginning of the route when transforming the route to tri chains
 route_full = [start_xy; xcc(route_triangle_chain), ycc(route_triangle_chain); finish_xy];
+route_x = route_full(:,1);
+route_y = route_full(:,2);
+route_deltas = diff([route_x(:) route_y(:)]);
+route_length = sum(sqrt(sum(route_deltas.*route_deltas,2)));
+
 % plot result
 figure; hold on; box on;
 xlabel('x [km]');
@@ -827,7 +835,9 @@ end
 plot(route_full(:,1), route_full(:,2), '-k','LineWidth',2.5) % plot approx. medial axis
 leg_str{end+1} = 'medial axis route';
 legend(leg_str,'Location','best');
-
+tit_str = sprintf('length cost weight was: %.1f \n total length: %.2f km \n worst corridor: %.2f km',w, route_length, route_choke);
+title(tit_str)
+end
 return
 %% attempt 3d
 % close all; clear all; clc;
