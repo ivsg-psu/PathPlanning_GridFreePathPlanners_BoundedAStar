@@ -167,12 +167,16 @@ y = P(:,2); % all y's
 DT = delaunayTriangulation(P,C) % perform constrained triangulation
 
 figure; box on; hold on; triplot(DT); title('triangulation')
+xlabel('x [km]')
+ylabel('y [km]')
 inside = isInterior(DT); % identify triangles statisfying constriants C (i.e. tris within the boundary and outside polytopes, i.e. free space)
 tr = triangulation(DT(inside,:),DT.Points); % keep only the triangles of free space, not the ones in polytopes
 for j = 2:length(shrunk_polytopes)
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
 end
 figure; box on; hold on; triplot(tr); title('triangulation, no interior')
+xlabel('x [km]')
+ylabel('y [km]')
 for j = 2:length(shrunk_polytopes)
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
 end
@@ -192,6 +196,8 @@ idx3 = T < neigh(:,3);
 neigh_for_plotting = [T(idx1) neigh(idx1,1); T(idx2) neigh(idx2,2); T(idx3) neigh(idx3,3)]';
 % plot the triangulation and approximate medial axis
 figure; hold on; box on;
+xlabel('x [km]')
+ylabel('y [km]')
 for j = 2:length(shrunk_polytopes)
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
 end
@@ -200,8 +206,7 @@ hold on
 plot(xcc(neigh_for_plotting), ycc(neigh_for_plotting), '-r','LineWidth',1.5) % plot approx. medial axis
 plot(xcc(nodes), ycc(nodes), '.k','MarkerSize',30) % plot 3 connected triangle circumcenters
 plot(x(C'),y(C'),'-b','LineWidth',1.5) % plot constriants (i.e. polytopes)
-title('Medial Axis, three connected nodes highlighted')
-
+title('Medial Axis, 3-connected nodes highlighted')
 % make a plannable graph from triangulation
 % identify the 3 connected triangles
 adjacency_matrix = eye(length(nodes)); % set to 1 if chain of 2 connected triangles exists between three connected triangle node(i) and node(j)
@@ -264,6 +269,8 @@ end % end direction while loop
 
 % plot the graph on the triangles
 figure; hold on; box on; title('medial axis graph overlaid on triangulation')
+xlabel('x [km]')
+ylabel('y [km]')
 for j = 2:length(shrunk_polytopes)
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
 end
@@ -288,6 +295,8 @@ for i = 1:(size(triangle_chains,1))
 end
 % plot the graph
 figure; hold on; box on; title('medial axis graph')
+xlabel('x [km]')
+ylabel('y [km]')
 for j = 2:length(shrunk_polytopes)
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
 end
@@ -396,6 +405,8 @@ while ~isequal(triangle_chains,prev_triangle_chains)
         if flag_do_plot_slow
             % plot the graph after this through node removal
             figure; hold on; box on;
+            xlabel('x [km]')
+            ylabel('y [km]')
             for j = 2:length(shrunk_polytopes)
                 fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
             end
@@ -451,6 +462,8 @@ while ~isequal(triangle_chains,prev_triangle_chains)
 
     % plot the graph without dead ends
     figure; hold on; box on; title('medial axis graph with dead ends removed')
+    xlabel('x [km]')
+    ylabel('y [km]')
     for j = 2:length(shrunk_polytopes)
         fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
     end
@@ -516,6 +529,8 @@ for i = 1:(size(triangle_chains,1)) % for each triangle chain
 end
 
 figure; hold on; box on; title('medial axis graph with corridor width expressed')
+xlabel('x [km]')
+ylabel('y [km]')
 corridor_widths = [triangle_chains{:,4}]';
 corridor_widths(isnan(corridor_widths)) = [];
 max_corridor_width = 0.6*max(corridor_widths);

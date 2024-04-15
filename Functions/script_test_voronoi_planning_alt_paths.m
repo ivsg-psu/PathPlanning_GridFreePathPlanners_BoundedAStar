@@ -757,7 +757,8 @@ finish_for_reachability = finish;
 finish_for_reachability(4) = finish(3);
 [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start_for_reachability,finish_for_reachability);
 if ~is_reachable
-    error('initial mission, prior to edge deletion, is not possible')
+    warning('initial mission, prior to edge deletion, is not possible')
+    continue
 end
 % run Dijkstra's algorithm (no heuristic)
 hvec = zeros(1,num_nodes);
