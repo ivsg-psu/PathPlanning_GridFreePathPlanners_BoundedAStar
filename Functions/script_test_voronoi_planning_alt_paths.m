@@ -713,6 +713,8 @@ end
 % cost is of the form: total cost = w*length + (1-w)*corridor_width
 w = 1;
 route_choke = 0;
+alternate_routes = {};
+smallest_corridors = [];
 for iterations = 1:5
 cgraph = nan(size(adjacency_matrix)); % initialize cgraph
 % since there can be multiple chains between two nodes, we need to note which one we are using
@@ -822,14 +824,6 @@ for i = 1:(size(triangle_chains,1))
     plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',0.6*ones(1,3));
     leg_str{end+1} = '';
 end
-plot(start_xy(1),start_xy(2),'xg','MarkerSize',10);
-plot(finish_xy(1),finish_xy(2),'xr','MarkerSize',10);
-plot(start(1),start(2),'.g','MarkerSize',10);
-plot(finish(1),finish(2),'.r','MarkerSize',10);
-leg_str{end+1} = 'start';
-leg_str{end+1} = 'finish';
-leg_str{end+1} = 'start node';
-leg_str{end+1} = 'finish node';
 plot(route(:,1),route(:,2),'--r','MarkerSize',20,'LineWidth',1);
 leg_str{end+1} = sprintf('adjacency of route nodes');
 for j = 2:length(shrunk_polytopes)
@@ -844,7 +838,41 @@ leg_str{end+1} = 'medial axis route';
 legend(leg_str,'Location','best');
 tit_str = sprintf('length cost weight was: %.1f \n total length: %.2f km \n worst corridor: %.2f km',w, route_length, route_choke);
 title(tit_str)
+alternate_routes{end+1}  = route_full;
+smallest_corridors = [smallest_corridors, route_choke];
 end
+figure; hold on; box on;
+leg_str = {};
+plot(start_xy(1),start_xy(2),'xg','MarkerSize',10);
+plot(finish_xy(1),finish_xy(2),'xr','MarkerSize',10);
+plot(start(1),start(2),'.g','MarkerSize',10);
+plot(finish(1),finish(2),'.r','MarkerSize',10);
+leg_str{end+1} = 'start';
+leg_str{end+1} = 'finish';
+leg_str{end+1} = 'start node';
+leg_str{end+1} = 'finish node';
+xlabel('x [km]');
+ylabel('y [km]');
+route_to_plot = alternate_routes{1};
+plot(route_to_plot(:,1),route_to_plot(:,2),'LineWidth',length(alternate_routes)+1);
+leg_str{end+1} = sprintf('route 1');
+for i = 2:length(alternate_routes)
+    route_to_plot = alternate_routes{i};
+    if isnan(route_to_plot) % if the route wasn't calculated, just remove it
+        continue
+    end
+    plot(route_to_plot(:,1),route_to_plot(:,2),'LineWidth',length(alternate_routes)+1-i);
+    leg_str{end+1} = sprintf('route %i, corridors > %.3f [km]',i,smallest_corridors(i));
+end
+for j = 2:length(shrunk_polytopes)
+    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+end
+leg_str{end+1} = 'obstacles';
+for i = 1:length(shrunk_polytopes)-2
+    leg_str{end+1} = '';
+end
+legend(leg_str,'Location','best');
+title(sprintf('%i paths, each with wider corridors',length(alternate_routes)));
 return
 %% attempt 3d
 % close all; clear all; clc;
