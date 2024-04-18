@@ -251,29 +251,29 @@ for map_idx =5%2:6
             % TODO @sjharnett make function for snapping point to nearest vertex of polytope
             % enlarging polytopes may have put the midway start inside a polytope
             % for each polytope, check if this point is inside the polytope
+            pts_to_test = [start_midway; finish_init];
+            output_pts = pts_to_test;
             for p = 1:length(enlarged_polytopes)
                 these_verts = enlarged_polytopes(p).vertices;
                 this_polyshape = polyshape(these_verts);
                 % is point in but not on polyshape?
-                [is_in,is_on] = isinterior(this_polyshape,start_midway);
-                [is_in_finish,~] = isinterior(this_polyshape,finish_init);
-                if is_in
-                    % if it is, get distance to all vertices
-                    vert_to_start_deltas = these_verts - start_midway;
-                    vert_to_start_distances = vert_to_start_deltas(:,1).^2 + vert_to_start_deltas(:,2).^2;
-                    [min_value, idx_of_min] = min(vert_to_start_distances);
-                    % set this point to the nearest vertex
-                    start_midway = these_verts(idx_of_min,:);
+                [is_in,is_on] = isinterior(this_polyshape,pts_to_test);
+                pts_in = find(is_in);
+                if isempty(pts_in)
+                    continue
                 end
-                if is_in_finish
+                for pt_in = 1:length(pts_in)
+                    pt_to_test = pts_to_test(pts_in(pt_in));
                     % if it is, get distance to all vertices
-                    vert_to_start_deltas = these_verts - finish_init;
+                    vert_to_start_deltas = these_verts - pt_to_test;
                     vert_to_start_distances = vert_to_start_deltas(:,1).^2 + vert_to_start_deltas(:,2).^2;
                     [min_value, idx_of_min] = min(vert_to_start_distances);
                     % set this point to the nearest vertex
-                    finish_init= these_verts(idx_of_min,:);
+                    output_pts(pts_in(pt_in),:) = these_verts(idx_of_min,:);
                 end
             end
+            start_midway = output_pts(1,:);
+            finish_init = output_pts(2,:);
             % TODO @sjharnett call all_pts function here again
             point_tot = length([enlarged_polytopes.xv]); % total number of vertices in the polytopes
             beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle

@@ -613,7 +613,8 @@ end
 % start = all_pts(24,:);
 % finish = all_pts(104,:);
 % find the xcc,ycc pair closest to start
-start_xy = [1031.5 -4715.4];
+% start_xy = [1031.5 -4715.4];
+start_xy = [1031 -4717];
 finish_xy = [1050 -4722];
 tris_in_graph = unique([triangle_chains{:,3}]');
 start_delta_from_all_tris = start_xy - [xcc(tris_in_graph), ycc(tris_in_graph)];

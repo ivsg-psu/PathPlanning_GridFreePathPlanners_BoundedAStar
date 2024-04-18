@@ -145,6 +145,7 @@ shrunk_polytopes = [boundary, shrunk_polytopes]; % put the boundary polytope as 
 distances = diff([[shrunk_polytopes.xv]',[shrunk_polytopes.yv]']); % find side lengths in whole field
 min_distance_between_verts = min(sqrt(sum(distances.*distances,2))); % the min of this is the smallest space between features
 resolution = 10*min_distance_between_verts/2; % want even the smallest feature to be bisected
+original_polytopes = shrunk_polytopes;
 shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, resolution); % interpolate sides
 
 %% constrained delaunay triangulation
@@ -715,6 +716,7 @@ w = 1;
 route_choke = 0;
 alternate_routes = {};
 smallest_corridors = [];
+route_lengths = [];
 for iterations = 1:5
 cgraph = nan(size(adjacency_matrix)); % initialize cgraph
 % since there can be multiple chains between two nodes, we need to note which one we are using
@@ -841,6 +843,7 @@ tit_str = sprintf('length cost weight was: %.1f \n total length: %.2f km \n wors
 title(tit_str)
 alternate_routes{end+1}  = route_full;
 smallest_corridors = [smallest_corridors, route_choke];
+route_lengths = [route_lengths, route_length];
 end
 figure; hold on; box on;
 leg_str = {};
