@@ -10,7 +10,7 @@ flag_do_plot = 1;
 flag_do_animation = 0;
 flag_do_plot_slow = 0;
 
-    for map_idx =7
+    for map_idx = 8
     if map_idx == 1 % generic canyon map
         %% load test fixtures for polytope map rather than creating it here
         % load distribution north of canyon
@@ -72,6 +72,13 @@ flag_do_plot_slow = 0;
         is_nonconvex = 1;
         start_init = [-77.68 40.9];
         finish_init = [-77.5 40.8];
+        %% make a boundary around the polytope field
+        boundary.vertices = [-77.7 40.78; -77.7 40.92; -77.45 40.92; -77.45 40.78];
+        boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
+        boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
+        boundary.parent_poly_id = nan; % ignore parend ID
+        shrunk_polytopes = [boundary, shrunk_polytopes]; % put the boundary polytope as the first polytope
+        resolution_scale = 1;
     elseif map_idx == 6 % large map, good for dilation case, nearly fully tiled
         load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_5.mat'));
         shrunk_polytopes = flood_plain_5;
@@ -113,15 +120,31 @@ flag_do_plot_slow = 0;
         start_init = [-2 20];
         finish_init = [32 20];
         % tile field to hedgerow by making a set above and a set below
+        %% make a boundary around the polytope field
+        boundary.vertices = [-3 -5; -3 45; 33 45; 33 -5];
+        boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
+        boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
+        shrunk_polytopes = [boundary, shrunk_polytopes]; % put the boundary polytope as the first polytope
+        resolution_scale = 10;
+    elseif map_idx == 8 % Josh's polytope map from 24 April 2024
+        load(strcat(pwd,'\..\Test_Fixtures\april_24_example_josh.mat'));
+        start_init = [0 20];
+        finish_init = [90 45];
+        shrunk_polytopes = polytopes;
+
+        %% make a boundary around the polytope field
+        boundary.vertices = [-5 -5; -5 105; 105 105; 105 -5];
+        boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
+        boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
+        % boundary.parent_poly_id = nan; % ignore parend ID
+        boundary.cost_uncertainty = nan;
+        boundary.indv = nan;
+        boundary = rmfield(boundary,'mean_radius');
+        boundary = rmfield(boundary,'radii');
+        shrunk_polytopes = [boundary, shrunk_polytopes]; % put the boundary polytope as the first polytope
+        resolution_scale = 2;
     end % if conditions for different map test fixtures
 end
-
-%% make a boundary around the polytope field
-boundary.vertices = [-3 -5; -3 45; 33 45; 33 -5];
-boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
-boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
-% boundary.parent_poly_id = nan; % ignore parend ID
-shrunk_polytopes = [boundary, shrunk_polytopes]; % put the boundary polytope as the first polytope
 
 %% convert from LLA to QGS84
 % centre_co_avg_alt = 351.7392;
@@ -144,7 +167,7 @@ shrunk_polytopes = [boundary, shrunk_polytopes]; % put the boundary polytope as 
 %% interpolate polytope vertices
 distances = diff([[shrunk_polytopes.xv]',[shrunk_polytopes.yv]']); % find side lengths in whole field
 min_distance_between_verts = min(sqrt(sum(distances.*distances,2))); % the min of this is the smallest space between features
-resolution = 10*min_distance_between_verts/2; % want even the smallest feature to be bisected
+resolution = resolution_scale*min_distance_between_verts/2; % want even the smallest feature to be bisected
 original_polytopes = shrunk_polytopes;
 shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, resolution); % interpolate sides
 

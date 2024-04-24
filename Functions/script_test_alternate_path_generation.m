@@ -12,7 +12,7 @@ flag_do_slow_plot = 0;
 flag_do_animation = 0;
 flag_do_plot_slow = 0;
 
-map_idx = 7;
+map_idx = 8;
 if map_idx == 1 % generic canyon map
     %% load test fixtures for polytope map rather than creating it here
     % load distribution north of canyon
@@ -113,6 +113,11 @@ elseif map_idx == 7 % generic polytope map
     start_init = [-2 20];
     finish_init = [32 20];
     % tile field to hedgerow by making a set above and a set below
+elseif map_idx == 8 % Josh's polytope map from 24 April 2024
+    load(strcat(pwd,'\..\Test_Fixtures\april_24_example_josh.mat'));
+    start_init = [0 20];
+    finish_init = [90 45];
+    shrunk_polytopes = polytopes;
 end % if conditions for different map test fixtures
 if map_idx <=6 && map_idx >= 2 % for the floodplain maps we have to convert from LLA to km
     %% convert from LLA to QGS84
@@ -205,9 +210,9 @@ for mission_idx = 1:size(start_inits,1)
     route_y = init_route(:,2);
     lengths = diff([route_x(:) route_y(:)]);
     init_route_length = sum(sqrt(sum(lengths.*lengths,2)));
-    num_paths = 5;
-    corridor_width_buffer = 1.3;
-    smallest_corridors = nan(1,num_paths)
+    num_paths = 10;
+    corridor_width_buffer = 1.1;
+    smallest_corridors = nan(1,num_paths);
 
     %% make alterante paths
     for path_idx = 1:num_paths
