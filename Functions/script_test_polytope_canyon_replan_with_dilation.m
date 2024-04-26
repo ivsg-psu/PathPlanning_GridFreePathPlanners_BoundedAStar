@@ -118,13 +118,16 @@ for map_idx =5%2:6
         finish_init = [32 20];
         % tile field to hedgerow by making a set above and a set below
     end % if conditions for different map test fixtures
+    datum = 'nad83';
     if map_idx <=6 && map_idx >= 2 % for the floodplain maps we have to convert from LLA to km
         %% convert from LLA to QGS84
         centre_co_avg_alt = 351.7392;
-        start_init = INTERNAL_WGSLLA2xyz(start_init(2),start_init(1),centre_co_avg_alt);
+        % start_init = INTERNAL_WGSLLA2xyz(start_init(2),start_init(1),centre_co_avg_alt);
+        start_init = ll2utm(start_init(2),start_init(1),datum);
         start_init = start_init(1:2)';
         start_init = start_init/1000;
-        finish_init = INTERNAL_WGSLLA2xyz(finish_init(2),finish_init(1),centre_co_avg_alt);
+        % finish_init = INTERNAL_WGSLLA2xyz(finish_init(2),finish_init(1),centre_co_avg_alt);
+        finish_init = ll2utm(finish_init(2),finish_init(1),datum);
         finish_init = finish_init(1:2)';
         finish_init = finish_init/1000;
         new_polytopes = [];
@@ -135,7 +138,8 @@ for map_idx =5%2:6
             alts = centre_co_avg_alt*ones(size(lats));
             wgs_verts = [];
             for j = 1:length(lats)
-                xyz = INTERNAL_WGSLLA2xyz(lats(j),longs(j),alts(j));
+                % xyz = INTERNAL_WGSLLA2xyz(lats(j),longs(j),alts(j));
+                xyz = ll2utm(lats(j),longs(j),datum);
                 xyz = xyz/1000;
                 wgs_verts(j,:) = [xyz(1),xyz(2)];
             end
@@ -153,6 +157,11 @@ for map_idx =5%2:6
         start_inits = start_init;
         finish_inits = finish_init;
     end
+    figure; hold on;
+                for j = 1:length(shrunk_polytopes)
+                     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
+                end
+    return
     for mission_idx = 1:size(start_inits,1)
         start_init = start_inits(mission_idx,:);
         finish_init = finish_inits(mission_idx,:);
@@ -167,7 +176,6 @@ for map_idx =5%2:6
         beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
         curpt = curpt+verts;
     end
-
     obs_id = [shrunk_polytopes.obs_id];
     all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
     for repeats = 1%:5
