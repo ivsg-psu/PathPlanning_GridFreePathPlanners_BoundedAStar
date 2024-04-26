@@ -510,8 +510,16 @@ for i = 1:(size(triangle_chains,1)) % for each triangle chain
     delta_x_and_y = diff([xcc(chain_of_note) ycc(chain_of_note)]);
     triangle_chain_length = sum(sqrt(sum(delta_x_and_y.*delta_x_and_y,2)));
     triangle_chains{i,5} = triangle_chain_length;
-    delta_z = zcc(chain_of_note(end)) - zcc(chain_of_note(1));
-    triangle_chains{i,6} = delta_z;
+    % the following gives change in elevation as a cost
+    % delta_z = zcc(chain_of_note(end)) - zcc(chain_of_note(1));
+    % triangle_chains{i,6} = delta_z;
+    % the following gives average pitch as a cost
+    deltaZ = diff(zcc(chain_of_note)); % the ith element contains the change in height from i+1 to i
+    avg_pitch = sum(deltaZ)/triangle_chain_length;
+    if avg_pitch<0
+        avg_pitch = 0; % don't reward descending as much as we punish ascending
+    end
+    triangle_chains{i,6} = avg_pitch;
 end
 
 figure; hold on; box on; title('medial axis graph with corridor width expressed')
@@ -593,6 +601,47 @@ ylabel(c,'elevation [m]')
 % for j = 2:length(shrunk_polytopes)
 %     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.5)
 % end
+
+figure; hold on; box on; title('medial axis graph with avg. pitch cost expressed')
+xlabel('x [km]')
+ylabel('y [km]')
+avg_pitches = [triangle_chains{:,6}]';
+avg_pitches(isnan(avg_pitches)) = [];
+max_avg_pitch = 0.6*max(avg_pitches);
+min_avg_pitch = min(avg_pitches);
+my_colormap = colormap(turbo);
+num_colors = size(my_colormap,1);
+for i = 1:(size(triangle_chains,1))
+    % pop off a triangle chain
+    chain_of_note = triangle_chains{i,3};
+    if isempty(chain_of_note)
+        continue
+    end
+    pitch_of_note = triangle_chains{i,6};
+    if pitch_of_note > max_avg_pitch
+        pitch_of_note = max_avg_pitch;
+    end
+    pitch_portion = (pitch_of_note-min_avg_pitch)/(max_avg_pitch-min_avg_pitch);
+    if pitch_portion > 1
+        pitch_portion = 1;
+    end
+    pitch_portion_color_idx = round(pitch_portion*num_colors,0); % convert pitch_portion to an index in colormap
+    if pitch_portion_color_idx == 0
+        pitch_portion_color_idx = 1; % matlab is 1 indexed
+    end
+    pitch_color = my_colormap(pitch_portion_color_idx,:);
+    % plot the medial axis path between them (this is the curved path from the triangle chain)
+    plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',pitch_color)
+end
+set(gca,'CLim',[min_avg_pitch max_avg_pitch]);
+c = colorbar;
+xlabel('x [km]')
+ylabel('y [km]')
+ylabel(c,'average pitch [km]')
+plot(xcc(nodes(~isnan(nodes))), ycc(nodes(~isnan(nodes))), '.k','MarkerSize',20) % plot 3 connected triangle circumcenters
+for j = 2:length(shrunk_polytopes)
+    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.5)
+end
 
 figure; hold on; box on; title('medial axis graph with route segment length expressed')
 lengths = [triangle_chains{:,5}]';
@@ -678,8 +727,16 @@ for i = 1:length(idx_chains_containing_start)
     delta_x_and_y = diff([xcc(first_chain) ycc(first_chain)]);
     triangle_chain_length = sum(sqrt(sum(delta_x_and_y.*delta_x_and_y,2)));
     triangle_chains{end,5} = triangle_chain_length;
-    delta_z = zcc(first_chain(end)) - zcc(first_chain(1));
-    triangle_chains{end,6} = delta_z;
+    % TODO the following gives change in elevation as a cost
+    % delta_z = zcc(first_chain(end)) - zcc(first_chain(1));
+    % triangle_chains{end,6} = delta_z;
+    % the following gives average pitch as a cost
+    deltaZ = diff(zcc(first_chain)); % the ith element contains the change in height from i+1 to i
+    avg_pitch = sum(deltaZ)/triangle_chain_length;
+    if avg_pitch<0
+        avg_pitch = 0; % don't reward descending as much as we punish ascending
+    end
+    triangle_chains{end,6} = avg_pitch;
     triangle_chains{end+1,1} = start_closest_node;
     triangle_chains{end,2} = last_node;
     triangle_chains{end,3} = last_chain;
@@ -688,8 +745,16 @@ for i = 1:length(idx_chains_containing_start)
     delta_x_and_y = diff([xcc(last_chain) ycc(last_chain)]);
     triangle_chain_length = sum(sqrt(sum(delta_x_and_y.*delta_x_and_y,2)));
     triangle_chains{end,5} = triangle_chain_length;
-    delta_z = zcc(last_chain(end)) - zcc(last_chain(1));
-    triangle_chains{end,6} = delta_z;
+    % TODO the following gives change in elevation as a cost
+    % delta_z = zcc(last_chain(end)) - zcc(last_chain(1));
+    % triangle_chains{end,6} = delta_z;
+    % the following gives average pitch as a cost
+    deltaZ = diff(zcc(last_chain)); % the ith element contains the change in height from i+1 to i
+    avg_pitch = sum(deltaZ)/triangle_chain_length;
+    if avg_pitch<0
+        avg_pitch = 0; % don't reward descending as much as we punish ascending
+    end
+    triangle_chains{end,6} = avg_pitch;
     % add the new chains to adjacency
     adjacency_matrix(start_closest_node,start_closest_node) = 1;
     adjacency_matrix(first_node,start_closest_node) = 1;
@@ -732,8 +797,16 @@ for i = 1:length(idx_chains_containing_finish)
     delta_x_and_y = diff([xcc(first_chain) ycc(first_chain)]);
     triangle_chain_length = sum(sqrt(sum(delta_x_and_y.*delta_x_and_y,2)));
     triangle_chains{end,5} = triangle_chain_length;
-    delta_z = zcc(first_chain(end)) - zcc(first_chain(1));
-    triangle_chains{end,6} = delta_z;
+    % TODO the following gives change in elevation as a cost
+    % delta_z = zcc(first_chain(end)) - zcc(first_chain(1));
+    % triangle_chains{end,6} = delta_z;
+    % the following gives average pitch as a cost
+    deltaZ = diff(zcc(first_chain)); % the ith element contains the change in height from i+1 to i
+    avg_pitch = sum(deltaZ)/triangle_chain_length;
+    if avg_pitch<0
+        avg_pitch = 0; % don't reward descending as much as we punish ascending
+    end
+    triangle_chains{end,6} = avg_pitch;
     triangle_chains{end+1,1} = finish_closest_node;
     triangle_chains{end,2} = last_node;
     triangle_chains{end,3} = last_chain;
@@ -742,8 +815,16 @@ for i = 1:length(idx_chains_containing_finish)
     delta_x_and_y = diff([xcc(last_chain) ycc(last_chain)]);
     triangle_chain_length = sum(sqrt(sum(delta_x_and_y.*delta_x_and_y,2)));
     triangle_chains{end,5} = triangle_chain_length;
-    delta_z = zcc(last_chain(end)) - zcc(last_chain(1));
-    triangle_chains{end,6} = delta_z;
+    % TODO the following gives change in elevation as a cost
+    % delta_z = zcc(last_chain(end)) - zcc(last_chain(1));
+    % triangle_chains{end,6} = delta_z;
+    % the following gives average pitch as a cost
+    deltaZ = diff(zcc(last_chain)); % the ith element contains the change in height from i+1 to i
+    avg_pitch = sum(deltaZ)/triangle_chain_length;
+    if avg_pitch<0
+        avg_pitch = 0; % don't reward descending as much as we punish ascending
+    end
+    triangle_chains{end,6} = avg_pitch;
     % add the new chains to adjacency
     adjacency_matrix(finish_closest_node,finish_closest_node) = 1;
     adjacency_matrix(first_node,finish_closest_node) = 1;
