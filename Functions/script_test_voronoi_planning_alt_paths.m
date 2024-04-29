@@ -128,10 +128,9 @@ flag_do_plot_slow = 0;
         resolution_scale = 10;
     elseif map_idx == 8 % Josh's polytope map from 24 April 2024
         load(strcat(pwd,'\..\Test_Fixtures\april_24_example_josh.mat'));
-        start_init = [0 20];
-        finish_init = [90 45];
+        start_init = [1 30];
+        finish_init = [100 50];
         shrunk_polytopes = polytopes;
-
         %% make a boundary around the polytope field
         boundary.vertices = [-5 -5; -5 105; 105 105; 105 -5];
         boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex

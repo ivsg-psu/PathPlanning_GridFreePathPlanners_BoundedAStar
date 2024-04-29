@@ -115,8 +115,8 @@ elseif map_idx == 7 % generic polytope map
     % tile field to hedgerow by making a set above and a set below
 elseif map_idx == 8 % Josh's polytope map from 24 April 2024
     load(strcat(pwd,'\..\Test_Fixtures\april_24_example_josh.mat'));
-    start_init = [0 20];
-    finish_init = [90 45];
+    start_init = [1 30];
+    finish_init = [100 50];
     shrunk_polytopes = polytopes;
 end % if conditions for different map test fixtures
 if map_idx <=6 && map_idx >= 2 % for the floodplain maps we have to convert from LLA to km
