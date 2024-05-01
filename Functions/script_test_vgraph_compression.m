@@ -1,19 +1,12 @@
 clear; close all; clc
 % script_test_vgraph_compression
-% create a visibility graph and dilate it to destroy edges
-% create a visibiltiy graph and delete edges based on edge length
-% overlay them to create a robust visibility graph
-% compress this with singular value decomposition and Eckhart-Young theorem
-% then plan through the compressed visibility graph to see what happens
+% experiment of removing "unecessary" edges from the vgraph by performing a singular value decomposition
+% and subsequent low rank matrix approximation using
+% Eckhart-Young theorem
+% see: https://en.wikipedia.org/wiki/Singular_value_decomposition#Low-rank_matrix_approximation
+% then plan through the compressed visibility graph to see how impacted the path is compared
+% to the original visibility graph
 
-addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
-addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
-
-addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
-addpath 'C:\Users\sjhar\Desktop\gif\gif'
-
-addpath 'C:\Users\sjh6473\Desktop\gif\gif'
-addpath 'C:\Users\sjh6473\Desktop\TriangleRayIntersection'
 
 addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
 addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
@@ -84,28 +77,18 @@ init_planning_time = tic;
 [init_cost, init_route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
 toc(init_planning_time)
 
-[U,S,V] = svd(vgraph);
-compressed_vgraph_size_portion = .5;
+%% compress vgraph
+[U,S,V] = svd(vgraph); % perform singular value decomposition
+critical_singular_value = 7; % apply eckhart young to remove SVs below some SV
 compressed_vgraph_S = S;
-compressed_vgraph_num_to_remove = round((1-compressed_vgraph_size_portion)*size(vgraph,1));
-% for i = 0:(compressed_vgraph_num_to_remove-1)
-    % compressed_vgraph_S(end-i,end-i) = 0;
-% end
-compressed_vgraph_S(compressed_vgraph_S<5) = 0;
+compressed_vgraph_S(compressed_vgraph_S<7) = 0;
 compressed_vgraph = round(U*compressed_vgraph_S*V');
 % add back start and finish rows and columns
 compressed_vgraph(:,end) = vgraph(:,end);
 compressed_vgraph(:,end-1) = vgraph(:,end-1);
 compressed_vgraph(end,:) = vgraph(end,:);
 compressed_vgraph(end-1,:) = vgraph(end-1,:);
-
-% compressed_cgraph = round(U*cgraph*V',4);
-% add back start and finish rows and columns
-% compressed_cgraph(:,end) = cgraph(:,end);
-% compressed_cgraph(:,end-1) = cgraph(:,end-1);
-% compressed_cgraph(end,:) = cgraph(end,:);
-% compressed_cgraph(end-1,:) = cgraph(end-1,:);
-
+% keep cgraph the same as it just contains costs for all  possible node pairs
 compressed_cgraph = cgraph;
 
 start_for_reachability = start;
@@ -120,6 +103,7 @@ end
 compressed_planning_time = tic;
 [compressed_cost, compressed_route] = fcn_algorithm_Astar(compressed_vgraph, compressed_cgraph, hvec, all_pts, start, finish);
 toc(compressed_planning_time)
+
 sprintf('initial route IDs \n')
 init_route(:,3)
 sprintf('compressed route IDs \n')
@@ -146,112 +130,6 @@ if flag_do_plot
     title(title_str);
 end % end flag_do_plot condition
 
-return
-%% dilation based delete
-% polytope_size_increase = 0;
-% enlarged_polytopes = fcn_MapGen_polytopesExpandEvenlyForConcave(shrunk_polytopes,polytope_size_increase);
-% % find all pts table
-% point_tot = length([enlarged_polytopes.xv]); % total number of vertices in the polytopes
-% beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-% curpt = 0;
-% for poly = 1:size(enlarged_polytopes,2) % check each polytope
-%     verts = length(enlarged_polytopes(poly).xv);
-%     enlarged_polytopes(poly).obs_id = ones(1,verts)*poly; % obs_id is the same for every vertex on a single polytope
-%     beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-%     curpt = curpt+verts;
-% end
-% obs_id = [enlarged_polytopes.obs_id];
-% all_pts_new = [[enlarged_polytopes.xv];[enlarged_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
-% start = [start_init size(all_pts_new,1)+1 -1 1];
-% finish = [finish_init size(all_pts_new,1)+2 -1 1];
-% finishes = [all_pts_new; start; finish];
-% starts = [all_pts_new; start; finish];
-% [new_vgraph_dilation, visibility_results_all_pts_new] = fcn_visibility_clear_and_blocked_points_global(enlarged_polytopes, starts, finishes,1);
-% reduced_vgraph = new_vgraph_dilation;
-% num_edges_initially = sum(sum(orig_vgraph_without_eye));
-% num_edges_finally = sum(sum(new_vgraph_dilation));
-% num_edges_removed = num_edges_initially - num_edges_finally;
-% pct_edges_removed_dilation = (num_edges_removed)/num_edges_initially*100;
-
-% %% plot result
-% figure; hold on; box on;
-% blues = zeros(size(orig_vgraph_without_eye));
-% num_orig_nodes = size(orig_vgraph_without_eye,1);
-% reduced_vgraph_concat = reduced_vgraph(1:num_orig_nodes,1:num_orig_nodes);
-% reds = orig_vgraph_without_eye & ~reduced_vgraph_concat;
-% greens = reduced_vgraph_concat;
-% vgraph_image(:,:,1) = reds;
-% vgraph_image(:,:,2) = greens;
-% vgraph_image(:,:,3) = blues;
-% imshow(vgraph_image*255);
-% num_edges_initially = sum(sum(orig_vgraph_without_eye));
-% num_edges_ultimately = sum(sum(reduced_vgraph_concat));
-% pct_edges_removed = (num_edges_initially - num_edges_ultimately)/num_edges_initially;
-% title(sprintf("%.2f pct. of edges removed, obstacle dilation",pct_edges_removed));
-
-%% length based edge blocking
-desired_portion_edge_deletion = 0.2;
-vgraph_without_start_and_fin = orig_vgraph_without_eye(1:end-2,1:end-2);
-valid_edges_initially = find(vgraph_without_start_and_fin==1);
-num_edges_initially = length(valid_edges_initially);
-mode = "xy spatial only";
-[cgraph, ~] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
-cgraph_without_start_and_fin = cgraph(1:end-2,1:end-2);
-costs_of_valid_edges = cgraph_without_start_and_fin(valid_edges_initially); % cost of every 1 in vgraph
-vgraph_edge_idx_to_cost_table = [valid_edges_initially, costs_of_valid_edges]; % associate in a table
-vgraph_edge_idx_sorted = sortrows(vgraph_edge_idx_to_cost_table,2,'descend'); % sort the table by edge length
-num_edges_for_removal = round(num_edges_initially*desired_portion_edge_deletion); % find out how many edges to remove
-idx_of_edges_for_removal = vgraph_edge_idx_sorted(1:num_edges_for_removal,1); % take that many edges from top of sorted list
-[rows_for_removal, cols_for_removal] = ind2sub(size(vgraph_without_start_and_fin),idx_of_edges_for_removal);
-num_edges_removed = length(rows_for_removal);
-pct_edges_removed = (num_edges_removed)/num_edges_initially*100;
-new_vgraph_random = orig_vgraph_without_eye;
-idx_of_edges_for_removal_updated = sub2ind(size(new_vgraph_random),rows_for_removal,cols_for_removal);
-new_vgraph_random(idx_of_edges_for_removal_updated) = 0;
-num_edges_after = sum(sum(new_vgraph_random));
-pct_edges_removed_random = (num_edges_initially- num_edges_after)/num_edges_initially*100;
-%% plot result
-figure; hold on; box on;
-blues = zeros(size(vgraph));
-reds = orig_vgraph_without_eye & ~new_vgraph_random;
-greens = new_vgraph_random;
-vgraph_image(:,:,1) = reds;
-vgraph_image(:,:,2) = greens;
-vgraph_image(:,:,3) = blues;
-imshow(vgraph_image*255);
-title(sprintf("%.2f pct. of edges removed, random edge blocking",pct_edges_removed_random));
-
-%% short edge first
-desired_portion_edge_deletion = 0.2;
-vgraph_without_start_and_fin = orig_vgraph_without_eye(1:end-2,1:end-2);
-valid_edges_initially = find(vgraph_without_start_and_fin==1);
-num_edges_initially = length(valid_edges_initially);
-mode = "xy spatial only";
-[cgraph, ~] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
-cgraph_without_start_and_fin = cgraph(1:end-2,1:end-2);
-costs_of_valid_edges = cgraph_without_start_and_fin(valid_edges_initially); % cost of every 1 in vgraph
-vgraph_edge_idx_to_cost_table = [valid_edges_initially, costs_of_valid_edges]; % associate in a table
-vgraph_edge_idx_sorted = sortrows(vgraph_edge_idx_to_cost_table,2,'ascend'); % sort the table by edge length
-num_edges_for_removal = round(num_edges_initially*desired_portion_edge_deletion); % find out how many edges to remove
-idx_of_edges_for_removal = vgraph_edge_idx_sorted(1:num_edges_for_removal,1); % take that many edges from top of sorted list
-[rows_for_removal, cols_for_removal] = ind2sub(size(vgraph_without_start_and_fin),idx_of_edges_for_removal);
-num_edges_removed = length(rows_for_removal);
-pct_edges_removed = (num_edges_removed)/num_edges_initially*100;
-new_vgraph_random = orig_vgraph_without_eye;
-idx_of_edges_for_removal_updated = sub2ind(size(new_vgraph_random),rows_for_removal,cols_for_removal);
-new_vgraph_random(idx_of_edges_for_removal_updated) = 0;
-num_edges_after = sum(sum(new_vgraph_random));
-pct_edges_removed_random = (num_edges_initially- num_edges_after)/num_edges_initially*100;
-%% plot result
-figure; hold on; box on;
-blues = zeros(size(vgraph));
-reds = orig_vgraph_without_eye & ~new_vgraph_random;
-greens = new_vgraph_random;
-vgraph_image(:,:,1) = reds;
-vgraph_image(:,:,2) = greens;
-vgraph_image(:,:,3) = blues;
-imshow(vgraph_image*255);
-title(sprintf("%.2f pct. of edges removed, random edge blocking",pct_edges_removed_random));
 function xyz = INTERNAL_WGSLLA2xyz(wlat, wlon, walt)
     %Function xyz = wgslla2xyz(lat, lon, alt) returns the
     %equivalent WGS84 XYZ coordinates (in meters) for a
