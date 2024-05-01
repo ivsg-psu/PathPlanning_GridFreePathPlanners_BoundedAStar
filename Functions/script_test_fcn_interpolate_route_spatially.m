@@ -1,6 +1,12 @@
 clear; close all; clc
-% script_test_interpolate_route_spatially
-% a basic test of interpolating a route in XY space
+% script_test_fcn_interpolate_route_spatially
+% Tests: fcn_interpolate_route_spatially
+%
+% REVISION HISTORY:
+%
+% 2024_01 by S. Harnett
+% -- first write of script
+%%%%%%%%%%%%%%§
 
 %% initialize test fixtures
 start = [0,0];

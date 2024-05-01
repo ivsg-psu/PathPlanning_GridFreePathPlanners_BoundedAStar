@@ -11,8 +11,8 @@ function route_dense = fcn_interpolate_route_spatially(route, spacing)
 %
 % INPUTS:
 %
-%     route: the matrix as produced by fcn_algorithm_Astar3d consisting of waypoints.  Each row is a
-%     waypoint, and each column is x, y, t, and point ID
+%     route: the matrix as produced by fcn_algorithm_Astar consisting of waypoints.  Each row is a
+%     waypoint, and each column is x, y, and point ID
 %
 %     spacing: the desired spacing between points to achieve by adding waypoints
 %       when creating the dense route by interpolating the route waypoints
@@ -49,7 +49,6 @@ function route_dense = fcn_interpolate_route_spatially(route, spacing)
 
     % loop through each pair of waypoints
     for i = 1:(num_route_verts-1)
-
         % get pair of adjascent waypoints and distance between them
         p1 = route(i,:);
         p2 = route(i+1,:);
