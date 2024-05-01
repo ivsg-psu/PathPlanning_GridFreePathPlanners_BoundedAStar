@@ -1,18 +1,17 @@
 function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode, polytopes)
 % fcn_algorithm_generate_dilation_robustness_matrix
 %
-% A function for generating a cost matrix and heuristic cost vector.  The cost matrix describes the
-% actual cost to go from one point to another in a map.  The heuristic vector describes the estimated
-% cost of going from each point to the goal.  If there are multiple goals, this is the minimum of
-% going to any goal because the heuristic should be an underestimate of the actual cost (see:
-% http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html).  Note using this function
-% is completely optional.  It is commonly used prior to calling a planner such as Astar
-% to conveniently generate a cost map but it may be circumvented if the user wishes to generate
-% their own cost function and cost function matrix
-%
+% This function operates on a visibility graph formed from a polytope map to estimate
+% the distance, for reach vgraph edge, that the polytopes would have to be dilated to block that edge.
+% This is similar to corridor width except (1) it is only an estimate, the actual corridor around
+% the vgraph edge is not measured/calculated and (2) the distance is measured to each side independently meaning
+% it is more accurate to think of it as the lateral distance from the vgraph edge to the nearest polytope, rather
+% than thinking of it as the width of the corridors between polytopes.  For a better approximate of corridor width
+% please see the medial axis graph structure.
+% see dilation_robustness section of Documentation/bounded_astar_documentation.pptx for pseudocode and algorithm description
 %
 % FORMAT:
-% dilation_robustness_matrix = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode)
+% dilation_robustness_matrix = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode, polytopes)
 %
 %
 % INPUTS:
@@ -33,11 +32,14 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
 %       - "3D" - this implies xyz or xyt space
 %       - "2D" - this implies xy spatial only dimensions only
 %
+%   polytopes: polytope struct array
+%
 % OUTPUTS:
 %
-%  dilation_robustness_matrix - nxn matrix where n is the number of points (nodes) in the map.
-%    The value of element i,j is the estimated coridor width surrounding the line segment
-%    from point i to point j. I.e., navigating the line segment from i to j affords you Dij lateral width
+%  dilation_robustness_matrix - nxnx2 matrix where n is the number of points (nodes) in the map.
+%    The value of element i,j,k is the estimated coridor width surrounding the line segment
+%    from point i to point j.  The third index, k, is 1 if the free space is measured to the left hand
+%    side when facing the j from i, or k = 2 if measured to the right hand side .
 %
 % DEPENDENCIES:
 %
@@ -100,7 +102,7 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
             corridor_width = inf; % for an edge of zero length, routing down the edge
             % is equivalent to staying still which should have no corridor width restriction as
             % staying still is "free" kinematically
-            dilation_robustness_matrix(edge_start_idx(i), edge_end_idx(i),:) = corridor_width;
+            dilation_robustness_matrix(edge_start_idx(i), edge_end_idx(i),:) = corridor_width; % set this to both the left and right
             continue % skip to next edge if this edge had zero length
         end
 
@@ -149,10 +151,11 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
 
         %% find if dot product is right or left
         num_secondary_edges = size(secondary_edge_dirs,1);
-        primary_edge_dir_repeated = repmat(primary_edge_dir,num_secondary_edges,1);
+        primary_edge_dir_repeated = repmat(primary_edge_dir,num_secondary_edges,1); % need to repeat primary edge to vectorize cross product
         cross_primary_with_secondary = cross([primary_edge_dir_repeated,zeros(num_secondary_edges,1)], [secondary_edge_dirs,zeros(num_secondary_edges,1)], 2);
 
         % dot the other edges with the unit normal to find the corridor width defined by each vgraph edge
+        % basically the projection of the secondary edge in the direction normal to the primary edge is what we want
         if strcmp(mode, "2d") || strcmp(mode,"2D")
             dot_secondary_with_unit_normal = secondary_edge_dirs(:,1)*unit_normal(1) + secondary_edge_dirs(:,2)*unit_normal(2);
         elseif strcmp(mode, "3d") || strcmp(mode,"3D")
@@ -160,10 +163,10 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
         else
             error(strcat("Mode argument must be a string containing '2d' or '3d' (case insensitive) mode was instead given as: ",mode))
         end
-        % dot_secondary_with_unit_normal_left = dot_secondary_with_unit_normal(dot_secondary_with_unit_normal>0);
-        % dot_secondary_with_unit_normal_right = dot_secondary_with_unit_normal(dot_secondary_with_unit_normal<0);
         dot_secondary_with_unit_normal_left = dot_secondary_with_unit_normal(find(cross_primary_with_secondary(:,3)>0));
         dot_secondary_with_unit_normal_right = dot_secondary_with_unit_normal(find(cross_primary_with_secondary(:,3)<0));
+        % the min of projection from all secondary edges is the "closest" secondary edge to the primary, defining
+        % the point that would cut off the primary edge
         corridor_width_left = min(abs(dot_secondary_with_unit_normal_left));
         corridor_width_right = min(abs(dot_secondary_with_unit_normal_right)); % these are negative so switch to positive before taking min
         %% check for polytope walls
@@ -177,11 +180,13 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
         % if there are no dot products, there's either nothing to that side, so the space is infinte
         % or there's a polytope to that side so the width is zero
 
+        % find a point to the left and a point to the right of the primary edge
         % first want to find if unit vector points left or right of primary vector
         primary_edge_mid_point = primary_edge_start + 0.5*primary_edge_dir; % find the middle of the edge
         cross_primary_with_normal = cross([primary_edge_dir 0],[unit_normal 0]);
         my_eps = 1e-7;
-        if cross_primary_with_normal(3) > 0
+        if cross_primary_with_normal(3) > 0 % if cross is negative, unit vector points left
+            % thus a point to the left, starting from the midpoint of the primary edge is eps in the normal direction
             point_to_left = primary_edge_mid_point + my_eps*unit_normal;
             point_to_right = primary_edge_mid_point - my_eps*unit_normal;
         elseif cross_primary_with_normal(3) < 0
@@ -192,10 +197,12 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
             % just make the midpoint the point in this case
         end
 
+        % now that we have a point on either side of the primary edge, check these points to see if they are in polytopes
         num_polys = length(polytopes);
         p = 1;
-        is_in_left = 0;
+        is_in_left = 0; % initialize to false
         is_in_right = 0;
+        % loop over all polys
         while p <= num_polys
             verts = polytopes(p).vertices;
             % get xmin and xmax also ymin and ymax
@@ -214,7 +221,8 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
             polyshape_p = polyshape(verts);
             % is point in but not on polyshape?
             [is_in,is_on] = isinterior(polyshape_p,primary_edge_mid_point);
-            % if so, remove the edge, and stop trying polytopes
+            % if the midpoint is on a polytope, the edge boarders a polytope so we need to check
+            % where the polytope is relative to the edge by testing the right and left points
             if is_on
                 [is_in_left,is_on_left] = isinterior(polyshape_p,point_to_left);
                 [is_in_right,is_on_right] = isinterior(polyshape_p,point_to_right);
@@ -222,7 +230,7 @@ function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustne
                     error('the point is somehow left and right of the polytope')
                 end
                 % if it is in one polytope, we needn't check any others
-                p = num_polys+1;
+                p = num_polys+1; % this will cause the loop to exit
             end
             % if not, continue to check the next polytope
             p = p + 1;
