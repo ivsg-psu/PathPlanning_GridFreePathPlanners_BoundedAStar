@@ -141,8 +141,8 @@ function vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfe
     [rows_of_1s, cols_of_1s] = ind2sub(size(vgraph_without_self_visible),linear_idx); % convert linear idx to r,c
     num_1s = length(rows_of_1s);
     for e = 1:num_1s
-        start_pt = all_pts(rows_of_1s(e),1:2);
-        end_pt = all_pts(cols_of_1s(e),1:2);
+        start_pt = all_pts(rows_of_1s(e),1:3);
+        end_pt = all_pts(cols_of_1s(e),1:3);
         % parametric equation for line in 3D: https://math.stackexchange.com/questions/404440/what-is-the-equation-for-a-3d-line
         % [x y z]' = [a b c]'*t + [x0 y0 z0]'
         abc_vec = end_pt - start_pt;

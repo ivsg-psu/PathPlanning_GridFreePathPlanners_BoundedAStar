@@ -150,8 +150,8 @@ function [visibility_matrix, visibility_results] = fcn_visibility_clear_and_bloc
         [rows_of_1s, cols_of_1s] = ind2sub(size(visibility_matrix_without_self_visible),linear_idx); % convert linear idx to r,c
         num_1s = length(rows_of_1s);
         for e = 1:num_1s
-            start_pt = starts(rows_of_1s(e),1:3);
-            end_pt = finishes(cols_of_1s(e),1:3);
+            start_pt = starts(rows_of_1s(e),1:2);
+            end_pt = finishes(cols_of_1s(e),1:2);
             % parametric equation for line in 3D: https://math.stackexchange.com/questions/404440/what-is-the-equation-for-a-3d-line
             % [x y z]' = [a b c]'*t + [x0 y0 z0]'
             % parametric equation for line in 2D: https://math.libretexts.org/Bookshelves/Calculus/CLP-3_Multivariable_Calculus_(Feldman_Rechnitzer_and_Yeager)/01%3A_Vectors_and_Geometry_in_Two_and_Three_Dimensions/1.03%3A_Equations_of_Lines_in_2d
