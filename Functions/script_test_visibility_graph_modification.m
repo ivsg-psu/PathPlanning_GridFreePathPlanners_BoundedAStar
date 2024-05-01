@@ -1,10 +1,10 @@
-% script_test_fcn_visibility_clear_and_blocked_points_global
-% Tests: fcn_visibility_clear_and_blocked_points_global
-
+% script_visibility_graph_modification
+% Tests: fcn_visibility_graph_add_obstacle
+%        fcn_visibility_graph_remove_obstacle
 %
 % REVISION HISTORY:
 %
-% 2022_10_28 by S. Harnett
+% 2024_03 by S. Harnett
 % -- first write of script
 %%%%%%%%%%%%%%§
 
