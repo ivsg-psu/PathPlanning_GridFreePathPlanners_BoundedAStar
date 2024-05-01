@@ -63,7 +63,7 @@ beg_end = beg_end(1:point_tot); % remove any extra points
 all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
 
 
-%% calculate vibility graph
+%% calculate original vibility graph
 create_vgraph_timer = tic;
 [vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts);
 toc(create_vgraph_timer)
@@ -78,6 +78,7 @@ if flag_do_plot
     end
 end
 
+%% test removing polytope
 idx_of_polytope_for_removal = 8;
 polytope_for_removal = polytopes(idx_of_polytope_for_removal);
 if flag_do_plot
@@ -87,7 +88,6 @@ if flag_do_plot
     title('original map with polytope for removal highlighed')
 end
 
-%% try removing an obstacle
 modify_vgraph_timer = tic;
 [vgraph_new, all_pts_new, start_new, finish_new, new_polytopes] = fcn_visibility_graph_remove_obstacle(vgraph, all_pts, [], [], polytopes, idx_of_polytope_for_removal);
 toc(modify_vgraph_timer)
@@ -112,10 +112,11 @@ if flag_do_plot
         end
     end
 end
-%% try adding an obstacle
-polytope_to_add = polytope_for_removal;
-polytope_shift = 0.7;
-polytope_to_add.xv = polytope_to_add.xv + polytope_shift;
+
+%% test adding obstacle
+polytope_to_add = polytope_for_removal; % we can add back the polytope we removed
+polytope_shift = 0.7; % let's transalate it though
+polytope_to_add.xv = polytope_to_add.xv + polytope_shift; % apply translation to vertices
 polytope_to_add.vertices(:,1) = polytope_to_add.vertices(:,1) + polytope_shift;
 add_obs_timer = tic;
 [vgraph_new2, all_pts_new2, start_new2, finish_new2, new_polytopes2] = ...

@@ -1,20 +1,23 @@
 function [visibility_matrix_new, all_pts_new, start_new, finish_new, polytopes_after] = ...
     fcn_visibility_graph_remove_obstacle(...
     visibility_matrix, all_pts, start, finish, polytopes_before, idx_of_polytope_for_removal)
-    % fcn_MapGen_increasePolytopeVertexCount
-    % The function fcn_visibility_clear_and_blocked_points returns an intersection
-    % matrix for a single start point, showing what was intersected between
-    % that start point and numerous possible end points.
-    % This function wraps that function to call it on every possible start and end
-    % combination to provide global visibility truth tables rather than local
-    % intersection truth tables.
+    % fcn_visibility_graph_remove_obstacle
+    %   this function recalculates the visibility graph after deleting a polytope without recalculating
+    %   the entire visibility graph.  This is accomplished using an AABB check as a coarse check.
+    %   This function also recalculates the all_pts, start, finish, and polytopes data structures
+    %   as these are also affected by the removal of an obstacle.
+    % see vgraph_modification section of Documentation/bounded_astar_documentation.pptx for pseudocode and algorithm description
     %
     %
     % FORMAT:
-    % visibility_matrix = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts)
+    % [visibility_matrix_new, all_pts_new, start_new, finish_new, polytopes_after] = ...
+    %     fcn_visibility_graph_remove_obstacle(...
+    %     visibility_matrix, all_pts, start, finish, polytopes_before, idx_of_polytope_for_removal)
     %
     % INPUTS:
-    %     polytopes - the polytope field
+    %     visibility_matrix - nxn matrix, where n is the number of points in all_pts
+    %       a 1 in column i and row j indicates that all_pts(i,:) is visible from
+    %       all_pts(j,:).  This matrix is therefore symmetric
     %     ALL_PTS: p-by-5 matrix of all the possible start points
     %       the information in the 5 columns is as follows:
     %         x-coordinate
@@ -24,48 +27,55 @@ function [visibility_matrix_new, all_pts_new, start_new, finish_new, polytopes_a
     %         beginning/ending indication (1 if the point is a beginning or ending
     %         point and 0 otherwise)
     %         Ex: [x y point_id obs_id beg_end]
-    %      gap_size: if zero, the special fully tiled case will be handled.
-    %         This involves assuming that visibility is only down sides and through polytopes
-    %     (optional inputs)
-    %     is_concave: set a 1 to allow for concave (i.e. non-convex) obstacles.  If this is left
-    %         blank or set to anyting other than 1, the function defaults to the convex behavior
-    %         which is more conservative (i.e. setting the flag wrong incorrectly may result in
-    %         suboptimal paths but not collisions). For background on what this flag does, see slides 9-14 here:
-    %         https://pennstateoffice365.sharepoint.com/:p:/r/sites/IntelligentVehiclesandSystemsGroup-Active/Shared%20Documents/IVSG/Theses/2025_Harnett_PhD/Weekly%20Updates/HARNETT_WEEKLY_UPDATE_JAN08_2024.pptx?d=w4f5e75a3c5b343aab47b41d2b945075b&csf=1&web=1&e=5otpZ3
+    %     START: 1-by-5 vector with the same info as route for the starting point
+    %     FINISH: same as start for the finish point
+    %     polytopes_before - the polytope struct array prior to modification INCLUDING the polytope for removal
+    %     idx_for_removal - the index of the polytope to be removed in the polytopes_before struct array
     %
     %
     % OUTPUTS:
-    %
-    %     visibility_matrix - nxn matrix, where n is the number of points in all_pts
-    %       a 1 in column i and row j indicates that all_pts(i,:) is visible from
-    %       all_pts(j,:).  This matrix is therefore symmetric
+    %     visibility_matrix_new: same as the visiblity_matrix input but modified so that the removed
+    %         removed polytope no longer affects the visibility.  Note this may have fewer points than
+    %         the input matrix as points on the removed polytope are deleted.
+    %     all_pts_new: same as the all_pts input but with points on the removed polytope deleted.
+    %         May be reindexed
+    %     start_new: same as start input but reindexed to account for removed points
+    %     finish_new: same as finish input but reindexed to account for removed points
+    %     polytopes_after:  the polytope struct array after modification no longer including
+    %         the polytope for removal
     %
     % DEPENDENCIES:
+    %     fcn_MapGen_isCrossingAABB from the MapGen repo
     %     fcn_visibility_clear_and_blocked_points
     %
     % EXAMPLES:
     %
-    % See the script: script_fcn_visibility_clear_and_blocked_points_global.m
+    % See the script: script_visibility_graph_modification
     % for a full test suite.
     %
     % Questions or comments? contact sjh6473@psu.edu
 
     % REVISION HISTORY:
-    % 2021_10_28
+    % 2024_03
     % -- first written by Steve Harnett
     % Questions? sjh6473@psu.edu
-    % outer = tic;
+
+    %% initialize the modified vgraph, pts, start, and finish to the old values
     visibility_matrix_new = visibility_matrix;
     all_pts_new = all_pts;
     start_new = start;
     finish_new = finish;
     all_pts_with_start_and_fin = [all_pts; start; finish];
-    polytope_of_interest = polytopes_before(idx_of_polytope_for_removal);
+
+    %% remove polytope from vgraph and all_pts
+    polytope_of_interest = polytopes_before(idx_of_polytope_for_removal); % get polytope for removal
+    % get AABB of polytope for removal
     polytope_vertices = [[polytope_of_interest.xv]',[polytope_of_interest.yv]'];
     AABB = [min(polytope_of_interest.xv) min(polytope_of_interest.yv) max(polytope_of_interest.xv) max(polytope_of_interest.yv)];
-
+    % delete polytope
     polytopes_after = polytopes_before;
     polytopes_after(idx_of_polytope_for_removal) = [];
+    % find the verts of that polytope in all_pts table
     [~, xloc] = ismember(polytope_vertices(:,1), all_pts(:,1));
     [~, yloc] = ismember(polytope_vertices(:,2), all_pts(:,2));
     idx_of_points_on_polytope = union(xloc,yloc);
@@ -91,10 +101,7 @@ function [visibility_matrix_new, all_pts_new, start_new, finish_new, polytopes_a
     % only want possible edges that are not already edges as deleting the obstacle adds edges, it does
     % not remove existing edges
     [r,c] = find(isInside & ~visibility_matrix_new);
-    % toc(outer)
-    % inner = tic
-    %% check only  specific edges method
-    % TODO @sjharnett use global function and check from each start to all finishes for that start
+    %% check only specific edges method
     for i = 1:length(r)
         [~,~,D] = fcn_visibility_clear_and_blocked_points(polytopes_after, all_pts_new(r(i),:), all_pts_new(c(i),:));
         visibility_scalar = sum(D);
@@ -103,6 +110,5 @@ function [visibility_matrix_new, all_pts_new, start_new, finish_new, polytopes_a
             visibility_matrix_new(r(i),c(i)) = 1;
         end
     end
-    % toc(inner)
     sprintf('num checks was %i',length(r))
 end
