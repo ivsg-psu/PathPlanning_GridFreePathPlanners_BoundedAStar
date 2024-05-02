@@ -28,8 +28,8 @@ function [visibility_matrix, visibility_results] = fcn_visibility_clear_and_bloc
     %     is_concave: set a 1 to allow for concave (i.e. non-convex) obstacles.  If this is left
     %         blank or set to anyting other than 1, the function defaults to the convex behavior
     %         which is more conservative (i.e. setting the flag wrong incorrectly may result in
-    %         suboptimal paths but not collisions). For background on what this flag does, see slides 9-14 here:
-    %         https://pennstateoffice365.sharepoint.com/:p:/r/sites/IntelligentVehiclesandSystemsGroup-Active/Shared%20Documents/IVSG/Theses/2025_Harnett_PhD/Weekly%20Updates/HARNETT_WEEKLY_UPDATE_JAN08_2024.pptx?d=w4f5e75a3c5b343aab47b41d2b945075b&csf=1&web=1&e=5otpZ3
+    %         suboptimal paths but not collisions). For background on what this flag does, see slides
+    %         in `concave_vgraph` section of Documentation/bounded_astar_documentation.pptx
     %
     %
     % OUTPUTS:

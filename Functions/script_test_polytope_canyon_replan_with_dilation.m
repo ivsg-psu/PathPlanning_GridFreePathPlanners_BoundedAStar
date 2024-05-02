@@ -124,11 +124,11 @@ for map_idx =5%2:6
         centre_co_avg_alt = 351.7392;
         % start_init = INTERNAL_WGSLLA2xyz(start_init(2),start_init(1),centre_co_avg_alt);
         start_init = ll2utm(start_init(2),start_init(1),datum);
-        start_init = start_init(1:2)';
+        start_init = start_init(1:2);
         start_init = start_init/1000;
         % finish_init = INTERNAL_WGSLLA2xyz(finish_init(2),finish_init(1),centre_co_avg_alt);
         finish_init = ll2utm(finish_init(2),finish_init(1),datum);
-        finish_init = finish_init(1:2)';
+        finish_init = finish_init(1:2);
         finish_init = finish_init/1000;
         new_polytopes = [];
         for i = 1:length(shrunk_polytopes)
@@ -157,11 +157,6 @@ for map_idx =5%2:6
         start_inits = start_init;
         finish_inits = finish_init;
     end
-    figure; hold on;
-                for j = 1:length(shrunk_polytopes)
-                     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
-                end
-    return
     for mission_idx = 1:size(start_inits,1)
         start_init = start_inits(mission_idx,:);
         finish_init = finish_inits(mission_idx,:);
