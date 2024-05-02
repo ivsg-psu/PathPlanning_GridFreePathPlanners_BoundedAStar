@@ -14,7 +14,7 @@ flag_do_animation = 0;
 % map_ID nominal_or_reachable edge_deletion initial_distance navigated_distance replan_route_length
 %%%
 data = []; % initialize array for storing results
-for map_idx = 2%2:5
+for map_idx = 4%2:5
     if map_idx == 1
         %% load test fixtures for polytope map rather than creating it here
         % load distribution north of canyon
