@@ -89,12 +89,7 @@ finishes = [all_pts; start; finish];
 starts = [all_pts; start; finish];
 [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes);
 
-start_for_reachability = start;
-start_for_reachability(4) = start(3);
-finish_for_reachability = finish;
-finish_for_reachability(4) = finish(3);
-
-[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start_for_reachability,finish_for_reachability);
+[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(3),finish(3));
 
 % new experimental cost function prioritizing reachability
 reachable_nodes_from_each_node = sum(rgraph,2);

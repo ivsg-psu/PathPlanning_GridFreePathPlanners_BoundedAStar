@@ -775,11 +775,7 @@ finish = [xcc(finish_closest_tri) ycc(finish_closest_tri) finish_closest_node];
 vgraph = adjacency_matrix;
 vgraph(1:num_nodes+1:end) = 1;
 % check reachability
-start_for_reachability = start;
-start_for_reachability(4) = start(3);
-finish_for_reachability = finish;
-finish_for_reachability(4) = finish(3);
-[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start_for_reachability,finish_for_reachability);
+[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(3),finish(3));
 if ~is_reachable
     warning('initial mission, prior to edge deletion, is not possible')
     continue

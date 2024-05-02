@@ -91,12 +91,7 @@ compressed_vgraph(end-1,:) = vgraph(end-1,:);
 % keep cgraph the same as it just contains costs for all  possible node pairs
 compressed_cgraph = cgraph;
 
-start_for_reachability = start;
-start_for_reachability(4) = start(3);
-finish_for_reachability = finish;
-finish_for_reachability(4) = finish(3);
-
-[is_reachable, num_steps, rgraph] = fcn_check_reachability(compressed_vgraph,start_for_reachability,finish_for_reachability);
+[is_reachable, num_steps, rgraph] = fcn_check_reachability(compressed_vgraph,start(3),finish(3));
 if ~is_reachable
     error('compressed map does not contain path from start to goal')
 end

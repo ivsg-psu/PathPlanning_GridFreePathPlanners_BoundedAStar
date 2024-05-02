@@ -105,7 +105,7 @@ finish_with_ids = all_pts(num_verts+num_starts+1:num_verts+num_starts+num_finish
 all_pts_with_ids_no_start_and_fin = all_pts(1:num_verts,:);
 
 %% form reachability graph
-[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph, start_with_ids, finish_with_ids);
+[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph, start_with_ids(:,4), finish_with_ids(:,4));
 
 %% make cgraph
 mode = "xy spatial only";
@@ -179,7 +179,7 @@ if second_pass_with_new_verts
 
 
     %% make rgraph
-    [is_reachable, num_steps, new_rgraph] = fcn_check_reachability(new_vgraph, start_with_ids, finish_with_ids);
+    [is_reachable, num_steps, new_rgraph] = fcn_check_reachability(new_vgraph, start_with_id(:,4), finish_with_ids(:,4));
 
     %% make cgraph
     mode = "xy spatial only";
@@ -237,7 +237,7 @@ if threadpulling
     %% make vgraph
     new_vgraph = fcn_visibility_graph_3d_global(verts_with_ids(:,1:3), start(:,1:3), finish(:,1:3), all_surfels, speed_limit, time_space_polytopes,dt);
     %% make rgraph
-    [is_reachable, num_steps, new_rgraph] = fcn_check_reachability(new_vgraph, start, finish);
+    [is_reachable, num_steps, new_rgraph] = fcn_check_reachability(new_vgraph, start(:,4), finish(:,4));
     %% make cgraph
     mode = "xy spatial only";
     % mode = 'time or z only';
