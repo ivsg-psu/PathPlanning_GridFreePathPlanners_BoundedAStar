@@ -179,7 +179,7 @@ if second_pass_with_new_verts
 
 
     %% make rgraph
-    [is_reachable, num_steps, new_rgraph] = fcn_check_reachability(new_vgraph, start_with_id(:,4), finish_with_ids(:,4));
+    [is_reachable, num_steps, new_rgraph] = fcn_check_reachability(new_vgraph, start_with_ids(:,4), finish_with_ids(:,4));
 
     %% make cgraph
     mode = "xy spatial only";
