@@ -19,7 +19,7 @@ add_boundary = 1;
 if map_idx == 5 % bridge map, good for random edge deletion case
     resolution_scale = 1;
 elseif map_idx == 7 % generic polytope map
-    resolution_scale = 10;
+    resolution_scale = 20;
 elseif map_idx == 8 % Josh's polytope map from 24 April 2024
     resolution_scale = 2;
 else
@@ -595,136 +595,152 @@ for i = 1:num_nodes
     end
     all_pts(i,:) = [xcc(nodes(i)), ycc(nodes(i)), i];
 end
-%% form cost graph from triangle_chains
+
+%% loop for generating alterate routes
 % cost is of the form: total cost = w*length + (1-w)*corridor_width
 w = 1;
 route_choke = 0;
 alternate_routes = {};
+alternate_routes_nodes = {};
 smallest_corridors = [];
 route_lengths = [];
-for iterations = 1:5
-cgraph = nan(size(adjacency_matrix)); % initialize cgraph
-% since there can be multiple chains between two nodes, we need to note which one we are using
-best_chain_idx_matrix = nan(size(adjacency_matrix));
-% for every one in the adjacency matrix, i.e., every connected pair of nodes
-[r, c] = find((adjacency_matrix));
-for i = 1:length(r)
-    % if this is the self adjacent node...
-    if r(i) == c(i)
-        cgraph(r(i),c(i)) = 0; % it's always free to stay still
-        continue
-    end
-    % find all the chains connecting r and c in adjacency that meet the min corridor width requirement
-    idx_chain_rc = find([triangle_chains{:,1}]'== r(i) & [triangle_chains{:,2}]'== c(i) & [triangle_chains{:,4}]' > route_choke);
-    % if there are no matches meeting the start, goal, and min corridor width, set adjacency to zero and move on
-    if isempty(idx_chain_rc)
-        adjacency_matrix(r(i),c(i)) = 0;
-        continue
-    end
-    % we want to only use the chain with the lowest total cost form r to c
-    corridor_widths = [triangle_chains{idx_chain_rc, 4}]; % the corridor width of all valid chains
-    lengths = [triangle_chains{idx_chain_rc, 5}]; % the length of all valid chains
-    possible_costs = w*lengths + (1-w)*(corridor_widths).^(-1); % vectorized total cost
-    [min_cost, min_cost_location] = min(possible_costs); % the min cost is what we use as cost
-    cgraph(r(i),c(i)) = min_cost;
-    best_chain_idx_matrix(r(i),c(i)) = idx_chain_rc(min_cost_location); % need to remember which chain we want to use
-end
-
 %  set the start for the planner as the start node not the startxy
 start = [xcc(start_closest_tri) ycc(start_closest_tri) start_closest_node];
 finish = [xcc(finish_closest_tri) ycc(finish_closest_tri) finish_closest_node];
 
-% adjacency matrix is vgraph
-vgraph = adjacency_matrix;
-vgraph(1:num_nodes+1:end) = 1;
-% check reachability
-[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(3),finish(3));
-if ~is_reachable
-    warning('initial mission, prior to edge deletion, is not possible')
-    continue
-end
-% run Dijkstra's algorithm (no heuristic)
-hvec = zeros(1,num_nodes);
-
-% plan a path
-[cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
-
-% take route and tri chains data structure
-% also take best path structure
-route_triangle_chain = [];
-route_choke = inf;
-for i = 1:(size(route,1)-1)
-    % for route to route + 1 get tri chain
-    beg_seg = route(i,3);
-    end_seg = route(i+1,3);
-    idx_chain = find([triangle_chains{:,1}]'== beg_seg & [triangle_chains{:,2}]'== end_seg);
-    % if there's none, error
-    if isempty(idx_chain)
-        error('no triangle chain exists for this route segment')
-    % elseif length(idx_chain) == 1
-    %     route_triangle_chain = [route_triangle_chain, triangle_chains{chain_idx,3}];
-    %     % coule extract length and min width here
-    % if there's two take best
-    % if there's one, take it
-    else
-        best_chain_idx = best_chain_idx_matrix(beg_seg,end_seg);
-        % append to list of triangle chains
-        route_triangle_chain = [route_triangle_chain, triangle_chains{best_chain_idx,3}];
-        segment_choke = triangle_chains{best_chain_idx,4};
-        route_choke = min(route_choke, segment_choke);
+backstep = 4;
+for iterations = 1:2
+route_choke = 0;
+    cgraph = nan(size(adjacency_matrix)); % initialize cgraph
+    % since there can be multiple chains between two nodes, we need to note which one we are using
+    best_chain_idx_matrix = nan(size(adjacency_matrix));
+    % for every one in the adjacency matrix, i.e., every connected pair of nodes
+    [r, c] = find((adjacency_matrix));
+    for i = 1:length(r)
+        % if this is the self adjacent node...
+        if r(i) == c(i)
+            cgraph(r(i),c(i)) = 0; % it's always free to stay still
+            continue
+        end
+        % TODO need to filter on segments included in prior route not route choke OR route chokes only what was in tail
+        % find all the chains connecting r and c in adjacency that meet the min corridor width requirement
+        idx_chain_rc = find([triangle_chains{:,1}]'== r(i) & [triangle_chains{:,2}]'== c(i) & [triangle_chains{:,4}]' > route_choke);
+        % if there are no matches meeting the start, goal, and min corridor width, set adjacency to zero and move on
+        if isempty(idx_chain_rc)
+            adjacency_matrix(r(i),c(i)) = 0;
+            continue
+        end
+        % we want to only use the chain with the lowest total cost form r to c
+        corridor_widths = [triangle_chains{idx_chain_rc, 4}]; % the corridor width of all valid chains
+        lengths = [triangle_chains{idx_chain_rc, 5}]; % the length of all valid chains
+        possible_costs = w*lengths + (1-w)*(corridor_widths).^(-1); % vectorized total cost
+        [min_cost, min_cost_location] = min(possible_costs); % the min cost is what we use as cost
+        cgraph(r(i),c(i)) = min_cost;
+        best_chain_idx_matrix(r(i),c(i)) = idx_chain_rc(min_cost_location); % need to remember which chain we want to use
     end
-end
-% dedup
-route_triangle_chain = unique(route_triangle_chain,'stable');
-% append the straightline from startxy to start node to the beginning of the route when transforming the route to tri chains
-route_full = [start_xy; xcc(route_triangle_chain), ycc(route_triangle_chain); finish_xy];
-route_x = route_full(:,1);
-route_y = route_full(:,2);
-route_deltas = diff([route_x(:) route_y(:)]);
-route_length = sum(sqrt(sum(route_deltas.*route_deltas,2)));
 
-% plot result
-figure; hold on; box on;
-xlabel('x [km]');
-ylabel('y [km]');
-leg_str = {};
-leg_str{end+1} = 'medial axis graph';
-not_first = 0;
-for i = 1:(size(triangle_chains,1))
-    % pop off a triangle chain
-    chain_of_note = triangle_chains{i,3};
-    if isempty(chain_of_note)
+    % adjacency matrix is vgraph
+    vgraph = adjacency_matrix;
+    vgraph(1:num_nodes+1:end) = 1;
+    % check reachability
+    [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(3),finish(3));
+    if ~is_reachable
+        my_warn = sprintf('alternate route %i planning not possible',iterations);
+        warning(my_warn)
         continue
     end
-    % pot big markers for the start and end node
-    beg_end = [chain_of_note(1) chain_of_note(end)];
-    % plot a straight line between them (this is the adjacency graph connection)
-    plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',0.6*ones(1,3));
-    if not_first
+    % run Dijkstra's algorithm (no heuristic)
+    hvec = zeros(1,num_nodes);
+
+    % plan a path
+    [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
+    if iterations ~= 1
+        % TODO don't need to do the prepending, just have the route be from the midpoint to the finish
+        route = [init_route(1:end-backstep,:); route];
+        start = route(1,:);
+    end
+    % take route and tri chains data structure
+    % also take best path structure
+    route_triangle_chain = [];
+    route_choke = inf;
+    for i = 1:(size(route,1)-1)
+        % for route to route + 1 get tri chain
+        beg_seg = route(i,3);
+        end_seg = route(i+1,3);
+        idx_chain = find([triangle_chains{:,1}]'== beg_seg & [triangle_chains{:,2}]'== end_seg);
+        % if there's none, error
+        if isempty(idx_chain)
+            error('no triangle chain exists for this route segment')
+        % elseif length(idx_chain) == 1
+        %     route_triangle_chain = [route_triangle_chain, triangle_chains{chain_idx,3}];
+        %     % coule extract length and min width here
+        % if there's two take best
+        % if there's one, take it
+        else
+            best_chain_idx = best_chain_idx_matrix(beg_seg,end_seg);
+            % append to list of triangle chains
+            route_triangle_chain = [route_triangle_chain, triangle_chains{best_chain_idx,3}];
+            segment_choke = triangle_chains{best_chain_idx,4};
+            route_choke = min(route_choke, segment_choke);
+        end
+    end
+    % dedup
+    route_triangle_chain = unique(route_triangle_chain,'stable');
+    % TODO don't append the start_xy unless its first iter
+    % append the straightline from startxy to start node to the beginning of the route when transforming the route to tri chains
+    route_full = [start_xy; xcc(route_triangle_chain), ycc(route_triangle_chain); finish_xy];
+    route_x = route_full(:,1);
+    route_y = route_full(:,2);
+    route_deltas = diff([route_x(:) route_y(:)]);
+    route_length = sum(sqrt(sum(route_deltas.*route_deltas,2)));
+
+    % plot result
+    figure; hold on; box on;
+    xlabel('x [km]');
+    ylabel('y [km]');
+    leg_str = {};
+    leg_str{end+1} = 'medial axis graph';
+    not_first = 0;
+    for i = 1:(size(triangle_chains,1))
+        % pop off a triangle chain
+        chain_of_note = triangle_chains{i,3};
+        if isempty(chain_of_note)
+            continue
+        end
+        % pot big markers for the start and end node
+        beg_end = [chain_of_note(1) chain_of_note(end)];
+        % plot a straight line between them (this is the adjacency graph connection)
+        plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',0.6*ones(1,3));
+        if not_first
+            leg_str{end+1} = '';
+        end
+        not_first =1;
+        % plot the medial axis path between them (this is the curved path from the triangle chain)
+        plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',0.6*ones(1,3));
         leg_str{end+1} = '';
     end
-    not_first =1;
-    % plot the medial axis path between them (this is the curved path from the triangle chain)
-    plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',0.6*ones(1,3));
-    leg_str{end+1} = '';
-end
-plot(route(:,1),route(:,2),'--r','MarkerSize',20,'LineWidth',1);
-leg_str{end+1} = sprintf('adjacency of route nodes');
-for j = 2:length(shrunk_polytopes)
-    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-end
-leg_str{end+1} = 'obstacles';
-for i = 1:length(shrunk_polytopes)-2
-    leg_str{end+1} = '';
-end
-plot(route_full(:,1), route_full(:,2), '-k','LineWidth',2.5) % plot approx. medial axis
-leg_str{end+1} = 'medial axis route';
-legend(leg_str,'Location','best');
-tit_str = sprintf('length cost weight was: %.1f \n total length: %.2f km \n worst corridor: %.2f km',w, route_length, route_choke);
-title(tit_str)
-alternate_routes{end+1}  = route_full;
-smallest_corridors = [smallest_corridors, route_choke];
-route_lengths = [route_lengths, route_length];
+    plot(route(:,1),route(:,2),'--r','MarkerSize',20,'LineWidth',1);
+    leg_str{end+1} = sprintf('adjacency of route nodes');
+    for j = 2:length(shrunk_polytopes)
+        fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+    end
+    leg_str{end+1} = 'obstacles';
+    for i = 1:length(shrunk_polytopes)-2
+        leg_str{end+1} = '';
+    end
+    plot(route_full(:,1), route_full(:,2), '-k','LineWidth',2.5) % plot approx. medial axis
+    leg_str{end+1} = 'medial axis route';
+    legend(leg_str,'Location','best');
+    tit_str = sprintf('length cost weight was: %.1f \n total length: %.2f km \n worst corridor: %.2f km',w, route_length, route_choke);
+    title(tit_str)
+    %% update for next iteration of alt route
+    alternate_routes_nodes{end+1}  = route;
+    alternate_routes{end+1}  = route_full;
+    smallest_corridors = [smallest_corridors, route_choke];
+    route_lengths = [route_lengths, route_length];
+    init_route = alternate_routes_nodes{1};
+    start = init_route(end-backstep,:);
+    backstep = backstep + 1;
 end
 figure; hold on; box on;
 leg_str = {};
@@ -758,34 +774,6 @@ for i = 1:length(shrunk_polytopes)-2
 end
 legend(leg_str,'Location','best');
 title(sprintf('%i paths, each with wider corridors',length(alternate_routes)));
-return
-%% attempt 3d
-% close all; clear all; clc;
-% load trimesh3d
-% trisurf(tri,x,y,z)
-% dt = delaunayTriangulation(x,y,z)
-% tr = triangulation(dt(:,:),dt.Points)
-% trisurf(tri,x,y,z)
-% numt = size(tr,1);
-% T = (1:numt)';
-% neigh = neighbors(tr);
-% cc = circumcenter(tr);
-cc = incenter(tr);
-% nodes = find(~isnan(sum(neigh, 2)));
-% xcc = cc(:,1);
-% ycc = cc(:,2);
-% zcc = cc(:,3);
-% idx1 = T < neigh(:,1);
-% idx2 = T < neigh(:,2);
-% idx3 = T < neigh(:,3);
-% neigh = [T(idx1) neigh(idx1,1); T(idx2) neigh(idx2,2); T(idx3) neigh(idx3,3)]';
-% figure(1); hold on; box on;
-% trisurf(tri,x,y,z)
-% hold on
-plot3(xcc(neigh), ycc(neigh), zcc(neigh), '-r','LineWidth',1.5)
-% plot3(xcc(nodes), ycc(nodes), zcc(nodes), '.k','MarkerSize',30)
-% xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
-%
 function xyz = INTERNAL_WGSLLA2xyz(wlat, wlon, walt)
     %Function xyz = wgslla2xyz(lat, lon, alt) returns the
     %equivalent WGS84 XYZ coordinates (in meters) for a
