@@ -74,12 +74,9 @@ finish_with_ids = all_pts(num_verts+num_starts+1:num_verts+num_starts+num_finish
 speed_limit = 1/1.25;
 vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit, time_space_polytopes, dt);
 
-%% make rgraph
-% [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph, start_with_ids, finish_with_ids);
-rgraph = ones(size(vgraph,1),size(vgraph,2));
 
 %% plan route
-[cost, route] = fcn_algorithm_Astar3d(vgraph, verts_with_ids, start_with_ids, finish_with_ids, rgraph);
+[cost, route] = fcn_algorithm_Astar3d(vgraph, verts_with_ids, start_with_ids, finish_with_ids);
 % route metrics follow
 total_time = max(route(:,3));
 route_x = route(:,1);

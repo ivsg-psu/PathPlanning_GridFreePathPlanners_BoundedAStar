@@ -75,7 +75,7 @@ speed_limit = 1/1.25;
 vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit, time_space_polytopes, dt);
 
 %% make rgraph
-[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph, start_with_ids, finish_with_ids);
+[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph, start_with_ids(:,4), finish_with_ids(:,4));
 
 %% make cgraph
 % mode = "xy spatial only";

@@ -73,7 +73,7 @@ speed_limit = 100;
 vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit,time_space_polytopes, dt);
 start = all_pts(num_verts+1,:);
 finish = all_pts(num_verts+2:end,:);
-[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start,finish);
+[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(:,4),finish(:,4));
 
 mode = 'time or z only';
 [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts(1:num_verts,:), all_pts(num_verts+1,:), all_pts(num_verts+2:end,:), mode);

@@ -1,5 +1,5 @@
-function [visibility_matrix, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes, starts, finishes)
-    % fcn_MapGen_increasePolytopeVertexCount
+function [visibility_matrix, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes, starts, finishes, varargin)
+    % fcn_visibility_clear_and_blocked_points_global
     % The function fcn_visibility_clear_and_blocked_points returns an intersection
     % matrix for a single start point, showing what was intersected between
     % that start point and numerous possible end points.
@@ -24,6 +24,13 @@ function [visibility_matrix, visibility_results] = fcn_visibility_clear_and_bloc
     %         Ex: [x y point_id obs_id beg_end]
     %      gap_size: if zero, the special fully tiled case will be handled.
     %         This involves assuming that visibility is only down sides and through polytopes
+    %     (optional inputs)
+    %     is_concave: set a 1 to allow for concave (i.e. non-convex) obstacles.  If this is left
+    %         blank or set to anyting other than 1, the function defaults to the convex behavior
+    %         which is more conservative (i.e. setting the flag wrong incorrectly may result in
+    %         suboptimal paths but not collisions). For background on what this flag does, see slides
+    %         in `concave_vgraph` section of Documentation/bounded_astar_documentation.pptx
+    %
     %
     % OUTPUTS:
     %
@@ -45,6 +52,28 @@ function [visibility_matrix, visibility_results] = fcn_visibility_clear_and_bloc
     % 2021_10_28
     % -- first written by Steve Harnett
     % Questions? sjh6473@psu.edu
+    %% check input arguments
+    if nargin < 3 || nargin > 4
+        error('Incorrect number of arguments');
+    end
+    % if there is no value in varargin...
+    if nargin == 3
+        % default is to assume convex obstacles as this is conservative
+        is_concave = 0;
+    end
+    % if there is a value in varargin...
+    if nargin == 4
+        % check what it is
+        if varargin{1} == 1
+            % set concave flag if it was passed in
+            is_concave = 1;
+        elseif varargin{1} == 0
+            is_concave = 0;
+        else
+            % throw error if it was passed in with an incorrect value
+            error('optional argument is the is_concave flag and can either be 1 or 0')
+        end
+    end
 
     % TODO(@sjharnett) could use the Lee algorithm to speed up if necessary
     % https://github.com/davetcoleman/visibility_graph/blob/master/Visibility_Graph_Algorithm.pdf
@@ -53,17 +82,17 @@ function [visibility_matrix, visibility_results] = fcn_visibility_clear_and_bloc
     % need the reverse mappping of points to polytopes
     % then each point is only represented once
     % visibility graph can then be reduced
-    num_points = size(starts,1)
+    num_points = size(starts,1);
     % for non-zero gap size, we can repeatedly call the legacy visibility functions
 
     % if gap_size ~= 0
-        visibility_matrix = NaN(num_points)
+        visibility_matrix = NaN(num_points);
         %% loop through all points
         for j = 1:num_points
             i = starts(j,3);
             % legacy visibility function returns visibility vector for this point
             [visibility_results(i).clear_pts,visibility_results(i).blocked_pts,visibility_results(i).D,visibility_results(i).di,visibility_results(i).dj,visibility_results(i).num_int,visibility_results(i).xiP,visibility_results(i).yiP,visibility_results(i).xiQ,visibility_results(i).yiQ,visibility_results(i).xjP,visibility_results(i).yjP,visibility_results(i).xjQ,visibility_results(i).yjQ] = ...
-                fcn_visibility_clear_and_blocked_points(polytopes,starts(j,:),finishes);
+                fcn_visibility_clear_and_blocked_points(polytopes,starts(j,:),finishes,is_concave);
             % D is finish points on the rows and polytope sides on the columns
             % transpose this so we have column for each point
             % sum each column into a row vector so each element is the sum of number
@@ -84,7 +113,7 @@ function [visibility_matrix, visibility_results] = fcn_visibility_clear_and_bloc
             % idx = sub2ind(size(visibility_matrix), i.*ones(size(pt_idx,1),size(pt_idx,2)), pt_idx);
             % % set a 1, indicating the self-blocked points are visible
             % visibility_matrix(idx) = 1;
-    %     end
+        end
     % elseif gap_size == 0
     %     % for the zero gap size case, we can do an optimization: all points on the same polytope
     %     % are visible, either along the side or across the polytope
@@ -110,6 +139,55 @@ function [visibility_matrix, visibility_results] = fcn_visibility_clear_and_bloc
     %                 visibility_matrix(i,r(k)) = 1;
     %             end
     %         end
-    %     end
+    %    end
     % end
+    if is_concave
+        %% check for edges entirely contained by polytopes
+        % don't need to check self visible points as this will not change
+        visibility_matrix_without_self_visible = visibility_matrix - eye(size(visibility_matrix,1));
+        % find indeces of every other '1' or allowed edge...
+        linear_idx = find(visibility_matrix_without_self_visible); % find 1s in visibility_matrix
+        [rows_of_1s, cols_of_1s] = ind2sub(size(visibility_matrix_without_self_visible),linear_idx); % convert linear idx to r,c
+        num_1s = length(rows_of_1s);
+        for e = 1:num_1s
+            start_pt = starts(rows_of_1s(e),1:2);
+            end_pt = finishes(cols_of_1s(e),1:2);
+            % parametric equation for line in 3D: https://math.stackexchange.com/questions/404440/what-is-the-equation-for-a-3d-line
+            % [x y z]' = [a b c]'*t + [x0 y0 z0]'
+            % parametric equation for line in 2D: https://math.libretexts.org/Bookshelves/Calculus/CLP-3_Multivariable_Calculus_(Feldman_Rechnitzer_and_Yeager)/01%3A_Vectors_and_Geometry_in_Two_and_Three_Dimensions/1.03%3A_Equations_of_Lines_in_2d
+            % [x y]' = d'*t + [x0 y0]'
+            d_vec = end_pt - start_pt;
+            mid_pt = start_pt + 0.5*d_vec; % find the middle of the edge
+            % for each polytope...
+            num_polys = length(polytopes);
+            p = 1;
+            while p <= num_polys
+                verts = polytopes(p).vertices;
+                % get xmin and xmax also ymin and ymax
+                xmax = max(verts(:,1));
+                xmin = min(verts(:,1));
+                ymax = max(verts(:,2));
+                ymin = min(verts(:,2));
+                % check axis aligned bounding box before checking for polytope containment of the midpoint
+                in_AABB = (mid_pt(1) < xmax && mid_pt(1) > xmin) && (mid_pt(2) < ymax && mid_pt(2) > ymin);
+                % is point between xmin xmax and ymin max? if not continue
+                if ~in_AABB
+                    p = p+1;
+                    continue
+                end
+                % if point is in AABB make polyshape from these verts
+                polyshape_p = polyshape(verts);
+                % is point in but not on polyshape?
+                [is_in,is_on] = isinterior(polyshape_p,mid_pt(1:2));
+                % if so, remove the edge, and stop trying polytopes
+                if is_in && ~ is_on
+                    visibility_matrix(rows_of_1s(e),cols_of_1s(e)) = 0;
+                    % if it is in one polytope, we needn't check any others
+                    p = num_polys+1;
+                end
+                % if not, continue to check the next polytope
+                p = p + 1;
+            end
+        end
+    end
 end

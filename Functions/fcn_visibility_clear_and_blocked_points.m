@@ -1,4 +1,4 @@
-function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = fcn_visibility_clear_and_blocked_points(polytopes,start,finish)
+function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = fcn_visibility_clear_and_blocked_points(polytopes,start,finish,varargin)
 % FCN_VISIBILITY_CLEAR_AND_BLOCKED_POINTS determines whether the points in
 % finish are blocked by a poltyope or not
 %
@@ -57,6 +57,12 @@ function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]
 %   Ex: [x y point_id obs_id beg_end]
 % FINISH: a m-by-5 vector of ending points information, including the same
 %   information as START
+% (optional inputs)
+% is_concave: set a 1 to allow for concave (i.e. non-convex) obstacles.  If this is left
+%   blank or set to anyting other than 1, the function defaults to the convex behavior
+%   which is more conservative (i.e. setting the flag wrong incorrectly may result in
+%   suboptimal paths but not collisions). For background on what this flag does, see slides 9-14 here:
+%   https://pennstateoffice365.sharepoint.com/:p:/r/sites/IntelligentVehiclesandSystemsGroup-Active/Shared%20Documents/IVSG/Theses/2025_Harnett_PhD/Weekly%20Updates/HARNETT_WEEKLY_UPDATE_JAN08_2024.pptx?d=w4f5e75a3c5b343aab47b41d2b945075b&csf=1&web=1&e=5otpZ3
 %
 % Examples:
 %
@@ -88,8 +94,26 @@ function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]
 %
 
 %% check input arguments
-if nargin ~= 3
+if nargin < 3 || nargin > 4
     error('Incorrect number of arguments');
+end
+% if there is no value in varargin...
+if nargin == 3
+    % default is to assume convex obstacles as this is conservative
+    is_concave = 0;
+end
+% if there is a value in varargin...
+if nargin == 4
+    % check what it is
+    if varargin{1} == 1
+        % set concave flag if it was passed in
+        is_concave = 1;
+    elseif varargin{1} == 0
+        is_concave = 0;
+    else
+        % throw error if it was passed in with an incorrect value
+        error('optional argument is the is_concave flag and can either be 1 or 0')
+    end
 end
 
 %% check orientation of start and finish
@@ -122,7 +146,7 @@ end
 [xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = fcn_convert_to_vector_points(polytopes,start,finish);
 
 %% calculate intersection check matrices
-[D,di,dj] = fcn_calculate_intersection_matrices(xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ,start,finish);
+[D,di,dj] = fcn_calculate_intersection_matrices(xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ,start,finish,is_concave);
 
 %% find indices of clear and blocked paths
 num_int = sum(D,2); % 0s should corespond with a clear path to a vertex
@@ -238,7 +262,7 @@ xiP = ones(lenQ,1)*start(1); % one starting point
 yiP = ones(lenQ,1)*start(2);
 end
 
-function [D,di,dj] = fcn_calculate_intersection_matrices(xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ,start,finish)
+function [D,di,dj] = fcn_calculate_intersection_matrices(xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ,start,finish,is_concave)
 % FCN_CALCULATE_INTERSECTION_MATRICES calculates matrices of values
 % indicating whether two lines intersect. Intersections occur when the
 % value of di and corresponding value of dj are both in the interval [0,1]
@@ -333,8 +357,13 @@ dj = (dxi.*(yjP-yiP) - dyi.*(xjP-xiP))./den;
 % midpoints = sum(isnan(di).*isnan(dj)+(di>=0).*(di<=1).*(dj==0),2) - (start_obs>0) - [ones(size(di,1)-1,1);0];
 % midpoints = isnan(di).*isnan(dj)+(di>=0).*(di<=1).*(dj==0) - (xjP==xiP).*(yjP==yiP) - (xjP==xiQ).*(yjP==yiQ);
 midpoints = (isnan(di).*isnan(dj)+(di>=0).*(di<=1).*(dj==0)) .* ((xiP~=xjP).*(yiP~=yjP) .* (xiP~=xjQ).*(yiP~=yjQ) .* (xiQ~=xjP).*(yiQ~=yjP) .* (xiQ~=xjQ).*(yiQ~=yjQ));
-%remove if both on same obstacle and not adjacent points
-exceptions = ((start_obs==finish_obs).*((abs(start_ind-finish_ind)~=1)-(start_be.*finish_be))).*1;
+if is_concave
+    % for nonconvex obstacles, we don't want to assume points are the same obstacle are blocked if not adjacent
+    exceptions = 0;
+else
+    %remove if both on same obstacle and not adjacent points
+    exceptions = ((start_obs==finish_obs).*((abs(start_ind-finish_ind)~=1)-(start_be.*finish_be))).*1;
+end
 acc = 1e-10;
 % removing "exceptions" could allow for self-blocked points to be visible...
 % but if a distinction is necessary between self-blocked points and points...
