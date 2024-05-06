@@ -12,14 +12,14 @@ flag_do_plot = 1;
 flag_do_plot_slow = 0;
 
 %% mission options
-map_idx = 8;
+map_idx = 7;
 add_boundary = 1;
 [shrunk_polytopes, start_init, finish_init] = fcn_util_load_test_map(map_idx, add_boundary);
 % some maps don't need as fine of a resolution so we can scale it up
 if map_idx == 5 % bridge map, good for random edge deletion case
     resolution_scale = 1;
 elseif map_idx == 7 % generic polytope map
-    resolution_scale = 20;
+    resolution_scale = 30;
 elseif map_idx == 8 % Josh's polytope map from 24 April 2024
     resolution_scale = 2;
 else
@@ -604,13 +604,17 @@ alternate_routes = {};
 alternate_routes_nodes = {};
 smallest_corridors = [];
 route_lengths = [];
+prev_route_chain_ids = [];
 %  set the start for the planner as the start node not the startxy
 start = [xcc(start_closest_tri) ycc(start_closest_tri) start_closest_node];
 finish = [xcc(finish_closest_tri) ycc(finish_closest_tri) finish_closest_node];
 
-backstep = 4;
-for iterations = 1:2
-route_choke = 0;
+backstep = 1;
+iterations = 1;
+init_route_num_nodes = inf; % initialize to infinite until we know init route length
+% TODO want to iterate for as many route points as there are
+while backstep < init_route_num_nodes
+    route_choke = 0;
     cgraph = nan(size(adjacency_matrix)); % initialize cgraph
     % since there can be multiple chains between two nodes, we need to note which one we are using
     best_chain_idx_matrix = nan(size(adjacency_matrix));
@@ -622,9 +626,9 @@ route_choke = 0;
             cgraph(r(i),c(i)) = 0; % it's always free to stay still
             continue
         end
-        % TODO need to filter on segments included in prior route not route choke OR route chokes only what was in tail
         % find all the chains connecting r and c in adjacency that meet the min corridor width requirement
         idx_chain_rc = find([triangle_chains{:,1}]'== r(i) & [triangle_chains{:,2}]'== c(i) & [triangle_chains{:,4}]' > route_choke);
+        idx_chain_rc = setdiff(idx_chain_rc, prev_route_chain_ids); % want to not use triangle chains that were in previous routes
         % if there are no matches meeting the start, goal, and min corridor width, set adjacency to zero and move on
         if isempty(idx_chain_rc)
             adjacency_matrix(r(i),c(i)) = 0;
@@ -647,6 +651,16 @@ route_choke = 0;
     if ~is_reachable
         my_warn = sprintf('alternate route %i planning not possible',iterations);
         warning(my_warn)
+        %% update for next iteration of alt route
+        alternate_routes_nodes{end+1}  = nan;
+        alternate_routes{end+1}  = nan;
+        smallest_corridors = [smallest_corridors, nan];
+        route_lengths = [route_lengths, nan];
+        init_route = alternate_routes_nodes{1};
+        init_route_num_nodes = size(init_route,1);
+        start = init_route(end-backstep,:);
+        backstep = backstep + 1;
+        iterations = iterations+ 1;
         continue
     end
     % run Dijkstra's algorithm (no heuristic)
@@ -656,7 +670,7 @@ route_choke = 0;
     [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
     if iterations ~= 1
         % TODO don't need to do the prepending, just have the route be from the midpoint to the finish
-        route = [init_route(1:end-backstep,:); route];
+        % route = [init_route(1:end-backstep,:); route];
         start = route(1,:);
     end
     % take route and tri chains data structure
@@ -680,15 +694,24 @@ route_choke = 0;
             best_chain_idx = best_chain_idx_matrix(beg_seg,end_seg);
             % append to list of triangle chains
             route_triangle_chain = [route_triangle_chain, triangle_chains{best_chain_idx,3}];
+            if i < (size(route,1)-3)
+                % if iterations == 1
+                % TODO do we want to do this on every step or only step 1?
+                prev_route_chain_ids = [prev_route_chain_ids, best_chain_idx];
+            end
             segment_choke = triangle_chains{best_chain_idx,4};
             route_choke = min(route_choke, segment_choke);
         end
     end
     % dedup
     route_triangle_chain = unique(route_triangle_chain,'stable');
-    % TODO don't append the start_xy unless its first iter
     % append the straightline from startxy to start node to the beginning of the route when transforming the route to tri chains
-    route_full = [start_xy; xcc(route_triangle_chain), ycc(route_triangle_chain); finish_xy];
+    if iterations == 1
+        route_full = [start_xy; xcc(route_triangle_chain), ycc(route_triangle_chain); finish_xy];
+    else
+        % don't append the start_xy unless its first iter
+        route_full = [xcc(route_triangle_chain), ycc(route_triangle_chain); finish_xy];
+    end
     route_x = route_full(:,1);
     route_y = route_full(:,2);
     route_deltas = diff([route_x(:) route_y(:)]);
@@ -739,8 +762,10 @@ route_choke = 0;
     smallest_corridors = [smallest_corridors, route_choke];
     route_lengths = [route_lengths, route_length];
     init_route = alternate_routes_nodes{1};
+    init_route_num_nodes = size(init_route,1);
     start = init_route(end-backstep,:);
     backstep = backstep + 1;
+    iterations = iterations+ 1;
 end
 figure; hold on; box on;
 leg_str = {};

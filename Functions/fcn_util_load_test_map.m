@@ -174,7 +174,7 @@ function [polytopes, starts, finishes] = fcn_util_load_test_map(map_idx, varargi
         points_scrambled = scramble(halton_points,'RR2'); % scramble values
 
         % pick values from halton set
-        Halton_range = [1801 1901];
+        Halton_range = [1801 1851];
         low_pt = Halton_range(1,1);
         high_pt = Halton_range(1,2);
         seed_points = points_scrambled(low_pt:high_pt,:);
@@ -193,7 +193,7 @@ function [polytopes, starts, finishes] = fcn_util_load_test_map(map_idx, varargi
         stretched_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(stretched_polytopes);
 
         % shrink polytopes to desired radius
-        des_rad = 0.8; sigma_radius = 0.4; min_rad = 0.1;
+        des_rad = 2; sigma_radius = 0.4; min_rad = 0.1;
         [polytopes,mu_final,sigma_final] = fcn_MapGen_polytopesShrinkToRadius(stretched_polytopes,des_rad,sigma_radius,min_rad);
 
         clear Halton_range
@@ -202,7 +202,6 @@ function [polytopes, starts, finishes] = fcn_util_load_test_map(map_idx, varargi
 
         start = [-2 20];
         finish = [32 20];
-        % tile field to hedgerow by making a set above and a set below
         if add_boundary
             %% make a boundary around the polytope field
             boundary.vertices = [-3 -5; -3 45; 33 45; 33 -5];
