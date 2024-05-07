@@ -12,7 +12,7 @@ flag_do_plot = 1;
 flag_do_plot_slow = 0;
 
 %% mission options
-map_idx = 8;
+map_idx = 7;
 num_paths = 10; % number of alternate paths to generate
 corridor_width_buffer = 1.1; % how much larger should the smallest corridor in route n+1 be relative to the smallest corridor in route n?
 [shrunk_polytopes, start_inits, finish_inits] = fcn_util_load_test_map(map_idx);
@@ -70,8 +70,9 @@ for mission_idx = 1:size(start_inits,1)
     init_route_length = sum(sqrt(sum(lengths.*lengths,2)));
     route_lengths = [init_route_length]; % note the route lengths
     smallest_corridors = nan(1,num_paths); % note the smallest corridor of each route
-
+    replanning_times = zeros(1,num_paths);
     for path_idx = 1:num_paths
+        replanning_time = tic;
         %% find smallest corridor in last route and remove all corridors that small or smaller
         % plan next best path given tighter constraints
         route_segment_costs = nan(1,size(init_route,1)-1);
@@ -116,6 +117,7 @@ for mission_idx = 1:size(start_inits,1)
         lengths = diff([route_x(:) route_y(:)]);
         replan_route_length = sum(sqrt(sum(lengths.*lengths,2)));
         route_lengths = [route_lengths, replan_route_length]; % store this route length in list of all route lengths
+        replanning_times(path_idx) = toc(replanning_time)
     end % end number of paths loop
     %% plot all alternate routes on one plot
     if flag_do_plot

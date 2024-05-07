@@ -605,6 +605,7 @@ alternate_routes_nodes = {};
 smallest_corridors = [];
 route_lengths = [];
 prev_route_chain_ids = [];
+replanning_times = [];
 %  set the start for the planner as the start node not the startxy
 start = [xcc(start_closest_tri) ycc(start_closest_tri) start_closest_node];
 finish = [xcc(finish_closest_tri) ycc(finish_closest_tri) finish_closest_node];
@@ -614,6 +615,7 @@ iterations = 1;
 init_route_num_nodes = inf; % initialize to infinite until we know init route length
 % TODO want to iterate for as many route points as there are
 while backstep < init_route_num_nodes
+    replanning_time = tic;
     route_choke = 0;
     cgraph = nan(size(adjacency_matrix)); % initialize cgraph
     % since there can be multiple chains between two nodes, we need to note which one we are using
@@ -716,7 +718,7 @@ while backstep < init_route_num_nodes
     route_y = route_full(:,2);
     route_deltas = diff([route_x(:) route_y(:)]);
     route_length = sum(sqrt(sum(route_deltas.*route_deltas,2)));
-
+    replanning_times = [replanning_times, toc(replanning_time)]
     % plot result
     figure; hold on; box on;
     xlabel('x [km]');
