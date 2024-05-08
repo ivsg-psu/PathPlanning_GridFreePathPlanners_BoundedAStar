@@ -72,7 +72,6 @@ function [visibility_matrix_new, all_pts_new, start_new, finish_new, polytopes_a
     polytope_vertices = [[polytope_to_add.xv]',[polytope_to_add.yv]'];
     AABB = [min(polytope_to_add.xv) min(polytope_to_add.yv) max(polytope_to_add.xv) max(polytope_to_add.yv)];
     % remake all_pts table
-    % TODO @sjharnett call all_pts function here again
     new_point_tot = length([polytope_to_add.xv]); % total number of vertices in the polytopes
     beg_end = zeros(1,new_point_tot); % is the point the start/end of an obstacle
     curpt = 0;

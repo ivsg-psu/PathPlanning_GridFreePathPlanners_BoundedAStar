@@ -26,28 +26,15 @@ data = []; % initialize array for storing results
 for mission_idx = 1:size(start_inits,1)
     start_init = start_inits(mission_idx,:);
     finish_init = finish_inits(mission_idx,:);
-    % all_pts array creation
-    % TODO @sjharnett make a function for all pts creation
-    point_tot = length([shrunk_polytopes.xv]); % total number of vertices in the polytopes
-    beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-    curpt = 0;
-    for poly = 1:size(shrunk_polytopes,2) % check each polytope
-        verts = length(shrunk_polytopes(poly).xv);
-        shrunk_polytopes(poly).obs_id = ones(1,verts)*poly; % obs_id is the same for every vertex on a single polytope
-        beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-        curpt = curpt+verts;
-    end
-    obs_id = [shrunk_polytopes.obs_id];
-    all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end
 
     % loop over dilation sizes
     for polytope_size_increases = [0.01 0.02 0.05 0.1 0.2 0.3 0.4 0.5]
         % loop over the nominal cost function and feature cost function
         for nominal_or_width_based = [1,2]
             %% plan the initial path
+            % all_pts array creation
+            [all_pts, start, finish] = fcn_polytopes_generate_all_pts_table(shrunk_polytopes, start_init, finish_init);
             % find vgraph
-            start = [start_init size(all_pts,1)+1 -1 1];
-            finish = [finish_init size(all_pts,1)+2 -1 1];
             finishes = [all_pts; start; finish];
             starts = [all_pts; start; finish];
             [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes,1);
@@ -106,20 +93,7 @@ for mission_idx = 1:size(start_inits,1)
 
             %% plan the new path
             % generate updated all_pts array
-            % TODO @sjharnett call all_pts function here again
-            point_tot = length([enlarged_polytopes.xv]); % total number of vertices in the polytopes
-            beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-            curpt = 0;
-            for poly = 1:size(enlarged_polytopes,2) % check each polytope
-                verts = length(enlarged_polytopes(poly).xv);
-                enlarged_polytopes(poly).obs_id = ones(1,verts)*poly; % obs_id is the same for every vertex on a single polytope
-                beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-                curpt = curpt+verts;
-            end
-            obs_id = [enlarged_polytopes.obs_id];
-            all_pts_new = [[enlarged_polytopes.xv];[enlarged_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
-            start = [start_midway size(all_pts_new,1)+1 -1 1];
-            finish = [finish_init size(all_pts_new,1)+2 -1 1];
+            [all_pts_new, start, finish] = fcn_polytopes_generate_all_pts_table(enlarged_polytopes, start_midway, finish_init);
 
             % make vgraph again
             finishes = [all_pts_new; start; finish];

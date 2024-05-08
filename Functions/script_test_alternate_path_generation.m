@@ -22,7 +22,7 @@ for mission_idx = 1:size(start_inits,1)
     finish_init = finish_inits(mission_idx,:);
 
     % all_pts array creation
-    [all_pts, start, finish] = fcn_polytopes_generate_all_pts_table(shrunk_polytopes, start_init, finish_init)
+    [all_pts, start, finish] = fcn_polytopes_generate_all_pts_table(shrunk_polytopes, start_init, finish_init);
 
     %% plan the initial path
     % make vgraph
@@ -142,21 +142,8 @@ for enlarge_idx = 1:(num_paths)
     % enlarge polytopes by the distance, below which corridors were filtered out, halved (because you dilate polytopes on both side of the corridor)
     enlarged_polytopes = fcn_MapGen_polytopesExpandEvenlyForConcave(shrunk_polytopes,(smallest_corridors(enlarge_idx))/2);
     % generate all_pts array for enlarged polytopes
-    % TODO @sjharnett call all_pts function here again
-    point_tot = length([enlarged_polytopes.xv]); % total number of vertices in the polytopes
-    beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-    curpt = 0;
-    for poly = 1:size(enlarged_polytopes,2) % check each polytope
-        verts = length(enlarged_polytopes(poly).xv);
-        enlarged_polytopes(poly).obs_id = ones(1,verts)*poly; % obs_id is the same for every vertex on a single polytope
-        beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-        curpt = curpt+verts;
-    end
-    obs_id = [enlarged_polytopes.obs_id];
-    all_pts_new = [[enlarged_polytopes.xv];[enlarged_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
+    [all_pts_new, start, finish] = fcn_polytopes_generate_all_pts_table(enlarged_polytopes, start_init, finish_init);
     % make vgraph for enlarged map
-    start = [start_init size(all_pts_new,1)+1 -1 1];
-    finish = [finish_init size(all_pts_new,1)+2 -1 1];
     finishes = [all_pts_new; start; finish];
     starts = [all_pts_new; start; finish];
     [new_vgraph, visibility_results_all_pts_new] = fcn_visibility_clear_and_blocked_points_global(enlarged_polytopes, starts, finishes,1);
