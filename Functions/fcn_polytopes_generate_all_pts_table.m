@@ -1,41 +1,40 @@
-function [all_pts, start, finish] = fcn_generate_all_pts_table(polytopes, start_xy, finish_xy)
-% fcn_generate_all_pts_table
+function [all_pts, start, finish] = fcn_polytopes_generate_all_pts_table(polytopes, start_xy, finish_xy)
+% fcn_polytopes_generate_all_pts_table
 %
-% A short function to turn polytope vertices into a points array of the form used by bounded Astar
-%
+% A short function to turn polytope vertices into an nx5 table of poitns of the form used by:
+%  - fcn_algorithm_bound_Astar
+%  - fcn_visibility_clear_and_blocked_points_global
+%  - fcn_visibility_clear_and_blocked_points
 %
 %
 % FORMAT:
-% [cost, route] = fcn_algorithm_Astar(vgraph, all_pts, start, finish, rgraph)
+% [all_pts, start, finish] = fcn_polytopes_generate_all_pts_table(polytopes, start_xy, finish_xy)
 %
 %
 % INPUTS:
 %
-%   start: the start point vector (x,t,id)
+%     start_xy: the start point vector (x,y)
 %
-%   finish: the finish point matrix of all valid finishes where each row is a single finish point vector (x,y,id)
+%     finish_xy: the finish point vector (x,y)
 %
-%   all_pts: the point matrix of all point that can be in the route, except the start and finish where
-%       each row is a single point vector (x,y,id)
+%     polytopes: the polytope struct array
 %
-%   vgraph: the visibility graph as an nxn matrix where n is the number of points (nodes) in the map.
-%       A 1 is in position i,j if point j is visible from point i.  0 otherwise.
-%
-%    cgraph: the cost graph matrix. A cost matrix is an nxn matrix where n is
-%      the number of points (nodes) in the map including the start and goal.
-%      The value of element i-j is the cost of routing from i to j.
-%
-%    hvec: the heuristic cost vector. A 1xn vector where n is
-%      the number of points (nodes) in the map including the start and goal.
-%      The value of element k is the estimated cost of routing from point k to
-%      the finish based on a heuristic cost estimation method.
 %
 % OUTPUTS:
 %
-%     cost: the total cost of the selected route
+%     ALL_PTS: p-by-5 matrix of all the possible start points
+%       the information in the 5 columns is as follows:
+%         x-coordinate
+%         y-coordinate
+%         point id number
+%         obstacle id number
+%         beginning/ending indication (1 if the point is a beginning or ending
+%         point and 0 otherwise)
+%         Ex: [x y point_id obs_id beg_end]
 %
-%    route: the matrix as produced by fcn_algorithm_Astar3d consisting of waypoints.  Each row is a
-%    waypoint, and each column is x, y, and point ID
+%     start: the start point vector as a 1x5 array with the same information as all_pts
+%
+%     finish: the finish point vector  as a 1x5 array with the same information as all_pts
 %
 %
 % DEPENDENCIES:
