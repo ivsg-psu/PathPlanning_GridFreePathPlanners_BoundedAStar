@@ -152,8 +152,12 @@ function [polytopes, starts, finishes] = fcn_util_load_test_map(map_idx, varargi
         start = [-77.68 40.9];
         finish = [-77.5 40.8];
         if add_boundary
-            my_warn = sprintf('boundary is not defined for map_idx %i.\n Either define a boundary in fcn_util_load_test_map or set the add_boundary flag to 0.', map_idx);
-            warning(my_warn)
+            %% make a boundary around the polytope field
+            boundary.vertices = [-77.7 40.78; -77.7 40.92; -77.45 40.92; -77.45 40.78];
+            boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
+            boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
+            boundary.parent_poly_id = nan; % ignore parend ID
+            polytopes = [boundary, polytopes]; % put the boundary polytope as the first polytope
         end
     elseif map_idx == 6 % large map, good for dilation case, nearly fully tiled
         load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_5.mat'));
@@ -166,7 +170,7 @@ function [polytopes, starts, finishes] = fcn_util_load_test_map(map_idx, varargi
             boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
             boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
             boundary.parent_poly_id = nan; % ignore parend ID
-            shrunk_polytopes = [boundary, shrunk_polytopes]; % put the boundary polytope as the first polytope
+            polytopes = [boundary, polytopes]; % put the boundary polytope as the first polytope
         end
     elseif map_idx == 7 % generic polytope map
         % pull halton set
