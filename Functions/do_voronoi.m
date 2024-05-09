@@ -4,16 +4,12 @@ flag_do_animation = 0;
 flag_do_plot_slow = 0;
 [shrunk_polytopes, start_init, finish_init] = fcn_util_load_test_map(map_idx, 1)
 
-%% interpolate polytope vertices
-distances = diff([[shrunk_polytopes.xv]',[shrunk_polytopes.yv]']); % find side lengths in whole field
-min_distance_between_verts = min(sqrt(sum(distances.*distances,2))); % the min of this is the smallest space between features
-resolution = min_distance_between_verts/2; % want even the smallest feature to be bisected
-shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, resolution); % interpolate sides
-
 %% constrained delaunay triangulation
 [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAxis_makeAdjacencyMatrixAndTriangleChains(shrunk_polytopes, flag_do_plot);
+
 %% prune graph
 [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_pruneGraph(adjacency_matrix, triangle_chains, nodes, xcc, ycc, shrunk_polytopes, flag_do_plot);
+
 %% get costs for navigating each triangle chain
 % to get corridor width:
 % (1) need to get triangle side lengths
@@ -638,6 +634,13 @@ function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAx
             error('optional argument is the plotting flag and can either be 1 or 0')
         end
     end
+
+    %% interpolate polytope vertices
+    distances = diff([[shrunk_polytopes.xv]',[shrunk_polytopes.yv]']); % find side lengths in whole field
+    min_distance_between_verts = min(sqrt(sum(distances.*distances,2))); % the min of this is the smallest space between features
+    resolution = min_distance_between_verts/2; % want even the smallest feature to be bisected
+    shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, resolution); % interpolate sides
+
     C = []; % initialize constriant matrix
     P = []; % initialize points matrix
     largest_idx = 0;
