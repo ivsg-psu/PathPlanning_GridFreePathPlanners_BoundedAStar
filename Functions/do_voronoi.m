@@ -11,342 +11,9 @@ resolution = min_distance_between_verts/2; % want even the smallest feature to b
 shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, resolution); % interpolate sides
 
 %% constrained delaunay triangulation
-C = []; % initialize constriant matrix
-P = []; % initialize points matrix
-largest_idx = 0;
-for poly_idx = 1:length(shrunk_polytopes)
-    P = [P; shrunk_polytopes(poly_idx).vertices(1:end-1,:)]; % add poly verts to points
-    % want to list every pair of points representing a polytope side as a constraint
-    num_verts = size(shrunk_polytopes(poly_idx).vertices,1)-1;
-    C1 = [1:num_verts]'; % this will be points 1 through n
-    C2 = [C1(2:end);C1(1)]; % C2 is equal to C1 with the order shifted by 1
-    Ccomb = [C1 C2]; % this will be a table saying point 1 to 2 is a side, 2 to 3, etc.
-    Ccomb = Ccomb + largest_idx; % shift the whole thing by the largest ID already in C so point IDs are global, not unique to this polytope onlyk
-    C = [C; Ccomb]; % add constriants for this polytope to total constraint list
-    largest_idx = max(max(C)); % update largest point ID in this polytope for use offsetting next polytope
-end
-x = P(:,1); % all x's
-y = P(:,2); % all y's
-DT = delaunayTriangulation(P,C) % perform constrained triangulation
-
-figure; box on; hold on; triplot(DT); title('triangulation')
-xlabel('x [km]')
-ylabel('y [km]')
-inside = isInterior(DT); % identify triangles statisfying constriants C (i.e. tris within the boundary and outside polytopes, i.e. free space)
-tr = triangulation(DT(inside,:),DT.Points); % keep only the triangles of free space, not the ones in polytopes
-for j = 2:length(shrunk_polytopes)
-    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-end
-figure; box on; hold on; triplot(tr); title('triangulation, no interior')
-xlabel('x [km]')
-ylabel('y [km]')
-for j = 2:length(shrunk_polytopes)
-    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-end
-numt = size(tr,1); % numbe of triangles
-T = (1:numt)'; % list of triangle idx
-neigh = tr.neighbors(); % this indicates which triangles are connected to which other triangles
-cc = circumcenter(tr); % get all circumcenters (centers of circumscribed circles)
-nodes = find(~isnan(sum(neigh, 2))); % identify all 3 connected triangles (tris with no nan neighbor)
-xcc = cc(:,1); % x coords of circumcenters
-ycc = cc(:,2); % y coords of circumcenters
-% the following code rearranges the numtx3 'neigh' matrix where row i is the three neighbors of tri i,
-% into a 2xm matrix where each columb is a pair of neighboring triangles
-% this is useful for plotting as neigh_for_plotting has no nan values while neigh does
-idx1 = T < neigh(:,1);
-idx2 = T < neigh(:,2);
-idx3 = T < neigh(:,3);
-neigh_for_plotting = [T(idx1) neigh(idx1,1); T(idx2) neigh(idx2,2); T(idx3) neigh(idx3,3)]';
-% plot the triangulation and approximate medial axis
-figure; hold on; box on;
-xlabel('x [km]')
-ylabel('y [km]')
-for j = 2:length(shrunk_polytopes)
-    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-end
-triplot(tr,'g')
-hold on
-plot(xcc(neigh_for_plotting), ycc(neigh_for_plotting), '-r','LineWidth',1.5) % plot approx. medial axis
-plot(xcc(nodes), ycc(nodes), '.k','MarkerSize',30) % plot 3 connected triangle circumcenters
-plot(x(C'),y(C'),'-b','LineWidth',1.5) % plot constriants (i.e. polytopes)
-title('Medial Axis, 3-connected nodes highlighted')
-% make a plannable graph from triangulation
-% identify the 3 connected triangles
-adjacency_matrix = eye(length(nodes)); % set to 1 if chain of 2 connected triangles exists between three connected triangle node(i) and node(j)
-triangle_chains = {}; % each row contains (i,1) start 3 connected tri, (i,2) end 3 connected tri, and (i,3) array of 2 connected tris between them
-path_is_explored = zeros(length(nodes),3); % set to 1 when a direction is explored when node(i) neighbor(i,j) is explored
-% while there is still a 0 in the path explored list...
-while ~isempty(find(path_is_explored == 0))
-    % find the first 0...it will be at i,j so we want nodes(i) in direction neigh(i,j)
-    [r,c] = find(path_is_explored == 0);
-    i = r(1);
-    direction = c(1);
-
-    tris_visited = []; % initialize triangles visited list
-    tris_visited = [nodes(i)]; % pick one starting node
-    % pick a direction from neighbors of the node triangle
-    direction_choices = neigh(nodes(i),:); % there should be three directions leaving nodes(i)
-    % next tri should just be neigh(node(i),j) the jth neightbor of node(i)
-    next_tri = direction_choices(direction); % go a direction that hasn't been explored yet
-    tris_visited = [tris_visited, next_tri];
-    % want to keep looking while the current triangle is not a 3 connected one
-    % i.e. while the last triangle visited is not a node
-    while ~ismember(tris_visited(end),nodes)
-        % march down direction until hit a 3 connected triangle, noting every triangle on the way
-        neighbors = neigh(next_tri,:); % find the neighbors of the current triangle, this is a 1x3 list of tri idx
-        % whichever of the two neighbors we haven't visited, is the direction we didn't come from
-        next_dir = find(~isnan(neighbors)&~ismember(neighbors,tris_visited)); % this will be an ID between 1 and 3
-        % if there is no next neighbor satisfying (not nan) && (not already visited)
-        % we can assume we hit a dead end and this whole chain can be removed
-        if isempty(next_dir)
-            % set the flag that indicates this was a dead end as this has special handling
-            is_dead_end = 1;
-            % break out of the while loop
-            break
-        else
-            % otherwise we must have selected a 2 or three connected triangle
-            is_dead_end =0;
-        end
-        next_tri = neighbors(next_dir); % update the next tiangle based on the valid direction ID
-        tris_visited = [tris_visited, next_tri]; % append to the triangle visited list
-    end % end triangle chain while loop
-    % special dead end handling
-    if is_dead_end
-        % don't store the triangles
-        % mark the direction as explored
-        path_is_explored(i,direction) = 1;
-        % don't udpate adjacency
-        % reset dead end flag
-        is_dead_end = 0;
-        continue % to next unexplored direction
-    end
-    % store tris visited list in the triangle chains lookup table
-    triangle_chains{end+1,1} = find(nodes==tris_visited(1)); % index of start in nodes
-    triangle_chains{end,2} = find(nodes==tris_visited(end)); % index of end in nodes
-    triangle_chains{end,3} = tris_visited; % list of triangles between them
-    % note that the start and end of the triangle chain are "adjacent" in a graph sense
-    adjacency_matrix(find(nodes==tris_visited(1)),find(nodes==tris_visited(end))) = 1;
-    % flag the direction as explored
-    path_is_explored(i,direction) = 1;
-end % end direction while loop
-
-% plot the graph on the triangles
-figure; hold on; box on; title('medial axis graph overlaid on triangulation')
-xlabel('x [km]')
-ylabel('y [km]')
-for j = 2:length(shrunk_polytopes)
-    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-end
-triplot(tr,'g')
-hold on
-plot(xcc(neigh_for_plotting), ycc(neigh_for_plotting), '-r','LineWidth',1.5) % plot approx. medial axis
-plot(xcc(nodes), ycc(nodes), '.k','MarkerSize',30) % plot 3 connected triangle circumcenters
-plot(x(C'),y(C'),'-b','LineWidth',1.5) % plot constriants (i.e. polytopes)
-xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
-colors = {"#A2142F","#7E2F8E","#EDB120","#0072BD"}; % some different colors
-color_idx = 1;
-for i = 1:(size(triangle_chains,1))
-    % pop off a triangle chain
-    chain_of_note = triangle_chains{i,3};
-    % pot big markers for the start and end node
-    beg_end = [chain_of_note(1) chain_of_note(end)];
-    % plot a straight line between them (this is the adjacency graph connection)
-    plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
-    % plot the medial axis path between them (this is the curved path from the triangle chain)
-    plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
-    color_idx = color_idx + 1;
-end
-% plot the graph
-figure; hold on; box on; title('medial axis graph')
-xlabel('x [km]')
-ylabel('y [km]')
-for j = 2:length(shrunk_polytopes)
-    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-end
-for i = 1:(size(triangle_chains,1))
-    % pop off a triangle chain
-    chain_of_note = triangle_chains{i,3};
-    % pot big markers for the start and end node
-    beg_end = [chain_of_note(1) chain_of_note(end)];
-    % plot a straight line between them (this is the adjacency graph connection)
-    plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
-    % plot the medial axis path between them (this is the curved path from the triangle chain)
-    plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
-    color_idx = color_idx + 1;
-end
-prev_triangle_chains = nan; % initialize the previous triangle_chains structure to nothing since there wasn't one before
-iterand = 1;
-% need to repeat the removal of through nodes and the pruning of dead ends until the triangle_chains structure stops changing
-while ~isequal(triangle_chains,prev_triangle_chains)
-    %% compute branching factor (connectivity)
-    % branching factor is the number of nodes connected to each node
-    branching_factor_outbound = sum(adjacency_matrix,2)-1; % number of destination nodes per node (excluding self)
-    branching_factor_inbound = [sum(adjacency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
-    % need to compare the sum of the rows and the sum of the columns.
-    % This will tell us inbound and outbound connections per node in an asymmetric graph
-    % if a node has 2 in but 3 out we would want to treat it as 3-connected becuase it does serve that role in one direction
-    % i.e. a nodes connectedness is determined by its max connectedness of max{in,out}
-    max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
-    %% remove through-put nodes
-    idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
-    false_through_nodes = [];
-    % a false through node has 2 possible destinations but more than 1 possible path to at least one of these destinations
-    % it proved difficult to iterate over nodes with 2 connected triangle chains directly
-    % so instead we iterate over nodes with 2 possible destinations and
-    % allowlist the subset of these nodes with 2 possible destinations but more than 2 triangle chains
-    % these are the so-called false through nodes that must be excluded from the through nodes that will be removed
-    prev_triangle_chains = triangle_chains; % store the current triangle chain structure before we modify it
-    while ~isempty(idx_2_connected_nodes)
-        % for each through node, t...
-        t = idx_2_connected_nodes(1);
-        adjacent_to_t = adjacency_matrix(t,:); % find t's adjacent nodes
-        adjacent_to_t(t) = 0; % don't need self adjacency for this
-        % find the node on either side...call these d and b
-        d_and_b = find(adjacent_to_t==1);
-        d = d_and_b(1);
-        b = d_and_b(2);
-        if flag_do_plot_slow
-            % plot the through node being removed and its neighbors
-            plot(xcc(nodes(t)), ycc(nodes(t)), '.b','MarkerSize',30) % plot 3 connected triangle circumcenters
-            plot(xcc(nodes(b)), ycc(nodes(b)), '.g','MarkerSize',30) % plot 3 connected triangle circumcenters
-            plot(xcc(nodes(d)), ycc(nodes(d)), '.g','MarkerSize',30) % plot 3 connected triangle circumcenters
-        end
-        % need to find triangle chains for d to t and t to b...
-        idx_chain_dt = find([triangle_chains{:,1}]'== d & [triangle_chains{:,2}]'== t);
-        idx_chain_tb = find([triangle_chains{:,1}]'== t & [triangle_chains{:,2}]'== b);
-        chain_dt = triangle_chains{idx_chain_dt,3};
-        chain_tb = triangle_chains{idx_chain_tb,3};
-        % do this again for reverse direction
-        idx_chain_bt = find([triangle_chains{:,1}]'== b & [triangle_chains{:,2}]'== t);
-        idx_chain_td = find([triangle_chains{:,1}]'== t & [triangle_chains{:,2}]'== d);
-        chain_bt = triangle_chains{idx_chain_bt,3};
-        chain_td = triangle_chains{idx_chain_td,3};
-        % need to check for a false through node (a node with two possible destinations but more than two possible paths)
-        if (length(idx_chain_dt) > 1 | length(idx_chain_tb) > 1 | length(idx_chain_bt) > 1 | length(idx_chain_td) > 1)
-            false_through_nodes = [false_through_nodes, t];
-            % re-compute branching factor (connectivity)
-            branching_factor_outbound = sum(adjacency_matrix,2)-1; % number of destination nodes per node (excluding self)
-            branching_factor_inbound = [sum(adjacency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
-            max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
-            idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
-            % need to remove the allowlisted false through nodes from the list of 2 connected nodes
-            is_false_through_node = ismember(idx_2_connected_nodes,false_through_nodes); % boolean array of which 2 connected nodes are false through nodes
-            idx_2_connected_nodes = idx_2_connected_nodes(~is_false_through_node); % only keep idx of 2 connected nodes that aren't false through nodes
-            continue % don't want to remove a false through node since it affords multiple paths to the same destination
-        end
-        % connect those two nodes in the adjacency matrix
-        adjacency_matrix(d_and_b, d_and_b) = 1; % note this line makes Adb, Abd, Add, and Abb =1
-        % make an entry for d to b and set tri list to the other two tri lists
-        triangle_chains{end+1,1} = d; % index of start in nodes
-        triangle_chains{end,2} = b; % index of end in nodes
-        triangle_chains{end,3} = [chain_dt(1:end-1), chain_tb]; % list of triangles between them
-        % do this again for reverse direction
-        triangle_chains{end+1,1} = b; % index of start in nodes
-        triangle_chains{end,2} = d; % index of end in nodes
-        triangle_chains{end,3} = [chain_bt(1:end-1), chain_td]; % list of triangles between them
-        % delete the rows for d to t and t to b
-        [triangle_chains{idx_chain_dt,3}] = deal([]);
-        [triangle_chains{idx_chain_tb,3}] = deal([]);
-        % do this again for reverse direction
-        [triangle_chains{idx_chain_bt,3}] = deal([]);
-        [triangle_chains{idx_chain_td,3}] = deal([]);
-        %  remove the t node from the adjacency matrix
-        adjacency_matrix(t, :) = zeros(1, size(adjacency_matrix,1));
-        adjacency_matrix(:, t) = zeros(size(adjacency_matrix,2), 1);
-        % remove from node list
-        nodes(t) = nan;
-
-        %% re-compute branching factor (connectivity)
-        branching_factor_outbound = sum(adjacency_matrix,2)-1; % number of destination nodes per node (excluding self)
-        branching_factor_inbound = [sum(adjacency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
-        max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
-        idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
-        % need to remove the allowlisted false through nodes from the list of 2 connected nodes
-        is_false_through_node = ismember(idx_2_connected_nodes,false_through_nodes); % boolean array of which 2 connected nodes are false through nodes
-        idx_2_connected_nodes = idx_2_connected_nodes(~is_false_through_node); % only keep idx of 2 connected nodes that aren't false through nodes
-
-        if flag_do_plot_slow
-            % plot the graph after this through node removal
-            figure; hold on; box on;
-            xlabel('x [km]')
-            ylabel('y [km]')
-            for j = 2:length(shrunk_polytopes)
-                fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-            end
-            for i = 1:(size(triangle_chains,1))
-                % pop off a triangle chain
-                chain_of_note = triangle_chains{i,3};
-                if isempty(chain_of_note)
-                    continue
-                end
-                % pot big markers for the start and end node
-                beg_end = [chain_of_note(1) chain_of_note(end)];
-                % plot a straight line between them (this is the adjacency graph connection)
-                plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
-                % plot the medial axis path between them (this is the curved path from the triangle chain)
-                plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
-                color_idx = color_idx + 1;
-            end
-        end
-    end
-    % plot the graph without through nodes
-    figure; hold on; box on; title('medial axis graph with through nodes removed')
-    for j = 2:length(shrunk_polytopes)
-        fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-    end
-    for i = 1:(size(triangle_chains,1))
-        % pop off a triangle chain
-        chain_of_note = triangle_chains{i,3};
-        if isempty(chain_of_note)
-            continue
-        end
-        % pot big markers for the start and end node
-        beg_end = [chain_of_note(1) chain_of_note(end)];
-        % plot a straight line between them (this is the adjacency graph connection)
-        plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
-        % plot the medial axis path between them (this is the curved path from the triangle chain)
-        plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
-        color_idx = color_idx + 1;
-    end
-    % TODO @sjharnett do we want to set these to zero/empty or actually remove them? Removing would require re-indexing
-    %% remove dead ends
-    [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_removeDeadEnds(adjacency_matrix, triangle_chains, nodes, max_branching_factor);
-    % plot the graph without dead ends
-    figure; hold on; box on; title('medial axis graph with dead ends removed')
-    xlabel('x [km]')
-    ylabel('y [km]')
-    for j = 2:length(shrunk_polytopes)
-        fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-    end
-    for i = 1:(size(triangle_chains,1))
-        % pop off a triangle chain
-        chain_of_note = triangle_chains{i,3};
-        if isempty(chain_of_note)
-            continue
-        end
-        % pot big markers for the start and end node
-        beg_end = [chain_of_note(1) chain_of_note(end)];
-        % plot a straight line between them (this is the adjacency graph connection)
-        plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
-        % plot the medial axis path between them (this is the curved path from the triangle chain)
-        plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
-        color_idx = color_idx + 1;
-    end
-    if flag_do_plot_slow % plot entire adjacency graph for debugging
-        [r, c] = find(adjacency_matrix);
-        for j = 1:length(r)
-            idx_chain_rc = find([triangle_chains{:,1}]'== r(j) & [triangle_chains{:,2}]'== c(j));
-            if length(idx_chain_rc)>=1
-                plot(xcc(nodes([r((j)) c((j))])), ycc(nodes([r((j)) c((j))])), '--.','MarkerSize',10,'Color','g')
-            else
-                plot(xcc(nodes([r((j)) c((j))])), ycc(nodes([r((j)) c((j))])), '--.','MarkerSize',10,'LineWidth',3,'Color','r')
-            end
-        end
-    end
-    sprintf('loop has iterated %i times',iterand)
-    iterand = iterand + 1;
-end % end outer while loop that loops until convergence occurs
-
+[adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAxis_makeAdjacencyMatrixAndTriangleChains(shrunk_polytopes, flag_do_plot);
+%% prune graph
+[adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_pruneGraph(adjacency_matrix, triangle_chains, nodes, xcc, ycc, shrunk_polytopes, flag_do_plot);
 %% get costs for navigating each triangle chain
 % to get corridor width:
 % (1) need to get triangle side lengths
@@ -703,17 +370,438 @@ title(tit_str)
 end
 end
 
-    function [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_removeDeadEnds(adjacency_matrix, triangle_chains, nodes, max_branching_factor)
-        idx_1_connected_nodes = find(max_branching_factor == 1); % all one connected nodes are dead ends
-        % remove the node from the adjacency matrix
-        adjacency_matrix(idx_1_connected_nodes, :) = zeros(length(idx_1_connected_nodes), size(adjacency_matrix,1));
-        adjacency_matrix(:, idx_1_connected_nodes) = zeros(size(adjacency_matrix,2), length(idx_1_connected_nodes));
-        % remove the node from the node list
-        nodes(idx_1_connected_nodes) = nan;
-        % find triangle chains that start and end at this node
-        idx_chain_starts_at_1_connected_node = find(ismember([triangle_chains{:,1}]', idx_1_connected_nodes));
-        idx_chain_ends_at_1_connected_node = find(ismember([triangle_chains{:,2}]', idx_1_connected_nodes));
-        % remove these triangle chains
-        [triangle_chains{idx_chain_ends_at_1_connected_node,3}] = deal([]);
-        [triangle_chains{idx_chain_starts_at_1_connected_node,3}] = deal([]);
+function [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_removeDeadEnds(adjacency_matrix, triangle_chains, nodes, max_branching_factor)
+    idx_1_connected_nodes = find(max_branching_factor == 1); % all one connected nodes are dead ends
+    % remove the node from the adjacency matrix
+    adjacency_matrix(idx_1_connected_nodes, :) = zeros(length(idx_1_connected_nodes), size(adjacency_matrix,1));
+    adjacency_matrix(:, idx_1_connected_nodes) = zeros(size(adjacency_matrix,2), length(idx_1_connected_nodes));
+    % remove the node from the node list
+    nodes(idx_1_connected_nodes) = nan;
+    % find triangle chains that start and end at this node
+    idx_chain_starts_at_1_connected_node = find(ismember([triangle_chains{:,1}]', idx_1_connected_nodes));
+    idx_chain_ends_at_1_connected_node = find(ismember([triangle_chains{:,2}]', idx_1_connected_nodes));
+    % remove these triangle chains
+    [triangle_chains{idx_chain_ends_at_1_connected_node,3}] = deal([]);
+    [triangle_chains{idx_chain_starts_at_1_connected_node,3}] = deal([]);
+end
+
+function [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_removeThroughNodes(adjacency_matrix, triangle_chains, nodes, max_branching_factor, varargin);
+
+    %% check input arguments
+    if nargin < 4 || nargin > 5
+        error('Incorrect number of arguments');
     end
+    % if there is no value in varargin...
+    if nargin == 4
+        % default is to assume convex obstacles as this is conservative
+        flag_do_plot_slow = 0;
+    end
+    % if there is a value in varargin...
+    if nargin == 5
+        % check what it is
+        if varargin{1} == 1
+            % set concave flag if it was passed in
+            flag_do_plot_slow = 0;
+        elseif varargin{1} == 0
+            flag_do_plot_slow = 0;
+        else
+            % throw error if it was passed in with an incorrect value
+            error('optional argument is the plotting flag and can either be 1 or 0')
+        end
+    end
+
+    idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
+    false_through_nodes = [];
+    % a false through node has 2 possible destinations but more than 1 possible path to at least one of these destinations
+    % it proved difficult to iterate over nodes with 2 connected triangle chains directly
+    % so instead we iterate over nodes with 2 possible destinations and
+    % allowlist the subset of these nodes with 2 possible destinations but more than 2 triangle chains
+    % these are the so-called false through nodes that must be excluded from the through nodes that will be removed
+    while ~isempty(idx_2_connected_nodes)
+        % for each through node, t...
+        t = idx_2_connected_nodes(1);
+        adjacent_to_t = adjacency_matrix(t,:); % find t's adjacent nodes
+        adjacent_to_t(t) = 0; % don't need self adjacency for this
+        % find the node on either side...call these d and b
+        d_and_b = find(adjacent_to_t==1);
+        d = d_and_b(1);
+        b = d_and_b(2);
+        if flag_do_plot_slow
+            % plot the through node being removed and its neighbors
+            plot(xcc(nodes(t)), ycc(nodes(t)), '.b','MarkerSize',30) % plot 3 connected triangle circumcenters
+            plot(xcc(nodes(b)), ycc(nodes(b)), '.g','MarkerSize',30) % plot 3 connected triangle circumcenters
+            plot(xcc(nodes(d)), ycc(nodes(d)), '.g','MarkerSize',30) % plot 3 connected triangle circumcenters
+        end
+        % need to find triangle chains for d to t and t to b...
+        idx_chain_dt = find([triangle_chains{:,1}]'== d & [triangle_chains{:,2}]'== t);
+        idx_chain_tb = find([triangle_chains{:,1}]'== t & [triangle_chains{:,2}]'== b);
+        chain_dt = triangle_chains{idx_chain_dt,3};
+        chain_tb = triangle_chains{idx_chain_tb,3};
+        % do this again for reverse direction
+        idx_chain_bt = find([triangle_chains{:,1}]'== b & [triangle_chains{:,2}]'== t);
+        idx_chain_td = find([triangle_chains{:,1}]'== t & [triangle_chains{:,2}]'== d);
+        chain_bt = triangle_chains{idx_chain_bt,3};
+        chain_td = triangle_chains{idx_chain_td,3};
+        % need to check for a false through node (a node with two possible destinations but more than two possible paths)
+        if (length(idx_chain_dt) > 1 | length(idx_chain_tb) > 1 | length(idx_chain_bt) > 1 | length(idx_chain_td) > 1)
+            false_through_nodes = [false_through_nodes, t];
+            % re-compute branching factor (connectivity)
+            branching_factor_outbound = sum(adjacency_matrix,2)-1; % number of destination nodes per node (excluding self)
+            branching_factor_inbound = [sum(adjacency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
+            max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
+            idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
+            % need to remove the allowlisted false through nodes from the list of 2 connected nodes
+            is_false_through_node = ismember(idx_2_connected_nodes,false_through_nodes); % boolean array of which 2 connected nodes are false through nodes
+            idx_2_connected_nodes = idx_2_connected_nodes(~is_false_through_node); % only keep idx of 2 connected nodes that aren't false through nodes
+            continue % don't want to remove a false through node since it affords multiple paths to the same destination
+        end
+        % connect those two nodes in the adjacency matrix
+        adjacency_matrix(d_and_b, d_and_b) = 1; % note this line makes Adb, Abd, Add, and Abb =1
+        % make an entry for d to b and set tri list to the other two tri lists
+        triangle_chains{end+1,1} = d; % index of start in nodes
+        triangle_chains{end,2} = b; % index of end in nodes
+        triangle_chains{end,3} = [chain_dt(1:end-1), chain_tb]; % list of triangles between them
+        % do this again for reverse direction
+        triangle_chains{end+1,1} = b; % index of start in nodes
+        triangle_chains{end,2} = d; % index of end in nodes
+        triangle_chains{end,3} = [chain_bt(1:end-1), chain_td]; % list of triangles between them
+        % delete the rows for d to t and t to b
+        [triangle_chains{idx_chain_dt,3}] = deal([]);
+        [triangle_chains{idx_chain_tb,3}] = deal([]);
+        % do this again for reverse direction
+        [triangle_chains{idx_chain_bt,3}] = deal([]);
+        [triangle_chains{idx_chain_td,3}] = deal([]);
+        %  remove the t node from the adjacency matrix
+        adjacency_matrix(t, :) = zeros(1, size(adjacency_matrix,1));
+        adjacency_matrix(:, t) = zeros(size(adjacency_matrix,2), 1);
+        % remove from node list
+        nodes(t) = nan;
+
+        %% re-compute branching factor (connectivity)
+        branching_factor_outbound = sum(adjacency_matrix,2)-1; % number of destination nodes per node (excluding self)
+        branching_factor_inbound = [sum(adjacency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
+        max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
+        idx_2_connected_nodes = find(max_branching_factor == 2); % all two connected nodes are through nodes
+        % need to remove the allowlisted false through nodes from the list of 2 connected nodes
+        is_false_through_node = ismember(idx_2_connected_nodes,false_through_nodes); % boolean array of which 2 connected nodes are false through nodes
+        idx_2_connected_nodes = idx_2_connected_nodes(~is_false_through_node); % only keep idx of 2 connected nodes that aren't false through nodes
+
+        if flag_do_plot_slow
+            % plot the graph after this through node removal
+            figure; hold on; box on;
+            xlabel('x [km]')
+            ylabel('y [km]')
+            for j = 2:length(shrunk_polytopes)
+                fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+            end
+            for i = 1:(size(triangle_chains,1))
+                % pop off a triangle chain
+                chain_of_note = triangle_chains{i,3};
+                if isempty(chain_of_note)
+                    continue
+                end
+                % pot big markers for the start and end node
+                beg_end = [chain_of_note(1) chain_of_note(end)];
+                % plot a straight line between them (this is the adjacency graph connection)
+                plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
+                % plot the medial axis path between them (this is the curved path from the triangle chain)
+                plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
+                color_idx = color_idx + 1;
+            end
+        end
+    end
+end
+
+function [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_pruneGraph(adjacency_matrix, triangle_chains, nodes, xcc, ycc, shrunk_polytopes, varargin);
+    %% check input arguments
+    if nargin < 6 || nargin > 7
+        error('Incorrect number of arguments');
+    end
+    % if there is no value in varargin...
+    if nargin == 6
+        % default is to assume convex obstacles as this is conservative
+        flag_do_plot_slow = 0;
+        flag_do_plot = 0;
+    end
+    % if there is a value in varargin...
+    if nargin == 7
+        % check what it is
+        if varargin{1} == 1
+            % set concave flag if it was passed in
+            flag_do_plot_slow = 0;
+            flag_do_plot = 1;
+        elseif varargin{1} == 0
+            flag_do_plot_slow = 0;
+            flag_do_plot = 0;
+        else
+            % throw error if it was passed in with an incorrect value
+            error('optional argument is the plotting flag and can either be 1 or 0')
+        end
+    end
+    prev_triangle_chains = nan; % initialize the previous triangle_chains structure to nothing since there wasn't one before
+    iterand = 1;
+    % need to repeat the removal of through nodes and the pruning of dead ends until the triangle_chains structure stops changing
+    while ~isequal(triangle_chains,prev_triangle_chains)
+        %% compute branching factor (connectivity)
+        % branching factor is the number of nodes connected to each node
+        branching_factor_outbound = sum(adjacency_matrix,2)-1; % number of destination nodes per node (excluding self)
+        branching_factor_inbound = [sum(adjacency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
+        % need to compare the sum of the rows and the sum of the columns.
+        % This will tell us inbound and outbound connections per node in an asymmetric graph
+        % if a node has 2 in but 3 out we would want to treat it as 3-connected becuase it does serve that role in one direction
+        % i.e. a nodes connectedness is determined by its max connectedness of max{in,out}
+        max_branching_factor = max(branching_factor_inbound,branching_factor_outbound);
+        %% remove through-put nodes
+        prev_triangle_chains = triangle_chains; % store the current triangle chain structure before we modify it
+        [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_removeThroughNodes(adjacency_matrix, triangle_chains, nodes, max_branching_factor, flag_do_plot);
+        % plot the graph without through nodes
+        figure; hold on; box on; title('medial axis graph with through nodes removed')
+        colors = {"#A2142F","#7E2F8E","#EDB120","#0072BD"}; % some different colors
+        color_idx = 1;
+        for j = 2:length(shrunk_polytopes)
+            fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+        end
+        for i = 1:(size(triangle_chains,1))
+            % pop off a triangle chain
+            chain_of_note = triangle_chains{i,3};
+            if isempty(chain_of_note)
+                continue
+            end
+            % pot big markers for the start and end node
+            beg_end = [chain_of_note(1) chain_of_note(end)];
+            % plot a straight line between them (this is the adjacency graph connection)
+            plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
+            % plot the medial axis path between them (this is the curved path from the triangle chain)
+            plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
+            color_idx = color_idx + 1;
+        end
+        % TODO @sjharnett do we want to set these to zero/empty or actually remove them? Removing would require re-indexing
+        %% remove dead ends
+        [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_removeDeadEnds(adjacency_matrix, triangle_chains, nodes, max_branching_factor);
+        % plot the graph without dead ends
+        figure; hold on; box on; title('medial axis graph with dead ends removed')
+        xlabel('x [km]')
+        ylabel('y [km]')
+        for j = 2:length(shrunk_polytopes)
+            fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+        end
+        for i = 1:(size(triangle_chains,1))
+            % pop off a triangle chain
+            chain_of_note = triangle_chains{i,3};
+            if isempty(chain_of_note)
+                continue
+            end
+            % pot big markers for the start and end node
+            beg_end = [chain_of_note(1) chain_of_note(end)];
+            % plot a straight line between them (this is the adjacency graph connection)
+            plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
+            % plot the medial axis path between them (this is the curved path from the triangle chain)
+            plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
+            color_idx = color_idx + 1;
+        end
+        if flag_do_plot_slow % plot entire adjacency graph for debugging
+            [r, c] = find(adjacency_matrix);
+            for j = 1:length(r)
+                idx_chain_rc = find([triangle_chains{:,1}]'== r(j) & [triangle_chains{:,2}]'== c(j));
+                if length(idx_chain_rc)>=1
+                    plot(xcc(nodes([r((j)) c((j))])), ycc(nodes([r((j)) c((j))])), '--.','MarkerSize',10,'Color','g')
+                else
+                    plot(xcc(nodes([r((j)) c((j))])), ycc(nodes([r((j)) c((j))])), '--.','MarkerSize',10,'LineWidth',3,'Color','r')
+                end
+            end
+        end
+        sprintf('loop has iterated %i times',iterand)
+        iterand = iterand + 1;
+    end % end outer while loop that loops until convergence occurs
+end
+
+function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAxis_makeAdjacencyMatrixAndTriangleChains(shrunk_polytopes, varargin)
+    %% check input arguments
+    if nargin < 1 || nargin > 2
+        error('Incorrect number of arguments');
+    end
+    % if there is no value in varargin...
+    if nargin == 1
+        % default is to assume convex obstacles as this is conservative
+        flag_do_plot = 0;
+    end
+    % if there is a value in varargin...
+    if nargin == 2
+        % check what it is
+        if varargin{1} == 1
+            % set concave flag if it was passed in
+            flag_do_plot = 1;
+        elseif varargin{1} == 0
+            flag_do_plot = 0;
+        else
+            % throw error if it was passed in with an incorrect value
+            error('optional argument is the plotting flag and can either be 1 or 0')
+        end
+    end
+    C = []; % initialize constriant matrix
+    P = []; % initialize points matrix
+    largest_idx = 0;
+    for poly_idx = 1:length(shrunk_polytopes)
+        P = [P; shrunk_polytopes(poly_idx).vertices(1:end-1,:)]; % add poly verts to points
+        % want to list every pair of points representing a polytope side as a constraint
+        num_verts = size(shrunk_polytopes(poly_idx).vertices,1)-1;
+        C1 = [1:num_verts]'; % this will be points 1 through n
+        C2 = [C1(2:end);C1(1)]; % C2 is equal to C1 with the order shifted by 1
+        Ccomb = [C1 C2]; % this will be a table saying point 1 to 2 is a side, 2 to 3, etc.
+        Ccomb = Ccomb + largest_idx; % shift the whole thing by the largest ID already in C so point IDs are global, not unique to this polytope onlyk
+        C = [C; Ccomb]; % add constriants for this polytope to total constraint list
+        largest_idx = max(max(C)); % update largest point ID in this polytope for use offsetting next polytope
+    end
+    x = P(:,1); % all x's
+    y = P(:,2); % all y's
+    DT = delaunayTriangulation(P,C) % perform constrained triangulation
+    figure; box on; hold on; triplot(DT); title('triangulation')
+    xlabel('x [km]')
+    ylabel('y [km]')
+    inside = isInterior(DT); % identify triangles statisfying constriants C (i.e. tris within the boundary and outside polytopes, i.e. free space)
+    tr = triangulation(DT(inside,:),DT.Points); % keep only the triangles of free space, not the ones in polytopes
+    for j = 2:length(shrunk_polytopes)
+        fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+    end
+    figure; box on; hold on; triplot(tr); title('triangulation, no interior')
+    xlabel('x [km]')
+    ylabel('y [km]')
+    for j = 2:length(shrunk_polytopes)
+        fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+    end
+    numt = size(tr,1); % numbe of triangles
+    T = (1:numt)'; % list of triangle idx
+    neigh = tr.neighbors(); % this indicates which triangles are connected to which other triangles
+    cc = circumcenter(tr); % get all circumcenters (centers of circumscribed circles)
+    nodes = find(~isnan(sum(neigh, 2))); % identify all 3 connected triangles (tris with no nan neighbor)
+    xcc = cc(:,1); % x coords of circumcenters
+    ycc = cc(:,2); % y coords of circumcenters
+    % the following code rearranges the numtx3 'neigh' matrix where row i is the three neighbors of tri i,
+    % into a 2xm matrix where each columb is a pair of neighboring triangles
+    % this is useful for plotting as neigh_for_plotting has no nan values while neigh does
+    idx1 = T < neigh(:,1);
+    idx2 = T < neigh(:,2);
+    idx3 = T < neigh(:,3);
+    neigh_for_plotting = [T(idx1) neigh(idx1,1); T(idx2) neigh(idx2,2); T(idx3) neigh(idx3,3)]';
+    if flag_do_plot
+        % plot the triangulation and approximate medial axis
+        figure; hold on; box on;
+        xlabel('x [km]')
+        ylabel('y [km]')
+        for j = 2:length(shrunk_polytopes)
+            fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+        end
+        triplot(tr,'g')
+        hold on
+        plot(xcc(neigh_for_plotting), ycc(neigh_for_plotting), '-r','LineWidth',1.5) % plot approx. medial axis
+        plot(xcc(nodes), ycc(nodes), '.k','MarkerSize',30) % plot 3 connected triangle circumcenters
+        plot(x(C'),y(C'),'-b','LineWidth',1.5) % plot constriants (i.e. polytopes)
+        title('Medial Axis, 3-connected nodes highlighted')
+    end
+    % make a plannable graph from triangulation
+    % identify the 3 connected triangles
+    adjacency_matrix = eye(length(nodes)); % set to 1 if chain of 2 connected triangles exists between three connected triangle node(i) and node(j)
+    triangle_chains = {}; % each row contains (i,1) start 3 connected tri, (i,2) end 3 connected tri, and (i,3) array of 2 connected tris between them
+    path_is_explored = zeros(length(nodes),3); % set to 1 when a direction is explored when node(i) neighbor(i,j) is explored
+    % while there is still a 0 in the path explored list...
+    while ~isempty(find(path_is_explored == 0))
+        % find the first 0...it will be at i,j so we want nodes(i) in direction neigh(i,j)
+        [r,c] = find(path_is_explored == 0);
+        i = r(1);
+        direction = c(1);
+
+        tris_visited = []; % initialize triangles visited list
+        tris_visited = [nodes(i)]; % pick one starting node
+        % pick a direction from neighbors of the node triangle
+        direction_choices = neigh(nodes(i),:); % there should be three directions leaving nodes(i)
+        % next tri should just be neigh(node(i),j) the jth neightbor of node(i)
+        next_tri = direction_choices(direction); % go a direction that hasn't been explored yet
+        tris_visited = [tris_visited, next_tri];
+        % want to keep looking while the current triangle is not a 3 connected one
+        % i.e. while the last triangle visited is not a node
+        while ~ismember(tris_visited(end),nodes)
+            % march down direction until hit a 3 connected triangle, noting every triangle on the way
+            neighbors = neigh(next_tri,:); % find the neighbors of the current triangle, this is a 1x3 list of tri idx
+            % whichever of the two neighbors we haven't visited, is the direction we didn't come from
+            next_dir = find(~isnan(neighbors)&~ismember(neighbors,tris_visited)); % this will be an ID between 1 and 3
+            % if there is no next neighbor satisfying (not nan) && (not already visited)
+            % we can assume we hit a dead end and this whole chain can be removed
+            if isempty(next_dir)
+                % set the flag that indicates this was a dead end as this has special handling
+                is_dead_end = 1;
+                % break out of the while loop
+                break
+            else
+                % otherwise we must have selected a 2 or three connected triangle
+                is_dead_end =0;
+            end
+            next_tri = neighbors(next_dir); % update the next tiangle based on the valid direction ID
+            tris_visited = [tris_visited, next_tri]; % append to the triangle visited list
+        end % end triangle chain while loop
+        % special dead end handling
+        if is_dead_end
+            % don't store the triangles
+            % mark the direction as explored
+            path_is_explored(i,direction) = 1;
+            % don't udpate adjacency
+            % reset dead end flag
+            is_dead_end = 0;
+            continue % to next unexplored direction
+        end
+        % store tris visited list in the triangle chains lookup table
+        triangle_chains{end+1,1} = find(nodes==tris_visited(1)); % index of start in nodes
+        triangle_chains{end,2} = find(nodes==tris_visited(end)); % index of end in nodes
+        triangle_chains{end,3} = tris_visited; % list of triangles between them
+        % note that the start and end of the triangle chain are "adjacent" in a graph sense
+        adjacency_matrix(find(nodes==tris_visited(1)),find(nodes==tris_visited(end))) = 1;
+        % flag the direction as explored
+        path_is_explored(i,direction) = 1;
+    end % end direction while loop
+
+    % plot the graph on the triangles
+    if flag_do_plot
+        figure; hold on; box on; title('medial axis graph overlaid on triangulation')
+        xlabel('x [km]')
+        ylabel('y [km]')
+        for j = 2:length(shrunk_polytopes)
+            fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+        end
+        triplot(tr,'g')
+        hold on
+        plot(xcc(neigh_for_plotting), ycc(neigh_for_plotting), '-r','LineWidth',1.5) % plot approx. medial axis
+        plot(xcc(nodes), ycc(nodes), '.k','MarkerSize',30) % plot 3 connected triangle circumcenters
+        plot(x(C'),y(C'),'-b','LineWidth',1.5) % plot constriants (i.e. polytopes)
+        xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
+        colors = {"#A2142F","#7E2F8E","#EDB120","#0072BD"}; % some different colors
+        color_idx = 1;
+        for i = 1:(size(triangle_chains,1))
+            % pop off a triangle chain
+            chain_of_note = triangle_chains{i,3};
+            % pot big markers for the start and end node
+            beg_end = [chain_of_note(1) chain_of_note(end)];
+            % plot a straight line between them (this is the adjacency graph connection)
+            plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
+            % plot the medial axis path between them (this is the curved path from the triangle chain)
+            plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
+            color_idx = color_idx + 1;
+        end
+        % plot the graph
+        figure; hold on; box on; title('medial axis graph')
+        xlabel('x [km]')
+        ylabel('y [km]')
+        for j = 2:length(shrunk_polytopes)
+            fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+        end
+        for i = 1:(size(triangle_chains,1))
+            % pop off a triangle chain
+            chain_of_note = triangle_chains{i,3};
+            % pot big markers for the start and end node
+            beg_end = [chain_of_note(1) chain_of_note(end)];
+            % plot a straight line between them (this is the adjacency graph connection)
+            plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
+            % plot the medial axis path between them (this is the curved path from the triangle chain)
+            plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
+            color_idx = color_idx + 1;
+        end
+    end % end flag_do_plot
+end
