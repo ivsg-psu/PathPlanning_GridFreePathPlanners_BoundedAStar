@@ -11,15 +11,31 @@ flag_do_plot_slow = 0;
 [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_pruneGraph(adjacency_matrix, triangle_chains, nodes, xcc, ycc, shrunk_polytopes, flag_do_plot);
 
 %% get costs for navigating each triangle chain
+% TODO add zcc as optional input
 [triangle_chains, max_side_lengths_per_tri] = fcn_MedialAxis_addCostsToTriangleChains(triangle_chains, nodes, xcc, ycc, tr, shrunk_polytopes, flag_do_plot);
 
 %% planning through triangle graph
 start_xy = [1031 -4717];
 finish_xy = [1050 -4722];
+% TODO add zcc as optional input
 [adjacency_matrix, triangle_chains, nodes, start_closest_tri, start_closest_node] = fcn_MedialAxis_addPointToAdjacencyMatrixAndTriangleChains(start_xy, adjacency_matrix, triangle_chains, nodes, xcc, ycc, max_side_lengths_per_tri);
 [adjacency_matrix, triangle_chains, nodes, finish_closest_tri, finish_closest_node] = fcn_MedialAxis_addPointToAdjacencyMatrixAndTriangleChains(finish_xy, adjacency_matrix, triangle_chains, nodes, xcc, ycc, max_side_lengths_per_tri);
 
 for w = 0.1:0.1:1
+    % TODO for alt paths, instead of looping on weights you loop on route chokes:
+    % w = 1;
+    % route_choke = 0;
+    % alternate_routes = {};
+    % smallest_corridors = [];
+    % route_lengths = [];
+    % for iterations = 1:5
+    % TODO for alt paths branching from primary path, need to take route_triangle_chains out of route unpacking function
+    % and pass this into cgraph creation function as an argument
+    % and need to start from midpoint on init route:
+    % backstep = 1;
+    % iterations = 1;
+    % init_route_num_nodes = inf; % initialize to infinite until we know init route length
+    % while backstep < init_route_num_nodes
     [cgraph, all_pts, start, finish, best_chain_idx_matrix] = fcn_MedialAxis_makeCostGraphAndAllPoints(adjacency_matrix, triangle_chains, nodes, xcc, ycc, start_closest_tri, start_closest_node, finish_closest_tri, finish_closest_node, w);
     % adjacency matrix is vgraph
     vgraph = adjacency_matrix;
@@ -35,6 +51,13 @@ for w = 0.1:0.1:1
 
     % plan a path
     [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
+    % TODO for replanning from route need something like this here and after ~is_reachable
+    % init_route = alternate_routes_nodes{1};
+    % init_route_num_nodes = size(init_route,1);
+    % start = init_route(end-backstep,:);
+    % backstep = backstep + 1;
+    % iterations = iterations+ 1;
+    % continue
 
     % take route and tri chains data structure
     % also take best path structure
@@ -86,6 +109,7 @@ for w = 0.1:0.1:1
     legend(leg_str,'Location','best');
     tit_str = sprintf('length cost weight was: %.1f \n total length: %.2f km \n worst corridor: %.2f km',w, route_length, route_choke);
     title(tit_str)
+    % TODO add alt route plotting code
 end % end weight loop
 end % end do_voronoi function
 function [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_removeDeadEnds(adjacency_matrix, triangle_chains, nodes, max_branching_factor)
@@ -726,6 +750,8 @@ function [adjacency_matrix, triangle_chains, nodes, point_closest_tri, point_clo
 end
 
 function [cgraph, all_pts, start, finish, best_chain_idx_matrix] = fcn_MedialAxis_makeCostGraphAndAllPoints(adjacency_matrix, triangle_chains, nodes, xcc, ycc, start_closest_tri, start_closest_node, finish_closest_tri, finish_closest_node, w)
+    % TODO add as an input the minimum route choke
+    % TODO also add as an input a list of banned chains
     num_nodes = length(nodes);
     all_pts = nan(num_nodes,3);
     for i = 1:num_nodes
@@ -748,7 +774,16 @@ function [cgraph, all_pts, start, finish, best_chain_idx_matrix] = fcn_MedialAxi
             continue
         end
         % find all the chains connecting r and c in adjacency
+        % TODO when a minimum choke is used as an argument, replace the line below
         idx_chain_rc = find([triangle_chains{:,1}]'== r(i) & [triangle_chains{:,2}]'== c(i));
+        % idx_chain_rc = find([triangle_chains{:,1}]'== r(i) & [triangle_chains{:,2}]'== c(i) & [triangle_chains{:,4}]' > route_choke);
+        % % if there are no matches meeting the start, goal, and min corridor width, set adjacency to zero and move on
+        % TODO also need to allow for filtering on banned chains
+        % idx_chain_rc = setdiff(idx_chain_rc, prev_route_chain_ids); % want to not use triangle chains that were in previous routes
+        % if isempty(idx_chain_rc)
+        %     adjacency_matrix(r(i),c(i)) = 0;
+        %     continue
+        % end
         % we want to only use the chain with the lowest total cost form r to c
         corridor_widths = [triangle_chains{idx_chain_rc, 4}]; % the corridor width of all valid chains
         lengths = [triangle_chains{idx_chain_rc, 5}]; % the length of all valid chains
@@ -763,7 +798,7 @@ function [cgraph, all_pts, start, finish, best_chain_idx_matrix] = fcn_MedialAxi
     finish = [xcc(finish_closest_tri) ycc(finish_closest_tri) finish_closest_node];
 end
 
-function [route_full, route_length, route_choke] = fcn_MedialAxis_processRoute(route, triangle_chains, best_chain_idx_matrix, xcc, ycc, start_xy, finish_xy)
+function [route_full, route_length, route_choke, route_triangle_chain] = fcn_MedialAxis_processRoute(route, triangle_chains, best_chain_idx_matrix, xcc, ycc, start_xy, finish_xy)
     route_triangle_chain = [];
     route_choke = inf;
     for i = 1:(size(route,1)-1)
