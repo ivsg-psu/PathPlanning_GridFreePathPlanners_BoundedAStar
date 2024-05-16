@@ -12,6 +12,11 @@ flag_do_plot = 1;
 flag_do_plot_slow = 0;
 
 %% mission options
+alt_path_mode = 3; % alt_route_mode can be a 1, 2, or 3:
+% 1 blocks only the next segment in the initial path,
+% 2 blocks the entire initial path,
+% 3 blocks the initial path and all previously calculated alternate paths
+
 map_idx = 7;
 add_boundary = 1;
 [shrunk_polytopes, start_init, finish_init] = fcn_util_load_test_map(map_idx, add_boundary);
@@ -602,9 +607,10 @@ w = 1;
 route_choke = 0;
 alternate_routes = {};
 alternate_routes_nodes = {};
+alternate_routes_chain_ids = {};
 smallest_corridors = [];
 route_lengths = [];
-prev_route_chain_ids = [];
+denylist_route_chain_ids = [];
 replanning_times = [];
 %  set the start for the planner as the start node not the startxy
 start = [xcc(start_closest_tri) ycc(start_closest_tri) start_closest_node];
@@ -614,7 +620,7 @@ backstep = 1;
 iterations = 1;
 init_route_num_nodes = inf; % initialize to infinite until we know init route length
 % TODO want to iterate for as many route points as there are
-while backstep < init_route_num_nodes
+while backstep < init_route_num_nodes - 1
     replanning_time = tic;
     route_choke = 0;
     cgraph = nan(size(adjacency_matrix)); % initialize cgraph
@@ -630,7 +636,7 @@ while backstep < init_route_num_nodes
         end
         % find all the chains connecting r and c in adjacency that meet the min corridor width requirement
         idx_chain_rc = find([triangle_chains{:,1}]'== r(i) & [triangle_chains{:,2}]'== c(i) & [triangle_chains{:,4}]' > route_choke);
-        idx_chain_rc = setdiff(idx_chain_rc, prev_route_chain_ids); % want to not use triangle chains that were in previous routes
+        idx_chain_rc = setdiff(idx_chain_rc, denylist_route_chain_ids); % want to not use triangle chains that were in previous routes
         % if there are no matches meeting the start, goal, and min corridor width, set adjacency to zero and move on
         if isempty(idx_chain_rc)
             adjacency_matrix(r(i),c(i)) = 0;
@@ -655,6 +661,7 @@ while backstep < init_route_num_nodes
         warning(my_warn)
         %% update for next iteration of alt route
         alternate_routes_nodes{end+1}  = nan;
+        alternate_routes_chain_ids{end+1}  = nan;
         alternate_routes{end+1}  = nan;
         smallest_corridors = [smallest_corridors, nan];
         route_lengths = [route_lengths, nan];
@@ -678,6 +685,7 @@ while backstep < init_route_num_nodes
     % take route and tri chains data structure
     % also take best path structure
     route_triangle_chain = [];
+    route_triangle_chain_ids = [];
     route_choke = inf;
     for i = 1:(size(route,1)-1)
         % for route to route + 1 get tri chain
@@ -696,17 +704,34 @@ while backstep < init_route_num_nodes
             best_chain_idx = best_chain_idx_matrix(beg_seg,end_seg);
             % append to list of triangle chains
             route_triangle_chain = [route_triangle_chain, triangle_chains{best_chain_idx,3}];
-            if i < (size(route,1)-3)
-                % if iterations == 1
-                % TODO do we want to do this on every step or only step 1?
-                prev_route_chain_ids = [prev_route_chain_ids, best_chain_idx];
-            end
+            route_triangle_chain_ids = [route_triangle_chain_ids, best_chain_idx];
             segment_choke = triangle_chains{best_chain_idx,4};
             route_choke = min(route_choke, segment_choke);
         end
     end
     % dedup
     route_triangle_chain = unique(route_triangle_chain,'stable');
+
+    %% denylist logic to create alternate routes
+    % 1 blocks only the next segment in the initial path,
+    % 2 blocks the entire initial path,
+    % 3 blocks the initial path and all previously calculated alternate paths
+    if alt_path_mode == 1
+        if iterations ~= 1
+            init_route_chain_ids = alternate_routes_chain_ids{1};
+            % if backstep > init_route_num_nodes - 2
+            %     continue
+            % end
+            denylist_route_chain_ids = init_route_chain_ids(end-backstep);
+        end
+    elseif alt_path_mode == 2
+        if iterations == 1
+            denylist_route_chain_ids = route_triangle_chain_ids(1:end-2);
+        end
+    elseif alt_path_mode == 3
+        denylist_route_chain_ids = [denylist_route_chain_ids route_triangle_chain_ids(1:end-2)];
+    end
+
     % append the straightline from startxy to start node to the beginning of the route when transforming the route to tri chains
     if iterations == 1
         route_full = [start_xy; xcc(route_triangle_chain), ycc(route_triangle_chain); finish_xy];
@@ -760,6 +785,7 @@ while backstep < init_route_num_nodes
     title(tit_str)
     %% update for next iteration of alt route
     alternate_routes_nodes{end+1}  = route;
+    alternate_routes_chain_ids{end+1}  = route_triangle_chain_ids;
     alternate_routes{end+1}  = route_full;
     smallest_corridors = [smallest_corridors, route_choke];
     route_lengths = [route_lengths, route_length];
@@ -800,7 +826,60 @@ for i = 1:length(shrunk_polytopes)-2
     leg_str{end+1} = '';
 end
 legend(leg_str,'Location','best');
-title(sprintf('%i paths, each with wider corridors',length(alternate_routes)));
+% 1 blocks only the next segment in the initial path,
+% 2 blocks the entire initial path,
+% 3 blocks the initial path and all previously calculated alternate paths
+if alt_path_mode == 1
+    blocking_mode_str = 'next segment of init. path blocked';
+elseif alt_path_mode == 2
+    blocking_mode_str = 'entire init. path blocked';
+elseif alt_path_mode == 3
+    blocking_mode_str = 'entire init. path and all prior alt. paths blocked';
+end
+title(strcat(sprintf('%i paths, ', length(alternate_routes)), blocking_mode_str));
+%% recolor of the above plot
+figure; hold on; box on;
+leg_str = {};
+plot(start_xy(1),start_xy(2),'xg','MarkerSize',10);
+plot(finish_xy(1),finish_xy(2),'xr','MarkerSize',10);
+plot(start(1),start(2),'.g','MarkerSize',10);
+plot(finish(1),finish(2),'.r','MarkerSize',10);
+leg_str{end+1} = 'start';
+leg_str{end+1} = 'finish';
+leg_str{end+1} = 'start node';
+leg_str{end+1} = 'finish node';
+xlabel('x [km]');
+ylabel('y [km]');
+route_to_plot = alternate_routes{1};
+plot(route_to_plot(:,1),route_to_plot(:,2),'-b','LineWidth',4);
+leg_str{end+1} = sprintf('route 1');
+for i = 2:length(alternate_routes)
+    route_to_plot = alternate_routes{i};
+    if isnan(route_to_plot) % if the route wasn't calculated, just remove it
+        continue
+    end
+    plot(route_to_plot(:,1),route_to_plot(:,2),'k--','LineWidth',2);
+    leg_str{end+1} = sprintf('route %i, corridors > %.3f [km]',i,smallest_corridors(i));
+end
+for j = 2:length(shrunk_polytopes)
+    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+end
+leg_str{end+1} = 'obstacles';
+for i = 1:length(shrunk_polytopes)-2
+    leg_str{end+1} = '';
+end
+legend(leg_str,'Location','best');
+% 1 blocks only the next segment in the initial path,
+% 2 blocks the entire initial path,
+% 3 blocks the initial path and all previously calculated alternate paths
+if alt_path_mode == 1
+    blocking_mode_str = 'next segment of init. path blocked';
+elseif alt_path_mode == 2
+    blocking_mode_str = 'entire init. path blocked';
+elseif alt_path_mode == 3
+    blocking_mode_str = 'entire init. path and all prior alt. paths blocked';
+end
+title(strcat(sprintf('%i paths, ', length(alternate_routes)), blocking_mode_str));
 function xyz = INTERNAL_WGSLLA2xyz(wlat, wlon, walt)
     %Function xyz = wgslla2xyz(lat, lon, alt) returns the
     %equivalent WGS84 XYZ coordinates (in meters) for a

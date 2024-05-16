@@ -798,8 +798,9 @@ function [cgraph, all_pts, start, finish, best_chain_idx_matrix] = fcn_MedialAxi
     finish = [xcc(finish_closest_tri) ycc(finish_closest_tri) finish_closest_node];
 end
 
-function [route_full, route_length, route_choke, route_triangle_chain] = fcn_MedialAxis_processRoute(route, triangle_chains, best_chain_idx_matrix, xcc, ycc, start_xy, finish_xy)
+function [route_full, route_length, route_choke, route_triangle_chain, route_triangle_chain_ids] = fcn_MedialAxis_processRoute(route, triangle_chains, best_chain_idx_matrix, xcc, ycc, start_xy, finish_xy)
     route_triangle_chain = [];
+    route_triangle_chain_ids = [];
     route_choke = inf;
     for i = 1:(size(route,1)-1)
         % for route to route + 1 get tri chain
@@ -817,6 +818,7 @@ function [route_full, route_length, route_choke, route_triangle_chain] = fcn_Med
         else
             best_chain_idx = best_chain_idx_matrix(beg_seg,end_seg);
             % append to list of triangle chains
+            route_triangle_chain_ids = [route_triangle_chain_ids, best_chain_idx];
             route_triangle_chain = [route_triangle_chain, triangle_chains{best_chain_idx,3}];
             segment_choke = triangle_chains{best_chain_idx,4};
             route_choke = min(route_choke, segment_choke);
