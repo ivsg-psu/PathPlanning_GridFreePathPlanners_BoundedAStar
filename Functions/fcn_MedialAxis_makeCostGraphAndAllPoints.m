@@ -22,9 +22,9 @@ function [adjacency_matrix, cgraph, all_pts, start, finish, best_chain_idx_matri
         end
         % find all the chains connecting r and c in adjacency that also meet minimum corridor width requirement
         idx_chain_rc = find([triangle_chains{:,1}]'== r(i) & [triangle_chains{:,2}]'== c(i) & [triangle_chains{:,4}]' > min_corridor_width);
+        % also need to allow for filtering on banned chains
+        idx_chain_rc = setdiff(idx_chain_rc, denylist_route_chain_ids); % want to not use triangle chains that were in previous routes
         % if there are no matches meeting the start, goal, and min corridor width, set adjacency to zero and move on
-        % TODO also need to allow for filtering on banned chains
-        % idx_chain_rc = setdiff(idx_chain_rc, prev_route_chain_ids); % want to not use triangle chains that were in previous routes
         if isempty(idx_chain_rc)
             adjacency_matrix(r(i),c(i)) = 0;
             continue
