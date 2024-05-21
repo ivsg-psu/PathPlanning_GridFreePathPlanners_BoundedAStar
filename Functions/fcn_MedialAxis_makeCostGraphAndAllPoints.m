@@ -1,6 +1,4 @@
-function [cgraph, all_pts, start, finish, best_chain_idx_matrix] = fcn_MedialAxis_makeCostGraphAndAllPoints(adjacency_matrix, triangle_chains, nodes, xcc, ycc, start_closest_tri, start_closest_node, finish_closest_tri, finish_closest_node, w)
-    % TODO add as an input the minimum route choke
-    % TODO also add as an input a list of banned chains
+function [adjacency_matrix, cgraph, all_pts, start, finish, best_chain_idx_matrix] = fcn_MedialAxis_makeCostGraphAndAllPoints(adjacency_matrix, triangle_chains, nodes, xcc, ycc, start_closest_tri, start_closest_node, finish_closest_tri, finish_closest_node, w, min_corridor_width, denylist_route_chain_ids)
     num_nodes = length(nodes);
     all_pts = nan(num_nodes,3);
     for i = 1:num_nodes
@@ -22,17 +20,15 @@ function [cgraph, all_pts, start, finish, best_chain_idx_matrix] = fcn_MedialAxi
             cgraph(r(i),c(i)) = 0; % it's always free to stay still
             continue
         end
-        % find all the chains connecting r and c in adjacency
-        % TODO when a minimum choke is used as an argument, replace the line below
-        idx_chain_rc = find([triangle_chains{:,1}]'== r(i) & [triangle_chains{:,2}]'== c(i));
-        % idx_chain_rc = find([triangle_chains{:,1}]'== r(i) & [triangle_chains{:,2}]'== c(i) & [triangle_chains{:,4}]' > route_choke);
-        % % if there are no matches meeting the start, goal, and min corridor width, set adjacency to zero and move on
+        % find all the chains connecting r and c in adjacency that also meet minimum corridor width requirement
+        idx_chain_rc = find([triangle_chains{:,1}]'== r(i) & [triangle_chains{:,2}]'== c(i) & [triangle_chains{:,4}]' > min_corridor_width);
+        % if there are no matches meeting the start, goal, and min corridor width, set adjacency to zero and move on
         % TODO also need to allow for filtering on banned chains
         % idx_chain_rc = setdiff(idx_chain_rc, prev_route_chain_ids); % want to not use triangle chains that were in previous routes
-        % if isempty(idx_chain_rc)
-        %     adjacency_matrix(r(i),c(i)) = 0;
-        %     continue
-        % end
+        if isempty(idx_chain_rc)
+            adjacency_matrix(r(i),c(i)) = 0;
+            continue
+        end
         % we want to only use the chain with the lowest total cost form r to c
         corridor_widths = [triangle_chains{idx_chain_rc, 4}]; % the corridor width of all valid chains
         lengths = [triangle_chains{idx_chain_rc, 5}]; % the length of all valid chains

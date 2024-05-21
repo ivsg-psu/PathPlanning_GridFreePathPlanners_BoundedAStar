@@ -1,4 +1,4 @@
-function [polytopes, starts, finishes] = fcn_util_load_test_map(map_idx, varargin)
+function [polytopes, starts, finishes, resolution_scale] = fcn_util_load_test_map(map_idx, varargin)
 % fcn_util_load_test_map
 %
 % A simple utility for loading a test fixture mat file containing a polytope map
@@ -74,7 +74,7 @@ function [polytopes, starts, finishes] = fcn_util_load_test_map(map_idx, varargi
         end
     end
 
-
+    resolution_scale = 1; % default to 1 unless over written somewhere
     if map_idx == 1 % generic canyon map
         %% load test fixtures for polytope map rather than creating it here
         % load distribution north of canyon
@@ -209,6 +209,7 @@ function [polytopes, starts, finishes] = fcn_util_load_test_map(map_idx, varargi
             boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
             polytopes = [boundary, polytopes]; % put the boundary polytope as the first polytope
         end
+        resolution_scale = 10; % this map has many fine features and resolution can be 10x the nominal
     elseif map_idx == 8 % Josh's polytope map from 24 April 2024
         load(strcat(pwd,'\..\Test_Fixtures\april_24_example_josh.mat'));
         start = [1 30];

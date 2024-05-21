@@ -7,14 +7,14 @@ addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'))
 addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 
-map_idx = 5
+map_idx = 8
 flag_do_plot = 1;
 flag_do_animation = 0;
 flag_do_plot_slow = 0;
-[shrunk_polytopes, start_init, finish_init] = fcn_util_load_test_map(map_idx, 1)
+[shrunk_polytopes, start_init, finish_init, resolution_scale] = fcn_util_load_test_map(map_idx, 1)
 
 %% constrained delaunay triangulation
-[adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAxis_makeAdjacencyMatrixAndTriangleChains(shrunk_polytopes, flag_do_plot);
+[adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAxis_makeAdjacencyMatrixAndTriangleChains(shrunk_polytopes, resolution_scale, flag_do_plot);
 
 %% prune graph
 [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_pruneGraph(adjacency_matrix, triangle_chains, nodes, xcc, ycc, shrunk_polytopes, flag_do_plot);
@@ -24,8 +24,8 @@ flag_do_plot_slow = 0;
 [triangle_chains, max_side_lengths_per_tri] = fcn_MedialAxis_addCostsToTriangleChains(triangle_chains, nodes, xcc, ycc, tr, shrunk_polytopes, flag_do_plot);
 
 %% planning through triangle graph
-start_xy = [1031 -4717];
-finish_xy = [1050 -4722];
+start_xy = start_init; %[1031 -4717];
+finish_xy = finish_init; %[1050 -4722];
 % TODO add zcc as optional input
 [adjacency_matrix, triangle_chains, nodes, start_closest_tri, start_closest_node] = fcn_MedialAxis_addPointToAdjacencyMatrixAndTriangleChains(start_xy, adjacency_matrix, triangle_chains, nodes, xcc, ycc, max_side_lengths_per_tri);
 [adjacency_matrix, triangle_chains, nodes, finish_closest_tri, finish_closest_node] = fcn_MedialAxis_addPointToAdjacencyMatrixAndTriangleChains(finish_xy, adjacency_matrix, triangle_chains, nodes, xcc, ycc, max_side_lengths_per_tri);
@@ -45,7 +45,9 @@ for w = 0.1:0.1:1
     % iterations = 1;
     % init_route_num_nodes = inf; % initialize to infinite until we know init route length
     % while backstep < init_route_num_nodes
-    [cgraph, all_pts, start, finish, best_chain_idx_matrix] = fcn_MedialAxis_makeCostGraphAndAllPoints(adjacency_matrix, triangle_chains, nodes, xcc, ycc, start_closest_tri, start_closest_node, finish_closest_tri, finish_closest_node, w);
+    min_corridor_width = 0; % do not restrict corridor width
+    denylist_route_chain_ids = []; % no need to denylist any triangle chains
+    [adjacency_matrix, cgraph, all_pts, start, finish, best_chain_idx_matrix] = fcn_MedialAxis_makeCostGraphAndAllPoints(adjacency_matrix, triangle_chains, nodes, xcc, ycc, start_closest_tri, start_closest_node, finish_closest_tri, finish_closest_node, w, min_corridor_width, denylist_route_chain_ids);
     % adjacency matrix is vgraph
     vgraph = adjacency_matrix;
     num_nodes = length(nodes);

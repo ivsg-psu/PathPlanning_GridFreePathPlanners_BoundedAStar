@@ -1,15 +1,15 @@
-function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAxis_makeAdjacencyMatrixAndTriangleChains(shrunk_polytopes, varargin)
+function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAxis_makeAdjacencyMatrixAndTriangleChains(shrunk_polytopes, resolution_scale, varargin)
     %% check input arguments
-    if nargin < 1 || nargin > 2
+    if nargin < 2 || nargin > 3
         error('Incorrect number of arguments');
     end
     % if there is no value in varargin...
-    if nargin == 1
+    if nargin == 2
         % default is to assume convex obstacles as this is conservative
         flag_do_plot = 0;
     end
     % if there is a value in varargin...
-    if nargin == 2
+    if nargin == 3
         % check what it is
         if varargin{1} == 1
             % set concave flag if it was passed in
@@ -25,7 +25,7 @@ function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAx
     %% interpolate polytope vertices
     distances = diff([[shrunk_polytopes.xv]',[shrunk_polytopes.yv]']); % find side lengths in whole field
     min_distance_between_verts = min(sqrt(sum(distances.*distances,2))); % the min of this is the smallest space between features
-    resolution = min_distance_between_verts/2; % want even the smallest feature to be bisected
+    resolution = resolution_scale*min_distance_between_verts/2; % want even the smallest feature to be bisected
     shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, resolution); % interpolate sides
 
     C = []; % initialize constriant matrix
