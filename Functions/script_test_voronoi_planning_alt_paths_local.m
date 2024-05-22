@@ -11,12 +11,12 @@ addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'))
 addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 %% mission options
-alt_path_mode = 3; % alt_route_mode can be a 1, 2, or 3:
+alt_path_mode = 1; % alt_route_mode can be a 1, 2, or 3:
 % 1 blocks only the next segment in the initial path,
 % 2 blocks the entire initial path,
 % 3 blocks the initial path and all previously calculated alternate paths
 map_idx = 7;
-flag_do_plot = 1
+flag_do_plot = 1;
 flag_do_animation = 0;
 flag_do_plot_slow = 0;
 [shrunk_polytopes, start_init, finish_init, resolution_scale] = fcn_util_load_test_map(map_idx, 1)

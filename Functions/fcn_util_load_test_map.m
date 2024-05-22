@@ -209,7 +209,7 @@ function [polytopes, starts, finishes, resolution_scale] = fcn_util_load_test_ma
             boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
             polytopes = [boundary, polytopes]; % put the boundary polytope as the first polytope
         end
-        resolution_scale = 10; % this map has many fine features and resolution can be 10x the nominal
+        resolution_scale = 20; % this map has many fine features and resolution can be 10x the nominal
     elseif map_idx == 8 % Josh's polytope map from 24 April 2024
         load(strcat(pwd,'\..\Test_Fixtures\april_24_example_josh.mat'));
         start = [1 30];
