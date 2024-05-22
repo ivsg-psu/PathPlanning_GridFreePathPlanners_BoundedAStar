@@ -63,7 +63,6 @@ while backstep < init_route_num_nodes - 1
         start_xy = [xcc(start_closest_tri) ycc(start_closest_tri)];
     end
 
-    % TODO need to probably pass in start closest tri and start xy and start node rather than hacky my_start overwrite
     [adjacency_matrix, cgraph, all_pts, start, finish, best_chain_idx_matrix] = fcn_MedialAxis_makeCostGraphAndAllPoints(adjacency_matrix, triangle_chains, nodes, xcc, ycc, start_closest_tri, start_closest_node, finish_closest_tri, finish_closest_node, w, route_choke, denylist_route_chain_ids);
 
     % adjacency matrix is vgraph
@@ -118,11 +117,6 @@ while backstep < init_route_num_nodes - 1
     elseif alt_path_mode == 3
         denylist_route_chain_ids = [denylist_route_chain_ids route_triangle_chain_ids(1:end-2)];
     end
-    % TODO get rid of this block
-    % don't prepend the start_xy unless its first iter, all other routes start from the initial route
-    % if iterations ~= 1
-        % route_full = route_full(2:end);
-    % end
 
     replanning_times = [replanning_times, toc(replanning_time)]
 
