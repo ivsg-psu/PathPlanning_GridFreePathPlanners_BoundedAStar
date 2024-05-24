@@ -17,6 +17,9 @@ function [alternate_routes, alternate_routes_nodes, alternate_routes_chain_ids, 
     possible_ids = 1:length(idx_chain_leaving_node); % might be 1,2,3
     for iterations = 1:length(idx_chain_leaving_node)
         replanning_time = tic;
+        if isempty(triangle_chains{idx_chain_leaving_node(iterations),3})
+            continue
+        end
         ids_to_denylist = setdiff(possible_ids,iterations); % so at step 1 this should be 2,3
         denylist_route_chain_ids_incl_chains_leaving_node = [denylist_route_chain_ids, idx_chain_leaving_node(ids_to_denylist)];% so at step 1, we would block 2, 3, plus whatever user input denlylist we're given
 
@@ -60,4 +63,19 @@ function [alternate_routes, alternate_routes_nodes, alternate_routes_chain_ids, 
         route_lengths = [route_lengths, route_length];
         iterations = iterations+ 1;
     end % end loop over departing edges
+    num_routes = length(alternate_routes);
+    route_combos = nchoosek(1:num_routes,2);
+    duplicate_routes_idx = [];
+    for i = 1:size(route_combos,1)
+        if isequal(alternate_routes{route_combos(i,1)}, alternate_routes{route_combos(i,2)})
+            duplicate_routes_idx = [duplicate_routes_idx, route_combos(i,2)];
+        end
+    end
+    for i = 1:length(duplicate_routes_idx)
+        alternate_routes_nodes(duplicate_routes_idx(i)) = [];
+        alternate_routes_chain_ids(duplicate_routes_idx(i))  = [];
+        alternate_routes(duplicate_routes_idx(i)) = [];
+        smallest_corridors(duplicate_routes_idx(i)) = [];
+        route_lengths(duplicate_routes_idx(i)) =[];
+    end
 end % end function
