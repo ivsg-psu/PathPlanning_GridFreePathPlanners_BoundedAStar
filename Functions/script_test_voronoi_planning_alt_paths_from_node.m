@@ -7,7 +7,7 @@ addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'))
 addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 %% mission options
-map_idx = 8;
+map_idx = 7;
 flag_do_plot = 1;
 % load map
 [shrunk_polytopes, start_init, finish_init, resolution_scale] = fcn_util_load_test_map(map_idx, 1);
