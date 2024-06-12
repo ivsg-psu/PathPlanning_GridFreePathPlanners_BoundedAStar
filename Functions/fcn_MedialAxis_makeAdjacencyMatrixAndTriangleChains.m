@@ -1,4 +1,76 @@
-function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAxis_makeAdjacencyMatrixAndTriangleChains(shrunk_polytopes, resolution_scale, varargin)
+function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAxis_makeAdjacencyMatrixAndTriangleChains(polytopes, resolution_scale, varargin)
+% fcn_MedialAxis_makeCostGraphAndAllPoints
+%
+% This function forms the medial axis graph (composed of an adjacency matrix and
+% the triangle_chains structure describing the edges) from a polytopes struct
+% array.  The free space between the polytope obstacles is triangulated.  The
+% circumcenters of the triangles are connected to form the medial axes.  The
+% 3-connected triangles (i.e., where the medial axes branch) are considered nodes.
+% The adjacency matrix tells which nodes are connected by medial axis edges. The
+% triangle_chains data structure describes these edges.
+%
+% FORMAT:
+%
+% [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAxis_makeAdjacencyMatrixAndTriangleChains(polytopes, resolution_scale, varargin)
+%
+%
+% INPUTS:
+%
+%   polytopes: the polytope struct array
+%
+%   resolution_scale: the multiplier for the minimum spacing between points for triangulation.
+%       The medial axis graph is formed using Delaunay triangulation.  The default spacing of points
+%       on obstacles used for forming triangles is half the minimum spacing between vertices (thus
+%       even the smallest feature will be composed of 2 triangles).  In many cases this is too conservative
+%       so the resolution_scale input allows the user to modify this default spacing.
+%
+%   (optional arguments)
+%   flag_do_plot: a 1 or 0 for flagging plotting on or off.  If ommitted, it is assumed to be 0.
+%
+% OUTPUTS:
+%    Useful variables for outputs: n - number of nodes, M - number of edges, P_M - number of triangles
+%       in the Mth edge, Q - number of triangles in the triangulation.
+%
+%    adjacency_matrix: Like the visibility graph but rather than indicating 2 nodes are visible,
+%       it indicates 2 nodes are connected by an edge.
+%       This an nxn matrix where n is the number of nodes in the map.
+%       A 1 is in position i,j if node j is visible from point i.  0 otherwise.
+%
+%    triangle_chains: an Mx3 cell array with a row for each edge in the medial axis graph.  The first
+%      column contains an int for the node ID for the start of the chain.  The second is the end node.
+%      The third column is a 1xP_M array of integers representing IDs of the triangles whose circumcenters
+%      form the "chain of triangles" connecting the two nodes. P_M can be different for each row, M.
+%
+%    nodes: a Nx1 array of integers.  The integers are the IDs of the triangles that are 3-connected,
+%      i.e., their circumcenters are nodes in the medial axis graph.  The position in the nodes array
+%      is the node ID and the value is the triangle ID.  E.g., if nodes(10)=146, then the 10th node
+%      in the adjacency_matrix and triangle_chains struct is the 146th triangle in
+%      the Delaunay triangulation.
+%
+%    xcc:
+%
+% DEPENDENCIES:
+%
+% none but several functions exist to create visibility matrices and fcn_algorithm_generate_cost_graph can create cost matrices (cgraph) and heuristic cost vectors (hvec)
+%
+% EXAMPLES:
+%
+% See the script: script_test_fcn_algorithm_Astar
+% for a full test suite.
+%
+% This function was written on spring 2023 by Steve Harnett
+% Questions or comments? contact sjharnett@psu.edu
+
+%
+% REVISION HISTORY:
+%
+% 2023, spring by Steve Harnett
+% -- first write of function
+%
+% TO DO:
+%
+% -- fill in to-do items here.
+
     %% check input arguments
     if nargin < 2 || nargin > 3
         error('Incorrect number of arguments');
@@ -23,18 +95,18 @@ function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAx
     end
 
     %% interpolate polytope vertices
-    distances = diff([[shrunk_polytopes.xv]',[shrunk_polytopes.yv]']); % find side lengths in whole field
+    distances = diff([[polytopes.xv]',[polytopes.yv]']); % find side lengths in whole field
     min_distance_between_verts = min(sqrt(sum(distances.*distances,2))); % the min of this is the smallest space between features
     resolution = resolution_scale*min_distance_between_verts/2; % want even the smallest feature to be bisected
-    shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, resolution); % interpolate sides
+    polytopes = fcn_MapGen_increasePolytopeVertexCount(polytopes, resolution); % interpolate sides
 
     C = []; % initialize constriant matrix
     P = []; % initialize points matrix
     largest_idx = 0;
-    for poly_idx = 1:length(shrunk_polytopes)
-        P = [P; shrunk_polytopes(poly_idx).vertices(1:end-1,:)]; % add poly verts to points
+    for poly_idx = 1:length(polytopes)
+        P = [P; polytopes(poly_idx).vertices(1:end-1,:)]; % add poly verts to points
         % want to list every pair of points representing a polytope side as a constraint
-        num_verts = size(shrunk_polytopes(poly_idx).vertices,1)-1;
+        num_verts = size(polytopes(poly_idx).vertices,1)-1;
         C1 = [1:num_verts]'; % this will be points 1 through n
         C2 = [C1(2:end);C1(1)]; % C2 is equal to C1 with the order shifted by 1
         Ccomb = [C1 C2]; % this will be a table saying point 1 to 2 is a side, 2 to 3, etc.
@@ -50,14 +122,14 @@ function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAx
     ylabel('y [km]')
     inside = isInterior(DT); % identify triangles statisfying constriants C (i.e. tris within the boundary and outside polytopes, i.e. free space)
     tr = triangulation(DT(inside,:),DT.Points); % keep only the triangles of free space, not the ones in polytopes
-    for j = 2:length(shrunk_polytopes)
-        fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+    for j = 2:length(polytopes)
+        fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
     end
     figure; box on; hold on; triplot(tr); title('triangulation, no interior')
     xlabel('x [km]')
     ylabel('y [km]')
-    for j = 2:length(shrunk_polytopes)
-        fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+    for j = 2:length(polytopes)
+        fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
     end
     numt = size(tr,1); % numbe of triangles
     T = (1:numt)'; % list of triangle idx
@@ -78,8 +150,8 @@ function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAx
         figure; hold on; box on;
         xlabel('x [km]')
         ylabel('y [km]')
-        for j = 2:length(shrunk_polytopes)
-            fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+        for j = 2:length(polytopes)
+            fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
         end
         triplot(tr,'g')
         hold on
@@ -153,8 +225,8 @@ function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAx
         figure; hold on; box on; title('medial axis graph overlaid on triangulation')
         xlabel('x [km]')
         ylabel('y [km]')
-        for j = 2:length(shrunk_polytopes)
-            fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+        for j = 2:length(polytopes)
+            fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
         end
         triplot(tr,'g')
         hold on
@@ -179,8 +251,8 @@ function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAx
         figure; hold on; box on; title('medial axis graph')
         xlabel('x [km]')
         ylabel('y [km]')
-        for j = 2:length(shrunk_polytopes)
-            fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+        for j = 2:length(polytopes)
+            fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
         end
         for i = 1:(size(triangle_chains,1))
             % pop off a triangle chain
