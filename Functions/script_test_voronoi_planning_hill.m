@@ -267,7 +267,7 @@ color_idx = 1;
 for i = 1:(size(triangle_chains,1))
     % pop off a triangle chain
     chain_of_note = triangle_chains{i,3};
-    % pot big markers for the start and end node
+    % plot big markers for the start and end node
     beg_end = [chain_of_note(1) chain_of_note(end)];
     % plot a straight line between them (this is the adjacency graph connection)
     plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
@@ -285,7 +285,7 @@ end
 for i = 1:(size(triangle_chains,1))
     % pop off a triangle chain
     chain_of_note = triangle_chains{i,3};
-    % pot big markers for the start and end node
+    % plot big markers for the start and end node
     beg_end = [chain_of_note(1) chain_of_note(end)];
     % plot a straight line between them (this is the adjacency graph connection)
     plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
@@ -398,7 +398,7 @@ while ~isequal(triangle_chains,prev_triangle_chains)
                 if isempty(chain_of_note)
                     continue
                 end
-                % pot big markers for the start and end node
+                % plot big markers for the start and end node
                 beg_end = [chain_of_note(1) chain_of_note(end)];
                 % plot a straight line between them (this is the adjacency graph connection)
                 plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
@@ -419,7 +419,7 @@ while ~isequal(triangle_chains,prev_triangle_chains)
         if isempty(chain_of_note)
             continue
         end
-        % pot big markers for the start and end node
+        % plot big markers for the start and end node
         beg_end = [chain_of_note(1) chain_of_note(end)];
         % plot a straight line between them (this is the adjacency graph connection)
         plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
@@ -455,7 +455,7 @@ while ~isequal(triangle_chains,prev_triangle_chains)
         if isempty(chain_of_note)
             continue
         end
-        % pot big markers for the start and end node
+        % plot big markers for the start and end node
         beg_end = [chain_of_note(1) chain_of_note(end)];
         % plot a straight line between them (this is the adjacency graph connection)
         plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
@@ -930,7 +930,7 @@ for i = 1:(size(triangle_chains,1))
     if isempty(chain_of_note)
         continue
     end
-    % pot big markers for the start and end node
+    % plot big markers for the start and end node
     beg_end = [chain_of_note(1) chain_of_note(end)];
     % plot a straight line between them (this is the adjacency graph connection)
     plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',0.6*ones(1,3));

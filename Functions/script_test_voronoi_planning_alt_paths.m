@@ -90,7 +90,7 @@ for iterations = 1:5
         if isempty(chain_of_note)
             continue
         end
-        % pot big markers for the start and end node
+        % plot big markers for the start and end node
         beg_end = [chain_of_note(1) chain_of_note(end)];
         % plot a straight line between them (this is the adjacency graph connection)
         plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',0.6*ones(1,3));

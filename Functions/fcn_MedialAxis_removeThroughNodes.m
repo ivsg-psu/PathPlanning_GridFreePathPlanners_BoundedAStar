@@ -1,4 +1,84 @@
 function [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_removeThroughNodes(adjacency_matrix, triangle_chains, nodes, max_branching_factor, varargin);
+% fcn_MedialAxis_removeThroughNodes
+%
+% This trims the medial axis graph, as made by fcn_MedialAxis_makeAdjacencyMatrixAndTriangleChains,
+% by removing through nodes (nodes that have fewer than 3 departing edges and thus are effectively
+% not a decision point for the planner)
+% This can be used by itself but is also wrapped by fcn_MedialAxis_pruneGraph.
+%
+% FORMAT:
+%
+% [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_removeThroughNodes(adjacency_matrix, triangle_chains, nodes, max_branching_factor, varargin);
+%
+%
+% INPUTS:
+%
+%    Useful variables for outputs: N - number of nodes, M - number of edges, P_M - number of triangles
+%       in the Mth edge, Q - number of triangles in the triangulation.
+%
+%    adjacency_matrix: Like the visibility graph but rather than indicating 2 nodes are visible,
+%       it indicates 2 nodes are connected by an edge.
+%       This an NxN matrix where N is the number of nodes in the map.
+%       A 1 is in position i,j if node j is visible from point i.  0 otherwise.
+%
+%    triangle_chains: an Mx3 cell array with a row for each edge in the medial axis graph.  The first
+%      column contains an int for the node ID for the start of the chain.  The second is the end node.
+%      The third column is a 1xP_M array of integers representing IDs of the triangles whose circumcenters
+%      form the "chain of triangles" connecting the two nodes. P_M can be different for each row, M.
+%
+%    nodes: a Nx1 array of integers.  The integers are the IDs of the triangles that are 3-connected,
+%      i.e., their circumcenters are nodes in the medial axis graph.  The position in the nodes array
+%      is the node ID and the value is the triangle ID.  E.g., if nodes(10)=146, then the 10th node
+%      in the adjacency_matrix and triangle_chains struct is the 146th triangle in
+%      the Delaunay triangulation.
+%
+%    max_branching_factor: a Nx1 array of integers.
+%      branching factor is the number of nodes connected to each node. An asymm-
+%      etric graph can have a different number of nodes connected by outbound edges and nodes conne-
+%      cted by inbound edges so this is the maximum of these two numbers
+%
+%   (optional arguments)
+%   flag_do_plot: a 1 or 0 for flagging plotting on or off.  If ommitted, it is assumed to be 0.
+%
+%   flag_do_plot_slow: a 1 or 0 for flagging slower plotting on or off.  If ommitted, it is assumed
+%      to be 0. This flag is different from flag_do_plot so that slower plotting actions can be con-
+%      trolled separately (e.g., a results plot at the end will be controlled by flag_do_plot but
+%      a debugging plot that prints at every iteration of a loop will be controlled by flag_do_plot_slow)
+%
+% OUTPUTS:
+%    Useful variables for outputs: N - number of nodes, M - number of edges, P_M - number of triangles
+%       in the Mth edge, Q - number of triangles in the triangulation.
+%
+%    adjacency_matrix: same size as the input adjacency matrix but nodes that are no longer adjacent
+%      due to pruning have their 1's set to 0's
+%
+%    triangle_chains: same size as input triangle_chains data structure but edges that have been
+%      pruned have an empty third column (i.e., there is no chain of triangles between the nodes)
+%
+%    nodes: same size as input nodes array but nodes that have been removed due to pruning are set
+%      to NaN
+%
+% DEPENDENCIES:
+%
+%
+% EXAMPLES:
+%
+% See the script: script_test_voronoi_planning* for examples of the script in use (it's wrapped by fcn_MedialAxis_pruneGraph).
+% See ../Documentation/medial_axis_planning.pptx for a flow chart of the medial axis/voronoi planning stack
+% for a full test suite.
+%
+% This function was written Spring 2024 by Steve Harnett
+% Questions or comments? contact sjharnett@psu.edu
+
+%
+% REVISION HISTORY:
+%
+% 2024, Spring by Steve Harnett
+% -- first write of function
+%
+% TO DO:
+%
+% -- fill in to-do items here.
 
     %% check input arguments
     if nargin < 4 || nargin > 5
@@ -57,7 +137,7 @@ function [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_removeThrou
         chain_td = triangle_chains{idx_chain_td,3};
         % need to check for a false through node (a node with two possible destinations but more than two possible paths)
         if (length(idx_chain_dt) > 1 | length(idx_chain_tb) > 1 | length(idx_chain_bt) > 1 | length(idx_chain_td) > 1)
-            false_through_nodes = [false_through_nodes, t];
+            false_through_nodes = [false_through_nodes, t]; % false through nodes get added to a list so we can track them
             % re-compute branching factor (connectivity)
             branching_factor_outbound = sum(adjacency_matrix,2)-1; % number of destination nodes per node (excluding self)
             branching_factor_inbound = [sum(adjacency_matrix,1)-1]'; % number of departing nodes per node (excluding self)
@@ -68,7 +148,7 @@ function [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_removeThrou
             idx_2_connected_nodes = idx_2_connected_nodes(~is_false_through_node); % only keep idx of 2 connected nodes that aren't false through nodes
             continue % don't want to remove a false through node since it affords multiple paths to the same destination
         end
-        % connect those two nodes in the adjacency matrix
+        % connect those two nodes (d and b) in the adjacency matrix
         adjacency_matrix(d_and_b, d_and_b) = 1; % note this line makes Adb, Abd, Add, and Abb =1
         % make an entry for d to b and set tri list to the other two tri lists
         triangle_chains{end+1,1} = d; % index of start in nodes
@@ -113,7 +193,7 @@ function [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_removeThrou
                 if isempty(chain_of_note)
                     continue
                 end
-                % pot big markers for the start and end node
+                % plot big markers for the start and end node
                 beg_end = [chain_of_note(1) chain_of_note(end)];
                 % plot a straight line between them (this is the adjacency graph connection)
                 plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})

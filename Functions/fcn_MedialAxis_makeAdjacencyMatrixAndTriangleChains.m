@@ -28,12 +28,12 @@ function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAx
 %   flag_do_plot: a 1 or 0 for flagging plotting on or off.  If ommitted, it is assumed to be 0.
 %
 % OUTPUTS:
-%    Useful variables for outputs: n - number of nodes, M - number of edges, P_M - number of triangles
+%    Useful variables for outputs: N - number of nodes, M - number of edges, P_M - number of triangles
 %       in the Mth edge, Q - number of triangles in the triangulation.
 %
 %    adjacency_matrix: Like the visibility graph but rather than indicating 2 nodes are visible,
 %       it indicates 2 nodes are connected by an edge.
-%       This an nxn matrix where n is the number of nodes in the map.
+%       This an NxN matrix where N is the number of nodes in the map.
 %       A 1 is in position i,j if node j is visible from point i.  0 otherwise.
 %
 %    triangle_chains: an Mx3 cell array with a row for each edge in the medial axis graph.  The first
@@ -47,24 +47,29 @@ function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAx
 %      in the adjacency_matrix and triangle_chains struct is the 146th triangle in
 %      the Delaunay triangulation.
 %
-%    xcc:
+%    xcc: Qx1 array of doubles.  The x positions of the circumcenters of the triangles.
+%
+%    ycc: Qx1 array of doubles.  The y positions of the circumcenters of the triangles.
+%
+%    tr: Qx3 triangulation.  See: https://www.mathworks.com/help/matlab/ref/triangulation.html#d126e1402901
 %
 % DEPENDENCIES:
 %
-% none but several functions exist to create visibility matrices and fcn_algorithm_generate_cost_graph can create cost matrices (cgraph) and heuristic cost vectors (hvec)
+%  -  fcn_MapGen_increasePolytopeVertexCount
 %
 % EXAMPLES:
 %
-% See the script: script_test_fcn_algorithm_Astar
+% See the script: script_test_voronoi_planning* for examples of the script in use.
+% See ../Documentation/medial_axis_planning.pptx for a flow chart of the medial axis/voronoi planning stack
 % for a full test suite.
 %
-% This function was written on spring 2023 by Steve Harnett
+% This function was written Spring 2024 by Steve Harnett
 % Questions or comments? contact sjharnett@psu.edu
 
 %
 % REVISION HISTORY:
 %
-% 2023, spring by Steve Harnett
+% 2024, Spring by Steve Harnett
 % -- first write of function
 %
 % TO DO:
@@ -138,8 +143,8 @@ function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAx
     nodes = find(~isnan(sum(neigh, 2))); % identify all 3 connected triangles (tris with no nan neighbor)
     xcc = cc(:,1); % x coords of circumcenters
     ycc = cc(:,2); % y coords of circumcenters
-    % the following code rearranges the numtx3 'neigh' matrix where row i is the three neighbors of tri i,
-    % into a 2xm matrix where each columb is a pair of neighboring triangles
+    % the following code rearranges the Qx3 'neigh' matrix where row i is the three neighbors of tri i,
+    % into a 2x? matrix where each column is a pair of neighboring triangles
     % this is useful for plotting as neigh_for_plotting has no nan values while neigh does
     idx1 = T < neigh(:,1);
     idx2 = T < neigh(:,2);
@@ -239,7 +244,7 @@ function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAx
         for i = 1:(size(triangle_chains,1))
             % pop off a triangle chain
             chain_of_note = triangle_chains{i,3};
-            % pot big markers for the start and end node
+            % plot big markers for the start and end node
             beg_end = [chain_of_note(1) chain_of_note(end)];
             % plot a straight line between them (this is the adjacency graph connection)
             plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
@@ -257,7 +262,7 @@ function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAx
         for i = 1:(size(triangle_chains,1))
             % pop off a triangle chain
             chain_of_note = triangle_chains{i,3};
-            % pot big markers for the start and end node
+            % plot big markers for the start and end node
             beg_end = [chain_of_note(1) chain_of_note(end)];
             % plot a straight line between them (this is the adjacency graph connection)
             plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
