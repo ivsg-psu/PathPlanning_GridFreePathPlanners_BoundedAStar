@@ -1,13 +1,10 @@
 function [triangle_chains, max_side_lengths_per_tri] = fcn_MedialAxis_addCostsToTriangleChains(triangle_chains, nodes, xcc, ycc, tr, shrunk_polytopes, varargin)
 % fcn_MedialAxis_addCostsToTriangleChains
-% % TODO you are here
-% This function forms the medial axis graph (composed of an adjacency matrix and
-% the triangle_chains structure describing the edges) from a polytopes struct
-% array.  The free space between the polytope obstacles is triangulated.  The
-% circumcenters of the triangles are connected to form the medial axes.  The
-% 3-connected triangles (i.e., where the medial axes branch) are considered nodes.
-% The adjacency matrix tells which nodes are connected by medial axis edges. The
-% triangle_chains data structure describes these edges.
+%
+% This function appends triangle_chains data structure of the the medial axis graph
+% (composed of an adjacency matrix and the triangle_chains structure describing
+% the edges) so that the length and approximate corridor width of each edge (i.e., triangle chain)
+% are included as a new 4th and 5th columns in the triangle_chains cell array
 %
 % FORMAT:
 %
@@ -16,25 +13,8 @@ function [triangle_chains, max_side_lengths_per_tri] = fcn_MedialAxis_addCostsTo
 %
 % INPUTS:
 %
-%   polytopes: the polytope struct array
-%
-%   resolution_scale: the multiplier for the minimum spacing between points for triangulation.
-%       The medial axis graph is formed using Delaunay triangulation.  The default spacing of points
-%       on obstacles used for forming triangles is half the minimum spacing between vertices (thus
-%       even the smallest feature will be composed of 2 triangles).  In many cases this is too conservative
-%       so the resolution_scale input allows the user to modify this default spacing.
-%
-%   (optional arguments)
-%   flag_do_plot: a 1 or 0 for flagging plotting on or off.  If ommitted, it is assumed to be 0.
-%
-% OUTPUTS:
 %    Useful variables for outputs: N - number of nodes, M - number of edges, P_M - number of triangles
 %       in the Mth edge, Q - number of triangles in the triangulation.
-%
-%    adjacency_matrix: Like the visibility graph but rather than indicating 2 nodes are visible,
-%       it indicates 2 nodes are connected by an edge.
-%       This an NxN matrix where N is the number of nodes in the map.
-%       A 1 is in position i,j if node j is visible from point i.  0 otherwise.
 %
 %    triangle_chains: an Mx3 cell array with a row for each edge in the medial axis graph.  The first
 %      column contains an int for the node ID for the start of the chain.  The second is the end node.
@@ -53,15 +33,33 @@ function [triangle_chains, max_side_lengths_per_tri] = fcn_MedialAxis_addCostsTo
 %
 %    tr: Qx3 triangulation.  See: https://www.mathworks.com/help/matlab/ref/triangulation.html#d126e1402901
 %
+%    shrunk_polytopes: the polytope struct array
+%
+%   (optional arguments)
+%   flag_do_plot: a 1 or 0 for flagging plotting on or off.  If ommitted, it is assumed to be 0.
+%
+% OUTPUTS:
+%    Useful variables for outputs: N - number of nodes, M - number of edges, P_M - number of triangles
+%       in the Mth edge, Q - number of triangles in the triangulation.
+%
+%    triangle_chains: an Mx5 cell array with a row for each edge in the medial axis graph.  The first
+%      column contains an int for the node ID for the start of the chain.  The second is the end node.
+%      The third column is a 1xP_M array of integers representing IDs of the triangles whose circumcenters
+%      form the "chain of triangles" connecting the two nodes. P_M can be different for each row, M.
+%      The 4th column contains the estimated corridor width (the minimum lateral free space a vehicle
+%      would have when routing down the edge) and the 5th column contains the length of the edge.
+%
+%    max_side_lengths_per_tri: a Qx1 array of doubles.  The double is the length of the shortest
+%      side of each triangle.
+%
+%
 % DEPENDENCIES:
 %
-%  -  fcn_MapGen_increasePolytopeVertexCount
 %
 % EXAMPLES:
 %
 % See the script: script_test_voronoi_planning* for examples of the script in use.
 % See ../Documentation/medial_axis_planning.pptx for a flow chart of the medial axis/voronoi planning stack
-% for a full test suite.
 %
 % This function was written Spring 2024 by Steve Harnett
 % Questions or comments? contact sjharnett@psu.edu

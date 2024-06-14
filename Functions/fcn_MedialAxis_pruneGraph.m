@@ -72,7 +72,6 @@ function [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_pruneGraph(
 %
 % See the script: script_test_voronoi_planning* for examples of the script in use.
 % See ../Documentation/medial_axis_planning.pptx for a flow chart of the medial axis/voronoi planning stack
-% for a full test suite.
 %
 % This function was written Spring 2024 by Steve Harnett
 % Questions or comments? contact sjharnett@psu.edu
