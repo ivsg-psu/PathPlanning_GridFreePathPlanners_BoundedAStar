@@ -16,7 +16,7 @@ flag_do_plot = 1;
 flag_do_plot_slow= 0;
 
 %% mission options
-map_idx =5;
+map_idx = 6;
 navigated_portion = 0.4; % portion of initial path to be completed prior to triggering replanning
 w = 1/6; % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
 [shrunk_polytopes, start_inits, finish_inits] = fcn_util_load_test_map(map_idx);
@@ -53,7 +53,7 @@ for mission_idx = 1:size(start_inits,1)
             % make dilation robustness matrix
             mode = '2d';
             dilation_robustness_tensor = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode, shrunk_polytopes);
-            dilation_robustness_matrix = max(dilation_robustness_tensor(:,:,1) , dilation_robustness_tensor(:,:,2)); % combine the left and right sides as a max
+            dilation_robustness_matrix = min(dilation_robustness_tensor(:,:,1) , dilation_robustness_tensor(:,:,2)); % combine the left and right sides as a max
             dilation_robustness_matrix_for_variance = dilation_robustness_matrix(:)'; % extract vector of all values
             dilation_robustness_matrix_for_variance(dilation_robustness_matrix_for_variance == 0) = []; % remove 0s
             dilation_robustness_matrix_for_variance(isinf(dilation_robustness_matrix_for_variance)) = []; % remove infs
