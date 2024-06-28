@@ -23,7 +23,7 @@ w = 1/6; % relative weighting of cost function, cost = w*length_cost + (1-w)*dil
 
 % map_idx nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length
 data = []; % initialize array for storing results
-for mission_idx = 1:size(start_inits,1)
+for mission_idx = 4%1:size(start_inits,1)
     start_init = start_inits(mission_idx,:);
     finish_init = finish_inits(mission_idx,:);
 
@@ -53,7 +53,7 @@ for mission_idx = 1:size(start_inits,1)
             % make dilation robustness matrix
             mode = '2d';
             dilation_robustness_tensor = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode, shrunk_polytopes);
-            dilation_robustness_matrix = min(dilation_robustness_tensor(:,:,1) , dilation_robustness_tensor(:,:,2)); % combine the left and right sides as a max
+            dilation_robustness_matrix = min(dilation_robustness_tensor(:,:,1), dilation_robustness_tensor(:,:,2)); % combine the left and right sides as a max
             dilation_robustness_matrix_for_variance = dilation_robustness_matrix(:)'; % extract vector of all values
             dilation_robustness_matrix_for_variance(dilation_robustness_matrix_for_variance == 0) = []; % remove 0s
             dilation_robustness_matrix_for_variance(isinf(dilation_robustness_matrix_for_variance)) = []; % remove infs
@@ -67,6 +67,32 @@ for mission_idx = 1:size(start_inits,1)
             end
             % plan initial route
             [init_cost, init_route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
+
+            if flag_do_threadpulling
+                init_route_original = init_route;
+                all_pts_tp = init_route(2:(end-1),:);
+                start_tp = init_route(1,:);
+                finish_tp = init_route(end,:);
+                all_pts_tp(:,3) = [1:size(all_pts_tp,1)];
+                start_tp(3) = size(all_pts_tp,1) + 1;
+                finish_tp(3) = size(all_pts_tp,1) + 2;
+                % make vgraph again
+                finishes_tp = [all_pts_tp; start_tp; finish_tp];
+                starts_tp = [all_pts_tp; start_tp; finish_tp];
+                [vgraph_tp, visibility_results_tp] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts_tp, finishes_tp,1);
+                % make rgraph again
+                [is_reachable_tp, num_steps_tp, rgraph_tp] = fcn_check_reachability(vgraph_tp,start_tp(3),finish_tp(3));
+                if ~is_reachable_tp
+                    % we don't want to break if replanning is impossible, we want to save the data for what caused this
+                    warning('threadpulling is impossible')
+                    continue
+                end % end is_reachable condition for replanning
+                % make cgraph again
+                mode = "xy spatial only";
+                [cgraph_tp, hvec_tp] = fcn_algorithm_generate_cost_graph(all_pts_tp, start_tp, finish_tp, mode);
+                % replan path
+                [cost_tp, route_tp] = fcn_algorithm_Astar(vgraph_tp, cgraph_tp, hvec_tp, all_pts_tp, start_tp, finish_tp);
+            end % end flag_do_threadpulling
 
             % find initial route length
             route_x = init_route(:,1);
@@ -189,6 +215,7 @@ for mission_idx = 1:size(start_inits,1)
                 end
             end % end flag_do_plot condition
         end % end nominal or corridor width cost function loop
+        return
     end % end edge dilation size loop
 end % end mission (i.e., start goal pair) loop
 %% plot multiple trials data
