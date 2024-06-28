@@ -14,6 +14,7 @@ addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 %% plotting flags
 flag_do_plot = 1;
 flag_do_plot_slow= 0;
+% TODO add flag for threadpulling
 
 %% mission options
 map_idx = 6;
@@ -70,6 +71,7 @@ for mission_idx = 4%1:size(start_inits,1)
 
             if flag_do_threadpulling
                 init_route_original = init_route;
+                % TODO backup original route and original length
                 all_pts_tp = init_route(2:(end-1),:);
                 start_tp = init_route(1,:);
                 finish_tp = init_route(end,:);
@@ -92,6 +94,8 @@ for mission_idx = 4%1:size(start_inits,1)
                 [cgraph_tp, hvec_tp] = fcn_algorithm_generate_cost_graph(all_pts_tp, start_tp, finish_tp, mode);
                 % replan path
                 [cost_tp, route_tp] = fcn_algorithm_Astar(vgraph_tp, cgraph_tp, hvec_tp, all_pts_tp, start_tp, finish_tp);
+                % TODO overwrite route and length with threadpulled versions of these
+                % TODO do not overwrite polytopes or vgraph or start and goal
             end % end flag_do_threadpulling
 
             % find initial route length
@@ -165,6 +169,7 @@ for mission_idx = 4%1:size(start_inits,1)
                 plot(start_init(1),start_init(2),'xg','MarkerSize',6);
                 plot(finish(1),finish(2),'xr','MarkerSize',6);
                 plot(init_route(:,1),init_route(:,2),'k','LineWidth',2);
+                % TODO plot pre and post threadpulling route
                 plot(start_midway(1),start_midway(2),'dm','MarkerSize',6)
                 plot(replan_route(:,1),replan_route(:,2),'--g','LineWidth',2);
                 for j = 1:length(enlarged_polytopes)
