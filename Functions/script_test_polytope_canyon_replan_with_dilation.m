@@ -14,7 +14,7 @@ addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 %% plotting flags
 flag_do_plot = 1;
 flag_do_plot_slow= 0;
-% TODO add flag for threadpulling
+flag_do_threadpulling = 1;
 
 %% mission options
 map_idx = 6;
@@ -29,7 +29,7 @@ for mission_idx = 4%1:size(start_inits,1)
     finish_init = finish_inits(mission_idx,:);
 
     % loop over dilation sizes
-    for polytope_size_increases = [0.01 0.02 0.05 0.1 0.2 0.3 0.4 0.5]
+    for polytope_size_increases = 0.2%[0.01 0.02 0.05 0.1 0.2 0.3 0.4 0.5]
         % loop over the nominal cost function and feature cost function
         for nominal_or_width_based = [1,2]
             %% plan the initial path
@@ -69,9 +69,15 @@ for mission_idx = 4%1:size(start_inits,1)
             % plan initial route
             [init_cost, init_route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
 
-            if flag_do_threadpulling
+            if flag_do_threadpulling && nominal_or_width_based==2
+                % backup initial route for comparison
                 init_route_original = init_route;
-                % TODO backup original route and original length
+                % find initial route length
+                route_x = init_route(:,1);
+                route_y = init_route(:,2);
+                lengths = diff([route_x(:) route_y(:)]);
+                init_route_length_original= sum(sqrt(sum(lengths.*lengths,2)));
+                % create all points and start/finish for threadpulling from initial route
                 all_pts_tp = init_route(2:(end-1),:);
                 start_tp = init_route(1,:);
                 finish_tp = init_route(end,:);
@@ -94,8 +100,14 @@ for mission_idx = 4%1:size(start_inits,1)
                 [cgraph_tp, hvec_tp] = fcn_algorithm_generate_cost_graph(all_pts_tp, start_tp, finish_tp, mode);
                 % replan path
                 [cost_tp, route_tp] = fcn_algorithm_Astar(vgraph_tp, cgraph_tp, hvec_tp, all_pts_tp, start_tp, finish_tp);
-                % TODO overwrite route and length with threadpulled versions of these
-                % TODO do not overwrite polytopes or vgraph or start and goal
+                % overwrite route and length with threadpulled versions of these
+                init_route = route_tp;
+                init_cost = cost_tp;
+                % find initial route length
+                route_x = init_route(:,1);
+                route_y = init_route(:,2);
+                lengths = diff([route_x(:) route_y(:)]);
+                init_route_length = sum(sqrt(sum(lengths.*lengths,2)));
             end % end flag_do_threadpulling
 
             % find initial route length
@@ -169,7 +181,9 @@ for mission_idx = 4%1:size(start_inits,1)
                 plot(start_init(1),start_init(2),'xg','MarkerSize',6);
                 plot(finish(1),finish(2),'xr','MarkerSize',6);
                 plot(init_route(:,1),init_route(:,2),'k','LineWidth',2);
-                % TODO plot pre and post threadpulling route
+                if flag_do_threadpulling && nominal_or_width_based==2
+                    plot(init_route_original(:,1), init_route_original(:,2),'--','Color',[0.5 0.5 0.5],'LineWidth',2);
+                end
                 plot(start_midway(1),start_midway(2),'dm','MarkerSize',6)
                 plot(replan_route(:,1),replan_route(:,2),'--g','LineWidth',2);
                 for j = 1:length(enlarged_polytopes)
@@ -181,6 +195,9 @@ for mission_idx = 4%1:size(start_inits,1)
                 title_string = sprintf('map idx: %i, nominal or corridor-width-based: %i,\npolytope size increase [km]: %.2f',map_idx, nominal_or_width_based,polytope_size_increases);
                 title(title_string);
                 leg_str = {'start','finish','initial route','replanning point','replanned route','enlarged obstacles'};
+                if flag_do_threadpulling && nominal_or_width_based==2
+                    leg_str = {'start','finish','initial route, shortened','initial route','replanning point','replanned route','enlarged obstacles'};
+                end
                 for i = 1:length(shrunk_polytopes)-1
                     leg_str{end+1} = '';
                 end
