@@ -72,7 +72,7 @@ for w = 0.1:0.1:1
 
     % take route and tri chains data structure
     % also take best path structure
-    [route_full, route_length, route_choke] = fcn_MedialAxis_processRoute(route, triangle_chains, best_chain_idx_matrix, xcc, ycc, start_xy, finish_xy);
+    [route_full, route_length, route_choke, route_triangle_chain, route_triangle_chain_ids] = fcn_MedialAxis_processRoute(route, triangle_chains, best_chain_idx_matrix, xcc, ycc, start_xy, finish_xy);
     % plot result
     figure; hold on; box on;
     xlabel('x [km]');

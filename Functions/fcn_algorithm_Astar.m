@@ -34,7 +34,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, star
 %
 %     cost: the total cost of the selected route
 %
-%    route: the matrix as produced by fcn_algorithm_Astar3d consisting of waypoints.  Each row is a
+%    route: the matrix as produced by fcn_algorithm_Astar consisting of waypoints.  Each row is a
 %    waypoint, and each column is x, y, and point ID
 %
 %

@@ -16,7 +16,9 @@ function [polytopes, starts, finishes, resolution_scale] = fcn_util_load_test_ma
 %
 % INPUTS:
 %    map_idx: the integer ID of the map the user wishes to load
+%
 %    (optional inputs)
+%
 %    add_boundary: set a 1 to append a polytope to the front of the polytope struct array
 %        (i.e. in position 1) representing a boundary rectangle around all other polytopes.
 %        This is useful for forming hte medial axis/Voronoi boundary graph so the free space
@@ -28,7 +30,9 @@ function [polytopes, starts, finishes, resolution_scale] = fcn_util_load_test_ma
 %
 % OUTPUTS:
 %     starts: n-by-2 vector qty. n (x,y) pairs representing n possible starts
+%
 %     finishes: n-by-2 vector qty. n (x,y) pairs representing n possible finishes
+%
 %     polytopes - the polytope struct array of obstacles in the map
 %
 % DEPENDENCIES:
@@ -38,6 +42,7 @@ function [polytopes, starts, finishes, resolution_scale] = fcn_util_load_test_ma
 % EXAMPLES:
 %
 % See the scripts: script_test_polytope_canyon* for several examples of this in use
+% See the script: script_test_voronoi_planning* for examples of the script in use.
 %
 % This function was written on 2 May 2024 by Steve Harnett
 % Questions or comments? contact sjharnett@psu.edu
