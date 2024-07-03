@@ -1,6 +1,6 @@
 % script_test_voronoi_planning_alt_paths
 % test script of planning along voronoi diagram edges
-% this graph is then used to generate alternate paths
+% this graph is then used to generate alternate paths, each with a wider corridor than the previous route
 clear; close all; clc
 
 addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -25,26 +25,23 @@ flag_do_plot_slow = 0;
 [triangle_chains, max_side_lengths_per_tri] = fcn_MedialAxis_addCostsToTriangleChains(triangle_chains, nodes, xcc, ycc, tr, shrunk_polytopes, flag_do_plot);
 
 %% planning through triangle graph
-start_xy = start_init; %[1031 -4717];
-finish_xy = finish_init; %[1050 -4722];
+start_xy = start_init;
+finish_xy = finish_init;
+% add start and finish to nearest medial axis edge
 % TODO add zcc as optional input
 [adjacency_matrix, triangle_chains, nodes, start_closest_tri, start_closest_node] = fcn_MedialAxis_addPointToAdjacencyMatrixAndTriangleChains(start_xy, adjacency_matrix, triangle_chains, nodes, xcc, ycc, max_side_lengths_per_tri);
 [adjacency_matrix, triangle_chains, nodes, finish_closest_tri, finish_closest_node] = fcn_MedialAxis_addPointToAdjacencyMatrixAndTriangleChains(finish_xy, adjacency_matrix, triangle_chains, nodes, xcc, ycc, max_side_lengths_per_tri);
 
-w = 1; % we can run full
-route_choke = 0;
+% set weight to 0 so corridor width is not incentivized
+w = 1;
+route_choke = 0; % initailize route choke to 0 so no edges are filtered out
 alternate_routes = {};
 smallest_corridors = [];
 route_lengths = [];
 denylist_route_chain_ids = [];
+% make 5 alternate routes, each with a wider corridor than the previous route
 for iterations = 1:5
-    % TODO for alt paths branching from primary path, need to take route_triangle_chains out of route unpacking function
-    % and pass this into cgraph creation function as an argument
-    % and need to start from midpoint on init route:
-    % backstep = 1;
-    % iterations = 1;
-    % init_route_num_nodes = inf; % initialize to infinite until we know init route length
-    % while backstep < init_route_num_nodes
+    % make cost graph, notice the route_choke parameter is set on the previous loop iteration so this cost graph will filter out edges with a smaller corridor than the choke value
     [adjacency_matrix, cgraph, all_pts, start, finish, best_chain_idx_matrix] = fcn_MedialAxis_makeCostGraphAndAllPoints(adjacency_matrix, triangle_chains, nodes, xcc, ycc, start_closest_tri, start_closest_node, finish_closest_tri, finish_closest_node, w, route_choke, denylist_route_chain_ids);
     % adjacency matrix is vgraph
     vgraph = adjacency_matrix;
@@ -63,16 +60,8 @@ for iterations = 1:5
 
     % plan a path
     [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
-    % TODO for replanning from route need something like this here and after ~is_reachable
-    % init_route = alternate_routes_nodes{1};
-    % init_route_num_nodes = size(init_route,1);
-    % start = init_route(end-backstep,:);
-    % backstep = backstep + 1;
-    % iterations = iterations+ 1;
-    % continue
 
-    % take route and tri chains data structure
-    % also take best path structure
+    % expand route from nodes into actual points
     [route_full, route_length, route_choke] = fcn_MedialAxis_processRoute(route, triangle_chains, best_chain_idx_matrix, xcc, ycc, start_xy, finish_xy);
     % plot result
     figure; hold on; box on;

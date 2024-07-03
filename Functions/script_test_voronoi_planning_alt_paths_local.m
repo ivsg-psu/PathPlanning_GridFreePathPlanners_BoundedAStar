@@ -30,8 +30,9 @@ flag_do_plot_slow = 0;
 [triangle_chains, max_side_lengths_per_tri] = fcn_MedialAxis_addCostsToTriangleChains(triangle_chains, nodes, xcc, ycc, tr, shrunk_polytopes, flag_do_plot);
 
 %% planning through triangle graph
-start_xy = start_init; %[1031 -4717];
-finish_xy = finish_init; %[1050 -4722];
+start_xy = start_init;
+finish_xy = finish_init;
+% add start and finish to nearest medial axis edge
 % TODO add zcc as optional input
 [adjacency_matrix, triangle_chains, nodes, start_closest_tri, start_closest_node] = fcn_MedialAxis_addPointToAdjacencyMatrixAndTriangleChains(start_xy, adjacency_matrix, triangle_chains, nodes, xcc, ycc, max_side_lengths_per_tri);
 [adjacency_matrix, triangle_chains, nodes, finish_closest_tri, finish_closest_node] = fcn_MedialAxis_addPointToAdjacencyMatrixAndTriangleChains(finish_xy, adjacency_matrix, triangle_chains, nodes, xcc, ycc, max_side_lengths_per_tri);
@@ -51,16 +52,19 @@ replanning_times = [];
 backstep = 1;
 iterations = 1;
 init_route_num_nodes = inf; % initialize to infinite until we know init route length
-% TODO want to iterate for as many route points as there are
+% want to iterate for as many route points as there are
+% we walk backwards along the initial route, planning again from each node in the init route
 while backstep < init_route_num_nodes - 1
-    replanning_time = tic;
+    replanning_time = tic; % time each replanning attempt
     route_choke = 0;
     if iterations ~= 1
+        % after the first iteration, we start from a node on the initial path.  Need to get that node's info.
         start_closest_node = my_start(3);
         start_closest_tri = nodes(start_closest_node);
         start_xy = [xcc(start_closest_tri) ycc(start_closest_tri)];
     end
 
+    % make cgraph, this is where denylisted edges are removed
     [adjacency_matrix, cgraph, all_pts, start, finish, best_chain_idx_matrix] = fcn_MedialAxis_makeCostGraphAndAllPoints(adjacency_matrix, triangle_chains, nodes, xcc, ycc, start_closest_tri, start_closest_node, finish_closest_tri, finish_closest_node, w, route_choke, denylist_route_chain_ids);
 
     % adjacency matrix is vgraph
@@ -91,9 +95,7 @@ while backstep < init_route_num_nodes - 1
 
     % plan a path
     [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
-    % TODO need to update start_xy here
-    % take route and tri chains data structure
-    % also take best path structure
+    % turn route of nodes into route of x-y positions
     [route_full, route_length, route_choke, route_triangle_chain, route_triangle_chain_ids] = fcn_MedialAxis_processRoute(route, triangle_chains, best_chain_idx_matrix, xcc, ycc, start_xy, finish_xy);
 
     %% denylist logic to create alternate routes
