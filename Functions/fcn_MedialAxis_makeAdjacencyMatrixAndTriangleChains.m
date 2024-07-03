@@ -60,6 +60,13 @@ function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAx
 % EXAMPLES:
 %
 % See the script: script_test_voronoi_planning* for examples of the script in use.
+%        script_test_voronoi_planning - basic example of medial axis planning
+%        ||_alt_paths - example of generating several paths from the start to the finish using different corridors
+%        ||_alt_paths_from_node - example of generating several paths from an arbitrary node to the finish using different corridors
+%        ||_alt_paths_local - example of generating several paths from an each node along the initial route to the finish.  This
+%                             script has a flag for which corridors are blocked on replanning: just the next segment in the
+%                             initial route, the entire initial route, or all previously calculated routes (initial and alternate)
+%        ||_hill - example of incorporating elevation into a medial axis graph.  This script is just a WIP demonstration
 % See ../Documentation/medial_axis_planning.pptx for a flow chart of the medial axis/voronoi planning stack
 %
 % This function was written Spring 2024 by Steve Harnett

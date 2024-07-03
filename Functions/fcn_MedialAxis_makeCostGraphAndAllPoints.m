@@ -11,6 +11,36 @@ function [adjacency_matrix, cgraph, all_pts, start, finish, best_chain_idx_matri
 %
 %
 % INPUTS:
+%    Useful variables for inputs: N - number of nodes, M - number of edges, P_M - number of triangles
+%       in the Mth edge, Q - number of triangles in the triangulation.
+%
+%    adjacency_matrix: Like the visibility graph but rather than indicating 2 nodes are visible,
+%       it indicates 2 nodes are connected by an edge.
+%       This an NxN matrix where N is the number of nodes in the map.
+%       A 1 is in position i,j if node j is visible from point i.  0 otherwise.
+%
+%    cgraph: the cost graph matrix. A cost matrix is an nxn matrix where n is
+%      the number of points (nodes) in the map including the start and goal.
+%      The value of element i-j is the cost of routing from i to j.
+%
+%   all_pts: the point matrix of all nodes that the planner can consider, except the start and finish where
+%       each row is a single point vector (x,y,id)
+%
+%   start: the start point vector (x,y,id)
+%
+%   finish: the finish point matrix of all valid finishes where each row is a single finish point vector (x,y,id)
+%
+%    best_chain_idx_matrix: Like the visibility graph but rather than indicating 2 nodes are visible,
+%       it indicates the best (lowest cost) triangle chain (edge) connecting 2 nodes.
+%       This an NxN matrix where N is the number of nodes in the map.
+%       A 12 is in position i,j if the best triangle chain to the node in nodes(j) from the node in
+%       nodes(i) is located in triangle_chains{12,:}. The reason this matrix exists is because there
+%       may be multiple triangle chains connecting the same two nodes in the medial axis graph (unlike
+%       in the visibility graph) so the planner needs to evaluate the cost from i to j by looking
+%       at the optimal cost available.
+%
+%
+% OUTPUTS:
 %
 %    adjacency_matrix: Like the visibility graph but rather than indicating 2 nodes are visible,
 %       it indicates 2 nodes are connected by an edge.
@@ -54,34 +84,6 @@ function [adjacency_matrix, cgraph, all_pts, start, finish, best_chain_idx_matri
 %       etc.of the minimum allowable corridor width.  Edges (triangle chains)
 %
 %
-% OUTPUTS:
-%
-%    adjacency_matrix: Like the visibility graph but rather than indicating 2 nodes are visible,
-%       it indicates 2 nodes are connected by an edge.
-%       This an NxN matrix where N is the number of nodes in the map.
-%       A 1 is in position i,j if node j is visible from point i.  0 otherwise.
-%
-%    cgraph: the cost graph matrix. A cost matrix is an nxn matrix where n is
-%      the number of points (nodes) in the map including the start and goal.
-%      The value of element i-j is the cost of routing from i to j.
-%
-%   all_pts: the point matrix of all nodes that the planner can consider, except the start and finish where
-%       each row is a single point vector (x,y,id)
-%
-%   start: the start point vector (x,y,id)
-%
-%   finish: the finish point matrix of all valid finishes where each row is a single finish point vector (x,y,id)
-%
-%    best_chain_idx_matrix: Like the visibility graph but rather than indicating 2 nodes are visible,
-%       it indicates the best (lowest cost) triangle chain (edge) connecting 2 nodes.
-%       This an NxN matrix where N is the number of nodes in the map.
-%       A 12 is in position i,j if the best triangle chain to the node in nodes(j) from the node in
-%       nodes(i) is located in triangle_chains{12,:}. The reason this matrix exists is because there
-%       may be multiple triangle chains connecting the same two nodes in the medial axis graph (unlike
-%       in the visibility graph) so the planner needs to evaluate the cost from i to j by looking
-%       at the optimal cost available.
-%
-%
 %
 % DEPENDENCIES:
 %
@@ -89,6 +91,13 @@ function [adjacency_matrix, cgraph, all_pts, start, finish, best_chain_idx_matri
 % EXAMPLES:
 %
 % See the script: script_test_voronoi_planning* for examples of the script in use.
+%        script_test_voronoi_planning - basic example of medial axis planning
+%        ||_alt_paths - example of generating several paths from the start to the finish using different corridors
+%        ||_alt_paths_from_node - example of generating several paths from an arbitrary node to the finish using different corridors
+%        ||_alt_paths_local - example of generating several paths from an each node along the initial route to the finish.  This
+%                             script has a flag for which corridors are blocked on replanning: just the next segment in the
+%                             initial route, the entire initial route, or all previously calculated routes (initial and alternate)
+%        ||_hill - example of incorporating elevation into a medial axis graph.  This script is just a WIP demonstration
 % See ../Documentation/medial_axis_planning.pptx for a flow chart of the medial axis/voronoi planning stack
 %
 % This function was written Spring 2024 by Steve Harnett

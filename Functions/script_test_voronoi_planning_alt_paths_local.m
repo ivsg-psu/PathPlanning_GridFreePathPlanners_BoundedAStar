@@ -3,8 +3,6 @@
 % this graph is then used to generate alternate paths
 
 clear; close all; clc
-% script_test_voronoi_planning
-% test script of planning along voronoi diagram edges
 
 addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
 addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
@@ -19,7 +17,7 @@ map_idx = 7;
 flag_do_plot = 1;
 flag_do_animation = 0;
 flag_do_plot_slow = 0;
-[shrunk_polytopes, start_init, finish_init, resolution_scale] = fcn_util_load_test_map(map_idx, 1)
+[shrunk_polytopes, start_init, finish_init, resolution_scale] = fcn_util_load_test_map(map_idx, 1);
 
 %% constrained delaunay triangulation
 [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAxis_makeAdjacencyMatrixAndTriangleChains(shrunk_polytopes, resolution_scale, flag_do_plot);

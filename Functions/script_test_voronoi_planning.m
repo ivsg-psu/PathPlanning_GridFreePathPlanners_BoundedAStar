@@ -1,6 +1,6 @@
-clear; close all; clc
 % script_test_voronoi_planning
 % test script of planning along voronoi diagram edges
+clear; close all; clc
 
 addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
 addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
