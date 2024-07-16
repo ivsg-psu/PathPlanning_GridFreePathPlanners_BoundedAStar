@@ -12,7 +12,7 @@ flag_do_plot = 1;
 flag_do_plot_slow = 0;
 
 %% mission options
-map_idx = 8;
+map_idx = 7;
 num_paths = 10; % number of alternate paths to generate
 corridor_width_buffer = 1.1; % how much larger should the smallest corridor in route n+1 be relative to the smallest corridor in route n?
 [shrunk_polytopes, start_inits, finish_inits] = fcn_util_load_test_map(map_idx);
@@ -22,23 +22,10 @@ for mission_idx = 1:size(start_inits,1)
     finish_init = finish_inits(mission_idx,:);
 
     % all_pts array creation
-    % TODO @sjharnett make a function for all pts creation
-    point_tot = length([shrunk_polytopes.xv]); % total number of vertices in the polytopes
-    beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-    curpt = 0;
-    for poly = 1:size(shrunk_polytopes,2) % check each polytope
-        verts = length(shrunk_polytopes(poly).xv);
-        shrunk_polytopes(poly).obs_id = ones(1,verts)*poly; % obs_id is the same for every vertex on a single polytope
-        beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-        curpt = curpt+verts;
-    end
-    obs_id = [shrunk_polytopes.obs_id];
-    all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
+    [all_pts, start, finish] = fcn_polytopes_generate_all_pts_table(shrunk_polytopes, start_init, finish_init);
 
     %% plan the initial path
     % make vgraph
-    start = [start_init size(all_pts,1)+1 -1 1];
-    finish = [finish_init size(all_pts,1)+2 -1 1];
     finishes = [all_pts; start; finish];
     starts = [all_pts; start; finish];
     [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes,1);
@@ -70,8 +57,9 @@ for mission_idx = 1:size(start_inits,1)
     init_route_length = sum(sqrt(sum(lengths.*lengths,2)));
     route_lengths = [init_route_length]; % note the route lengths
     smallest_corridors = nan(1,num_paths); % note the smallest corridor of each route
-
+    replanning_times = zeros(1,num_paths);
     for path_idx = 1:num_paths
+        replanning_time = tic;
         %% find smallest corridor in last route and remove all corridors that small or smaller
         % plan next best path given tighter constraints
         route_segment_costs = nan(1,size(init_route,1)-1);
@@ -116,6 +104,7 @@ for mission_idx = 1:size(start_inits,1)
         lengths = diff([route_x(:) route_y(:)]);
         replan_route_length = sum(sqrt(sum(lengths.*lengths,2)));
         route_lengths = [route_lengths, replan_route_length]; % store this route length in list of all route lengths
+        replanning_times(path_idx) = toc(replanning_time)
     end % end number of paths loop
     %% plot all alternate routes on one plot
     if flag_do_plot
@@ -153,21 +142,8 @@ for enlarge_idx = 1:(num_paths)
     % enlarge polytopes by the distance, below which corridors were filtered out, halved (because you dilate polytopes on both side of the corridor)
     enlarged_polytopes = fcn_MapGen_polytopesExpandEvenlyForConcave(shrunk_polytopes,(smallest_corridors(enlarge_idx))/2);
     % generate all_pts array for enlarged polytopes
-    % TODO @sjharnett call all_pts function here again
-    point_tot = length([enlarged_polytopes.xv]); % total number of vertices in the polytopes
-    beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-    curpt = 0;
-    for poly = 1:size(enlarged_polytopes,2) % check each polytope
-        verts = length(enlarged_polytopes(poly).xv);
-        enlarged_polytopes(poly).obs_id = ones(1,verts)*poly; % obs_id is the same for every vertex on a single polytope
-        beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-        curpt = curpt+verts;
-    end
-    obs_id = [enlarged_polytopes.obs_id];
-    all_pts_new = [[enlarged_polytopes.xv];[enlarged_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
+    [all_pts_new, start, finish] = fcn_polytopes_generate_all_pts_table(enlarged_polytopes, start_init, finish_init);
     % make vgraph for enlarged map
-    start = [start_init size(all_pts_new,1)+1 -1 1];
-    finish = [finish_init size(all_pts_new,1)+2 -1 1];
     finishes = [all_pts_new; start; finish];
     starts = [all_pts_new; start; finish];
     [new_vgraph, visibility_results_all_pts_new] = fcn_visibility_clear_and_blocked_points_global(enlarged_polytopes, starts, finishes,1);

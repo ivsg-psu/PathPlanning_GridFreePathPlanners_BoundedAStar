@@ -1,132 +1,23 @@
+% script_test_voronoi_planning_hill
+% test script of planning along voronoi diagram edges while incorporating elevation changes into cost
+% this script is WIP and does not use the MedialAxis functions, rather, their contents are explicitly
+% stated below and modified to allow for elevations
 clear; close all; clc
-% script_test_voronoi_planning
-% test script of planning along voronoi diagram edges
 
 addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
 addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
 addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
+map_idx = 7;
 flag_do_plot = 1;
 flag_do_animation = 0;
 flag_do_plot_slow = 0;
-
-    for map_idx = 7
-    if map_idx == 1 % generic canyon map
-        %% load test fixtures for polytope map rather than creating it here
-        % load distribution north of canyon
-        load(strcat(pwd,'\..\Test_Fixtures\shrunk_polytopes1.mat'));
-        % this test fixture was made with the following block of code using functions from the MapGen repo
-        % tiled_polytopes1 = fcn_MapGen_haltonVoronoiTiling([1,20],[2 1]);
-        % % remove the edge polytope that extend past the high and low points
-        % % shink the polytopes so that they are no longer tiled
-        % des_radius = 0.05; % desired average maximum radius
-        % sigma_radius = 0.002; % desired standard deviation in maximum radii
-        % min_rad = 0.0001; % minimum possible maximum radius for any obstacle
-        % [shrunk_polytopes1,~,~] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes1,des_radius,sigma_radius,min_rad);
-
-        % load polytopes representing canyon
-        load(strcat(pwd,'\..\Test_Fixtures\canyon_polys_without_exterior.mat'));
-        % these polytopes were manually defined
-
-        % load distribution south of canyon
-        load(strcat(pwd,'\..\Test_Fixtures\shrunk_polytopes2.mat'));
-        % this test fixture was made with the following block of code using functions from the MapGen repo
-        % tiled_polytopes2 = fcn_MapGen_haltonVoronoiTiling([1, 20],[2 1]);
-        % % remove the edge polytope that extend past the high and low points
-        % % shink the polytopes so that they are no longer tiled
-        % [shrunk_polytopes2,~,~] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes2,des_radius,sigma_radius,min_rad);
-        %% move second polytope field north of canyon
-        second_field_vertical_translation = 1.5;
-        for i = 1:length(shrunk_polytopes2)
-            num_verts_this_poly = length(shrunk_polytopes2(i).yv);
-            shrunk_polytopes2(i).yv = shrunk_polytopes2(i).yv + second_field_vertical_translation;
-            shrunk_polytopes2(i).vertices = shrunk_polytopes2(i).vertices + [zeros(num_verts_this_poly+1,1) second_field_vertical_translation*ones(num_verts_this_poly+1,1)];
-        end
-
-        %% combine two polytope fields and canyon choke point into one field
-        shrunk_polytopes = [shrunk_polytopes1, shrunk_polytopes2, polytopes_manual_canyon];
-        %% define start and finish
-        start_init = [0 1.25];
-        finish_init = [2 1.25];
-    elseif map_idx == 2 % the lower triangular flood plain
-        load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_1.mat'));
-        shrunk_polytopes = flood_plain_1;
-        start_init = [-78.3 40.88];
-        % finish_init = [-78.1 40.9];
-        finish_init = [-78.07 40.82];
-    elseif map_idx == 3 % the mustafar mining rig map (the comb)
-        load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_2.mat'));
-        shrunk_polytopes = flood_plain_2;
-        start_init = [-78.02 40.96];
-        % finish_init = [-77.86 40.93];
-        finish_init = [-77.82 40.97];
-    elseif map_idx == 4 % also good for edge deletion case (the long river valleys)
-        load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_3.mat'));
-        shrunk_polytopes = flood_plain_3;
-        start_init = [-77.49 40.84];
-        % finish_init = [-77.58 40.845];
-        finish_init = [-77.68 40.85];
-    elseif map_idx == 5 % bridge map, good for random edge deletion case
-        load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_4.mat'));
-        shrunk_polytopes = flood_plain_4;
-        is_nonconvex = 1;
-        start_init = [-77.68 40.9];
-        finish_init = [-77.5 40.8];
-    elseif map_idx == 6 % large map, good for dilation case, nearly fully tiled
-        load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_5.mat'));
-        shrunk_polytopes = flood_plain_5;
-        start_init = [-78.01 41.06];
-        finish_init = [-77.75 40.93];
-    elseif map_idx == 7 % generic polytope map
-        is_nonconvex = 0;
-        % pull halton set
-        halton_points = haltonset(2);
-        points_scrambled = scramble(halton_points,'RR2'); % scramble values
-
-        % pick values from halton set
-        Halton_range = [1801 1851];
-        low_pt = Halton_range(1,1);
-        high_pt = Halton_range(1,2);
-        seed_points = points_scrambled(low_pt:high_pt,:);
-
-        % fill polytopes from tiling
-        AABB = [0 0 1 1];
-        stretch = AABB(3:4);
-        tiled_polytopes = fcn_MapGen_generatePolysFromVoronoiAABBWithTiling(seed_points,AABB, stretch);
-
-        % stretch polytopes to cover more area
-        new_stretch = [30 40];
-        stretched_polytopes = [];
-        for poly = 1:length(tiled_polytopes) % pull each cell from the voronoi diagram
-            stretched_polytopes(poly).vertices  = tiled_polytopes(poly).vertices.*new_stretch;
-        end % Ends for loop for stretch
-        stretched_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(stretched_polytopes);
-
-        % shrink polytopes to desired radius
-        des_rad = 2; sigma_radius = 0.4; min_rad = 0.1;
-        [shrunk_polytopes,mu_final,sigma_final] = fcn_MapGen_polytopesShrinkToRadius(stretched_polytopes,des_rad,sigma_radius,min_rad);
-
-        clear Halton_range
-        clear halton_points
-        clear points_scrambled
-
-        start_init = [-2 5];
-        finish_init = [32 5];
-        % tile field to hedgerow by making a set above and a set below
-    end % if conditions for different map test fixtures
-end
-
-%% make a boundary around the polytope field
-boundary.vertices = [-3 -5; -3 45; 33 45; 33 -5];
-boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
-boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
-% boundary.parent_poly_id = nan; % ignore parend ID
-shrunk_polytopes = [boundary, shrunk_polytopes]; % put the boundary polytope as the first polytope
+[shrunk_polytopes, start_init, finish_init, resolution_scale] = fcn_util_load_test_map(map_idx, 1);
 
 %% interpolate polytope vertices
 distances = diff([[shrunk_polytopes.xv]',[shrunk_polytopes.yv]']); % find side lengths in whole field
 min_distance_between_verts = min(sqrt(sum(distances.*distances,2))); % the min of this is the smallest space between features
-resolution = 20*min_distance_between_verts/2; % want even the smallest feature to be bisected
+resolution = resolution_scale*min_distance_between_verts/2; % want even the smallest feature to be bisected
 shrunk_polytopes = fcn_MapGen_increasePolytopeVertexCount(shrunk_polytopes, resolution); % interpolate sides
 
 %% constrained delaunay triangulation
@@ -267,7 +158,7 @@ color_idx = 1;
 for i = 1:(size(triangle_chains,1))
     % pop off a triangle chain
     chain_of_note = triangle_chains{i,3};
-    % pot big markers for the start and end node
+    % plot big markers for the start and end node
     beg_end = [chain_of_note(1) chain_of_note(end)];
     % plot a straight line between them (this is the adjacency graph connection)
     plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
@@ -285,7 +176,7 @@ end
 for i = 1:(size(triangle_chains,1))
     % pop off a triangle chain
     chain_of_note = triangle_chains{i,3};
-    % pot big markers for the start and end node
+    % plot big markers for the start and end node
     beg_end = [chain_of_note(1) chain_of_note(end)];
     % plot a straight line between them (this is the adjacency graph connection)
     plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
@@ -398,7 +289,7 @@ while ~isequal(triangle_chains,prev_triangle_chains)
                 if isempty(chain_of_note)
                     continue
                 end
-                % pot big markers for the start and end node
+                % plot big markers for the start and end node
                 beg_end = [chain_of_note(1) chain_of_note(end)];
                 % plot a straight line between them (this is the adjacency graph connection)
                 plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
@@ -419,7 +310,7 @@ while ~isequal(triangle_chains,prev_triangle_chains)
         if isempty(chain_of_note)
             continue
         end
-        % pot big markers for the start and end node
+        % plot big markers for the start and end node
         beg_end = [chain_of_note(1) chain_of_note(end)];
         % plot a straight line between them (this is the adjacency graph connection)
         plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
@@ -455,7 +346,7 @@ while ~isequal(triangle_chains,prev_triangle_chains)
         if isempty(chain_of_note)
             continue
         end
-        % pot big markers for the start and end node
+        % plot big markers for the start and end node
         beg_end = [chain_of_note(1) chain_of_note(end)];
         % plot a straight line between them (this is the adjacency graph connection)
         plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
@@ -930,7 +821,7 @@ for i = 1:(size(triangle_chains,1))
     if isempty(chain_of_note)
         continue
     end
-    % pot big markers for the start and end node
+    % plot big markers for the start and end node
     beg_end = [chain_of_note(1) chain_of_note(end)];
     % plot a straight line between them (this is the adjacency graph connection)
     plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',0.6*ones(1,3));
@@ -975,62 +866,6 @@ surf(X,Y,Z);
 xlabel('x [km]')
 ylabel('y [km]')
 zlabel('elevation [m]')
-return
-%% attempt 3d
-% close all; clear all; clc;
-% load trimesh3d
-% trisurf(tri,x,y,z)
-% dt = delaunayTriangulation(x,y,z)
-% tr = triangulation(dt(:,:),dt.Points)
-% trisurf(tri,x,y,z)
-% numt = size(tr,1);
-% T = (1:numt)';
-% neigh = neighbors(tr);
-% cc = circumcenter(tr);
-cc = incenter(tr);
-% nodes = find(~isnan(sum(neigh, 2)));
-% xcc = cc(:,1);
-% ycc = cc(:,2);
-% zcc = cc(:,3);
-% idx1 = T < neigh(:,1);
-% idx2 = T < neigh(:,2);
-% idx3 = T < neigh(:,3);
-% neigh = [T(idx1) neigh(idx1,1); T(idx2) neigh(idx2,2); T(idx3) neigh(idx3,3)]';
-% figure(1); hold on; box on;
-% trisurf(tri,x,y,z)
-% hold on
-plot3(xcc(neigh), ycc(neigh), zcc(neigh), '-r','LineWidth',1.5)
-% plot3(xcc(nodes), ycc(nodes), zcc(nodes), '.k','MarkerSize',30)
-% xlabel('Medial Axis of Polygonal Domain','FontWeight','b')
-%
-function xyz = INTERNAL_WGSLLA2xyz(wlat, wlon, walt)
-    %Function xyz = wgslla2xyz(lat, lon, alt) returns the
-    %equivalent WGS84 XYZ coordinates (in meters) for a
-    %given geodetic latitude "lat" (degrees), longitude "lon"
-    %(degrees), and altitude above the WGS84 ellipsoid
-    %in meters.  Note: N latitude is positive, S latitude
-    %is negative, E longitude is positive, W longitude is
-    %negative.
-    %
-    %Ref: Decker, B. L., World Geodetic System 1984,
-    %Defense Mapping Agency Aerospace Center.
-
-    A_EARTH = 6378137;
-    flattening = 1/298.257223563;
-    NAV_E2 = (2-flattening)*flattening; % also e^2
-    deg2rad = pi/180;
-
-    slat = sin(wlat*deg2rad);
-    clat = cos(wlat*deg2rad);
-    r_n = A_EARTH/sqrt(1 - NAV_E2*slat*slat);
-    xyz = [ (r_n + walt)*clat*cos(wlon*deg2rad);
-            (r_n + walt)*clat*sin(wlon*deg2rad);
-            (r_n*(1 - NAV_E2) + walt)*slat ];
-
-    if ((wlat < -90.0) | (wlat > +90.0) | (wlon < -180.0) | (wlon > +360.0))
-        error('WGS lat or WGS lon out of range');
-    end
-end
 
 % function to generate a parabolic hill and give elevation values z for x,y pairs
 function z = f(x,y)

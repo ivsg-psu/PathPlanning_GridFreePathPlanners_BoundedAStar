@@ -14,40 +14,28 @@ addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 %% plotting flags
 flag_do_plot = 1;
 flag_do_plot_slow= 0;
+flag_do_threadpulling = 1;
 
 %% mission options
-map_idx =5;
+map_idx = 6;
 navigated_portion = 0.4; % portion of initial path to be completed prior to triggering replanning
 w = 1/6; % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
 [shrunk_polytopes, start_inits, finish_inits] = fcn_util_load_test_map(map_idx);
 
 % map_idx nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length
 data = []; % initialize array for storing results
-for mission_idx = 1:size(start_inits,1)
+for mission_idx = 2:size(start_inits,1)
     start_init = start_inits(mission_idx,:);
     finish_init = finish_inits(mission_idx,:);
-    % all_pts array creation
-    % TODO @sjharnett make a function for all pts creation
-    point_tot = length([shrunk_polytopes.xv]); % total number of vertices in the polytopes
-    beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-    curpt = 0;
-    for poly = 1:size(shrunk_polytopes,2) % check each polytope
-        verts = length(shrunk_polytopes(poly).xv);
-        shrunk_polytopes(poly).obs_id = ones(1,verts)*poly; % obs_id is the same for every vertex on a single polytope
-        beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-        curpt = curpt+verts;
-    end
-    obs_id = [shrunk_polytopes.obs_id];
-    all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end
 
     % loop over dilation sizes
     for polytope_size_increases = [0.01 0.02 0.05 0.1 0.2 0.3 0.4 0.5]
         % loop over the nominal cost function and feature cost function
         for nominal_or_width_based = [1,2]
             %% plan the initial path
+            % all_pts array creation
+            [all_pts, start, finish] = fcn_polytopes_generate_all_pts_table(shrunk_polytopes, start_init, finish_init);
             % find vgraph
-            start = [start_init size(all_pts,1)+1 -1 1];
-            finish = [finish_init size(all_pts,1)+2 -1 1];
             finishes = [all_pts; start; finish];
             starts = [all_pts; start; finish];
             [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes,1);
@@ -66,7 +54,7 @@ for mission_idx = 1:size(start_inits,1)
             % make dilation robustness matrix
             mode = '2d';
             dilation_robustness_tensor = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode, shrunk_polytopes);
-            dilation_robustness_matrix = max(dilation_robustness_tensor(:,:,1) , dilation_robustness_tensor(:,:,2)); % combine the left and right sides as a max
+            dilation_robustness_matrix = min(dilation_robustness_tensor(:,:,1), dilation_robustness_tensor(:,:,2)); % combine the left and right sides as a max
             dilation_robustness_matrix_for_variance = dilation_robustness_matrix(:)'; % extract vector of all values
             dilation_robustness_matrix_for_variance(dilation_robustness_matrix_for_variance == 0) = []; % remove 0s
             dilation_robustness_matrix_for_variance(isinf(dilation_robustness_matrix_for_variance)) = []; % remove infs
@@ -80,6 +68,47 @@ for mission_idx = 1:size(start_inits,1)
             end
             % plan initial route
             [init_cost, init_route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
+
+            if flag_do_threadpulling && nominal_or_width_based==2
+                % backup initial route for comparison
+                init_route_original = init_route;
+                % find initial route length
+                route_x = init_route(:,1);
+                route_y = init_route(:,2);
+                lengths = diff([route_x(:) route_y(:)]);
+                init_route_length_original= sum(sqrt(sum(lengths.*lengths,2)));
+                % create all points and start/finish for threadpulling from initial route
+                all_pts_tp = init_route(2:(end-1),:);
+                start_tp = init_route(1,:);
+                finish_tp = init_route(end,:);
+                all_pts_tp(:,3) = [1:size(all_pts_tp,1)];
+                start_tp(3) = size(all_pts_tp,1) + 1;
+                finish_tp(3) = size(all_pts_tp,1) + 2;
+                % make vgraph again
+                finishes_tp = [all_pts_tp; start_tp; finish_tp];
+                starts_tp = [all_pts_tp; start_tp; finish_tp];
+                [vgraph_tp, visibility_results_tp] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts_tp, finishes_tp,1);
+                % make rgraph again
+                [is_reachable_tp, num_steps_tp, rgraph_tp] = fcn_check_reachability(vgraph_tp,start_tp(3),finish_tp(3));
+                if ~is_reachable_tp
+                    % we don't want to break if replanning is impossible, we want to save the data for what caused this
+                    warning('threadpulling is impossible')
+                    continue
+                end % end is_reachable condition for replanning
+                % make cgraph again
+                mode = "xy spatial only";
+                [cgraph_tp, hvec_tp] = fcn_algorithm_generate_cost_graph(all_pts_tp, start_tp, finish_tp, mode);
+                % replan path
+                [cost_tp, route_tp] = fcn_algorithm_Astar(vgraph_tp, cgraph_tp, hvec_tp, all_pts_tp, start_tp, finish_tp);
+                % overwrite route and length with threadpulled versions of these
+                init_route = route_tp;
+                init_cost = cost_tp;
+                % find initial route length
+                route_x = init_route(:,1);
+                route_y = init_route(:,2);
+                lengths = diff([route_x(:) route_y(:)]);
+                init_route_length = sum(sqrt(sum(lengths.*lengths,2)));
+            end % end flag_do_threadpulling
 
             % find initial route length
             route_x = init_route(:,1);
@@ -106,20 +135,7 @@ for mission_idx = 1:size(start_inits,1)
 
             %% plan the new path
             % generate updated all_pts array
-            % TODO @sjharnett call all_pts function here again
-            point_tot = length([enlarged_polytopes.xv]); % total number of vertices in the polytopes
-            beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-            curpt = 0;
-            for poly = 1:size(enlarged_polytopes,2) % check each polytope
-                verts = length(enlarged_polytopes(poly).xv);
-                enlarged_polytopes(poly).obs_id = ones(1,verts)*poly; % obs_id is the same for every vertex on a single polytope
-                beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-                curpt = curpt+verts;
-            end
-            obs_id = [enlarged_polytopes.obs_id];
-            all_pts_new = [[enlarged_polytopes.xv];[enlarged_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
-            start = [start_midway size(all_pts_new,1)+1 -1 1];
-            finish = [finish_init size(all_pts_new,1)+2 -1 1];
+            [all_pts_new, start, finish] = fcn_polytopes_generate_all_pts_table(enlarged_polytopes, start_midway, finish_init);
 
             % make vgraph again
             finishes = [all_pts_new; start; finish];
@@ -138,7 +154,7 @@ for mission_idx = 1:size(start_inits,1)
                 warning('mission replanning is impossible')
                 replan_cost = NaN;
                 replan_route_length = NaN;
-                data = [data; map_idx nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length];
+                data = [data; mission_idx nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length];
                 continue
             end % end is_reachable condition for replanning
 
@@ -155,7 +171,7 @@ for mission_idx = 1:size(start_inits,1)
             replan_route_length = sum(sqrt(sum(lengths.*lengths,2)));
 
             % save data from this trial
-            data = [data; map_idx nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length];
+            data = [data; mission_idx nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length];
             %% plot single trial
             % plot field, initial path, replan path, and midway point
             if flag_do_plot
@@ -165,6 +181,9 @@ for mission_idx = 1:size(start_inits,1)
                 plot(start_init(1),start_init(2),'xg','MarkerSize',6);
                 plot(finish(1),finish(2),'xr','MarkerSize',6);
                 plot(init_route(:,1),init_route(:,2),'k','LineWidth',2);
+                if flag_do_threadpulling && nominal_or_width_based==2
+                    plot(init_route_original(:,1), init_route_original(:,2),'--','Color',[0.5 0.5 0.5],'LineWidth',2);
+                end
                 plot(start_midway(1),start_midway(2),'dm','MarkerSize',6)
                 plot(replan_route(:,1),replan_route(:,2),'--g','LineWidth',2);
                 for j = 1:length(enlarged_polytopes)
@@ -176,6 +195,9 @@ for mission_idx = 1:size(start_inits,1)
                 title_string = sprintf('map idx: %i, nominal or corridor-width-based: %i,\npolytope size increase [km]: %.2f',map_idx, nominal_or_width_based,polytope_size_increases);
                 title(title_string);
                 leg_str = {'start','finish','initial route','replanning point','replanned route','enlarged obstacles'};
+                if flag_do_threadpulling && nominal_or_width_based==2
+                    leg_str = {'start','finish','initial route, shortened','initial route','replanning point','replanned route','enlarged obstacles'};
+                end
                 for i = 1:length(shrunk_polytopes)-1
                     leg_str{end+1} = '';
                 end
@@ -219,18 +241,27 @@ for mission_idx = 1:size(start_inits,1)
 end % end mission (i.e., start goal pair) loop
 %% plot multiple trials data
 % sort data and define plot options
-markers = {'x','d','o','+','s','x','d'};
+markers = {'x','d','o','+','s','x','^','v','pentagram'};
 colors = {'r','b'};
-idx_nominal = data(:,1)== map_idx & data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
+% idx_nominal = data(:,1)== map_idx & data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7)); % filter on map and nominal and not NaN
+idx_nominal = data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
 nominal_data = data(idx_nominal,:);
-idx_reachable = data(:,1)== map_idx & data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
+% idx_reachable = data(:,1)== map_idx & data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7)); % filter on map and feature and not NaN
+idx_reachable = data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
 reachable_data = data(idx_reachable,:);
 
 % plot ratio of each path relative to its own initial path
 figure; hold on; box on;
 box on; hold on;
-plot(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(:,5),"Color",colors{nominal_data(1,2)},"Marker",markers{nominal_data(1,1)},'LineStyle','none');
-plot(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./reachable_data(:,5),"Color",colors{reachable_data(1,2)},"Marker",markers{reachable_data(1,1)},'LineStyle','none');
+% loop over each mission idx to plot different markers for different missions
+for this_mission = 2:mission_idx
+    idx_nominal_this_mission = nominal_data(:,1) == this_mission;
+    nominal_data_this_mission = nominal_data(idx_nominal_this_mission,:);
+    idx_reachable_this_mission = reachable_data(:,1) == this_mission;
+    reachable_data_this_mission = reachable_data(idx_reachable_this_mission,:);
+    plot(nominal_data_this_mission(:,4),(nominal_data_this_mission(:,6)+nominal_data_this_mission(:,7))./nominal_data_this_mission(:,5),"Color",colors{nominal_data_this_mission(1,2)},"Marker",markers{nominal_data_this_mission(1,1)},'LineStyle','none');
+    plot(reachable_data_this_mission(:,4),(reachable_data_this_mission(:,6)+reachable_data_this_mission(:,7))./reachable_data_this_mission(:,5),"Color",colors{reachable_data_this_mission(1,2)},"Marker",markers{reachable_data_this_mission(1,1)},'LineStyle','none');
+end
 % add polynominal fit
 fit_order = 3;
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(:,5),fit_order);
@@ -258,8 +289,14 @@ legend({'nominal cost function','corridor width function'},'Location','best');
 % plot ratio of each path relative to nominal initial path
 figure; hold on; box on;
 box on; hold on;
-plot(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5),"Color",colors{nominal_data(1,2)},"Marker",markers{nominal_data(1,1)},'LineStyle','none');
-plot(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./nominal_data(1,5),"Color",colors{reachable_data(1,2)},"Marker",markers{reachable_data(1,1)},'LineStyle','none');
+for this_mission = 2:mission_idx
+    idx_nominal_this_mission = nominal_data(:,1) == this_mission;
+    nominal_data_this_mission = nominal_data(idx_nominal_this_mission,:);
+    idx_reachable_this_mission = reachable_data(:,1) == this_mission;
+    reachable_data_this_mission = reachable_data(idx_reachable_this_mission,:);
+    plot(nominal_data_this_mission(:,4),(nominal_data_this_mission(:,6)+nominal_data_this_mission(:,7))./nominal_data_this_mission(1,5),"Color",colors{nominal_data_this_mission(1,2)},"Marker",markers{nominal_data_this_mission(1,1)},'LineStyle','none');
+    plot(reachable_data_this_mission(:,4),(reachable_data_this_mission(:,6)+reachable_data_this_mission(:,7))./nominal_data_this_mission(1,5),"Color",colors{reachable_data_this_mission(1,2)},"Marker",markers{reachable_data_this_mission(1,1)},'LineStyle','none');
+end
 % add polynominal fit
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5),fit_order);
 p_reachable = polyfit(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./nominal_data(1,5),fit_order);
@@ -286,8 +323,14 @@ legend({'nominal cost function','corridor width cost function'},'Location','best
 % plot absolute length
 figure; hold on; box on;
 box on; hold on;
-plot(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7)),"Color",colors{nominal_data(1,2)},"Marker",markers{nominal_data(1,1)},'LineStyle','none');
-plot(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7)),"Color",colors{reachable_data(1,2)},"Marker",markers{reachable_data(1,1)},'LineStyle','none');
+for this_mission = 2:mission_idx
+    idx_nominal_this_mission = nominal_data(:,1) == this_mission;
+    nominal_data_this_mission = nominal_data(idx_nominal_this_mission,:);
+    idx_reachable_this_mission = reachable_data(:,1) == this_mission;
+    reachable_data_this_mission = reachable_data(idx_reachable_this_mission,:);
+    plot(nominal_data_this_mission(:,4),(nominal_data_this_mission(:,6)+nominal_data_this_mission(:,7)),"Color",colors{nominal_data_this_mission(1,2)},"Marker",markers{nominal_data_this_mission(1,1)},'LineStyle','none');
+    plot(reachable_data_this_mission(:,4),(reachable_data_this_mission(:,6)+reachable_data_this_mission(:,7)),"Color",colors{reachable_data_this_mission(1,2)},"Marker",markers{reachable_data_this_mission(1,1)},'LineStyle','none');
+end
 % add polynominal fit
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7)),fit_order);
 p_reachable = polyfit(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7)),fit_order);

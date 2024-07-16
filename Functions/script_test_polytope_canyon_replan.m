@@ -27,18 +27,7 @@ for mission_idx = 1:size(start_inits,1)
     start_init = start_inits(mission_idx,:);
     finish_init = finish_inits(mission_idx,:);
     % all_pts array creation
-    % TODO @sjharnett make a function for all pts creation
-    point_tot = length([shrunk_polytopes.xv]); % total number of vertices in the polytopes
-    beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-    curpt = 0;
-    for poly = 1:size(shrunk_polytopes,2) % check each polytope
-        verts = length(shrunk_polytopes(poly).xv);
-        shrunk_polytopes(poly).obs_id = ones(1,verts)*poly; % obs_id is the same for every vertex on a single polytope
-        beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-        curpt = curpt+verts;
-    end
-    obs_id = [shrunk_polytopes.obs_id];
-    all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
+    [all_pts, start, finish] = fcn_polytopes_generate_all_pts_table(shrunk_polytopes, start_init, finish_init);
 
     % loop over multiple trials as there is randomness in edge deletion so we may wish to repeat the experiment
     for repeats = 1:num_repeats
@@ -47,10 +36,11 @@ for mission_idx = 1:size(start_inits,1)
         for edge_deletion_idx = 1:length(edge_deletion)
             % loop over the nominal cost function and feature cost function
             for nominal_or_reachable = [1,2]
+                % have to reset the start at each iteration so we don't accidentally...
+                %  use the previous iteration's midpoint
+                start = [start_init size(all_pts,1)+1 -1 1];
                 %% plan the initial path
                 % make vgraph
-                start = [start_init size(all_pts,1)+1 -1 1];
-                finish = [finish_init size(all_pts,1)+2 -1 1];
                 finishes = [all_pts; start; finish];
                 starts = [all_pts; start; finish];
                 [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes,1);
@@ -201,16 +191,16 @@ for mission_idx = 1:size(start_inits,1)
                                 plot([route_segment_start(1),route_segment_end(1)],[route_segment_start(2),route_segment_end(2)],"Color",'r',"LineWidth",3)
                             end
                         end
+                        figure; hold on; box on;
+                        blues = zeros(size(vgraph));
+                        reds = orig_vgraph & ~reduced_vgraph;
+                        greens = reduced_vgraph;
+                        vgraph_image(:,:,1) = reds;
+                        vgraph_image(:,:,2) = greens;
+                        vgraph_image(:,:,3) = blues;
+                        imshow(vgraph_image*255);
+                        title(sprintf("%.2f pct. of edges removed, random edge blocking",pct_edges_removed));
                     end
-                    figure; hold on; box on;
-                    blues = zeros(size(vgraph));
-                    reds = orig_vgraph & ~reduced_vgraph;
-                    greens = reduced_vgraph;
-                    vgraph_image(:,:,1) = reds;
-                    vgraph_image(:,:,2) = greens;
-                    vgraph_image(:,:,3) = blues;
-                    imshow(vgraph_image*255);
-                    title(sprintf("%.2f pct. of edges removed, random edge blocking",pct_edges_removed));
                 end % end flag_do_plot condition
             end % end nominal or reachable cost function loop
         end % end edge deletion portion loop

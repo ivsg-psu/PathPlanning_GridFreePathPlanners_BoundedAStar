@@ -11,7 +11,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, star
 %
 % INPUTS:
 %
-%   start: the start point vector (x,t,id)
+%   start: the start point vector (x,y,id)
 %
 %   finish: the finish point matrix of all valid finishes where each row is a single finish point vector (x,y,id)
 %
@@ -34,7 +34,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, star
 %
 %     cost: the total cost of the selected route
 %
-%    route: the matrix as produced by fcn_algorithm_Astar3d consisting of waypoints.  Each row is a
+%    route: the matrix as produced by fcn_algorithm_Astar consisting of waypoints.  Each row is a
 %    waypoint, and each column is x, y, and point ID
 %
 %
