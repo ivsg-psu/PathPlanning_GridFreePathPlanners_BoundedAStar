@@ -1,4 +1,4 @@
-% script_test_voronoi_planning_alt_paths
+% script_test_voronoi_planning_alt_paths_local
 % test script of planning along voronoi diagram edges
 % this graph is then used to generate alternate paths
 
