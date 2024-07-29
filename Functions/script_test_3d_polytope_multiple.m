@@ -60,7 +60,7 @@ end
 
 %% define start and finish
 start = [0 0.5 0];
-finish = [1 0.5 0; 1 0.2 20]; % moving finish
+finish = [1 0.5 0; 0.7 0.2 20]; % moving finish
 dt = 5;
 finish = fcn_interpolate_route_in_time(finish,dt);
 num_finish_pts = size(finish,1);
@@ -193,6 +193,11 @@ end
 route_dense = fcn_interpolate_route_in_time(route,dt);
 toc
 if flag_do_animation
+    %% change some things for the animation...
+    dt = 0.25; % use denser interpolation for more frames
+    route_dense = fcn_interpolate_route_in_time(route,dt); % interpolate the route
+    [verts, time_space_polytopes] = fcn_interpolate_polytopes_in_time(time_space_polytopes,dt); % interpolate the polytopes
+    finish = fcn_interpolate_route_in_time(finish,dt); % interpolate the finish
     fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, route_dense, dt, [0 1], [0 1]);
 end
 
@@ -201,7 +206,7 @@ function INTERNAL_fcn_format_timespace_plot()
     opts.width      = 8.8;
     opts.height     = 6;
     opts.fontType   = 'Times New Roman';
-    opts.fontSize   = 8;
+    opts.fontSize   = 14;
     fig = gcf;
     % scaling
     fig.Units               = 'centimeters';
@@ -211,7 +216,7 @@ function INTERNAL_fcn_format_timespace_plot()
     % set text properties
     set(fig.Children, ...
         'FontName',     'Times New Roman', ...
-        'FontSize',     8);
+        'FontSize',     14);
 
     % remove unnecessary white space
     set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
