@@ -7,14 +7,70 @@ addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'))
 addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 
-map_idx = 8;
+map_idx = 7;
 flag_do_plot = 1;
 flag_do_animation = 0;
 flag_do_plot_slow = 0;
 [shrunk_polytopes, start_init, finish_init, resolution_scale] = fcn_util_load_test_map(map_idx, 1);
 
-%% constrained delaunay triangulation
-[adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAxis_makeAdjacencyMatrixAndTriangleChains(shrunk_polytopes, resolution_scale, flag_do_plot);
+%% for sake of comparisons, do this with a visibility graph as well
+polytopes = shrunk_polytopes;
+if flag_do_plot
+    fig = 99; % figure to plot on
+    line_spec = 'b-'; % edge line plotting
+    line_width = 2; % linewidth of the edge
+    axes_limits = [1025 1055 -4726 -4710]; % x and y axes limits
+    axis_style = 'square'; % plot axes style
+    fcn_plot_polytopes(polytopes(2:end),fig,line_spec,line_width,axes_limits,axis_style);
+    hold on
+    box on
+    xlabel('x [km]')
+    ylabel('y [km]')
+end
+point_tot = length([polytopes.xv]); % total number of vertices in the convex polytopes
+beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
+curpt = 0;
+for poly = 1:size(polytopes,2) % check each polytope
+    verts = unique(polytopes(poly).vertices,'stable','rows');
+    num_verts = size(verts,1);
+    polytopes(poly).obs_id = ones(1,num_verts)*poly; % obs_id is the same for every vertex on a single polytope
+    polytopes(poly).xv = verts(:,1)';
+    polytopes(poly).yv = verts(:,2)';
+    polytopes(poly).vertices = [verts; verts(1,:)];
+    polytopes(poly).distances = fcn_general_calculation_euclidean_point_to_point_distance(polytopes(poly).vertices(1:end-1,:),polytopes(poly).vertices(2:end,:));
+    beg_end([curpt+1,curpt+num_verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
+    curpt = curpt+num_verts;
+    polytopes(poly).perimeter = sum(polytopes(poly).distances);
+end
+obs_id = [polytopes.obs_id];
+point_tot = length([polytopes.xv]); % need to recheck total points
+beg_end = beg_end(1:point_tot); % remove any extra points
+all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
+vgraph_times = [];
+for i = 1:10 % get timing data for repeat iterations
+    create_vgraph_timer = tic;
+    [vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts);
+    vgraph_time = toc(create_vgraph_timer)
+    vgraph_times = [vgraph_times vgraph_time]
+end
+% plot visibility graph edges
+if flag_do_plot
+    for i = 1:size(vgraph,1)
+        for j = 1:size(vgraph,1)
+            if vgraph(i,j) == 1
+                plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'-r')
+            end
+        end
+    end
+end
+med_ax_times = [];
+for i = 1:10 % get timing data for repeat iterations
+    t_medial_axis = tic;
+    %% constrained delaunay triangulation
+    [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAxis_makeAdjacencyMatrixAndTriangleChains(shrunk_polytopes, resolution_scale, flag_do_plot);
+    medial_axis_time = toc(t_medial_axis)
+    med_ax_times = [med_ax_times medial_axis_time]
+end
 
 %% prune graph
 [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_pruneGraph(adjacency_matrix, triangle_chains, nodes, xcc, ycc, shrunk_polytopes, flag_do_plot);

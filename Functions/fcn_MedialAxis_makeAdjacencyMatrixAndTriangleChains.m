@@ -127,20 +127,27 @@ function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAx
     end
     x = P(:,1); % all x's
     y = P(:,2); % all y's
-    DT = delaunayTriangulation(P,C) % perform constrained triangulation
-    figure; box on; hold on; triplot(DT); title('triangulation')
-    xlabel('x [km]')
-    ylabel('y [km]')
+    if flag_do_plot
+        DT = delaunayTriangulation(P,C) % perform constrained triangulation
+        figure; box on; hold on; triplot(DT); title('triangulation')
+        xlabel('x [km]')
+        ylabel('y [km]')
+    else
+        DT = delaunayTriangulation(P,C);
+    end
+
     inside = isInterior(DT); % identify triangles statisfying constriants C (i.e. tris within the boundary and outside polytopes, i.e. free space)
     tr = triangulation(DT(inside,:),DT.Points); % keep only the triangles of free space, not the ones in polytopes
-    for j = 2:length(polytopes)
-        fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-    end
-    figure; box on; hold on; triplot(tr); title('triangulation, no interior')
-    xlabel('x [km]')
-    ylabel('y [km]')
-    for j = 2:length(polytopes)
-        fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+    if flag_do_plot
+        for j = 2:length(polytopes)
+            fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+        end
+        figure; box on; hold on; triplot(tr); title('triangulation, no interior')
+        xlabel('x [km]')
+        ylabel('y [km]')
+        for j = 2:length(polytopes)
+            fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+        end
     end
     numt = size(tr,1); % numbe of triangles
     T = (1:numt)'; % list of triangle idx
