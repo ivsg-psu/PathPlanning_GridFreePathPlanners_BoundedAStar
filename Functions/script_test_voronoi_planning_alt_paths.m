@@ -8,7 +8,7 @@ addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'))
 addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 
-map_idx = 8;
+map_idx = 7;
 flag_do_plot = 1;
 flag_do_animation = 0;
 flag_do_plot_slow = 0;
@@ -127,18 +127,20 @@ leg_str{end+1} = 'start';
 leg_str{end+1} = 'finish';
 leg_str{end+1} = 'start node';
 leg_str{end+1} = 'finish node';
-xlabel('x [km]');
-ylabel('y [km]');
+xlabel('x [m]');
+ylabel('y [m]');
 route_to_plot = alternate_routes{1};
-plot(route_to_plot(:,1),route_to_plot(:,2),'LineWidth',length(alternate_routes)+1);
+p_route = plot(route_to_plot(:,1),route_to_plot(:,2),'LineWidth',1);
+uistack(p_route,'bottom');
 leg_str{end+1} = sprintf('route 1');
 for i = 2:length(alternate_routes)
     route_to_plot = alternate_routes{i};
     if isnan(route_to_plot) % if the route wasn't calculated, just remove it
         continue
     end
-    plot(route_to_plot(:,1),route_to_plot(:,2),'LineWidth',length(alternate_routes)+1-i);
-    leg_str{end+1} = sprintf('route %i, corridors > %.3f [km]',i,smallest_corridors(i));
+    p_route = plot(route_to_plot(:,1),route_to_plot(:,2),'LineWidth',i);
+    uistack(p_route,'bottom');
+    leg_str{end+1} = sprintf('route %i, corridors > %.3f [m]',i,smallest_corridors(i));
 end
 for j = 2:length(shrunk_polytopes)
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)

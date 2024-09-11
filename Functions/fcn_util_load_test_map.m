@@ -175,6 +175,7 @@ function [polytopes, starts, finishes, resolution_scale] = fcn_util_load_test_ma
         end
     elseif map_idx == 7 % generic polytope map
         % pull halton set
+        rng(1);
         halton_points = haltonset(2);
         points_scrambled = scramble(halton_points,'RR2'); % scramble values
 
