@@ -385,7 +385,7 @@ for my_tri = 1:size(tr,1) % loop over each triangle in the triangulation
     max_side_lengths_per_tri(my_tri) = max(side_lengths); % only need to store max length
 end
 %% store route segment length and corridor width for each triangle chain and elev change
-zcc = f(xcc(1:size(tr,1)),ycc(1:size(tr,1)));
+zcc = f_peaks(xcc(1:size(tr,1)),ycc(1:size(tr,1)));
 for i = 1:(size(triangle_chains,1)) % for each triangle chain
     % pop off a triangle chain
     chain_of_note = triangle_chains{i,3};
@@ -470,10 +470,11 @@ for i = 1:(size(triangle_chains,1))
     % plot the medial axis path between them (this is the curved path from the triangle chain)
     dense_x = xcc(chain_of_note(1)):0.1:xcc(chain_of_note(end));
     dense_y = interp1(xcc(chain_of_note), ycc(chain_of_note), dense_x);
-    dense_z = f(dense_x, dense_y);
+    dense_z = f_peaks(dense_x, dense_y);
     elev_portion = (dense_z-min_elev)./(max_elev-min_elev);
     elev_portion_color_idx = round(elev_portion*num_colors,0); % convert elev_portion to an index in colormap
     elev_portion_color_idx(elev_portion_color_idx == 0) = 1;
+    elev_portion_color_idx(elev_portion_color_idx > num_colors) = num_colors;
     for j = 1:length(dense_x)
         x = dense_x(j);
         y = dense_y(j);
@@ -750,7 +751,7 @@ for i = 1:length(r)
     corridor_widths = [triangle_chains{idx_chain_rc, 4}]; % the corridor width of all valid chains
     lengths = [triangle_chains{idx_chain_rc, 5}]; % the length of all valid chains
     elev_change = [triangle_chains{idx_chain_rc, 6}]; % the length of all valid chains
-    possible_costs = w*lengths + (1-w)*(corridor_widths).^(-1)+elev_change; % vectorized total cost
+    possible_costs = w*lengths + (1-w)*(corridor_widths).^(-1)+0.2*elev_change; % vectorized total cost
     [min_cost, min_cost_location] = min(possible_costs); % the min cost is what we use as cost
     cgraph(r(i),c(i)) = min_cost;
     best_chain_idx_matrix(r(i),c(i)) = idx_chain_rc(min_cost_location); % need to remember which chain we want to use
@@ -857,21 +858,89 @@ tit_str = sprintf('length cost weight was: %.1f \n total length: %.2f km \n wors
 title(tit_str)
 end
 
+% plot result
 figure; hold on; box on;
-x = 0:1:40;
+xlabel('x [km]');
+ylabel('y [km]');
+leg_str = {};
+leg_str{end+1} = 'medial axis graph';
+not_first = 0;
+for i = 1:(size(triangle_chains,1))
+    % pop off a triangle chain
+    chain_of_note = triangle_chains{i,3};
+    if isempty(chain_of_note)
+        continue
+    end
+    % plot big markers for the start and end node
+    beg_end = [chain_of_note(1) chain_of_note(end)];
+    % plot a straight line between them (this is the adjacency graph connection)
+    plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',0.6*ones(1,3));
+    if not_first
+        leg_str{end+1} = '';
+    end
+    not_first =1;
+    % plot the medial axis path between them (this is the curved path from the triangle chain)
+    plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',0.6*ones(1,3));
+    leg_str{end+1} = '';
+end
+plot(start_xy(1),start_xy(2),'xg','MarkerSize',10);
+plot(finish_xy(1),finish_xy(2),'xr','MarkerSize',10);
+plot(start(1),start(2),'.g','MarkerSize',10);
+plot(finish(1),finish(2),'.r','MarkerSize',10);
+leg_str{end+1} = 'start';
+leg_str{end+1} = 'finish';
+leg_str{end+1} = 'start node';
+leg_str{end+1} = 'finish node';
+plot(route(:,1),route(:,2),'--r','MarkerSize',20,'LineWidth',1);
+leg_str{end+1} = sprintf('adjacency of route nodes');
+% plot polytopes with elevation colors
+elevs = unique(zcc);
+max_elev = max(elevs);
+min_elev = min(elevs);
+my_colormap = colormap(turbo);
+num_colors = size(my_colormap,1);
+for j = 2:length(shrunk_polytopes)
+    poly_avg_z = f_peaks(shrunk_polytopes(j).mean(1),shrunk_polytopes(j).mean(2));
+    if poly_avg_z > max_elev
+        poly_avg_z = max_elev;
+    end
+    elev_portion = (poly_avg_z-min_elev)./(max_elev-min_elev);
+    elev_portion_color_idx = round(elev_portion*num_colors,0); % convert elev_portion to an index in colormap
+    elev_portion_color_idx(elev_portion_color_idx == 0) = 1;
+    elev_color = my_colormap(elev_portion_color_idx,:);
+    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),elev_color,'FaceAlpha',0.3)
+end
+leg_str{end+1} = 'obstacles';
+for i = 1:length(shrunk_polytopes)-2
+    leg_str{end+1} = '';
+end
+plot(route_full(:,1), route_full(:,2), '-k','LineWidth',2.5) % plot approx. medial axis
+leg_str{end+1} = 'medial axis route';
+legend(leg_str,'Location','best');
+tit_str = sprintf('length cost weight was: %.1f \n total length: %.2f km \n worst corridor: %.2f km',w, route_length, route_choke);
+title(tit_str)
+set(gca,'CLim',[min_elev max_elev]);
+c = colorbar;
+ylabel(c,'elevation [m]')
+
+figure; hold on; box on;
+x = -1:1:40;
 y = x;
 [X,Y] = meshgrid(x,y);
-Z = f(X,Y);
+Z = f_peaks(X,Y);
 surf(X,Y,Z);
 xlabel('x [km]')
 ylabel('y [km]')
 zlabel('elevation [m]')
 
 % function to generate a parabolic hill and give elevation values z for x,y pairs
-function z = f(x,y)
+function z = f_saddle(x,y)
     a = 0.1; % x scale
     b = 0.1; % y scale
     xc = 15; % x center
     yc = 20; % y center
     z = -(((x-xc).^2)/a - ((y-yc).^2)/b) + 1000;
+end
+function z = f_peaks(x,y)
+    z = 100*(peaks((x-20)/10,(y-15)/10)+10);
 end
