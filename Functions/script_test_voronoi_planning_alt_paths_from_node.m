@@ -32,7 +32,7 @@ finish_xy = finish_init;
 % make cost graph
 % cost is of the form: total cost = w*length + (1-w)*corridor_width
 w = 1;
-min_corridor_width = 0; % willing to tolerate any corridor with greater than 0 width
+min_corridor_width = 0; % willing to tolerate any corridor width greater than 0 width
 denylist_route_chain_ids = []; % no need to manually block edge
 [adjacency_matrix, cgraph, all_pts, start, finish, best_chain_idx_matrix] = fcn_MedialAxis_makeCostGraphAndAllPoints(adjacency_matrix, triangle_chains, nodes, xcc, ycc, start_closest_tri, start_closest_node, finish_closest_tri, finish_closest_node, w, min_corridor_width, denylist_route_chain_ids);
 % adjacency matrix is vgraph

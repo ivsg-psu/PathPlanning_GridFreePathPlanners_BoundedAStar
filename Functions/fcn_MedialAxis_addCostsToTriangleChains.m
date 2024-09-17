@@ -168,7 +168,7 @@ function [triangle_chains, max_side_lengths_per_tri] = fcn_MedialAxis_addCostsTo
         c = colorbar;
         xlabel('x [km]')
         ylabel('y [km]')
-        ylabel(c,'corridor with [km]')
+        ylabel(c,'corridor width [km]')
         plot(xcc(nodes(~isnan(nodes))), ycc(nodes(~isnan(nodes))), '.k','MarkerSize',20) % plot 3 connected triangle circumcenters
         for j = 2:length(shrunk_polytopes)
             fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.5)
