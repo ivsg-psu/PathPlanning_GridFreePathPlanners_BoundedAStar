@@ -169,10 +169,19 @@ function [polytopes, starts, finishes, resolution_scale] = fcn_util_load_test_ma
         polytopes = flood_plain_5;
         start = [-78.01 41.06];
         finish = [-77.75 40.93];
+
         if add_boundary
-            my_warn = sprintf('boundary is not defined for map_idx %i.\n Either define a boundary in fcn_util_load_test_map or set the add_boundary flag to 0.', map_idx);
-            warning(my_warn)
+            X = max([polytopes.xv]) + 0.02;
+            Y = max([polytopes.yv]) + 0.02;
+            x = min([polytopes.xv]) - 0.02;
+            y = min([polytopes.yv]) - 0.02;
+            %% make a boundary around the polytope field
+            boundary.vertices = [x y; x Y; X Y; X y];
+            boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
+            boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
+            polytopes = [boundary, polytopes]; % put the boundary polytope as the first polytope
         end
+        resolution_scale = 0.8;
     elseif map_idx == 7 % generic polytope map
         % pull halton set
         rng(1);
@@ -199,7 +208,7 @@ function [polytopes, starts, finishes, resolution_scale] = fcn_util_load_test_ma
         stretched_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(stretched_polytopes);
 
         % shrink polytopes to desired radius
-        des_rad = 2; sigma_radius = 0.4; min_rad = 0.1;
+        des_rad = 2.4; sigma_radius = 1.2; min_rad = 0.1;
         [polytopes,mu_final,sigma_final] = fcn_MapGen_polytopesShrinkToRadius(stretched_polytopes,des_rad,sigma_radius,min_rad);
 
         clear Halton_range
