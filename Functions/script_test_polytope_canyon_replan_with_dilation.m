@@ -154,7 +154,7 @@ for mission_idx = 2:size(start_inits,1)
                 warning('mission replanning is impossible')
                 replan_cost = NaN;
                 replan_route_length = NaN;
-                data = [data; mission_idx nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length];
+                data = [data; str2num(strcat(num2str(map_idx),num2str(mission_idx))) nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length];
                 continue
             end % end is_reachable condition for replanning
 
@@ -250,9 +250,45 @@ nominal_data = data(idx_nominal,:);
 idx_reachable = data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
 reachable_data = data(idx_reachable,:);
 
+%% make a ratio of feature to nominal to show cost savings
+% [1 map_idx,mission_idx
+% 2 nominal_or_width_based
+% 3 polytope_size_increases
+% 4 polytope_size_increases
+% 5 init_route_length
+% 6 navigated_distance
+% 7 replan_route_length];
+idx_nominal_data_including_fails = find(data(:,2)==1);
+data_discount_ratio = nan(size(data,1)/2, 3);
+for d = 1:size(idx_nominal_data_including_fails,1)
+    nominal_datum = data(idx_nominal_data_including_fails(d),:);
+    % grab the datum from the feature cost function with the same map+mission id and same dilation
+    feature_datum = data((data(:,2)==2) & data(:,1) == nominal_datum(1) & data(:,3) == nominal_datum(3),:);
+    nominal_length = nominal_datum(6)+nominal_datum(7);
+    feature_length = feature_datum(6)+feature_datum(7);
+    if isnan(feature_length)
+        feature_length = inf;
+    end
+    if isnan(nominal_length)
+        nominal_length = inf;
+    end
+    discount_ratio = feature_length/nominal_length;
+    data_discount_ratio(d,:) = [feature_datum(1) feature_datum(4) discount_ratio];
+end
+% plot this
+unique_maps = unique(data_discount_ratio(:,1));
+figure; hold on; box on;
+xlabel('obstacle size increase [km]')
+ylabel('path length ratio (feature vs. nominal cost function)')
+for u_map_id = 1:length(unique_maps)
+    unique_map = unique_maps(u_map_id);
+    data_discount_ratio_this_map = data_discount_ratio(data_discount_ratio(:,1) == unique_map,:);
+    plot(data_discount_ratio_this_map(:,2), data_discount_ratio_this_map(:,3), 'LineWidth',2,'MarkerSize',4);
+end
+plot([min(data_discount_ratio(:,2)) max(data_discount_ratio(:,2))], [1 1], 'k--')
+
 % plot ratio of each path relative to its own initial path
 figure; hold on; box on;
-box on; hold on;
 % loop over each mission idx to plot different markers for different missions
 for this_mission = 2:mission_idx
     idx_nominal_this_mission = nominal_data(:,1) == this_mission;
