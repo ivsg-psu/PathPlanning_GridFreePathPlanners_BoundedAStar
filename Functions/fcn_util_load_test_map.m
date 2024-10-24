@@ -241,6 +241,8 @@ function [polytopes, starts, finishes, resolution_scale] = fcn_util_load_test_ma
             boundary = rmfield(boundary,'radii');
             polytopes = [boundary, polytopes]; % put the boundary polytope as the first polytope
         end
+    elseif map_idx == 9
+        error("map 9 not yet defined in fcn_util_load_test_map.  You're welcome to add one following the convention of other maps.")
     end % if conditions for different map test fixtures
     if map_idx <=6 && map_idx >= 2 % for the floodplain maps we have to convert from LLA to km
         %% convert from LLA to QGS84
@@ -282,8 +284,10 @@ function [polytopes, starts, finishes, resolution_scale] = fcn_util_load_test_ma
         starts = [-10 15; 2 15; 15 15; -15 25; -5 36; 12 36];
         finishes = [10 37; 2 36; -15 36; 18 26; -5 15; 12 15];
     elseif map_idx == 3
-        starts = [1002, -4715.9];
-        finishes = [1017, -4719];
+        % starts = [1002, -4715.9];
+        % finishes = [1017, -4719];
+        starts = [-10 26; -12 21; -11 13; -5 13; 1 13.5];
+        finishes = [3 16; 6 20; 4 26; -8 26; -4 25];
     else % if we only have one start goal pair
         starts = start;
         finishes = finish;
