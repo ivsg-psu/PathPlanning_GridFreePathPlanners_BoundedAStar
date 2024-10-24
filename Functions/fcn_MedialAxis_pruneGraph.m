@@ -117,6 +117,30 @@ function [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_pruneGraph(
             error('optional argument is the plotting flag and can either be 1 or 0')
         end
     end
+    if flag_do_plot
+        % plot the graph before pruning
+        figure; hold on; box on; title('medial axis graph before pruning')
+        xlabel('x [km]')
+        ylabel('y [km]')
+        for j = 2:length(shrunk_polytopes)
+            fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+        end
+        for i = 1:(size(triangle_chains,1))
+            % pop off a triangle chain
+            chain_of_note = triangle_chains{i,3};
+            if isempty(chain_of_note)
+                continue
+            end
+            % plot big markers for the start and end node
+            beg_end = [chain_of_note(1) chain_of_note(end)];
+            % plot a straight line between them (this is the adjacency graph connection)
+            % plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
+            plot(xcc(beg_end), ycc(beg_end), '.','MarkerSize',20,'Color', 'k')
+            % plot the medial axis path between them (this is the curved path from the triangle chain)
+            % plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
+            plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color', 'k')
+        end
+    end % end flag do plot
     % need to store previous state of triangle_chains struct to check for convergence
     prev_triangle_chains = nan; % initialize the previous triangle_chains structure to nothing until we iterate the pruning once
     iterand = 1;
@@ -197,4 +221,28 @@ function [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_pruneGraph(
         sprintf('loop has iterated %i times',iterand)
         iterand = iterand + 1;
     end % end outer while loop that loops until convergence occurs
+    if flag_do_plot
+        % plot the graph after pruning has converged
+        figure; hold on; box on; title('medial axis graph after pruning')
+        xlabel('x [km]')
+        ylabel('y [km]')
+        for j = 2:length(shrunk_polytopes)
+            fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+        end
+        for i = 1:(size(triangle_chains,1))
+            % pop off a triangle chain
+            chain_of_note = triangle_chains{i,3};
+            if isempty(chain_of_note)
+                continue
+            end
+            % plot big markers for the start and end node
+            beg_end = [chain_of_note(1) chain_of_note(end)];
+            % plot a straight line between them (this is the adjacency graph connection)
+            % plot(xcc(beg_end), ycc(beg_end), '--.','MarkerSize',20,'Color',colors{mod(color_idx,4)+1})
+            plot(xcc(beg_end), ycc(beg_end), '.','MarkerSize',20,'Color', 'k')
+            % plot the medial axis path between them (this is the curved path from the triangle chain)
+            % plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color',colors{mod(color_idx,4)+1})
+            plot(xcc(chain_of_note), ycc(chain_of_note), '--','LineWidth',2,'Color', 'k')
+        end
+    end % end flag do plot
 end
