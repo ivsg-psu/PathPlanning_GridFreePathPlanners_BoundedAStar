@@ -108,6 +108,8 @@ if fill_info(1) == 1 % if fill is specified
         filler = fill(polytopes(polys).vertices(:,1)',polytopes(polys).vertices(:,2)',fill_info(2:4));
         % the following shades polytopes based on traversal cost
         filler.FaceAlpha = polytopes(polys).cost;
+        filler.FaceAlpha = 0.3;
+        filler.FaceColor = [0 0 1];
         % Uncomment the following to write polytope cost on polytopes.
         % This is useful for debugging but cluttered
         % txt = sprintf('%.2f',round(polytopes(polys).cost,2));
