@@ -116,13 +116,18 @@ for iterations = 1:5
     route_lengths = [route_lengths, route_length];
 end % end alternate route iterations loop
 
+% TODO change this to use DisplayName
 % plot alternate routes
 figure; hold on; box on;
 leg_str = {};
-plot(start_xy(1),start_xy(2),'xg','MarkerSize',10);
-plot(finish_xy(1),finish_xy(2),'xr','MarkerSize',10);
-plot(start(1),start(2),'.g','MarkerSize',10);
-plot(finish(1),finish(2),'.r','MarkerSize',10);
+p_start = plot(start_xy(1),start_xy(2),'xg','MarkerSize',10);
+uistack(p_start,'top');
+p_finish = plot(finish_xy(1),finish_xy(2),'xr','MarkerSize',10);
+uistack(p_finish,'down');
+p_start_n = plot(start(1),start(2),'.g','MarkerSize',10);
+uistack(p_start_n,'down');
+p_finish_n = plot(finish(1),finish(2),'.r','MarkerSize',10);
+uistack(p_finish_n,'down');
 leg_str{end+1} = 'start';
 leg_str{end+1} = 'finish';
 leg_str{end+1} = 'start node';
