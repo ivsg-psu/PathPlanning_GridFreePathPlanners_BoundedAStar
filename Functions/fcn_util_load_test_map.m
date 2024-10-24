@@ -246,12 +246,17 @@ function [polytopes, starts, finishes, resolution_scale] = fcn_util_load_test_ma
         %% convert from LLA to QGS84
         datum = 'nad83';
         centre_co_avg_alt = 351.7392;
-        start = INTERNAL_WGSLLA2xyz(start(2),start(1),centre_co_avg_alt);
+        lla0 = [40.765144 -77.87615 centre_co_avg_alt];
+        % start = INTERNAL_WGSLLA2xyz(start(2),start(1),centre_co_avg_alt);
+        start = lla2enu([start(2) start(1) centre_co_avg_alt], lla0, 'flat');
         % start = ll2utm(start(2),start(1),datum);
         start = start(1:2)';
+        start = start(1:2)';
         start = start/1000;
-        finish = INTERNAL_WGSLLA2xyz(finish(2),finish(1),centre_co_avg_alt);
+        % finish = INTERNAL_WGSLLA2xyz(finish(2),finish(1),centre_co_avg_alt);
+        finish = lla2enu([finish(2) finish(1) centre_co_avg_alt], lla0, 'flat');
         % finish = ll2utm(finish(2),finish(1),datum);
+        finish = finish(1:2)';
         finish = finish(1:2)';
         finish = finish/1000;
         new_polytopes = [];
@@ -262,7 +267,8 @@ function [polytopes, starts, finishes, resolution_scale] = fcn_util_load_test_ma
             alts = centre_co_avg_alt*ones(size(lats));
             wgs_verts = [];
             for j = 1:length(lats)
-                xyz = INTERNAL_WGSLLA2xyz(lats(j),longs(j),alts(j));
+                % xyz = INTERNAL_WGSLLA2xyz(lats(j),longs(j),alts(j));
+                xyz = lla2enu([lats(j),longs(j),alts(j)], lla0, 'flat');
                 xyz = xyz/1000;
                 wgs_verts(j,:) = [xyz(1),xyz(2)];
             end
@@ -273,6 +279,8 @@ function [polytopes, starts, finishes, resolution_scale] = fcn_util_load_test_ma
     if map_idx == 6 % for map 6 we can loop over many start goal pairs
         starts = [start; 1015,-4704; 1000,-4722; 1017 -4721; 995, -4714; 1025, -4704; 1030, -4708];
         finishes = [finish; 1010, -4722 ; 1027, -4704; 1007 -4707; 1030, -4712; 1005, -4722; 995 -4722];
+        starts = [-10 15; 2 15; 15 15; -15 25; -5 36; 12 36];
+        finishes = [10 37; 2 36; -15 36; 18 26; -5 15; 12 15];
     elseif map_idx == 3
         starts = [1002, -4715.9];
         finishes = [1017, -4719];
