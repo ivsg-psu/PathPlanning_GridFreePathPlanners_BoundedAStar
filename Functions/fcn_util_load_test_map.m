@@ -242,7 +242,50 @@ function [polytopes, starts, finishes, resolution_scale] = fcn_util_load_test_ma
             polytopes = [boundary, polytopes]; % put the boundary polytope as the first polytope
         end
     elseif map_idx == 9
-        error("map 9 not yet defined in fcn_util_load_test_map.  You're welcome to add one following the convention of other maps.")
+        % pull halton set
+        rng(50);
+        halton_points = haltonset(2);
+        points_scrambled = scramble(halton_points,'RR2'); % scramble values
+
+        % pick values from halton set
+        Halton_range = [1701 1751];
+        low_pt = Halton_range(1,1);
+        high_pt = Halton_range(1,2);
+        seed_points = points_scrambled(low_pt:high_pt,:);
+
+        % fill polytopes from tiling
+        AABB = [0 0 1 1];
+        stretch = AABB(3:4);
+        tiled_polytopes = fcn_MapGen_generatePolysFromVoronoiAABBWithTiling(seed_points,AABB, stretch);
+
+        % stretch polytopes to cover more area
+        new_stretch = [30 40];
+        stretched_polytopes = [];
+        for poly = 1:length(tiled_polytopes) % pull each cell from the voronoi diagram
+            stretched_polytopes(poly).vertices  = tiled_polytopes(poly).vertices.*new_stretch;
+        end % Ends for loop for stretch
+        stretched_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(stretched_polytopes);
+
+        % shrink polytopes to desired radius
+        des_rad = 2; sigma_radius = 1; min_rad = 0.1;
+        [polytopes,mu_final,sigma_final] = fcn_MapGen_polytopesShrinkToRadius(stretched_polytopes,des_rad,sigma_radius,min_rad);
+
+        clear Halton_range
+        clear halton_points
+        clear points_scrambled
+
+        start = [-2 20];
+        finish = [32 20];
+        if add_boundary
+            %% make a boundary around the polytope field
+            boundary.vertices = [-3 -5; -3 45; 33 45; 33 -5];
+            boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
+            boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
+            polytopes = [boundary, polytopes]; % put the boundary polytope as the first polytope
+        end
+        resolution_scale = 20; % this map has many fine features and resolution can be 10x the nominal
+    elseif map_idx == 10
+        error("map 10 not yet defined in fcn_util_load_test_map.  You're welcome to add one following the convention of other maps.")
     end % if conditions for different map test fixtures
     if map_idx <=6 && map_idx >= 2 % for the floodplain maps we have to convert from LLA to km
         %% convert from LLA to QGS84

@@ -16,21 +16,21 @@ flag_do_plot = 1;
 flag_do_plot_slow= 0;
 flag_do_threadpulling = 1;
 
+% map_idx nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length
+data = []; % initialize array for storing results
 %% mission options
-% for map_idx = [7, 8] % Halton maps
-for map_idx = [3 5 6] % flood plain maps
-    navigated_portion = 0.4; % portion of initial path to be completed prior to triggering replanning
+for map_idx = [7, 8, 9] % Halton maps
+% for map_idx = [3, 5, 6] % flood plain maps
+    navigated_portion = 0.2; % portion of initial path to be completed prior to triggering replanning
     w = 1/6; % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
     [shrunk_polytopes, start_inits, finish_inits] = fcn_util_load_test_map(map_idx);
 
-    % map_idx nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length
-    data = []; % initialize array for storing results
     for mission_idx = 1:size(start_inits,1)
         start_init = start_inits(mission_idx,:);
         finish_init = finish_inits(mission_idx,:);
 
         % loop over dilation sizes
-        for polytope_size_increases = [0.01 0.02 0.05 0.1 0.2 0.3 0.4 0.5]
+        for polytope_size_increases = [0.01 0.02 0.05 0.1 0.20 0.3 0.5] %[0.01 0.02 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55]
             % loop over the nominal cost function and feature cost function
             for nominal_or_width_based = [1,2]
                 %% plan the initial path
@@ -289,16 +289,18 @@ for u_map_id = 1:length(unique_maps)
 end
 plot([min(data_discount_ratio(:,2)) max(data_discount_ratio(:,2))], [1 1], 'k--')
 
-% plot ratio of each path relative to its own initial path
+%% plot ratio of each path relative to its own initial path
 figure; hold on; box on;
 % loop over each mission idx to plot different markers for different missions
-for this_mission = 2:mission_idx
+figure; hold on; box on;
+for u_map_id = 1:length(unique_maps)
+    this_mission = unique_maps(u_map_id);
     idx_nominal_this_mission = nominal_data(:,1) == this_mission;
     nominal_data_this_mission = nominal_data(idx_nominal_this_mission,:);
     idx_reachable_this_mission = reachable_data(:,1) == this_mission;
     reachable_data_this_mission = reachable_data(idx_reachable_this_mission,:);
-    plot(nominal_data_this_mission(:,4),(nominal_data_this_mission(:,6)+nominal_data_this_mission(:,7))./nominal_data_this_mission(:,5),"Color",colors{nominal_data_this_mission(1,2)},"Marker",markers{nominal_data_this_mission(1,1)},'LineStyle','none');
-    plot(reachable_data_this_mission(:,4),(reachable_data_this_mission(:,6)+reachable_data_this_mission(:,7))./reachable_data_this_mission(:,5),"Color",colors{reachable_data_this_mission(1,2)},"Marker",markers{reachable_data_this_mission(1,1)},'LineStyle','none');
+    plot(nominal_data_this_mission(:,4),(nominal_data_this_mission(:,6)+nominal_data_this_mission(:,7))./nominal_data_this_mission(:,5),"Color",colors{nominal_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))},'LineStyle','none');
+    plot(reachable_data_this_mission(:,4),(reachable_data_this_mission(:,6)+reachable_data_this_mission(:,7))./reachable_data_this_mission(:,5),"Color",colors{reachable_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))},'LineStyle','none');
 end
 % add polynominal fit
 fit_order = 3;
@@ -324,16 +326,16 @@ ylabel(sprintf('ratio of replanned path length to width incentive \nor nominal i
 xlabel('obstacle size increase [km]')
 legend({'nominal cost function','corridor width function'},'Location','best');
 
-% plot ratio of each path relative to nominal initial path
+%% plot ratio of each path relative to nominal initial path
 figure; hold on; box on;
-box on; hold on;
-for this_mission = 2:mission_idx
+for u_map_id = 1:length(unique_maps)
+    this_mission = unique_maps(u_map_id);
     idx_nominal_this_mission = nominal_data(:,1) == this_mission;
     nominal_data_this_mission = nominal_data(idx_nominal_this_mission,:);
     idx_reachable_this_mission = reachable_data(:,1) == this_mission;
     reachable_data_this_mission = reachable_data(idx_reachable_this_mission,:);
-    plot(nominal_data_this_mission(:,4),(nominal_data_this_mission(:,6)+nominal_data_this_mission(:,7))./nominal_data_this_mission(1,5),"Color",colors{nominal_data_this_mission(1,2)},"Marker",markers{nominal_data_this_mission(1,1)},'LineStyle','none');
-    plot(reachable_data_this_mission(:,4),(reachable_data_this_mission(:,6)+reachable_data_this_mission(:,7))./nominal_data_this_mission(1,5),"Color",colors{reachable_data_this_mission(1,2)},"Marker",markers{reachable_data_this_mission(1,1)},'LineStyle','none');
+    plot(nominal_data_this_mission(:,4),(nominal_data_this_mission(:,6)+nominal_data_this_mission(:,7))./nominal_data_this_mission(:,5),"Color",colors{nominal_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))},'LineStyle','none');
+    plot(reachable_data_this_mission(:,4),(reachable_data_this_mission(:,6)+reachable_data_this_mission(:,7))./nominal_data_this_mission(:,5),"Color",colors{reachable_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))},'LineStyle','none');
 end
 % add polynominal fit
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5),fit_order);
@@ -358,16 +360,16 @@ ylabel('ratio of replanned path length to nominal initial path length')
 xlabel('obstacle size increase [km]')
 legend({'nominal cost function','corridor width cost function'},'Location','best');
 
-% plot absolute length
+%% plot absolute length
 figure; hold on; box on;
-box on; hold on;
-for this_mission = 2:mission_idx
+for u_map_id = 1:length(unique_maps)
+    this_mission = unique_maps(u_map_id);
     idx_nominal_this_mission = nominal_data(:,1) == this_mission;
     nominal_data_this_mission = nominal_data(idx_nominal_this_mission,:);
     idx_reachable_this_mission = reachable_data(:,1) == this_mission;
     reachable_data_this_mission = reachable_data(idx_reachable_this_mission,:);
-    plot(nominal_data_this_mission(:,4),(nominal_data_this_mission(:,6)+nominal_data_this_mission(:,7)),"Color",colors{nominal_data_this_mission(1,2)},"Marker",markers{nominal_data_this_mission(1,1)},'LineStyle','none');
-    plot(reachable_data_this_mission(:,4),(reachable_data_this_mission(:,6)+reachable_data_this_mission(:,7)),"Color",colors{reachable_data_this_mission(1,2)},"Marker",markers{reachable_data_this_mission(1,1)},'LineStyle','none');
+    plot(nominal_data_this_mission(:,4),(nominal_data_this_mission(:,6)+nominal_data_this_mission(:,7)),"Color",colors{nominal_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))},'LineStyle','none');
+    plot(reachable_data_this_mission(:,4),(reachable_data_this_mission(:,6)+reachable_data_this_mission(:,7)),"Color",colors{reachable_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))},'LineStyle','none');
 end
 % add polynominal fit
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7)),fit_order);
@@ -392,7 +394,7 @@ xlabel('obstacle size increase [km]')
 ylabel('total path length after replanning [km]')
 legend({'nominal cost function','corridor width function'},'Location','best');
 
-% plot histogram of failed trials
+%% plot histogram of failed trials
 nandata = data(find(isnan(data(:,7))),:); % find nan replan cost rows
 nandata_nominal = nandata(nandata(:,2)==1,:); % of those, find nominal ones
 nandata_reachable = nandata(nandata(:,2)==2,:); % of those, find reachable ones
