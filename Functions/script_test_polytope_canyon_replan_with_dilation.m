@@ -15,11 +15,12 @@ addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 flag_do_plot = 1;
 flag_do_plot_slow= 0;
 flag_do_threadpulling = 1;
+flat_save_plots = 0;
 
 % map_idx nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length
 data = []; % initialize array for storing results
 %% mission options
-for map_idx = 9%[7, 8, 9] % Halton maps
+for map_idx = 6%[7, 8, 9] % Halton maps
 % for map_idx = [3, 5, 6] % flood plain maps
     navigated_portion = 0.2; % portion of initial path to be completed prior to triggering replanning
     w = 1/6; % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
@@ -30,7 +31,7 @@ for map_idx = 9%[7, 8, 9] % Halton maps
         finish_init = finish_inits(mission_idx,:);
 
         % loop over dilation sizes
-        for polytope_size_increases = [0.5 0.6 0.7 0.8 0.9 1]%[0.01 0.02 0.05 0.1 0.20 0.3 0.5] %[0.01 0.02 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55]
+        for polytope_size_increases = [0.01 0.02 0.05 0.1 0.20 0.3 0.5] % [0.5 0.6 0.7 0.8 0.9 1]% %[0.01 0.02 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55]
             % loop over the nominal cost function and feature cost function
             for nominal_or_width_based = [1,2]
                 trial_identifier = sprintf('map idx: %i, nominal or corridor-width-based: %i,\npolytope size increase [km]: %.2f',str2num(strcat(num2str(map_idx),num2str(mission_idx))), nominal_or_width_based,polytope_size_increases)
@@ -409,6 +410,23 @@ h2.FaceColor = 'b';
 xlabel('obstacle size increase [km]')
 ylabel('count of failed replanning attempts');
 legend({'nominal cost function','corridor width function'},'Location','best');
+
+%% save all figs from this bag and the workspace, then close them
+if flag_save_plots
+    FolderName = './data_output';
+    mkdir(FolderName)  % Your destination folder
+    FigList = findobj(allchild(0), 'flat', 'Type', 'figure');
+    cd(FolderName)
+    for iFig = 1:length(FigList)
+      FigHandle = FigList(iFig);
+      FigName   = get(FigHandle, 'Number');
+      savefig(FigHandle, strcat(num2str(FigName), '.fig'));
+      saveas(FigHandle, strcat(num2str(FigName), '.png'));
+    end
+    close all;
+    save('data.mat','data');
+    cd ..
+end
 
 function INTERNAL_fcn_format_timespace_plot()
     box on
