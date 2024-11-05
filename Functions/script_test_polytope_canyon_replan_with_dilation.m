@@ -15,23 +15,28 @@ addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 flag_do_plot = 1;
 flag_do_plot_slow= 0;
 flag_do_threadpulling = 1;
-flat_save_plots = 0;
+flag_save_plots = 1;
 
 % map_idx nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length
 data = []; % initialize array for storing results
 %% mission options
 for map_idx = 6%[7, 8, 9] % Halton maps
 % for map_idx = [3, 5, 6] % flood plain maps
-    navigated_portion = 0.2; % portion of initial path to be completed prior to triggering replanning
+    navigated_portion = 0.4; % portion of initial path to be completed prior to triggering replanning
     w = 1/6; % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
     [shrunk_polytopes, start_inits, finish_inits] = fcn_util_load_test_map(map_idx);
 
     for mission_idx = 1:size(start_inits,1)
+        if mission_idx == 1 || mission_idx == 7
+            w = 1/15;
+        else
+            w = 1/6;
+        end
         start_init = start_inits(mission_idx,:);
         finish_init = finish_inits(mission_idx,:);
 
         % loop over dilation sizes
-        for polytope_size_increases = [0.01 0.02 0.05 0.1 0.20 0.3 0.5] % [0.5 0.6 0.7 0.8 0.9 1]% %[0.01 0.02 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55]
+        for polytope_size_increases = [0.01 0.02 0.05 0.1 0.20 0.3 0.5 0.6 0.7 0.8]% 0.9 1]% %[0.01 0.02 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55]
             % loop over the nominal cost function and feature cost function
             for nominal_or_width_based = [1,2]
                 trial_identifier = sprintf('map idx: %i, nominal or corridor-width-based: %i,\npolytope size increase [km]: %.2f',str2num(strcat(num2str(map_idx),num2str(mission_idx))), nominal_or_width_based,polytope_size_increases)
@@ -47,7 +52,8 @@ for map_idx = 6%[7, 8, 9] % Halton maps
                 % find rgraph
                 [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(3),finish(3));
                 if ~is_reachable
-                    error('initial mission, prior to edge deletion, is not possible')
+                    warning('initial mission, prior to edge deletion, is not possible')
+                    continue
                 end
 
                 % make cgraph
@@ -248,10 +254,10 @@ end % end map loop
 markers = {'x','d','o','+','s','x','^','v','pentagram'};
 colors = {'r','b'};
 % idx_nominal = data(:,1)== map_idx & data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7)); % filter on map and nominal and not NaN
-idx_nominal = data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
+idx_nominal = data(:,2)==1;% & ~isnan(data(:,6)) & ~isnan(data(:,7));
 nominal_data = data(idx_nominal,:);
 % idx_reachable = data(:,1)== map_idx & data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7)); % filter on map and feature and not NaN
-idx_reachable = data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
+idx_reachable = data(:,2)==2;% & ~isnan(data(:,6)) & ~isnan(data(:,7));
 reachable_data = data(idx_reachable,:);
 
 %% make a ratio of feature to nominal to show cost savings
@@ -292,6 +298,10 @@ end
 plot([min(data_discount_ratio(:,2)) max(data_discount_ratio(:,2))], [1 1], 'k--')
 
 %% plot ratio of each path relative to its own initial path
+idx_nominal = data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
+nominal_data = data(idx_nominal,:);
+idx_reachable = data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
+reachable_data = data(idx_reachable,:);
 figure; hold on; box on;
 % loop over each mission idx to plot different markers for different missions
 figure; hold on; box on;
@@ -329,6 +339,10 @@ xlabel('obstacle size increase [km]')
 legend({'nominal cost function','corridor width function'},'Location','best');
 
 %% plot ratio of each path relative to nominal initial path
+idx_nominal = data(:,2)==1 & ~isnan(data(:,6))% & ~isnan(data(:,7));
+nominal_data = data(idx_nominal,:);
+idx_reachable = data(:,2)==2 & ~isnan(data(:,6))% & ~isnan(data(:,7));
+reachable_data = data(idx_reachable,:);
 figure; hold on; box on;
 for u_map_id = 1:length(unique_maps)
     this_mission = unique_maps(u_map_id);
@@ -339,30 +353,16 @@ for u_map_id = 1:length(unique_maps)
     plot(nominal_data_this_mission(:,4),(nominal_data_this_mission(:,6)+nominal_data_this_mission(:,7))./nominal_data_this_mission(:,5),"Color",colors{nominal_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))},'LineStyle','none');
     plot(reachable_data_this_mission(:,4),(reachable_data_this_mission(:,6)+reachable_data_this_mission(:,7))./nominal_data_this_mission(:,5),"Color",colors{reachable_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))},'LineStyle','none');
 end
-% add polynominal fit
-p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5),fit_order);
-p_reachable = polyfit(reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./nominal_data(1,5),fit_order);
-x_for_poly = linspace(min(nominal_data(:,4)),max(nominal_data(:,4)),100);
-% plot(x_for_poly,polyval(p_nominal,x_for_poly),'Color',colors{nominal_data(1,2)},'LineWidth',2);
-% plot(x_for_poly,polyval(p_reachable,x_for_poly),'Color',colors{reachable_data(1,2)},'LineWidth',2);
-% add convex hull
-P_nominal = [nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7))./nominal_data(1,5)];
-P_reachable = [reachable_data(:,4),(reachable_data(:,6)+reachable_data(:,7))./nominal_data(1,5)];
-k_nominal = convhull(P_nominal);
-k_reachable = convhull(P_reachable);
-fill(P_nominal(k_nominal,1),P_nominal(k_nominal,2),colors{nominal_data(1,2)},'FaceAlpha',0.3);
-fill(P_reachable(k_reachable,1),P_reachable(k_reachable,2),colors{reachable_data(1,2)},'FaceAlpha',0.3);
-% add tight non-convex boundary
-k_nominal_nonconvex = boundary(P_nominal);
-k_reachable_nonconvex = boundary(P_reachable);
-% fill(P_nominal(k_nominal_nonconvex,1),P_nominal(k_nominal_nonconvex,2),colors{nominal_data(1,2)},'FaceAlpha',0.5);
-% fill(P_reachable(k_reachable_nonconvex,1),P_reachable(k_reachable_nonconvex,2),colors{reachable_data(1,2)},'FaceAlpha',0.5);
 % legends and labels
 ylabel('ratio of replanned path length to nominal initial path length')
 xlabel('obstacle size increase [km]')
 legend({'nominal cost function','corridor width cost function'},'Location','best');
 
 %% plot absolute length
+idx_nominal = data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
+nominal_data = data(idx_nominal,:);
+idx_reachable = data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
+reachable_data = data(idx_reachable,:);
 figure; hold on; box on;
 for u_map_id = 1:length(unique_maps)
     this_mission = unique_maps(u_map_id);
