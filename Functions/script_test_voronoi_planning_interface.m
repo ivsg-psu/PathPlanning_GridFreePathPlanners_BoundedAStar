@@ -38,7 +38,10 @@ min_corridor_width = 0;
 length_cost_weight = 1;
 
 %% wrapper function called here
-route = fcn_MedialAxis_plannerWrapper(polytope_vertices, start, finish, boundary_verts, min_corridor_width, length_cost_weight);
+[route, route_length, route_choke] = fcn_MedialAxis_plannerWrapper(polytope_vertices, start, finish, boundary_verts, min_corridor_width, length_cost_weight);
 %% plot result
 figure(1);
 plot(route(:,1), route(:,2), '-k','LineWidth',2.5) % plot approx. medial axis
+xlabel('x [m]')
+ylabel('y [m]')
+title(sprintf('path length: %.2f [m]\n narrowest corridor: %.2f [m]',route_length, route_choke));
