@@ -25,7 +25,7 @@ function [route_full, route_length, route_choke] = fcn_MedialAxis_plannerWrapper
 %   without a boundary.
 %
 % min_corridor_width - double value of the narrowest corridor that should be routed through by the planner
-%
+%   setting to 0 will use all available corridors without restriction
 % length_cost_weight - scalar relative weighting of cost function, cost = w*length_cost + (1-w)*corridor width
 %   setting to 1 gives minimum distance path
 %
