@@ -20,12 +20,12 @@ flag_save_plots = 1;
 % map_idx nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length
 data = []; % initialize array for storing results
 %% mission options
-for map_idx = [7, 8, 9] % Halton maps
-% for map_idx = [3, 5, 6] % flood plain maps
+% for map_idx = [7, 8, 9] % Halton maps
+for map_idx = 9%[3, 5, 6] % flood plain maps
     navigated_portion = 0.4; % portion of initial path to be completed prior to triggering replanning
     [shrunk_polytopes, start_inits, finish_inits,~, length_cost_weights] = fcn_util_load_test_map(map_idx); % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
 
-    for mission_idx = 1:size(start_inits,1)
+    for mission_idx = [6]%1:size(start_inits,1)
         w = length_cost_weights(mission_idx);
         start_init = start_inits(mission_idx,:);
         finish_init = finish_inits(mission_idx,:);
@@ -119,9 +119,13 @@ for map_idx = [7, 8, 9] % Halton maps
                 route_y = init_route(:,2);
                 lengths = diff([route_x(:) route_y(:)]);
                 init_route_length = sum(sqrt(sum(lengths.*lengths,2)));
+                % only need to calculate station distance for nominal case
+                if nominal_or_width_based == 1
+                    nominal_init_route_length = sum(sqrt(sum(lengths.*lengths,2)));
+                end
 
                 %% find midpoint of route
-                navigated_distance = init_route_length*navigated_portion; % distance along init path to place replanning point
+                navigated_distance = nominal_init_route_length*navigated_portion; % distance along init path to place replanning point
                 St_points_input = [navigated_distance 0]; % ST coordinates so station is the navigated distance and T is 0 (i.e. we're on the path)
                 referencePath = init_route(:,1:2);
                 flag_snap_type = 1;

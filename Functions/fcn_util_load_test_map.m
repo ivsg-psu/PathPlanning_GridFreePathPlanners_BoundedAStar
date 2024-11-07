@@ -35,8 +35,10 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights] = 
 %
 %     polytopes - the polytope struct array of obstacles in the map
 %
-%     length_cost_weight - scalar relative weighting of cost function, cost = w*length_cost + (1-w)*corridor width
-%         setting to 1 gives minimum distance path
+%     length_cost_weights - 1xn vector of relative weight values for each start-finish pair
+%         Weights are intended to be applied to the cost function like:
+%         cost = w*length_cost + (1-w)*corridor width
+%         Setting to 1 gives minimum distance path
 %
 % DEPENDENCIES:
 %
@@ -84,7 +86,6 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights] = 
 
     resolution_scale = 1; % default to 1 unless over written somewhere
     length_cost_weight = 1/6; % default to 1/6 unless over written somewhere
-    length_cost_weights = 1/6; % need a vector of weights for each start goal pair, default is size 1
 
     %% load test fixtures for polytope map rather than creating it here
     if map_idx == 1 % generic canyon map
@@ -298,18 +299,24 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights] = 
     if map_idx <=6 && map_idx >= 2 % for the floodplain maps we have to convert from LLA to km
         %% convert from LLA to QGS84
         datum = 'nad83';
-        centre_co_avg_alt = 351.7392;
-        lla0 = [40.765144 -77.87615 centre_co_avg_alt];
-        start = INTERNAL_WGSLLA2xyz(start(2),start(1),centre_co_avg_alt);
-        start = start(1:2)';
-        % start = lla2enu([start(2) start(1) centre_co_avg_alt], lla0, 'flat');
-        % start = start(1:2);
+        centre_co_avg_alt = 351.7392; % use average elevation
+        lla0 = [40.765144 -77.87615 centre_co_avg_alt]; % approx cato base station location
+        if map_idx == 3
+            start = lla2enu([start(2) start(1) centre_co_avg_alt], lla0, 'flat');
+            start = start(1:2);
+        else
+            start = INTERNAL_WGSLLA2xyz(start(2),start(1),centre_co_avg_alt);
+            start = start(1:2)';
+        end
         % start = ll2utm(start(2),start(1),datum);
         start = start/1000;
-        finish = INTERNAL_WGSLLA2xyz(finish(2),finish(1),centre_co_avg_alt);
-        finish = finish(1:2)';
-        % finish = lla2enu([finish(2) finish(1) centre_co_avg_alt], lla0, 'flat');
-        % finish = finish(1:2);
+        if map_idx == 3
+            finish = lla2enu([finish(2) finish(1) centre_co_avg_alt], lla0, 'flat');
+            finish = finish(1:2);
+        else
+            finish = INTERNAL_WGSLLA2xyz(finish(2),finish(1),centre_co_avg_alt);
+            finish = finish(1:2)';
+        end
         % finish = ll2utm(finish(2),finish(1),datum);
         finish = finish/1000;
         new_polytopes = [];
@@ -320,8 +327,11 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights] = 
             alts = centre_co_avg_alt*ones(size(lats));
             wgs_verts = [];
             for j = 1:length(lats)
-                xyz = INTERNAL_WGSLLA2xyz(lats(j),longs(j),alts(j));
-                % xyz = lla2enu([lats(j),longs(j),alts(j)], lla0, 'flat');
+                if map_idx == 3
+                    xyz = lla2enu([lats(j),longs(j),alts(j)], lla0, 'flat');
+                else
+                    xyz = INTERNAL_WGSLLA2xyz(lats(j),longs(j),alts(j));
+                end
                 xyz = xyz/1000;
                 wgs_verts(j,:) = [xyz(1),xyz(2)];
             end
@@ -332,20 +342,26 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights] = 
 
     %% define multiple start goal pairs for some maps
     if map_idx == 6 % for map 6 we can loop over many start goal pairs
+        % missions defined in the old enu
         starts = [1015,-4704; 1000,-4722; 1017 -4721; 995, -4714; 1025, -4704; 1030, -4708];
-        finishes = [1010, -4722 ; 1027, -4704; 1007 -4707; 1030, -4712; 1005, -4722; 995 -4722];
+        finishes = [1010, -4722 ; 1027, -4704; 1007 -4707; 1030, -4710; 1005, -4722; 995 -4720];
+
+        % try to shift the old enu to the new spots
         % x_shift = -1012.46-0.05;
         % y_shift = 4712.88-26.77;
         % shift = repmat([x_shift y_shift],size(starts,1),1);
         % starts = starts + shift;
         % finishes = finishes + shift;
-        starts = [start; starts];
+
+        % coord defined in LLA added back to start
+        starts = [start; starts]; % add in the enclosed start finish pair
         finishes = [finish; finishes];
+
+        % coords for lla2enu
         % starts = [-10 15; 2 15; 15 15; -15 25; -5 36; 12 36];
         % finishes = [10 37; 2 36; -15 36; 18 26; -5 15; 12 15];
-        legnth_cost_weights = length_cost_weight*ones(1, size(starts,1));
-        legnth_cost_weights(1) = 1/8;
-        legnth_cost_weights(7) = 1/8;
+        length_cost_weights = length_cost_weight*ones(1, size(starts,1));
+        length_cost_weights(7) = 1/8;
     elseif map_idx == 3
         % starts = [1002, -4715.9];
         % finishes = [1017, -4719];
@@ -353,21 +369,23 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights] = 
         finishes = [6 20];
         % starts = [-10 26; -12 21; -11 13; -5 13; 1 13.5];
         % finishes = [3 16; 6 20; 4 26; -8 26; -4 25];
-        legnth_cost_weights = length_cost_weight*ones(1, size(starts,1));
+        length_cost_weights = length_cost_weight*ones(1, size(starts,1));
     elseif (map_idx == 7 || map_idx == 9)
         starts = [start; -2 25; -2 25; -2 15; -2 10; -2 30; -2 10];
         finishes = [finish; 32 25; 32 15; 32 15; 32 10; 32 30; 32 30];
-        legnth_cost_weights = length_cost_weight*ones(1, size(starts,1));
-        legnth_cost_weights(6) = 1/8;
-        legnth_cost_weights(3) = 1/4;
+        length_cost_weights = length_cost_weight*ones(1, size(starts,1));
+        if map_idx == 9
+            finishes(6,2) = 26;
+            length_cost_weights(3) = 1/4;
+        end
     elseif map_idx == 5
         starts = [start; 1037 -4712];
         finishes = [finish; 1037 -4725];
-        legnth_cost_weights = length_cost_weight*ones(1, size(starts,1));
+        length_cost_weights = length_cost_weight*ones(1, size(starts,1));
     else % if we only have one start goal pair
         starts = start;
         finishes = finish;
-        legnth_cost_weights = length_cost_weight*ones(1, size(starts,1));
+        length_cost_weights = length_cost_weight*ones(1, size(starts,1));
     end
 end
 
