@@ -20,8 +20,8 @@ flag_save_plots = 1;
 % map_idx nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length
 data = []; % initialize array for storing results
 %% mission options
-% for map_idx = [7, 8, 9] % Halton maps
-for map_idx = [3, 5, 6] % flood plain maps
+for map_idx = [7, 8, 9] % Halton maps
+% for map_idx = [3, 5, 6] % flood plain maps
     navigated_portion = 0.4; % portion of initial path to be completed prior to triggering replanning
     [shrunk_polytopes, start_inits, finish_inits,~, length_cost_weights] = fcn_util_load_test_map(map_idx); % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
 
@@ -31,7 +31,7 @@ for map_idx = [3, 5, 6] % flood plain maps
         finish_init = finish_inits(mission_idx,:);
 
         % loop over dilation sizes
-        for polytope_size_increases = [0.01 0.02 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55] %[0.01 0.02 0.05 0.1 0.20 0.3 0.5 0.6 0.7 0.8 0.9 1]
+        for polytope_size_increases = [0.01 0.02 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9  0.95 1]
             % loop over the nominal cost function and feature cost function
             for nominal_or_width_based = [1,2]
                 trial_identifier = sprintf('map idx: %i, nominal or corridor-width-based: %i,\npolytope size increase [km]: %.2f',str2num(strcat(num2str(map_idx),num2str(mission_idx))), nominal_or_width_based,polytope_size_increases)
@@ -259,7 +259,7 @@ nominal_data = data(idx_nominal,:);
 idx_reachable = data(:,2)==2;% & ~isnan(data(:,6)) & ~isnan(data(:,7));
 reachable_data = data(idx_reachable,:);
 
-%% make a ratio of feature to nominal to show cost savings
+%% make a smooth curve ratio of feature to nominal to show cost savings
 % [1 map_idx,mission_idx
 % 2 nominal_or_width_based
 % 3 polytope_size_increases
@@ -296,7 +296,49 @@ for u_map_id = 1:length(unique_maps)
 end
 plot([min(data_discount_ratio(:,2)) max(data_discount_ratio(:,2))], [1 1], 'k--')
 
-%% plot ratio of each path relative to its own initial path
+%% make a smooth curve ratio of each cost after replanning to nominal initial path length
+% [1 map_idx,mission_idx
+% 2 nominal_or_width_based
+% 3 polytope_size_increases
+% 4 polytope_size_increases
+% 5 init_route_length
+% 6 navigated_distance
+% 7 replan_route_length];
+ratios_to_min_dist = nan(size(data,1), 4);
+for d = 1:size(data,1)
+    datum = data(d,:);
+    % grab the reference datum from the nominal cost function with the same map+mission id and same dilation
+    reference_datum = data((data(:,2)==1) & data(:,1) == datum(1) & data(:,3) == datum(3),:);
+    % TODO are there ever nan nominals? waht si nan/n what is n/nan
+    nominal_init_length = reference_datum(5);
+    replan_length = datum(6)+datum(7);
+    ratio_to_min_dist = replan_length/nominal_init_length;
+    if isnan(ratio_to_min_dist)
+        continue
+    end
+    ratios_to_min_dist(d,:) = [datum(1) datum(2) datum(4) ratio_to_min_dist];
+end
+% plot this
+unique_maps = unique(ratios_to_min_dist(:,1));
+figure; hold on; box on;
+xlabel('obstacle size increase [km]')
+ylabel('path length ratio (relative to min. distance path)')
+plot([min(data(:,4)) max(data(:,4))], [1 1], 'k--')
+for u_map_id = 1:length(unique_maps)
+    unique_map = unique_maps(u_map_id);
+    min_dist_ratio_this_map_nominal = ratios_to_min_dist(ratios_to_min_dist(:,1) == unique_map & ratios_to_min_dist(:,2) == 1,:);
+    min_dist_ratio_this_map_feature = ratios_to_min_dist(ratios_to_min_dist(:,1) == unique_map & ratios_to_min_dist(:,2) == 2,:);
+    plot(min_dist_ratio_this_map_nominal(:,3), min_dist_ratio_this_map_nominal(:,4), '-x', 'Color', colors{1}, 'LineWidth',1,'MarkerSize',4);
+    plot(min_dist_ratio_this_map_feature(:,3), min_dist_ratio_this_map_feature(:,4), '-x', 'Color', colors{2}, 'LineWidth',1,'MarkerSize',4);
+end
+legend({'optimal length','nominal cost function','corridor width function'},'Location','best');
+
+%% plot scatter of ratio of each path relative to its own initial path
+idx_nominal = data(:,2)==1;% & ~isnan(data(:,6)) & ~isnan(data(:,7));
+nominal_data = data(idx_nominal,:);
+% idx_reachable = data(:,1)== map_idx & data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7)); % filter on map and feature and not NaN
+idx_reachable = data(:,2)==2;% & ~isnan(data(:,6)) & ~isnan(data(:,7));
+reachable_data = data(idx_reachable,:);
 idx_nominal = data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
 nominal_data = data(idx_nominal,:);
 idx_reachable = data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
@@ -337,7 +379,7 @@ ylabel(sprintf('ratio of replanned path length to width incentive \nor nominal i
 xlabel('obstacle size increase [km]')
 legend({'nominal cost function','corridor width function'},'Location','best');
 
-%% plot ratio of each path relative to nominal initial path
+%% plot scatter ratio of each path relative to nominal initial path
 idx_nominal = data(:,2)==1 & ~isnan(data(:,6))% & ~isnan(data(:,7));
 nominal_data = data(idx_nominal,:);
 idx_reachable = data(:,2)==2 & ~isnan(data(:,6))% & ~isnan(data(:,7));
@@ -357,7 +399,7 @@ ylabel('ratio of replanned path length to nominal initial path length')
 xlabel('obstacle size increase [km]')
 legend({'nominal cost function','corridor width cost function'},'Location','best');
 
-%% plot absolute length
+%% plot scatter of absolute length
 idx_nominal = data(:,2)==1 & ~isnan(data(:,6)) & ~isnan(data(:,7));
 nominal_data = data(idx_nominal,:);
 idx_reachable = data(:,2)==2 & ~isnan(data(:,6)) & ~isnan(data(:,7));
@@ -399,13 +441,17 @@ legend({'nominal cost function','corridor width function'},'Location','best');
 nandata = data(find(isnan(data(:,7))),:); % find nan replan cost rows
 nandata_nominal = nandata(nandata(:,2)==1,:); % of those, find nominal ones
 nandata_reachable = nandata(nandata(:,2)==2,:); % of those, find reachable ones
-polytope_size_bins = [0.005 0.015 0.03 0.075 0.15 0.25 0.35 0.45 0.55];
+% polytope_size_bins = [0.005 0.015 0.03 0.075 0.15 0.25 0.35 0.45 0.55];
+sizes = [0.01 0.02 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9  0.95 1];
+polytope_size_bins = [0 diff(sizes)./2] + sizes;
 
 figure; hold on; box on;
-% h1 = histogram(nandata_nominal(:,4), polytope_size_bins); % polytope dilations for nan data
-% h2 = histogram(nandata_reachable(:,4), polytope_size_bins); % polytope dilations for nan data
-h1 = histogram(nandata_nominal(:,4)); % polytope dilations for nan data
-h2 = histogram(nandata_reachable(:,4)); % polytope dilations for nan data
+h1 = histogram(nandata_nominal(:,4), polytope_size_bins); % polytope dilations for nan data
+h2 = histogram(nandata_reachable(:,4), polytope_size_bins); % polytope dilations for nan data
+% h1 = histogram(nandata_nominal(:,4),13); % polytope dilations for nan data
+% h2 = histogram(nandata_reachable(:,4),13); % polytope dilations for nan data
+% h1 = histogram(nandata_nominal(:,4),22); % polytope dilations for nan data
+% h2 = histogram(nandata_reachable(:,4),22); % polytope dilations for nan data
 h1.FaceColor = 'r';
 h2.FaceColor = 'b';
 xlabel('obstacle size increase [km]')
@@ -424,7 +470,6 @@ if flag_save_plots
       savefig(FigHandle, strcat(num2str(FigName), '.fig'));
       saveas(FigHandle, strcat(num2str(FigName), '.png'));
     end
-    close all;
     save('data.mat','data');
     cd ..
 end
