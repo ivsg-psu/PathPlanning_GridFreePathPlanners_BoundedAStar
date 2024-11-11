@@ -21,17 +21,17 @@ flag_save_plots = 1;
 data = []; % initialize array for storing results
 %% mission options
 % for map_idx = [7, 8, 9] % Halton maps
-for map_idx = 9%[3, 5, 6] % flood plain maps
+for map_idx = [3, 5, 6] % flood plain maps
     navigated_portion = 0.4; % portion of initial path to be completed prior to triggering replanning
     [shrunk_polytopes, start_inits, finish_inits,~, length_cost_weights] = fcn_util_load_test_map(map_idx); % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
 
-    for mission_idx = [6]%1:size(start_inits,1)
+    for mission_idx = 1:size(start_inits,1)
         w = length_cost_weights(mission_idx);
         start_init = start_inits(mission_idx,:);
         finish_init = finish_inits(mission_idx,:);
 
         % loop over dilation sizes
-        for polytope_size_increases = [0.01]% 0.02 0.05 0.1 0.20 0.3 0.5 0.6 0.7 0.8]% 0.9 1]% %[0.01 0.02 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55]
+        for polytope_size_increases = [0.01 0.02 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55] %[0.01 0.02 0.05 0.1 0.20 0.3 0.5 0.6 0.7 0.8 0.9 1]
             % loop over the nominal cost function and feature cost function
             for nominal_or_width_based = [1,2]
                 trial_identifier = sprintf('map idx: %i, nominal or corridor-width-based: %i,\npolytope size increase [km]: %.2f',str2num(strcat(num2str(map_idx),num2str(mission_idx))), nominal_or_width_based,polytope_size_increases)
@@ -310,8 +310,8 @@ for u_map_id = 1:length(unique_maps)
     nominal_data_this_mission = nominal_data(idx_nominal_this_mission,:);
     idx_reachable_this_mission = reachable_data(:,1) == this_mission;
     reachable_data_this_mission = reachable_data(idx_reachable_this_mission,:);
-    plot(nominal_data_this_mission(:,4),(nominal_data_this_mission(:,6)+nominal_data_this_mission(:,7))./nominal_data_this_mission(:,5),"Color",colors{nominal_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))},'LineStyle','none');
-    plot(reachable_data_this_mission(:,4),(reachable_data_this_mission(:,6)+reachable_data_this_mission(:,7))./reachable_data_this_mission(:,5),"Color",colors{reachable_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))},'LineStyle','none');
+    plot(nominal_data_this_mission(:,4),(nominal_data_this_mission(:,6)+nominal_data_this_mission(:,7))./nominal_data_this_mission(:,5),"Color",colors{nominal_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))+1},'LineStyle','none');
+    plot(reachable_data_this_mission(:,4),(reachable_data_this_mission(:,6)+reachable_data_this_mission(:,7))./reachable_data_this_mission(:,5),"Color",colors{reachable_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))+1},'LineStyle','none');
 end
 % add polynominal fit
 fit_order = 3;
@@ -349,8 +349,8 @@ for u_map_id = 1:length(unique_maps)
     nominal_data_this_mission = nominal_data(idx_nominal_this_mission,:);
     idx_reachable_this_mission = reachable_data(:,1) == this_mission;
     reachable_data_this_mission = reachable_data(idx_reachable_this_mission,:);
-    plot(nominal_data_this_mission(:,4),(nominal_data_this_mission(:,6)+nominal_data_this_mission(:,7))./nominal_data_this_mission(:,5),"Color",colors{nominal_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))},'LineStyle','none');
-    plot(reachable_data_this_mission(:,4),(reachable_data_this_mission(:,6)+reachable_data_this_mission(:,7))./nominal_data_this_mission(:,5),"Color",colors{reachable_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))},'LineStyle','none');
+    plot(nominal_data_this_mission(:,4),(nominal_data_this_mission(:,6)+nominal_data_this_mission(:,7))./nominal_data_this_mission(:,5),"Color",colors{nominal_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))+1},'LineStyle','none');
+    plot(reachable_data_this_mission(:,4),(reachable_data_this_mission(:,6)+reachable_data_this_mission(:,7))./nominal_data_this_mission(:,5),"Color",colors{reachable_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))+1},'LineStyle','none');
 end
 % legends and labels
 ylabel('ratio of replanned path length to nominal initial path length')
@@ -369,8 +369,8 @@ for u_map_id = 1:length(unique_maps)
     nominal_data_this_mission = nominal_data(idx_nominal_this_mission,:);
     idx_reachable_this_mission = reachable_data(:,1) == this_mission;
     reachable_data_this_mission = reachable_data(idx_reachable_this_mission,:);
-    plot(nominal_data_this_mission(:,4),(nominal_data_this_mission(:,6)+nominal_data_this_mission(:,7)),"Color",colors{nominal_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))},'LineStyle','none');
-    plot(reachable_data_this_mission(:,4),(reachable_data_this_mission(:,6)+reachable_data_this_mission(:,7)),"Color",colors{reachable_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))},'LineStyle','none');
+    plot(nominal_data_this_mission(:,4),(nominal_data_this_mission(:,6)+nominal_data_this_mission(:,7)),"Color",colors{nominal_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))+1},'LineStyle','none');
+    plot(reachable_data_this_mission(:,4),(reachable_data_this_mission(:,6)+reachable_data_this_mission(:,7)),"Color",colors{reachable_data_this_mission(1,2)},"Marker",markers{mod(u_map_id,length(markers))+1},'LineStyle','none');
 end
 % add polynominal fit
 p_nominal = polyfit(nominal_data(:,4),(nominal_data(:,6)+nominal_data(:,7)),fit_order);
@@ -402,8 +402,10 @@ nandata_reachable = nandata(nandata(:,2)==2,:); % of those, find reachable ones
 polytope_size_bins = [0.005 0.015 0.03 0.075 0.15 0.25 0.35 0.45 0.55];
 
 figure; hold on; box on;
-h1 = histogram(nandata_nominal(:,4), polytope_size_bins); % polytope dilations for nan data
-h2 = histogram(nandata_reachable(:,4), polytope_size_bins); % polytope dilations for nan data
+% h1 = histogram(nandata_nominal(:,4), polytope_size_bins); % polytope dilations for nan data
+% h2 = histogram(nandata_reachable(:,4), polytope_size_bins); % polytope dilations for nan data
+h1 = histogram(nandata_nominal(:,4)); % polytope dilations for nan data
+h2 = histogram(nandata_reachable(:,4)); % polytope dilations for nan data
 h1.FaceColor = 'r';
 h2.FaceColor = 'b';
 xlabel('obstacle size increase [km]')
