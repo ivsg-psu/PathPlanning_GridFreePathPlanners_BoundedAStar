@@ -257,24 +257,14 @@ return
 % -- first write of function
 %
 % TO DO:
-    figure; hold on; box on;
-    xlabel('x [km]');
-    ylabel('y [km]');
-    plot(start_init(1),start_init(2),'xg','MarkerSize',6);
-    plot(finish(1),finish(2),'xr','MarkerSize',6);
     plot(init_route(:,1),init_route(:,2),'k','LineWidth',2);
     if flag_do_threadpulling && nominal_or_width_based==2
         plot(init_route_original(:,1), init_route_original(:,2),'--','Color',[0.5 0.5 0.5],'LineWidth',2);
     end
     plot(start_midway(1),start_midway(2),'dm','MarkerSize',6)
     plot(replan_route(:,1),replan_route(:,2),'--g','LineWidth',2);
-    for j = 1:length(enlarged_polytopes)
-         fill(enlarged_polytopes(j).vertices(:,1)',enlarged_polytopes(j).vertices(:,2),[0 0 1],'FaceColor','r','FaceAlpha',0.3)
-    end
-    for j = 1:length(shrunk_polytopes)
-         fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 0.5],'FaceAlpha',1)
-    end
 spacing = 0.5;
+dt = 0.5
 init_route_dense = fcn_interpolate_route_spatially(init_route, spacing);
 % find closest route point to midpoint
 [~, midway_idx] = min((start_midway(1)-init_route_dense(:,1)).^2+(start_midway(2)-init_route_dense(:,2)).^2);
@@ -284,26 +274,32 @@ num_frames = size(init_route_dense_to_midway,1) + size(replan_route_dense,1);
 close all; % close all figures so they aren't included as a gif frame
 
 % loop through all time steps
-for i = 1:num_dense_times
-    hold on; box on; title(sprintf('Animation of timespace path planning\n %.2f min per frame', dt))
+for i = 1:num_frames
+    hold on; box on;
     xlabel('x [km]')
     ylabel('y [km]')
-    ylim(ylims)
-    xlim(xlims)
+    % xlim([min(all_pts(:,1))*0.95 max(all_pts(:,1))*1.05]);
+    % ylim([min(all_pts(:,2))*0.95 max(all_pts(:,2))*1.05]);
+    % always show start and goal
+    plot(start_init(1),start_init(2),'xg','MarkerSize',6);
+    plot(finish(1),finish(2),'xr','MarkerSize',6);
     % for each polytope,
     % create a fill from this poly's verts
-    cur_time = dense_times(i);
-    for j = 1:length(time_space_polytopes)
-        verts = time_space_polytopes(j).dense_vertices;
-        cur_time_locations = find(verts(:,3) == cur_time); % only care about x and y coords at this time
-        cur_x = verts(cur_time_locations,1);
-        cur_y = verts(cur_time_locations,2);
-        P = [cur_x, cur_y];
-        k = convhull(P);
-        fill(P(k,1),P(k,2),'b','FaceAlpha',0.2);
-        % fill(cur_x,cur_y,'b','FaceAlpha',0.2);
+    if i >= midway_idx
+        for j = 1:length(enlarged_polytopes)
+             fill(enlarged_polytopes(j).vertices(:,1)',enlarged_polytopes(j).vertices(:,2),[0 0 1],'FaceColor','r','FaceAlpha',0.3)
+        end
     end
-
+    for j = 1:length(shrunk_polytopes)
+         fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 0.5],'FaceAlpha',1)
+    end
+    % TODO you are here
+    % plot initial route as green dotted line
+    % plot current progress as black path
+    % if the midpoint has been hit, plot the midpoint as a pink diamond
+    % plot the initial route as a grey dotted line
+    % plot the replanned path as a green dotted line
+    % plot the current progress as a black path
     cur_route_idx = find(route_dense(:,3) == cur_time); % find route waypoint based on current time
 
     % want to plot route history
@@ -318,7 +314,7 @@ for i = 1:num_dense_times
     % first call of the gif function is different from subsequent calls
     if i == 1
         % gif('timespace_animation.gif','LoopCount',1,'DelayTime',dt/10) % notice frame duration is dt/10 to speed up animations for convenient viewing
-        gif('timespace_animation.gif','DelayTime',dt/10) % notice frame duration is dt/10 to speed up animations for convenient viewing
+        gif('replanning_animation.gif','DelayTime',dt) % notice frame duration is dt/10 to speed up animations for convenient viewing
     else
         gif
     end
