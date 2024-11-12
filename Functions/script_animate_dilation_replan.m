@@ -3,6 +3,11 @@ addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
 addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
 addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
+addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
+
+addpath 'C:\Users\sjhar\Desktop\gif\gif'
+
+addpath 'C:\Users\sjh6473\Desktop\gif\gif'
 %% plotting flags
 flag_do_plot = 1;
 flag_do_plot_slow= 0;
@@ -257,19 +262,15 @@ return
 % -- first write of function
 %
 % TO DO:
-    plot(init_route(:,1),init_route(:,2),'k','LineWidth',2);
-    if flag_do_threadpulling && nominal_or_width_based==2
-        plot(init_route_original(:,1), init_route_original(:,2),'--','Color',[0.5 0.5 0.5],'LineWidth',2);
-    end
-    plot(start_midway(1),start_midway(2),'dm','MarkerSize',6)
-    plot(replan_route(:,1),replan_route(:,2),'--g','LineWidth',2);
+
 spacing = 0.5;
-dt = 0.5
+dt = 0.25;
 init_route_dense = fcn_interpolate_route_spatially(init_route, spacing);
 % find closest route point to midpoint
 [~, midway_idx] = min((start_midway(1)-init_route_dense(:,1)).^2+(start_midway(2)-init_route_dense(:,2)).^2);
 init_route_dense_to_midway = init_route_dense(1:midway_idx,:);
 replan_route_dense = fcn_interpolate_route_spatially(replan_route, spacing);
+actual_route_dense = [init_route_dense_to_midway; replan_route_dense];
 num_frames = size(init_route_dense_to_midway,1) + size(replan_route_dense,1);
 close all; % close all figures so they aren't included as a gif frame
 
@@ -281,8 +282,8 @@ for i = 1:num_frames
     % xlim([min(all_pts(:,1))*0.95 max(all_pts(:,1))*1.05]);
     % ylim([min(all_pts(:,2))*0.95 max(all_pts(:,2))*1.05]);
     % always show start and goal
-    plot(start_init(1),start_init(2),'xg','MarkerSize',6);
-    plot(finish(1),finish(2),'xr','MarkerSize',6);
+    p_start = plot(start_init(1),start_init(2),'xg','MarkerSize',6);
+    p_finish = plot(finish(1),finish(2),'xr','MarkerSize',6);
     % for each polytope,
     % create a fill from this poly's verts
     if i >= midway_idx
@@ -291,26 +292,30 @@ for i = 1:num_frames
         end
     end
     for j = 1:length(shrunk_polytopes)
-         fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 0.5],'FaceAlpha',1)
+         fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[137 207 240]./255,'FaceAlpha',1)
     end
-    % TODO you are here
-    % plot initial route as green dotted line
-    % plot current progress as black path
-    % if the midpoint has been hit, plot the midpoint as a pink diamond
-    % plot the initial route as a grey dotted line
-    % plot the replanned path as a green dotted line
-    % plot the current progress as a black path
-    cur_route_idx = find(route_dense(:,3) == cur_time); % find route waypoint based on current time
 
-    % want to plot route history
-    p_route = plot(route_dense(1:cur_route_idx,1),route_dense(1:cur_route_idx,2),'-k','LineWidth',2);
+    cur_route_idx = i;
+    % if the midpoint has not been hit, plot the midpoint as a pink diamond
+    if i < midway_idx
+        % plot initial route as green dotted line
+        p_plan = plot(init_route_dense(:,1), init_route_dense(:,2),'g--','LineWidth',2);
+        p_midway = plot(NaN,NaN);
+        p_plan_old = plot(NaN,NaN);
+    else
+    % if the midpoint has been hit, plot the midpoint as a pink diamond
+        % plot the initial route as a grey dotted line
+        delete(p_plan)
+        p_midway = plot(start_midway(1),start_midway(2),'dm','MarkerSize',6)
+        p_plan_old = plot(init_route_dense(:,1), init_route_dense(:,2),'--','Color',[0.5 0.5 0.5],'LineWidth',2);
+        % plot the replanned path as a green dotted line
+        p_plan = plot(replan_route_dense(:,1), replan_route_dense(:,2),'g--');
+    end
+    % plot current progress as black path
+    p_route = plot(actual_route_dense(1:cur_route_idx,1),actual_route_dense(1:cur_route_idx,2),'-k','LineWidth',2);
     % also want to plot current position
-    p_pose = plot(route_dense(cur_route_idx,1),route_dense(cur_route_idx,2),'xk');
-    % plot finish position at current time, if it exists
-    cur_time_locations_in_finish = find(finish(:,3) == cur_time);
-    p_start = plot(start(:,1),start(:,2),'gx'); % plot start regardless of time
-    p_finish = plot(finish(cur_time_locations_in_finish ,1),finish(cur_time_locations_in_finish,2),'rx');
-    p_finish_traj = plot(finish(:,1),finish(:,2),'--r'); % plot past and future trajectory of finish if it moves
+    p_pose = plot(actual_route_dense(cur_route_idx,1),actual_route_dense(cur_route_idx,2),'xk','MarkerSize',6);
+
     % first call of the gif function is different from subsequent calls
     if i == 1
         % gif('timespace_animation.gif','LoopCount',1,'DelayTime',dt/10) % notice frame duration is dt/10 to speed up animations for convenient viewing
@@ -322,7 +327,8 @@ for i = 1:num_frames
     delete(gca)
     delete(p_route)
     delete(p_pose)
+    delete(p_midway)
+    delete(p_plan)
     delete(p_start)
     delete(p_finish)
-    delete(p_finish_traj)
 end
