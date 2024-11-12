@@ -18,7 +18,7 @@ navigated_portion = 0.4; % portion of initial path to be completed prior to trig
 map_idx = 6 % Halton map
 [shrunk_polytopes, start_inits, finish_inits,~, length_cost_weights] = fcn_util_load_test_map(map_idx); % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
 
-mission_idx = 2;
+mission_idx = 3;
 
 w = length_cost_weights(mission_idx);
 start_init = start_inits(mission_idx,:);
@@ -212,7 +212,7 @@ if flag_do_plot
     end
     legend(leg_str,'Location','best');
 end % end flag_do_plot condition
-return
+
 % fcn_animate_timespace_path_plan
 %
 % Uses the gif library to plot the vehicle position, route progress, and polytope positions
@@ -287,35 +287,40 @@ for i = 1:num_frames
     % for each polytope,
     % create a fill from this poly's verts
     if i >= midway_idx
-        for j = 1:length(enlarged_polytopes)
-             fill(enlarged_polytopes(j).vertices(:,1)',enlarged_polytopes(j).vertices(:,2),[0 0 1],'FaceColor','r','FaceAlpha',0.3)
+        j = 1;
+        p_poly_enlarged = fill(enlarged_polytopes(j).vertices(:,1)',enlarged_polytopes(j).vertices(:,2),[0 0 1],'FaceColor','r','FaceAlpha',0.3,'DisplayName','enlarged obstacles')
+        for j = 2:length(enlarged_polytopes)
+            p_poly_enlarged = fill(enlarged_polytopes(j).vertices(:,1)',enlarged_polytopes(j).vertices(:,2),[0 0 1],'FaceColor','r','FaceAlpha',0.3,'DisplayName','')
         end
     end
-    for j = 1:length(shrunk_polytopes)
-         fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[137 207 240]./255,'FaceAlpha',1)
+    j = 1;
+    p_poly = fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[137 207 240]./255,'FaceAlpha',1,'DisplayName','obstacles')
+    for j = 2:length(shrunk_polytopes)
+        p_poly = fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[137 207 240]./255,'FaceAlpha',1,'DisplayName','')
     end
 
     cur_route_idx = i;
     % if the midpoint has not been hit, plot the midpoint as a pink diamond
     if i < midway_idx
         % plot initial route as green dotted line
-        p_plan = plot(init_route_dense(:,1), init_route_dense(:,2),'g--','LineWidth',2);
-        p_midway = plot(NaN,NaN);
-        p_plan_old = plot(NaN,NaN);
+        p_plan = plot(init_route_dense(:,1), init_route_dense(:,2),'g--','LineWidth',2,'DisplayName','planned path');
+        p_midway = plot(NaN,NaN,'DisplayName','');
+        p_plan_old = plot(NaN,NaN,'DisplayName','');
+
     else
     % if the midpoint has been hit, plot the midpoint as a pink diamond
         % plot the initial route as a grey dotted line
         delete(p_plan)
-        p_midway = plot(start_midway(1),start_midway(2),'dm','MarkerSize',6)
-        p_plan_old = plot(init_route_dense(:,1), init_route_dense(:,2),'--','Color',[0.5 0.5 0.5],'LineWidth',2);
+        p_midway = plot(start_midway(1),start_midway(2),'dm','MarkerSize',6,'MarkerFaceColor','m','DisplayName','replanning point')
+        p_plan_old = plot(init_route_dense(:,1), init_route_dense(:,2),'--','Color',[0.5 0.5 0.5],'LineWidth',2,'DisplayName','outdated plan');
         % plot the replanned path as a green dotted line
-        p_plan = plot(replan_route_dense(:,1), replan_route_dense(:,2),'g--');
+        p_plan = plot(replan_route_dense(:,1), replan_route_dense(:,2),'g--','DisplayName','planned path');
     end
     % plot current progress as black path
-    p_route = plot(actual_route_dense(1:cur_route_idx,1),actual_route_dense(1:cur_route_idx,2),'-k','LineWidth',2);
+    p_route = plot(actual_route_dense(1:cur_route_idx,1),actual_route_dense(1:cur_route_idx,2),'-k','LineWidth',2,'DisplayName','path history');
     % also want to plot current position
-    p_pose = plot(actual_route_dense(cur_route_idx,1),actual_route_dense(cur_route_idx,2),'xk','MarkerSize',6);
-
+    p_pose = plot(actual_route_dense(cur_route_idx,1),actual_route_dense(cur_route_idx,2),'xk','MarkerSize',6,'DisplayName','current position');
+    legend
     % first call of the gif function is different from subsequent calls
     if i == 1
         % gif('timespace_animation.gif','LoopCount',1,'DelayTime',dt/10) % notice frame duration is dt/10 to speed up animations for convenient viewing

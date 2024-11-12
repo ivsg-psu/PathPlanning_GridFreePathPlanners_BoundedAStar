@@ -282,6 +282,12 @@ for d = 1:size(idx_nominal_data_including_fails,1)
         nominal_length = inf;
     end
     discount_ratio = feature_length/nominal_length;
+    if isnan(discount_ratio)
+        continue
+    end
+    if isinf(discount_ratio)
+        continue
+    end
     data_discount_ratio(d,:) = [feature_datum(1) feature_datum(4) discount_ratio];
 end
 % plot this
