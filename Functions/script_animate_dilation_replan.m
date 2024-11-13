@@ -284,43 +284,52 @@ for i = 1:num_frames
     % always show start and goal
     p_start = plot(start_init(1),start_init(2),'xg','MarkerSize',6);
     p_finish = plot(finish(1),finish(2),'xr','MarkerSize',6);
+    leg_str = {'start','finish'};
     % for each polytope,
     % create a fill from this poly's verts
     if i >= midway_idx
         j = 1;
-        p_poly_enlarged = fill(enlarged_polytopes(j).vertices(:,1)',enlarged_polytopes(j).vertices(:,2),[0 0 1],'FaceColor','r','FaceAlpha',0.3,'DisplayName','enlarged obstacles')
+        p_poly_enlarged = fill(enlarged_polytopes(j).vertices(:,1)',enlarged_polytopes(j).vertices(:,2),[0 0 1],'FaceColor','r','FaceAlpha',0.3)
+        leg_str{end+1} = 'enlarged obstacles';
         for j = 2:length(enlarged_polytopes)
-            p_poly_enlarged = fill(enlarged_polytopes(j).vertices(:,1)',enlarged_polytopes(j).vertices(:,2),[0 0 1],'FaceColor','r','FaceAlpha',0.3,'DisplayName','')
+            p_poly_enlarged = fill(enlarged_polytopes(j).vertices(:,1)',enlarged_polytopes(j).vertices(:,2),[0 0 1],'FaceColor','r','FaceAlpha',0.3)
         end
     end
     j = 1;
-    p_poly = fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[137 207 240]./255,'FaceAlpha',1,'DisplayName','obstacles')
+    p_poly = fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[137 207 240]./255,'FaceAlpha',1)
+        leg_str{end+1} = 'obstacles';
     for j = 2:length(shrunk_polytopes)
-        p_poly = fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[137 207 240]./255,'FaceAlpha',1,'DisplayName','')
+        p_poly = fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[137 207 240]./255,'FaceAlpha',1)
     end
 
     cur_route_idx = i;
     % if the midpoint has not been hit, plot the midpoint as a pink diamond
     if i < midway_idx
         % plot initial route as green dotted line
-        p_plan = plot(init_route_dense(:,1), init_route_dense(:,2),'g--','LineWidth',2,'DisplayName','planned path');
-        p_midway = plot(NaN,NaN,'DisplayName','');
-        p_plan_old = plot(NaN,NaN,'DisplayName','');
+        p_plan = plot(init_route_dense(:,1), init_route_dense(:,2),'g--','LineWidth',2);
+        leg_str{end+1} = 'planned path';
+        p_midway = plot(NaN,NaN);
+        p_plan_old = plot(NaN,NaN);
 
     else
     % if the midpoint has been hit, plot the midpoint as a pink diamond
         % plot the initial route as a grey dotted line
         delete(p_plan)
-        p_midway = plot(start_midway(1),start_midway(2),'dm','MarkerSize',6,'MarkerFaceColor','m','DisplayName','replanning point')
-        p_plan_old = plot(init_route_dense(:,1), init_route_dense(:,2),'--','Color',[0.5 0.5 0.5],'LineWidth',2,'DisplayName','outdated plan');
+        p_plan = plot(replan_route_dense(:,1), replan_route_dense(:,2),'g--','LineWidth',2);
+        leg_str{end+1} = 'planned_path';
+        p_plan_old = plot(init_route_dense(:,1), init_route_dense(:,2),'--','Color','r','LineWidth',2);
+        leg_str{end+1} = 'outdated plan';
+        p_midway = plot(start_midway(1),start_midway(2),'dm','MarkerSize',6,'MarkerFaceColor','m')
+        leg_str{end+1} = 'replanning point';
         % plot the replanned path as a green dotted line
-        p_plan = plot(replan_route_dense(:,1), replan_route_dense(:,2),'g--','DisplayName','planned path');
     end
     % plot current progress as black path
-    p_route = plot(actual_route_dense(1:cur_route_idx,1),actual_route_dense(1:cur_route_idx,2),'-k','LineWidth',2,'DisplayName','path history');
+    p_route = plot(actual_route_dense(1:cur_route_idx,1),actual_route_dense(1:cur_route_idx,2),'-k','LineWidth',2);
+    leg_str{end+1} = 'path history';
     % also want to plot current position
-    p_pose = plot(actual_route_dense(cur_route_idx,1),actual_route_dense(cur_route_idx,2),'xk','MarkerSize',6,'DisplayName','current position');
-    legend
+    p_pose = plot(actual_route_dense(cur_route_idx,1),actual_route_dense(cur_route_idx,2),'xk','MarkerSize',6);
+    leg_str{end+1} = 'current position';
+    legend(leg_str)
     % first call of the gif function is different from subsequent calls
     if i == 1
         % gif('timespace_animation.gif','LoopCount',1,'DelayTime',dt/10) % notice frame duration is dt/10 to speed up animations for convenient viewing
