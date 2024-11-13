@@ -176,7 +176,7 @@ if flag_do_plot
     if flag_do_threadpulling && nominal_or_width_based==2
         plot(init_route_original(:,1), init_route_original(:,2),'--','Color',[0.5 0.5 0.5],'LineWidth',2);
     end
-    plot(start_midway(1),start_midway(2),'dm','MarkerSize',6)
+    plot(start_midway(1),start_midway(2),'dm','MarkerSize',6,'MarkerFaceColor','m')
     plot(replan_route(:,1),replan_route(:,2),'--g','LineWidth',2);
     for j = 1:length(enlarged_polytopes)
          fill(enlarged_polytopes(j).vertices(:,1)',enlarged_polytopes(j).vertices(:,2),[0 0 1],'FaceColor','r','FaceAlpha',0.3)

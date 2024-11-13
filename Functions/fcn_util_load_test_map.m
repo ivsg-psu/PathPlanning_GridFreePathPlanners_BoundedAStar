@@ -1,4 +1,4 @@
-function [polytopes, starts, finishes, resolution_scale, length_cost_weights] = fcn_util_load_test_map(map_idx, varargin)
+function [polytopes, starts, finishes, resolution_scale, length_cost_weights, navigated_portions] = fcn_util_load_test_map(map_idx, varargin)
 % fcn_util_load_test_map
 %
 % A simple utility for loading a test fixture mat file containing a polytope map
@@ -39,6 +39,10 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights] = 
 %         Weights are intended to be applied to the cost function like:
 %         cost = w*length_cost + (1-w)*corridor width
 %         Setting to 1 gives minimum distance path
+%
+%     navigated_portions - 1xn vector of portion of station distance along path
+%         at which to trigger replanning for tests as in:
+%         script_test_polytope_canyon_replan_with_dilation.m
 %
 % DEPENDENCIES:
 %
@@ -86,6 +90,7 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights] = 
 
     resolution_scale = 1; % default to 1 unless over written somewhere
     length_cost_weight = 1/6; % default to 1/6 unless over written somewhere
+    navigated_portion = 0.4; % default to 1/6 unless over written somewhere
 
     %% load test fixtures for polytope map rather than creating it here
     if map_idx == 1 % generic canyon map
@@ -362,6 +367,9 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights] = 
         % finishes = [10 37; 2 36; -15 36; 18 26; -5 15; 12 15];
         length_cost_weights = length_cost_weight*ones(1, size(starts,1));
         length_cost_weights(7) = 1/8;
+        navigated_portions = navigated_portion*ones(1, size(starts,1));
+        navigated_portions(1) = 0.2;
+        navigated_portions(7) = 0.3;
     elseif map_idx == 3
         % starts = [1002, -4715.9];
         % finishes = [1017, -4719];
@@ -370,6 +378,7 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights] = 
         % starts = [-10 26; -12 21; -11 13; -5 13; 1 13.5];
         % finishes = [3 16; 6 20; 4 26; -8 26; -4 25];
         length_cost_weights = length_cost_weight*ones(1, size(starts,1));
+        navigated_portions = navigated_portion*ones(1, size(starts,1));
     elseif (map_idx == 7 || map_idx == 9)
         starts = [start; -2 25; -2 25; -2 15; -2 10; -2 30; -2 10];
         finishes = [finish; 32 25; 32 15; 32 15; 32 10; 32 30; 32 30];
@@ -378,14 +387,17 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights] = 
             finishes(6,2) = 26;
             length_cost_weights(3) = 1/4;
         end
+        navigated_portions = navigated_portion*ones(1, size(starts,1));
     elseif map_idx == 5
         starts = [start; 1037 -4712];
         finishes = [finish; 1037 -4725];
         length_cost_weights = length_cost_weight*ones(1, size(starts,1));
+        navigated_portions = navigated_portion*ones(1, size(starts,1));
     else % if we only have one start goal pair
         starts = start;
         finishes = finish;
         length_cost_weights = length_cost_weight*ones(1, size(starts,1));
+        navigated_portions = navigated_portion*ones(1, size(starts,1));
     end
 end
 
