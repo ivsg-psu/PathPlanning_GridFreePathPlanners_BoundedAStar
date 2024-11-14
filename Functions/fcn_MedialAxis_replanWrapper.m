@@ -1,4 +1,4 @@
-[route_full, route_length, route_choke] = fcn_MedialAxis_replanWrapper(replan_point, finish, min_corridor_width, length_cost_weight);
+function [route_full, route_length, route_choke] = fcn_MedialAxis_replanWrapper(replan_point, finish_xy, min_corridor_width, length_cost_weight);
 % fcn_MedialAxis_replannerWrapper
 %
 % This function wraps the basic call stack to perform planning in thethe medial axis graph.
@@ -73,42 +73,52 @@
 % -- fill in to-do items here.
     flag_do_plot = 0;
 
-    %% turn vertices cell array into polytopes struct array
-    clear polytopes
-    for poly = 1:length(polytope_vertices)
-        polytopes(poly).vertices = polytope_vertices{poly};
-        polytopes(poly).vertices = [polytopes(poly).vertices; polytopes(poly).vertices(1,:)]; % repeat first vert at end
+    global medial_axis_graph; % grab the global medial axis graph so we don't have to recalculate it
+    if isempty(medial_axis_graph)
+        error('Medial axis graph is not created yet.  Please call fcn_MedialAxis_plannerWrapper before calling fcn_MedialAxis_replanWrapper.')
     end
-    boundary.vertices = boundary_verts;
-    boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % repeat first vert at end
-    boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
-    shrunk_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(polytopes);
-    shrunk_polytopes = [boundary, shrunk_polytopes]; % put the boundary polytope as the first polytope
 
-    %% assume necessary triangulation resolution
-    resolution_scale = 0.5;
+    adjacency_matrix = medial_axis_graph.adjacency_matrix;
+    triangle_chains = medial_axis_graph.triangle_chains;
+    max_side_lengths_per_tri = medial_axis_graph.max_side_lengths_per_tri;
+    nodes = medial_axis_graph.nodes;
+    xcc = medial_axis_graph.xcc;
+    ycc = medial_axis_graph.ycc;
+    tr = medial_axis_graph.tr;
+    old_route = medial_axis_graph.route;
+    old_route_triangle_chain = medial_axis_graph.route_triangle_chain;
+    old_route_triangle_chain_ids = medial_axis_graph.route_triangle_chain_ids;
 
-    %% constrained delaunay triangulation
-    [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAxis_makeAdjacencyMatrixAndTriangleChains(shrunk_polytopes, resolution_scale, flag_do_plot);
+    start_xy = replan_point;
 
-    %% prune graph
-    [adjacency_matrix, triangle_chains, nodes] = fcn_MedialAxis_pruneGraph(adjacency_matrix, triangle_chains, nodes, xcc, ycc, shrunk_polytopes, flag_do_plot);
-
-    %% get costs for navigating each triangle chain
-    % TODO add zcc as optional input
-    [triangle_chains, max_side_lengths_per_tri] = fcn_MedialAxis_addCostsToTriangleChains(triangle_chains, nodes, xcc, ycc, tr, shrunk_polytopes, flag_do_plot);
-
-    %% planning through triangle graph
-    % add start and finish to nearest medial axis edge
-    % TODO add zcc as optional input
     [adjacency_matrix, triangle_chains, nodes, start_closest_tri, start_closest_node] = fcn_MedialAxis_addPointToAdjacencyMatrixAndTriangleChains(start_xy, adjacency_matrix, triangle_chains, nodes, xcc, ycc, max_side_lengths_per_tri);
-    [adjacency_matrix, triangle_chains, nodes, finish_closest_tri, finish_closest_node] = fcn_MedialAxis_addPointToAdjacencyMatrixAndTriangleChains(finish_xy, adjacency_matrix, triangle_chains, nodes, xcc, ycc, max_side_lengths_per_tri);
 
+    % this line is weird: the last added 4 triangle chains will go from the replanning
+    % point to two existing nodes
+    nodes_near_replanning_point_incl_replan_point = unique([triangle_chains{end-3:end,1:2}]);
+    % we can ditch the highest node ID as this is the replanning point, keeping only the two
+    % nodes that were bookending the replanning point
+    nodes_near_replanning_point = nodes_near_replanning_point_incl_replan_point(1:2);
+    replanning_node = nodes_near_replanning_point_incl_replan_point(3);
+    % then we want to prevent planning to that node
+    idx_of_unreached_node_in_route = max(find(ismember(old_route(:,3),nodes_near_replanning_point)));
+    idx_of_departed_node_in_route = min(find(ismember(old_route(:,3),nodes_near_replanning_point)));
+    unreached_node = old_route(idx_of_unreached_node_in_route,3);
+    departed_node = old_route(idx_of_departed_node_in_route,3);
+
+    edge_that_failed = find([triangle_chains{:,1}]' == departed_node & [triangle_chains{:,2}]' == unreached_node);
+    % edge_that_failed_bw = find([triangle_chains{:,2}]' == departed_node & [triangle_chains{:,1}]' == unreached_node);
+    edge_that_will_fail = find([triangle_chains{:,1}]' == replanning_node & [triangle_chains{:,2}]' == unreached_node);
+    % edge_that_will_fail_bw = find([triangle_chains{:,2}]' == replanning_node & [triangle_chains{:,1}]' == unreached_node);
+    % denylist_route_chain_ids = [edge_that_failed, edge_that_will_fail, edge_that_failed_bw, edge_that_will_fail_bw]
+    denylist_route_chain_ids = [edge_that_failed, edge_that_will_fail]
+
+    [adjacency_matrix, triangle_chains, nodes, finish_closest_tri, finish_closest_node] = fcn_MedialAxis_addPointToAdjacencyMatrixAndTriangleChains(finish_xy, adjacency_matrix, triangle_chains, nodes, xcc, ycc, max_side_lengths_per_tri);
     % loop over cost function weights
-    denylist_route_chain_ids = []; % no need to denylist any triangle chains
     % make cost matrix
     [adjacency_matrix, cgraph, all_pts, start, finish, best_chain_idx_matrix] = fcn_MedialAxis_makeCostGraphAndAllPoints(adjacency_matrix, triangle_chains, nodes, xcc, ycc, start_closest_tri, start_closest_node, finish_closest_tri, finish_closest_node, length_cost_weight, min_corridor_width, denylist_route_chain_ids);
-    % adjacency matrix is vgraph
+
+    %% adjacency matrix is vgraph
     vgraph = adjacency_matrix;
     num_nodes = length(nodes);
     vgraph(1:num_nodes+1:end) = 1;
@@ -126,4 +136,3 @@
     % expand route nodes into actual path
     [route_full, route_length, route_choke, route_triangle_chain, route_triangle_chain_ids] = fcn_MedialAxis_processRoute(route, triangle_chains, best_chain_idx_matrix, xcc, ycc, start_xy, finish_xy);
 end % end function
-

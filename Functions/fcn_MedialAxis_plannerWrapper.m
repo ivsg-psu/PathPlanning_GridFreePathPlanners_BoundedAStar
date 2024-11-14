@@ -1,4 +1,4 @@
-function [route_full, route_length, route_choke, medial_axis_graph] = fcn_MedialAxis_plannerWrapper(polytope_vertices, start_xy, finish_xy, boundary_verts, min_corridor_width, length_cost_weight)
+function [route_full, route_length, route_choke] = fcn_MedialAxis_plannerWrapper(polytope_vertices, start_xy, finish_xy, boundary_verts, min_corridor_width, length_cost_weight)
 % fcn_MedialAxis_plannerWrapper
 %
 % This function wraps the basic call stack to perform planning in thethe medial axis graph.
@@ -98,6 +98,15 @@ function [route_full, route_length, route_choke, medial_axis_graph] = fcn_Medial
     % TODO add zcc as optional input
     [triangle_chains, max_side_lengths_per_tri] = fcn_MedialAxis_addCostsToTriangleChains(triangle_chains, nodes, xcc, ycc, tr, shrunk_polytopes, flag_do_plot);
 
+    % return a struct to store medial axis graph in workspace
+    global medial_axis_graph;
+    medial_axis_graph.adjacency_matrix = adjacency_matrix;
+    medial_axis_graph.triangle_chains = triangle_chains;
+    medial_axis_graph.max_side_lengths_per_tri = max_side_lengths_per_tri;
+    medial_axis_graph.nodes = nodes;
+    medial_axis_graph.xcc = xcc;
+    medial_axis_graph.ycc = ycc;
+    medial_axis_graph.tr = tr;
     %% planning through triangle graph
     % add start and finish to nearest medial axis edge
     % TODO add zcc as optional input
@@ -108,14 +117,8 @@ function [route_full, route_length, route_choke, medial_axis_graph] = fcn_Medial
     denylist_route_chain_ids = []; % no need to denylist any triangle chains
     % make cost matrix
     [adjacency_matrix, cgraph, all_pts, start, finish, best_chain_idx_matrix] = fcn_MedialAxis_makeCostGraphAndAllPoints(adjacency_matrix, triangle_chains, nodes, xcc, ycc, start_closest_tri, start_closest_node, finish_closest_tri, finish_closest_node, length_cost_weight, min_corridor_width, denylist_route_chain_ids);
-    % TODO struct for memory of graph, probably also needs cost information?
-    medial_axis_graph.adjacency_matrix = adjacency_matrixj;
-    medial_axis_graph.triangle_chains = triangle_chains;
-    medial_axis_graph.nodes = nodes;
-    medial_axis_graph.xcc = xcc;
-    medial_axis_graph.ycc = ycc;
-    medial_axis_graph.tr = tr;
-       %% adjacency matrix is vgraph
+
+    %% adjacency matrix is vgraph
     vgraph = adjacency_matrix;
     num_nodes = length(nodes);
     vgraph(1:num_nodes+1:end) = 1;
@@ -129,7 +132,9 @@ function [route_full, route_length, route_choke, medial_axis_graph] = fcn_Medial
 
     % plan a path
     [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
-
+    medial_axis_graph.route = route;
     % expand route nodes into actual path
     [route_full, route_length, route_choke, route_triangle_chain, route_triangle_chain_ids] = fcn_MedialAxis_processRoute(route, triangle_chains, best_chain_idx_matrix, xcc, ycc, start_xy, finish_xy);
+    medial_axis_graph.route_triangle_chain = route_triangle_chain;
+    medial_axis_graph.route_triangle_chain_ids = route_triangle_chain_ids;
 end % end function
