@@ -1,5 +1,5 @@
-function [route_full, route_length, route_choke, medial_axis_graph] = fcn_MedialAxis_plannerWrapper(polytope_vertices, start_xy, finish_xy, boundary_verts, min_corridor_width, length_cost_weight)
-% fcn_MedialAxis_plannerWrapper
+[route_full, route_length, route_choke] = fcn_MedialAxis_replanWrapper(replan_point, finish, min_corridor_width, length_cost_weight);
+% fcn_MedialAxis_replannerWrapper
 %
 % This function wraps the basic call stack to perform planning in thethe medial axis graph.
 % The functions called herein are called individually in script_test_voronoi_planning.m
@@ -108,14 +108,7 @@ function [route_full, route_length, route_choke, medial_axis_graph] = fcn_Medial
     denylist_route_chain_ids = []; % no need to denylist any triangle chains
     % make cost matrix
     [adjacency_matrix, cgraph, all_pts, start, finish, best_chain_idx_matrix] = fcn_MedialAxis_makeCostGraphAndAllPoints(adjacency_matrix, triangle_chains, nodes, xcc, ycc, start_closest_tri, start_closest_node, finish_closest_tri, finish_closest_node, length_cost_weight, min_corridor_width, denylist_route_chain_ids);
-    % TODO struct for memory of graph, probably also needs cost information?
-    medial_axis_graph.adjacency_matrix = adjacency_matrixj;
-    medial_axis_graph.triangle_chains = triangle_chains;
-    medial_axis_graph.nodes = nodes;
-    medial_axis_graph.xcc = xcc;
-    medial_axis_graph.ycc = ycc;
-    medial_axis_graph.tr = tr;
-       %% adjacency matrix is vgraph
+    % adjacency matrix is vgraph
     vgraph = adjacency_matrix;
     num_nodes = length(nodes);
     vgraph(1:num_nodes+1:end) = 1;
@@ -133,3 +126,4 @@ function [route_full, route_length, route_choke, medial_axis_graph] = fcn_Medial
     % expand route nodes into actual path
     [route_full, route_length, route_choke, route_triangle_chain, route_triangle_chain_ids] = fcn_MedialAxis_processRoute(route, triangle_chains, best_chain_idx_matrix, xcc, ycc, start_xy, finish_xy);
 end % end function
+

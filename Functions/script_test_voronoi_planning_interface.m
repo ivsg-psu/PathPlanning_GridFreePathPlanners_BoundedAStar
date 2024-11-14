@@ -45,3 +45,6 @@ plot(route(:,1), route(:,2), '-k','LineWidth',2.5) % plot approx. medial axis
 xlabel('x [m]')
 ylabel('y [m]')
 title(sprintf('path length: %.2f [m]\n narrowest corridor: %.2f [m]',route_length, route_choke));
+
+replan_point = [2, 2.5];
+[route, route_length, route_choke] = fcn_MedialAxis_replanWrapper(replan_point, finish, min_corridor_width, length_cost_weight);
