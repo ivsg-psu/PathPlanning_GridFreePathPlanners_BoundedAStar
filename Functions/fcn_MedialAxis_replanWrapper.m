@@ -111,7 +111,7 @@ function [route_full, route_length, route_choke] = fcn_MedialAxis_replanWrapper(
     edge_that_will_fail = find([triangle_chains{:,1}]' == replanning_node & [triangle_chains{:,2}]' == unreached_node);
     % edge_that_will_fail_bw = find([triangle_chains{:,2}]' == replanning_node & [triangle_chains{:,1}]' == unreached_node);
     % denylist_route_chain_ids = [edge_that_failed, edge_that_will_fail, edge_that_failed_bw, edge_that_will_fail_bw]
-    denylist_route_chain_ids = [edge_that_failed, edge_that_will_fail]
+    denylist_route_chain_ids = [edge_that_failed, edge_that_will_fail];
 
     [adjacency_matrix, triangle_chains, nodes, finish_closest_tri, finish_closest_node] = fcn_MedialAxis_addPointToAdjacencyMatrixAndTriangleChains(finish_xy, adjacency_matrix, triangle_chains, nodes, xcc, ycc, max_side_lengths_per_tri);
     % loop over cost function weights
