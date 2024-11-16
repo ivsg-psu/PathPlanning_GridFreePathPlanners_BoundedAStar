@@ -51,3 +51,8 @@ replan_point = [2, 2.5];
 [new_route,~ ,~] = fcn_MedialAxis_replanWrapper(replan_point, finish, min_corridor_width, length_cost_weight);
 plot(replan_point(1), replan_point(2), 'dm','MarkerFaceColor','m','MarkerSize',6)
 plot(new_route(:,1), new_route(:,2), '--g','LineWidth',2.5)
+
+replan_point = [1.5, 3];
+[new_route,~ ,~] = fcn_MedialAxis_replanWrapper(replan_point, finish, min_corridor_width, length_cost_weight);
+plot(replan_point(1), replan_point(2), 'dr','MarkerFaceColor','r','MarkerSize',6)
+plot(new_route(:,1), new_route(:,2), '--r','LineWidth',2.5)

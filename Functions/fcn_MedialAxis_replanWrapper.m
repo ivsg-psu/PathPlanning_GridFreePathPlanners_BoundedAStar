@@ -78,6 +78,8 @@ function [route_full, route_length, route_choke] = fcn_MedialAxis_replanWrapper(
         error('Medial axis graph is not created yet.  Please call fcn_MedialAxis_plannerWrapper before calling fcn_MedialAxis_replanWrapper.')
     end
 
+    global denylist_route_chain_ids
+
     adjacency_matrix = medial_axis_graph.adjacency_matrix;
     triangle_chains = medial_axis_graph.triangle_chains;
     max_side_lengths_per_tri = medial_axis_graph.max_side_lengths_per_tri;
@@ -111,7 +113,11 @@ function [route_full, route_length, route_choke] = fcn_MedialAxis_replanWrapper(
     edge_that_will_fail = find([triangle_chains{:,1}]' == replanning_node & [triangle_chains{:,2}]' == unreached_node);
     % edge_that_will_fail_bw = find([triangle_chains{:,2}]' == replanning_node & [triangle_chains{:,1}]' == unreached_node);
     % denylist_route_chain_ids = [edge_that_failed, edge_that_will_fail, edge_that_failed_bw, edge_that_will_fail_bw]
-    denylist_route_chain_ids = [edge_that_failed, edge_that_will_fail];
+    if isempty(denylist_route_chain_ids)
+        denylist_route_chain_ids = [edge_that_failed, edge_that_will_fail];
+    else
+        denylist_route_chain_ids = [denylist_route_chain_ids, edge_that_failed, edge_that_will_fail];
+    end
 
     [adjacency_matrix, triangle_chains, nodes, finish_closest_tri, finish_closest_node] = fcn_MedialAxis_addPointToAdjacencyMatrixAndTriangleChains(finish_xy, adjacency_matrix, triangle_chains, nodes, xcc, ycc, max_side_lengths_per_tri);
     % loop over cost function weights
@@ -135,4 +141,11 @@ function [route_full, route_length, route_choke] = fcn_MedialAxis_replanWrapper(
 
     % expand route nodes into actual path
     [route_full, route_length, route_choke, route_triangle_chain, route_triangle_chain_ids] = fcn_MedialAxis_processRoute(route, triangle_chains, best_chain_idx_matrix, xcc, ycc, start_xy, finish_xy);
+
+    % set globals:
+    medial_axis_graph.route = route;
+    medial_axis_graph.route_triangle_chain = route_triangle_chain;
+    medial_axis_graph.route_triangle_chain_ids = route_triangle_chain_ids;
+
+
 end % end function
