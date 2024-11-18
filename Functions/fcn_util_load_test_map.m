@@ -369,6 +369,7 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
         length_cost_weights(7) = 1/8;
         navigated_portions = navigated_portion*ones(1, size(starts,1));
         navigated_portions(1) = 0.2;
+        navigated_portions(5) = 0.7;
         navigated_portions(7) = 0.3;
     elseif map_idx == 3
         % starts = [1002, -4715.9];
