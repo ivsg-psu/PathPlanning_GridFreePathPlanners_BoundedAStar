@@ -208,8 +208,7 @@ for nominal_or_width_based = [1, 2]
           saveas(FigHandle, strcat(num2str(FigName), '.png'));
         end
     end % end flag_do_plot condition
-end % end nominal or feature loop
-return
+
     % fcn_animate_timespace_path_plan
     %
     % Uses the gif library to plot the vehicle position, route progress, and polytope positions
@@ -269,6 +268,8 @@ return
     replan_route_dense = fcn_interpolate_route_spatially(replan_route, spacing);
     actual_route_dense = [init_route_dense_to_midway; replan_route_dense];
     num_frames = size(init_route_dense_to_midway,1) + size(replan_route_dense,1);
+    num_frames_before_replan = size(init_route_dense_to_midway,1);
+    polytope_size_per_frame = linspace(0, polytope_size_increases, num_frames_before_replan);
     close all; % close all figures so they aren't included as a gif frame
 
     % loop through all time steps
@@ -284,14 +285,15 @@ return
         leg_str = {'start','finish'};
         % for each polytope,
         % create a fill from this poly's verts
-        if i >= midway_idx
-            j = 1;
+        if i <= midway_idx
+            enlarged_polytopes = fcn_MapGen_polytopesExpandEvenlyForConcave(shrunk_polytopes, polytope_size_per_frame(i));
+        end
+        j = 1;
+        p_poly_enlarged = fill(enlarged_polytopes(j).vertices(:,1)'+x_shift,enlarged_polytopes(j).vertices(:,2)+y_shift,[0 0 1],'FaceColor','r','FaceAlpha',0.3);
+        leg_str{end+1} = 'enlarged obstacles';
+        for j = 2:length(enlarged_polytopes)
             p_poly_enlarged = fill(enlarged_polytopes(j).vertices(:,1)'+x_shift,enlarged_polytopes(j).vertices(:,2)+y_shift,[0 0 1],'FaceColor','r','FaceAlpha',0.3);
-            leg_str{end+1} = 'enlarged obstacles';
-            for j = 2:length(enlarged_polytopes)
-                p_poly_enlarged = fill(enlarged_polytopes(j).vertices(:,1)'+x_shift,enlarged_polytopes(j).vertices(:,2)+y_shift,[0 0 1],'FaceColor','r','FaceAlpha',0.3);
-                leg_str{end+1} = '';
-            end
+            leg_str{end+1} = '';
         end
         j = 1;
         p_poly = fill(shrunk_polytopes(j).vertices(:,1)'+x_shift,shrunk_polytopes(j).vertices(:,2)+y_shift,[137 207 240]./255,'FaceAlpha',1);
@@ -348,3 +350,4 @@ return
         delete(p_start)
         delete(p_finish)
     end % end gif frame loop
+end % end nominal or feature loop
