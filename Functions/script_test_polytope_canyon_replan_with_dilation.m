@@ -24,6 +24,22 @@ data = []; % initialize array for storing results
 for map_idx = [3, 5, 6] % flood plain maps
     [shrunk_polytopes, start_inits, finish_inits,~, length_cost_weights, navigated_portions] = fcn_util_load_test_map(map_idx); % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
 
+    %% get stats for this map to find gap size
+    poly_map_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes);
+    N_int = poly_map_stats.linear_density_mean;
+    figure; hold on; box on;
+    for j = 1:length(shrunk_polytopes)
+        fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
+    end
+    all_xv = extractfield(shrunk_polytopes,'xv');
+    L = max(all_xv) - min(all_xv);
+    A_occ = poly_map_stats.occupied_area;
+    A = poly_map_stats.total_area;
+    A_unocc = A - A_occ;
+    r_A_unocc = A_unocc/A;
+    r_L_unocc_old = sqrt(r_A_unocc);
+    G_bar_old = r_L_unocc_old*L/N_int;
+
     for mission_idx = 1:size(start_inits,1)
         w = length_cost_weights(mission_idx);
         start_init = start_inits(mission_idx,:);
@@ -162,7 +178,7 @@ for map_idx = [3, 5, 6] % flood plain maps
                     warning('mission replanning is impossible')
                     replan_cost = NaN;
                     replan_route_length = NaN;
-                    data = [data; str2num(strcat(num2str(map_idx),num2str(mission_idx))) nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length];
+                    data = [data; str2num(strcat(num2str(map_idx),num2str(mission_idx))) nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length G_bar_old];
                     continue
                 end % end is_reachable condition for replanning
 
@@ -179,7 +195,7 @@ for map_idx = [3, 5, 6] % flood plain maps
                 replan_route_length = sum(sqrt(sum(lengths.*lengths,2)));
 
                 % save data from this trial
-                data = [data; str2num(strcat(num2str(map_idx),num2str(mission_idx))) nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length];
+                data = [data; str2num(strcat(num2str(map_idx),num2str(mission_idx))) nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length G_bar_old];
                 %% plot single trial
                 % plot field, initial path, replan path, and midway point
                 if flag_do_plot
