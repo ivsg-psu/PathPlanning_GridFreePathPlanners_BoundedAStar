@@ -164,6 +164,18 @@ function [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAx
     idx3 = T < neigh(:,3);
     neigh_for_plotting = [T(idx1) neigh(idx1,1); T(idx2) neigh(idx2,2); T(idx3) neigh(idx3,3)]';
     if flag_do_plot
+                % plot the triangulation and approximate medial axis
+        figure; hold on; box on;
+        xlabel('x [km]')
+        ylabel('y [km]')
+        for j = 2:length(polytopes)
+            fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+        end
+        triplot(tr,'g')
+        hold on
+        plot(xcc(neigh_for_plotting), ycc(neigh_for_plotting), '-r','LineWidth',1.5) % plot approx. medial axis
+        plot(x(C'),y(C'),'-b','LineWidth',1.5) % plot constriants (i.e. polytopes)
+        title('Medial Axis')
         % plot the triangulation and approximate medial axis
         figure; hold on; box on;
         xlabel('x [km]')
