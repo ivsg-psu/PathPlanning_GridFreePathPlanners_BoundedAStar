@@ -21,13 +21,15 @@ flag_save_plots = 1;
 data = []; % initialize array for storing results
 %% mission options
 % for map_idx = [7, 8, 9] % Halton maps
-for map_idx = [3, 5, 6] % flood plain maps
+for map_idx = [3, 5, 6, 7, 8, 9] % flood plain maps
     [shrunk_polytopes, start_inits, finish_inits,~, length_cost_weights, navigated_portions] = fcn_util_load_test_map(map_idx); % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
 
     %% get stats for this map to find gap size
     poly_map_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes);
     N_int = poly_map_stats.linear_density_mean;
     figure; hold on; box on;
+    xlabel('x [km]')
+    ylabel('y [km]')
     for j = 1:length(shrunk_polytopes)
         fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
     end
@@ -304,12 +306,12 @@ for d = 1:size(idx_nominal_data_including_fails,1)
     if isinf(discount_ratio)
         continue
     end
-    data_discount_ratio(d,:) = [feature_datum(1) feature_datum(4) discount_ratio];
+    data_discount_ratio(d,:) = [feature_datum(1) feature_datum(4)./feature_datum(8) discount_ratio];
 end
 % plot this
 unique_maps = unique(data_discount_ratio(:,1));
 figure; hold on; box on;
-xlabel('obstacle size increase [km]')
+xlabel('obstacle size increase ratio (relative to average gap size)')
 ylabel('path length ratio (feature vs. nominal cost function)')
 line_widths = 2;
 for u_map_id = 1:length(unique_maps)
@@ -339,14 +341,14 @@ for d = 1:size(data,1)
     if isnan(ratio_to_min_dist)
         continue
     end
-    ratios_to_min_dist(d,:) = [datum(1) datum(2) datum(4) ratio_to_min_dist];
+    ratios_to_min_dist(d,:) = [datum(1) datum(2) datum(4)./datum(8) ratio_to_min_dist];
 end
 % plot this
 unique_maps = unique(ratios_to_min_dist(:,1));
 figure; hold on; box on;
-xlabel('obstacle size increase [km]')
+xlabel('obstacle size increase ratio (relative to average gap size)')
 ylabel('path length ratio (relative to min. distance path)')
-plot([min(data(:,4)) max(data(:,4))], [1 1], 'k--')
+plot([min(data(:,4)./data(:,8)) max(data(:,4)./data(:,8))], [1 1], 'k--')
 for u_map_id = 1:length(unique_maps)
     unique_map = unique_maps(u_map_id);
     min_dist_ratio_this_map_nominal = ratios_to_min_dist(ratios_to_min_dist(:,1) == unique_map & ratios_to_min_dist(:,2) == 1,:);
