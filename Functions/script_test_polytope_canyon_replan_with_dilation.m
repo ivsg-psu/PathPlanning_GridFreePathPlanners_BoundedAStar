@@ -487,22 +487,45 @@ ylabel('total path length after replanning [km]')
 legend({'nominal cost function','corridor width function'},'Location','best');
 
 %% plot histogram of failed trials
+% find data for failed replanning
 nandata = data(find(isnan(data(:,7))),:); % find nan replan cost rows
 nandata_nominal = nandata(nandata(:,2)==1,:); % of those, find nominal ones
 nandata_reachable = nandata(nandata(:,2)==2,:); % of those, find reachable ones
+% find data for successful initial planning to normalize the above data
+init_success_data = data(find(~isnan(data(:,5))),:); % find non-nan initial path cost rows
+init_success_data_nominal = init_success_data(init_success_data(:,2)==1,:); % of those, find nominal ones
+init_success_data_reachable = init_success_data(init_success_data(:,2)==2,:); % of those, find reachable ones
 % polytope_size_bins = [0.005 0.015 0.03 0.075 0.15 0.25 0.35 0.45 0.55];
-sizes = [0.01 0.02 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 ]%0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9  0.95 1];
+sizes = [0.01 0.02 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 ];%0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9  0.95 1];
 polytope_size_bins = [0 diff(sizes)./2] + sizes;
 
 figure; hold on; box on;
-h1 = histogram(nandata_nominal(:,4), polytope_size_bins); % polytope dilations for nan data
-h2 = histogram(nandata_reachable(:,4), polytope_size_bins); % polytope dilations for nan data
+n_bins = 18;
+x_bins = 0.02:0.02:0.2;
+h1 = histogram(nandata_nominal(:,4)./nandata_nominal(:,8),n_bins); % polytope dilations for nan data
+h2 = histogram(nandata_reachable(:,4)./nandata_reachable(:,8),n_bins); % polytope dilations for nan data
 % h1 = histogram(nandata_nominal(:,4),13); % polytope dilations for nan data
 % h2 = histogram(nandata_reachable(:,4),13); % polytope dilations for nan data
 % h1 = histogram(nandata_nominal(:,4),22); % polytope dilations for nan data
 % h2 = histogram(nandata_reachable(:,4),22); % polytope dilations for nan data
 h1.FaceColor = 'r';
 h2.FaceColor = 'b';
+xlabel('obstacle size increase [km]')
+ylabel('count of failed replanning attempts');
+legend({'nominal cost function','corridor width function'},'Location','best');
+
+% count normilized dilations for failed attempts
+h1data = hist(nandata_nominal(:,4)./nandata_nominal(:,8),x_bins); % normilized polytope dilations for nan data
+h2data = hist(nandata_reachable(:,4)./nandata_reachable(:,8),x_bins); % normilized polytope dilations for nan data
+% count normilized dilations for initial successes
+h1data_denom = hist(init_success_data_nominal(:,4)./init_success_data_nominal(:,8),x_bins); % normilized polytope dilations for nan data
+h2data_denom = hist(init_success_data_reachable(:,4)./init_success_data_reachable(:,8),x_bins); % normilized polytope dilations for nan data
+h1_norm = h1data./h1data_denom;
+h2_norm = h2data./h2data_denom;
+
+figure; hold on; box on;
+bar(x_bins, h1_norm,'FaceColor','r','FaceAlpha',0.5)
+bar(x_bins, h2_norm,'FaceColor','b','FaceAlpha',0.5)
 xlabel('obstacle size increase [km]')
 ylabel('count of failed replanning attempts');
 legend({'nominal cost function','corridor width function'},'Location','best');
