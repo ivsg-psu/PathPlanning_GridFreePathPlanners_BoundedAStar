@@ -350,4 +350,75 @@ for nominal_or_width_based = [1, 2]
         delete(p_start)
         delete(p_finish)
     end % end gif frame loop
+
+    %% plot last frame as a still
+    i = num_frames;
+    figure;
+    hold on; box on;
+    xlabel('x [km]')
+    ylabel('y [km]')
+    % xlim([min(all_pts(:,1))*0.95 max(all_pts(:,1))*1.05]);
+    % ylim([min(all_pts(:,2))*0.95 max(all_pts(:,2))*1.05]);
+    % always show start and goal
+    p_start = plot(start_init(1)+x_shift,start_init(2)+y_shift,'xg','MarkerSize',6);
+    p_finish = plot(finish(1)+x_shift,finish(2)+y_shift,'xr','MarkerSize',6);
+    leg_str = {'start','finish'};
+    % for each polytope,
+    % create a fill from this poly's verts
+    if i <= midway_idx
+        enlarged_polytopes = fcn_MapGen_polytopesExpandEvenlyForConcave(shrunk_polytopes, polytope_size_per_frame(i));
+    end
+    j = 1;
+    p_poly_enlarged = fill(enlarged_polytopes(j).vertices(:,1)'+x_shift,enlarged_polytopes(j).vertices(:,2)+y_shift,[0 0 1],'FaceColor','r','FaceAlpha',0.3);
+    leg_str{end+1} = 'enlarged obstacles';
+    for j = 2:length(enlarged_polytopes)
+        p_poly_enlarged = fill(enlarged_polytopes(j).vertices(:,1)'+x_shift,enlarged_polytopes(j).vertices(:,2)+y_shift,[0 0 1],'FaceColor','r','FaceAlpha',0.3);
+        leg_str{end+1} = '';
+    end
+    j = 1;
+    p_poly = fill(shrunk_polytopes(j).vertices(:,1)'+x_shift,shrunk_polytopes(j).vertices(:,2)+y_shift,[137 207 240]./255,'FaceAlpha',1);
+        leg_str{end+1} = 'obstacles';
+    for j = 2:length(shrunk_polytopes)
+        p_poly = fill(shrunk_polytopes(j).vertices(:,1)'+x_shift,shrunk_polytopes(j).vertices(:,2)+y_shift,[137 207 240]./255,'FaceAlpha',1);
+        leg_str{end+1} = '';
+    end
+
+    cur_route_idx = i;
+    % if the midpoint has not been hit, plot the midpoint as a pink diamond
+    if i < midway_idx
+        % plot initial route as green dotted line
+        p_plan = plot(init_route_dense(:,1)+x_shift, init_route_dense(:,2)+y_shift,'g--','LineWidth',2);
+        leg_str{end+1} = 'planned path';
+        p_midway = plot(NaN,NaN);
+        leg_str{end+1} = '';
+        p_plan_old = plot(NaN,NaN);
+        leg_str{end+1} = '';
+
+    else
+    % if the midpoint has been hit, plot the midpoint as a pink diamond
+        % plot the initial route as a grey dotted line
+        p_plan_old = plot(init_route_dense(:,1)+x_shift, init_route_dense(:,2)+y_shift,'--','Color','r','LineWidth',2);
+        leg_str{end+1} = 'outdated path plan';
+        p_midway = plot(start_midway(1)+x_shift,start_midway(2)+y_shift,'dm','MarkerSize',6,'MarkerFaceColor','m');
+        leg_str{end+1} = 'replanning point';
+        % plot the replanned path as a green dotted line
+    end
+    % plot current progress as black path
+    p_route = plot(actual_route_dense(1:cur_route_idx,1)+x_shift,actual_route_dense(1:cur_route_idx,2)+y_shift,'-k','LineWidth',2);
+    leg_str{end+1} = 'path';
+    legend(leg_str)
+
+    FolderName = sprintf('./replanning_still_%i',nominal_or_width_based);
+    mkdir(FolderName)  % Your destination folder
+
+    FigList = findobj(allchild(0), 'flat', 'Type', 'figure');
+    cd(FolderName)
+    for iFig = 1:length(FigList)
+      FigHandle = FigList(iFig);
+      FigName   = get(FigHandle, 'Number');
+      savefig(FigHandle, strcat(num2str(FigName), '.fig'));
+      saveas(FigHandle, strcat(num2str(FigName), '.png'));
+    end
+    cd ..
+
 end % end nominal or feature loop
