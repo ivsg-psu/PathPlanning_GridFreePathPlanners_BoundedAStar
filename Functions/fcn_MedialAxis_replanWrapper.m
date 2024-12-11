@@ -1,4 +1,4 @@
-function [route_full, route_length, route_choke] = fcn_MedialAxis_replanWrapper(replan_point, finish_xy, min_corridor_width, length_cost_weight);
+function [route_full, route_length, route_choke] = fcn_MedialAxis_replanWrapper(replan_point, finish_xy, min_corridor_width, length_cost_weight)
 % fcn_MedialAxis_replannerWrapper
 %
 % This function wraps the basic call stack to perform planning in thethe medial axis graph.
