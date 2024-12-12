@@ -138,8 +138,7 @@ for left_or_right = [1,2]
                 end
             end
         end
-        map = [(linspace(0,1,100))' zeros(100,1) (linspace(1,0,100))'];
-        colormap(map)
+        colormap(turbo)
         set(gca,'CLim',sort([0 1]*max_dilation_robustness_excluding_inf));
         c = colorbar;
         c.Label.String = 'dilation robustness';
