@@ -141,7 +141,7 @@ for left_or_right = [1,2]
         colormap(turbo)
         set(gca,'CLim',sort([0 1]*max_dilation_robustness_excluding_inf));
         c = colorbar;
-        c.Label.String = 'dilation robustness';
+        c.Label.String = 'corridor width [km]';
     end
 end
 
