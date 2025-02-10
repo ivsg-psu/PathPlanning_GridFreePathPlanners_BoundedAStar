@@ -3,7 +3,7 @@
 % this script is WIP and does not use the MedialAxis functions, rather, their contents are explicitly
 % stated below and modified to allow for elevations
 clear; close all; clc
-
+% TODO
 addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
 addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
 addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
@@ -580,8 +580,8 @@ end
 % finish = all_pts(104,:);
 % find the xcc,ycc pair closest to start
 % start_xy = [1031.5 -4715.4];
-start_xy = start_init;%[1031 -4717];
-finish_xy = finish_init;%[1050 -4722];
+start_xy = start_init(1,:)%+ [0 10];%[1031 -4717];
+finish_xy = finish_init(1,:)%+ [0 10];%[1050 -4722];
 tris_in_graph = unique([triangle_chains{:,3}]');
 start_delta_from_all_tris = start_xy - [xcc(tris_in_graph), ycc(tris_in_graph)];
 start_dist_from_all_tris = (start_delta_from_all_tris(:,1).^2 + start_delta_from_all_tris(:,2).^2).^0.5;
@@ -751,7 +751,7 @@ for i = 1:length(r)
     corridor_widths = [triangle_chains{idx_chain_rc, 4}]; % the corridor width of all valid chains
     lengths = [triangle_chains{idx_chain_rc, 5}]; % the length of all valid chains
     elev_change = [triangle_chains{idx_chain_rc, 6}]; % the length of all valid chains
-    possible_costs = w*lengths + (1-w)*(corridor_widths).^(-1)+0.2*elev_change; % vectorized total cost
+    possible_costs = w*lengths + (1-w)*(corridor_widths).^(-1)+0.02*elev_change; % vectorized total cost
     [min_cost, min_cost_location] = min(possible_costs); % the min cost is what we use as cost
     cgraph(r(i),c(i)) = min_cost;
     best_chain_idx_matrix(r(i),c(i)) = idx_chain_rc(min_cost_location); % need to remember which chain we want to use
@@ -906,7 +906,7 @@ for j = 2:length(shrunk_polytopes)
     end
     elev_portion = (poly_avg_z-min_elev)./(max_elev-min_elev);
     elev_portion_color_idx = round(elev_portion*num_colors,0); % convert elev_portion to an index in colormap
-    elev_portion_color_idx(elev_portion_color_idx == 0) = 1;
+    elev_portion_color_idx(elev_portion_color_idx <= 0) = 1;
     elev_color = my_colormap(elev_portion_color_idx,:);
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),elev_color,'FaceAlpha',0.3)
 end
@@ -929,6 +929,8 @@ y = x;
 [X,Y] = meshgrid(x,y);
 Z = f_peaks(X,Y);
 surf(X,Y,Z);
+route_full_z = f_peaks(route_full(:,1),route_full(:,2));
+plot3(route_full(:,1),route_full(:,2),route_full_z,'-r','LineWidth',2.5);
 xlabel('x [km]')
 ylabel('y [km]')
 zlabel('elevation [m]')
@@ -942,5 +944,5 @@ function z = f_saddle(x,y)
     z = -(((x-xc).^2)/a - ((y-yc).^2)/b) + 1000;
 end
 function z = f_peaks(x,y)
-    z = 100*(peaks((x-20)/10,(y-15)/10)+10);
+    z = 100*(peaks((x-20)/10,(y-15+10)/10)+10);
 end
