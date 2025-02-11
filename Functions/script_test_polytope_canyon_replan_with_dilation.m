@@ -357,6 +357,94 @@ for u_map_id = 1:length(unique_maps)
     plot(min_dist_ratio_this_map_feature(:,3), min_dist_ratio_this_map_feature(:,4), '-x', 'Color', colors{2}, 'LineWidth',1,'MarkerSize',4);
 end
 legend({'optimal length','nominal cost function','corridor width function'},'Location','best');
+%% make a smooth curve ratio of each cost after replanning to nominal initial path length AVERAGED
+% [1 map_idx,mission_idx
+% 2 nominal_or_width_based
+% 3 polytope_size_increases
+% 4 polytope_size_increases
+% 5 init_route_length
+% 6 navigated_distance
+% 7 replan_route_length];
+ratios_to_min_dist = nan(size(data,1), 4);
+for d = 1:size(data,1)
+    datum = data(d,:);
+    % grab the reference datum from the nominal cost function with the same map+mission id and same dilation
+    reference_datum = data((data(:,2)==1) & data(:,1) == datum(1) & data(:,3) == datum(3),:);
+    % TODO are there ever nan nominals? waht si nan/n what is n/nan
+    nominal_init_length = reference_datum(5);
+    replan_length = datum(6)+datum(7);
+    ratio_to_min_dist = replan_length/nominal_init_length;
+    if isnan(ratio_to_min_dist)
+        continue
+    end
+    %                          map id   nom or feat    gap (xaxis)   ratio  (yaxis)
+    ratios_to_min_dist(d,:) = [datum(1) datum(2) datum(4)./datum(8) ratio_to_min_dist];
+end
+% plot this
+unique_gaps = unique(ratios_to_min_dist(:,3));
+figure; hold on; box on;
+xlabel('obstacle size increase ratio (relative to average gap size)')
+ylabel('path length ratio (relative to min. distance path)')
+plot([min(data(:,4)./data(:,8)) max(data(:,4)./data(:,8))], [1 1], 'k--')
+min_dist_ratio_all_maps_nominal = [];
+min_dist_ratio_all_maps_feature = [];
+min_dist_ratio_all_maps_nominal_std = [];
+min_dist_ratio_all_maps_feature_std = [];
+for u_gap_id = 1:length(unique_gaps)
+    unique_gap = unique_gaps(u_gap_id);
+    min_dist_ratio_this_gap_nominal = ratios_to_min_dist(ratios_to_min_dist(:,3) == unique_gap & ratios_to_min_dist(:,2) == 1,:);
+    min_dist_ratio_this_gap_feature = ratios_to_min_dist(ratios_to_min_dist(:,3) == unique_gap & ratios_to_min_dist(:,2) == 2,:);
+    min_dist_ratio_all_maps_nominal = [min_dist_ratio_all_maps_nominal; mean(min_dist_ratio_this_gap_nominal(:,4),'omitnan')];
+    min_dist_ratio_all_maps_feature = [min_dist_ratio_all_maps_feature; mean(min_dist_ratio_this_gap_feature(:,4),'omitnan')];
+    min_dist_ratio_all_maps_nominal_std = [min_dist_ratio_all_maps_nominal_std; std(min_dist_ratio_this_gap_nominal(:,4),'omitnan')];
+    min_dist_ratio_all_maps_feature_std = [min_dist_ratio_all_maps_feature_std; std(min_dist_ratio_this_gap_feature(:,4),'omitnan')];
+end
+plot(unique_gaps, min_dist_ratio_all_maps_nominal, '-x', 'Color', colors{1}, 'LineWidth',1,'MarkerSize',4);
+plot(unique_gaps, min_dist_ratio_all_maps_feature, '-x', 'Color', colors{2}, 'LineWidth',1,'MarkerSize',4);
+errorbar(unique_gaps, min_dist_ratio_all_maps_nominal, min_dist_ratio_all_maps_nominal_std, '-x', 'Color', colors{1}, 'LineWidth',1,'MarkerSize',4);
+errorbar(unique_gaps, min_dist_ratio_all_maps_feature, min_dist_ratio_all_maps_feature_std, '-x', 'Color', colors{2}, 'LineWidth',1,'MarkerSize',4);
+legend({'optimal length','nominal cost function','corridor width function'},'Location','best');
+%% same as above but with average of average ga
+ratios_to_min_dist = nan(size(data,1), 4);
+avg_avg_gap = mean(data(:,8),'omitnan');
+for d = 1:size(data,1)
+    datum = data(d,:);
+    % grab the reference datum from the nominal cost function with the same map+mission id and same dilation
+    reference_datum = data((data(:,2)==1) & data(:,1) == datum(1) & data(:,3) == datum(3),:);
+    % TODO are there ever nan nominals? waht si nan/n what is n/nan
+    nominal_init_length = reference_datum(5);
+    replan_length = datum(6)+datum(7);
+    ratio_to_min_dist = replan_length/nominal_init_length;
+    if isnan(ratio_to_min_dist)
+        continue
+    end
+    %                          map id   nom or feat    gap (xaxis)   ratio  (yaxis)
+    ratios_to_min_dist(d,:) = [datum(1) datum(2) datum(4)./avg_avg_gap ratio_to_min_dist];
+end
+% plot this
+unique_gaps = unique(ratios_to_min_dist(:,3));
+figure; hold on; box on;
+xlabel('obstacle size increase ratio (relative to average gap size)')
+ylabel('path length ratio (relative to min. distance path)')
+plot([min(data(:,4)./avg_avg_gap) max(data(:,4)./avg_avg_gap)], [1 1], 'k--')
+min_dist_ratio_all_maps_nominal = [];
+min_dist_ratio_all_maps_feature = [];
+min_dist_ratio_all_maps_nominal_std = [];
+min_dist_ratio_all_maps_feature_std = [];
+for u_gap_id = 1:length(unique_gaps)
+    unique_gap = unique_gaps(u_gap_id);
+    min_dist_ratio_this_gap_nominal = ratios_to_min_dist(ratios_to_min_dist(:,3) == unique_gap & ratios_to_min_dist(:,2) == 1,:);
+    min_dist_ratio_this_gap_feature = ratios_to_min_dist(ratios_to_min_dist(:,3) == unique_gap & ratios_to_min_dist(:,2) == 2,:);
+    min_dist_ratio_all_maps_nominal = [min_dist_ratio_all_maps_nominal; mean(min_dist_ratio_this_gap_nominal(:,4),'omitnan')];
+    min_dist_ratio_all_maps_feature = [min_dist_ratio_all_maps_feature; mean(min_dist_ratio_this_gap_feature(:,4),'omitnan')];
+    min_dist_ratio_all_maps_nominal_std = [min_dist_ratio_all_maps_nominal_std; std(min_dist_ratio_this_gap_nominal(:,4),'omitnan')];
+    min_dist_ratio_all_maps_feature_std = [min_dist_ratio_all_maps_feature_std; std(min_dist_ratio_this_gap_feature(:,4),'omitnan')];
+end
+plot(unique_gaps, min_dist_ratio_all_maps_nominal, '-x', 'Color', colors{1}, 'LineWidth',1,'MarkerSize',4);
+plot(unique_gaps, min_dist_ratio_all_maps_feature, '-x', 'Color', colors{2}, 'LineWidth',1,'MarkerSize',4);
+
+legend({'optimal length','nominal cost function','corridor width function'},'Location','best');
+
 
 %% plot scatter of ratio of each path relative to its own initial path
 idx_nominal = data(:,2)==1;% & ~isnan(data(:,6)) & ~isnan(data(:,7));

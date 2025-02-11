@@ -3,7 +3,7 @@
 % this script is WIP and does not use the MedialAxis functions, rather, their contents are explicitly
 % stated below and modified to allow for elevations
 clear; close all; clc
-% TODO
+
 addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
 addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
 addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
