@@ -27,7 +27,8 @@ load(strcat(pwd,'\..\Test_Fixtures\shrunk_polytopes.mat'));
 flag_do_plot = 1;
 flag_do_slow_plot = 0;
 flag_do_animation = 0;
-
+do_phantom = 1;
+rng(10)
 if flag_do_plot
     %% plot the map
     figure; hold on; box on;
@@ -106,20 +107,25 @@ all_pts_with_ids_no_start_and_fin = all_pts(1:num_verts,:);
 [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph, start_with_ids, finish_with_ids);
 
 %% make cgraph
-mode = "xy spatial only";
-% mode = 'time or z only';
+% mode = "xy spatial only";
+mode = 'time or z only';
 % mode = "xyz or xyt";
 [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids, mode);
 
 %% plan route
-% [vgraph_phantom, cgraph_phantom, hvec_phantom, finish_phantom, all_pts_with_ids_no_start_and_fin_phantom] = fcn_algorithm_create_phantom_goal(vgraph, cgraph, hvec, finish_with_ids, all_pts_with_ids_no_start_and_fin);
 inner_time = tic;
-% [cost, route] = fcn_algorithm_Astar3d(vgraph_phantom, cgraph_phantom, 0*hvec_phantom, all_pts_with_ids_no_start_and_fin_phantom, start_with_ids, finish_phantom);
-[cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids);
+if do_phantom
+    [vgraph_phantom, cgraph_phantom, hvec_phantom, finish_phantom, all_pts_with_ids_no_start_and_fin_phantom] = fcn_algorithm_create_phantom_goal(vgraph, cgraph, hvec, finish_with_ids, all_pts_with_ids_no_start_and_fin);
+    [cost, route] = fcn_algorithm_Astar3d(vgraph_phantom, cgraph_phantom, 0*hvec_phantom, all_pts_with_ids_no_start_and_fin_phantom, start_with_ids, finish_phantom);
+else
+    [cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids);
+end
 time1 = toc(inner_time);
 times1(time_sample_iter) = time1;
-% assert(isnan(route(end,1)))
-% route = route(1:end-1,:);
+if do_phantom
+    assert(isnan(route(end,1)))
+    route = route(1:end-1,:);
+end
 % route metrics follow
 total_time = max(route(:,3));
 route_x = route(:,1);
@@ -200,7 +206,7 @@ if flag_do_slow_plot
     end
     view([1 0 0])
 end
-
+return
 route_dense = fcn_interpolate_route_in_time(route,dt);
 time2 = toc(outer_time)
 times2(time_sample_iter) = time2;
@@ -210,24 +216,24 @@ if flag_do_animation
 end
 
 function INTERNAL_fcn_format_timespace_plot()
-    % define figure properties
-    opts.width      = 8.8;
-    opts.height     = 6;
-    opts.fontType   = 'Times New Roman';
-    opts.fontSize   = 8;
-    fig = gcf;
-    % scaling
-    fig.Units               = 'centimeters';
-    fig.Position(3)         = opts.width;
-    fig.Position(4)         = opts.height;
+    % % define figure properties
+    % opts.width      = 8.8;
+    % opts.height     = 6;
+    % opts.fontType   = 'Times New Roman';
+    % opts.fontSize   = 8;
+    % fig = gcf;
+    % % scaling
+    % fig.Units               = 'centimeters';
+    % fig.Position(3)         = opts.width;
+    % fig.Position(4)         = opts.height;
 
-    % set text properties
-    set(fig.Children, ...
-        'FontName',     'Times New Roman', ...
-        'FontSize',     8);
+    % % set text properties
+    % set(fig.Children, ...
+    %     'FontName',     'Times New Roman', ...
+    %     'FontSize',     8);
 
-    % remove unnecessary white space
-    set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+    % % remove unnecessary white space
+    % set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
     xlabel('x [km]')
     ylabel('y [km]')
     zlabel('t [min]')
