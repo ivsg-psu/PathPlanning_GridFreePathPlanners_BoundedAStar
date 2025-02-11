@@ -259,7 +259,7 @@ for nominal_or_width_based = [1, 2]
     %
     % TO DO:
 
-    spacing = 0.5;
+    spacing = 0.25;
     dt = spacing;
     init_route_dense = fcn_interpolate_route_spatially(init_route, spacing);
     % find closest route point to midpoint
@@ -277,6 +277,12 @@ for nominal_or_width_based = [1, 2]
         hold on; box on;
         xlabel('x [km]')
         ylabel('y [km]')
+        set(gcf,'color','white')
+        % pose = [1000 458 1.5*560 1.5*420]
+        % fig = gcf;
+        % scaling
+        % fig.Units               = 'pixels';
+        % fig.Position         = pose;
         % xlim([min(all_pts(:,1))*0.95 max(all_pts(:,1))*1.05]);
         % ylim([min(all_pts(:,2))*0.95 max(all_pts(:,2))*1.05]);
         % always show start and goal

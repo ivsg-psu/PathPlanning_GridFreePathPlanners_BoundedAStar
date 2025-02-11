@@ -57,19 +57,17 @@ function fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, ro
     for i = 1:num_dense_times
         hold on; box on; title(sprintf('Animation of timespace path planning\n %.2f min per frame', dt))
         % define figure properties
-        opts.width      = 8;
-        opts.height     = 6;
-        opts.fontType   = 'Times New Roman';
+        pose = [1000 458 560 420]
+        opts.fontType   = 'Helvetica';
         opts.fontSize   = 10;
         fig = gcf;
         % scaling
-        fig.Units               = 'centimeters';
-        fig.Position(3)         = opts.width;
-        fig.Position(4)         = opts.height;
+        fig.Units               = 'pixels';
+        fig.Position         = pose;
         set(gcf,'color','white')
         % set text properties
         set(fig.Children, ...
-            'FontName',     'Times New Roman', ...
+            'FontName',     'Helvetica', ...
             'FontSize',     10);
 
         % remove unnecessary white space
