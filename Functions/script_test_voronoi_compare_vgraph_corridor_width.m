@@ -115,7 +115,7 @@ end
 %% plot dilation robustness (corridor width) heat map
 for left_or_right = [1,2]
     % show the difference between measuring to the right and to the left
-    dilation_robustness_values = dilation_robustness_matrix(:,:,left_or_right)';
+    dilation_robustness_values = dilation_robustness_matrix(:,:,1) +  dilation_robustness_matrix(:,:,2);
     dilation_robustness_values = dilation_robustness_values(:)';
     max_dilation_robustness_excluding_inf = max(dilation_robustness_values(~isinf(dilation_robustness_values) & ~isinf(-dilation_robustness_values)));
 
@@ -124,9 +124,9 @@ for left_or_right = [1,2]
         fig_num = 123410;
         fcn_MapGen_plotPolytopes(polytopes,fig_num,'g-',line_width);
         hold on; box on;
-        xlabel('x [m]');
-        ylabel('y [m]');
-        title('dilation robustness');
+        xlabel('x [km]');
+        ylabel('y [km]');
+        title('Visibility Graph');
         for i = 1:size(vgraph,1)
             for j = 1:size(vgraph,1)
                 if vgraph(i,j) == 1
@@ -141,7 +141,7 @@ for left_or_right = [1,2]
         colormap(turbo)
         set(gca,'CLim',sort([0 1]*max_dilation_robustness_excluding_inf));
         c = colorbar;
-        c.Label.String = 'dilation robustness';
+        c.Label.String = 'corridor width [km]';
     end
 end
 
@@ -154,16 +154,21 @@ end
 %% get costs for navigating each triangle chain
 % TODO add zcc as optional input
 [triangle_chains, max_side_lengths_per_tri] = fcn_MedialAxis_addCostsToTriangleChains(triangle_chains, nodes, xcc, ycc, tr, shrunk_polytopes, flag_do_plot);
-
-dilation_robustness_values = dilation_robustness_matrix(:,:,1)' + dilation_robustness_matrix(:,:,2)';
+figure(13)
+title('Medial Axis Graph')
+dilation_robustness_values = (dilation_robustness_matrix(:,:,1)' + dilation_robustness_matrix(:,:,2)');
 dilation_robustness_values = dilation_robustness_values(dilation_robustness_values ~= 0);
 dilation_robustness_values = dilation_robustness_values(~isinf(dilation_robustness_values));
 dilation_robustness_values = dilation_robustness_values(dilation_robustness_values < 1.5);
 mean_dilation_robustness = mean(dilation_robustness_values)
+median_dilation_robustness = median(dilation_robustness_values)
+var_dilation_robustness = var(dilation_robustness_values)
 
 triangle_chain_widths = [triangle_chains{:,4}];
-triangle_chain_widths = triangle_chain_widths(~isnan(triangle_chain_widths))
-triangle_chain_widths = triangle_chain_widths(~isinf(triangle_chain_widths))
-triangle_chain_widths = triangle_chain_widths(triangle_chain_widths ~= 0)
-triangle_chain_widths = triangle_chain_widths(triangle_chain_widths < 1.5 )
+triangle_chain_widths = triangle_chain_widths(~isnan(triangle_chain_widths));
+triangle_chain_widths = triangle_chain_widths(~isinf(triangle_chain_widths));
+triangle_chain_widths = triangle_chain_widths(triangle_chain_widths ~= 0);
+triangle_chain_widths = triangle_chain_widths(triangle_chain_widths < 1.5);
 mean_triangle_chain_width = mean(triangle_chain_widths)
+median_triangle_chain_width = median(triangle_chain_widths)
+var_triangle_chain_width = var(triangle_chain_widths)
