@@ -144,7 +144,7 @@ function [alternate_routes, alternate_routes_nodes, alternate_routes_chain_ids, 
             continue
         end
         ids_to_denylist = setdiff(possible_ids,iterations); % so at step 1 this should be 2,3
-        denylist_route_chain_ids_incl_chains_leaving_node = [denylist_route_chain_ids, idx_chain_leaving_node(ids_to_denylist)];% so at step 1, we would block 2, 3, plus whatever user input denlylist we're given
+        denylist_route_chain_ids_incl_chains_leaving_node = [denylist_route_chain_ids; idx_chain_leaving_node(ids_to_denylist)];% so at step 1, we would block 2, 3, plus whatever user input denlylist we're given
 
         [adjacency_matrix_small, cgraph, all_pts, start, finish, best_chain_idx_matrix_small] = fcn_MedialAxis_makeCostGraphAndAllPoints(adjacency_matrix, triangle_chains, nodes, xcc, ycc, start_closest_tri, start_closest_node, finish_closest_tri, finish_closest_node, w, min_corridor_width, denylist_route_chain_ids_incl_chains_leaving_node);
 
