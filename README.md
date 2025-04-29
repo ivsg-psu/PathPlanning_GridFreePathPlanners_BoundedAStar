@@ -7,8 +7,12 @@ The repo for grid-free path planning using Bounded A-star algorithm, first start
 - `fcn_algorithm_bound_Astar.m` – core planning algorithm
 - `fcn_algorithm_straight_planner.m` – alternative planner that only plans a straight path without diverting around obstacles
 - `fcn_algorithm_setup_bound_Astar_for_tiled_polytopes.m` – wraps and calls planning algorithms.  This is generally the entry point for calling the planner stack.  One purpose of this code is to find the search space boundary which will be explained later.
-- `fcn_visibility_clear_and_blocked_points.m` – creates the visibility graph for the polytope field from the given location
+- `fcn_visibility_clear_and_blocked_points.m` – creates the visibility graph for the polytope field from the given location.  An optional `is_concave` argument  allows for performing self-visibility checks between points on the same polytope which, for convex polytopes, were typically not checked.
 - `fcn_visibility_self_blocked_pts.m` – determines points blocked by the current obstacle (i.e. points that would be visible if the current obstacle was transparent)
+- `fcn_visibility_graph_{add,remove}_obstacle` - tools for adding and removing obstacles to a map without recalculating the entire visibility graph
+- `fcn_algorithm_generate_dilation_robustness_matrix` - a tool for estimating the corridor width, or robustness to obstacle dilation, around each vgraph edge
+- `fcn_util_load_test_map` - a simple utility for loading flood plain test fixtures with their associated starts and finishes
+
 
 ## Key Features
 ### The Elliptical Boundary
@@ -31,7 +35,14 @@ For the purposes of replanning the path after probing an obstacle (i.e. navigati
 
 ![image](https://user-images.githubusercontent.com/67085752/200881638-3bcec94f-3e0a-45c1-9543-50afc77c5c3d.png)
 
+### Replanning
 
+There are demonstrations for replanning from partially along an initial route which may be planned in order to mitigate replanning risk, e.g., the route may prioritize passing through wider corridors or visiting nodes with more departing edges such that replanning is more possible.
+The main scripts demonstrating this behavior are:
+- `script_test_polytope_canyon_replan` - this script plans two paths: (1) a distance reducing path and (2) a path that visits more connected nodes.  Then random edges are deleted from the vgraph and replanning is triggered from midway down the initial path.  The final paths are then compared to show that replanning from the more connected path is less costly and more likely to be successful.
+- `script_test_polytope_canyon_replan_with_dilation` - This script is very similar to the above but it evaluates a corridor width cost function instead of a connectivity cost function.  This script plans two paths: (1) a distance reducing path and (2) a path that routes down edges with more free space around them.  Then obstacles are dilated to close off narrow corridors and replanning is triggered from midway down the initial path.  The final paths are then compared to show that replanning from the path that uses wider corridors is less costly and more likely to be successful.
+- `script_test_polytope_canyon_corridor_width_incentive_weighting` - This script plans a series of paths using a distance reducing and corridor width incentivizing cost function with a range of different relative weightings on the cost function terms to show how this affects the resulting paths.
+- `script_test_alternate_path_generation` - This script uses corridor width as a constraint rather than an objective and plans a series of paths, each with wider corridors to provide alternate routes if a route is too narrow to navigate.
 
 ## Planner Modes
 The argument `planner_mode` for `fcn_algorithm_bound_Astar` and `fcn_algorithm_setup_bound_Astar_for_tiled_polytopes` can be used to modify the planner modality to one of the following:
