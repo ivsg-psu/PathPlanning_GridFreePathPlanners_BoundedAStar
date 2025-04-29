@@ -1,28 +1,19 @@
 function [route_full, route_length, route_choke] = fcn_MedialAxis_replanWrapper(replan_point, finish_xy, min_corridor_width, length_cost_weight)
 % fcn_MedialAxis_replannerWrapper
 %
-% This function wraps the basic call stack to perform planning in thethe medial axis graph.
+% This function wraps the basic call stack to perform replanning in the medial axis graph.  This function would typically be called after calling fcn_MedialAxis_plannerWrapper
 % The functions called herein are called individually in script_test_voronoi_planning.m
 %
 % FORMAT:
 %
-% [route_full, route_length, route_choke] = fcn_MedialAxis_plannerWrapper(polytope_vertices, start_xy, finish_xy, boundary_verts, min_corridor_width, length_cost_weight)
+% [route_full, route_length, route_choke] = fcn_MedialAxis_replanWrapper(replan_point, finish_xy, min_corridor_width, length_cost_weight)
 %
 %
 % INPUTS:
-% polytope_vertices - 1xP cell array where P is the number of polytopes.
-%   Each cell contains a Vx2 matrix of doubles where V is the number of vertices
-%   in a polytope.  Column 1 contains x-values and column 2 contains y-values.
 %
-% start_xy - 1x2 vector of doubles defining the (x,y) coordinates of the start position
+% replan_point - 1x2 vector of doubles defining the (x,y) coordinates of the position from which to replan
 %
 % finish_xy - 1x2 vector of doubles defining the (x,y) coordinates of the start position
-%
-% boundary_verts - Bx2 matrix containing the (x,y) coordinates of the B-vertices forming a boundary
-%   around the polytope obstacles in the map.  The boundary does not need to contain the start or finish.
-%   The boundary is necessary as the medial axis is defined as the furthest distance from the obstacles in the
-%   domain of the free space, thus the medial axis would be infinitely far from the obstacles on the edge of the map
-%   without a boundary.
 %
 % min_corridor_width - double value of the narrowest corridor that should be routed through by the planner
 %   setting to 0 will use all available corridors without restriction
@@ -56,7 +47,7 @@ function [route_full, route_length, route_choke] = fcn_MedialAxis_replanWrapper(
 % EXAMPLES:
 %
 % See the script: script_test_voronoi_planning_interface for an example of the script in use.
-%        script_test_voronoi_planning - shows the functions wrapped by fcn_MedialAxis_plannerWrapper in use independently
+%        script_test_voronoi_planning - shows the functions wrapped by fcn_MedialAxis_replanWrapper in use independently
 % See ../Documentation/medial_axis_planning.pptx for a flow chart of the medial axis/voronoi planning stack
 %
 % This function was written Oct 2024 by Steve Harnett
