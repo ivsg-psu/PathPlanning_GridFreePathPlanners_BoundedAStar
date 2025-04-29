@@ -12,6 +12,7 @@ The repo for grid-free path planning using Bounded A-star algorithm, first start
 - `fcn_visibility_graph_{add,remove}_obstacle` - tools for adding and removing obstacles to a map without recalculating the entire visibility graph
 - `fcn_algorithm_generate_dilation_robustness_matrix` - a tool for estimating the corridor width, or robustness to obstacle dilation, around each vgraph edge
 - `fcn_util_load_test_map` - a simple utility for loading flood plain test fixtures with their associated starts and finishes
+- `fcn_polytopes_generate_all_pts_table` - this function contains a common dozen lines of boilerplate code block that was used in many places in this repo to generate a table of all possible points A* could visit from an input of polytopes, starts, and finishes.
 
 
 ## Key Features
