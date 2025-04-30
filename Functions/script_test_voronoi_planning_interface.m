@@ -1,4 +1,5 @@
 % script_test_voronoi_planning_interface
+% tests fcn_MedialAxis_plannerWrapper and fcn_MedialAxis_replanWrapper
 % test script of planning along voronoi diagram edges via a wrapper function that encompases the
 % medial axis planning stack
 clear; close all; clc
@@ -47,6 +48,7 @@ xlabel('x [m]')
 ylabel('y [m]')
 title(sprintf('path length: %.2f [m]\n narrowest corridor: %.2f [m]',route_length, route_choke));
 
+%% replan wrapper called here
 replan_point = [2, 2.5];
 [new_route,~ ,~] = fcn_MedialAxis_replanWrapper(replan_point, finish, min_corridor_width, length_cost_weight);
 plot(replan_point(1), replan_point(2), 'dm','MarkerFaceColor','m','MarkerSize',6)

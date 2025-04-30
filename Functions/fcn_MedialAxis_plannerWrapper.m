@@ -1,7 +1,7 @@
 function [route_full, route_length, route_choke] = fcn_MedialAxis_plannerWrapper(polytope_vertices, start_xy, finish_xy, boundary_verts, min_corridor_width, length_cost_weight)
 % fcn_MedialAxis_plannerWrapper
 %
-% This function wraps the basic call stack to perform planning in thethe medial axis graph.
+% This function wraps the basic call stack to perform planning in the medial axis graph.
 % The functions called herein are called individually in script_test_voronoi_planning.m
 %
 % FORMAT:
@@ -59,13 +59,13 @@ function [route_full, route_length, route_choke] = fcn_MedialAxis_plannerWrapper
 %        script_test_voronoi_planning - shows the functions wrapped by fcn_MedialAxis_plannerWrapper in use independently
 % See ../Documentation/medial_axis_planning.pptx for a flow chart of the medial axis/voronoi planning stack
 %
-% This function was written Oct 2024 by Steve Harnett
+% This function was written Nov 2024 by Steve Harnett
 % Questions or comments? contact sjharnett@psu.edu
 
 %
 % REVISION HISTORY:
 %
-% 2024, Spring by Steve Harnett
+% 2024, November by Steve Harnett
 % -- first write of function
 %
 % TO DO:
