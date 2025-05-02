@@ -1,5 +1,5 @@
-% script_test_voronoi_planning
-% test script of planning along voronoi diagram edges
+% script_test_voronoi_compare_vgraph_corridor_width
+% demo script comparing corridor width as estimtated from vgraph to estiamted from medial axis
 clear; close all; clc
 
 addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));

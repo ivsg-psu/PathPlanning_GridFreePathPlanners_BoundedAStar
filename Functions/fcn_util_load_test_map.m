@@ -90,7 +90,7 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
 
     resolution_scale = 1; % default to 1 unless over written somewhere
     length_cost_weight = 1/6; % default to 1/6 unless over written somewhere
-    navigated_portion = 0.4; % default to 1/6 unless over written somewhere
+    navigated_portion = 0.4; % default to 40% unless over written somewhere
 
     %% load test fixtures for polytope map rather than creating it here
     if map_idx == 1 % generic canyon map
