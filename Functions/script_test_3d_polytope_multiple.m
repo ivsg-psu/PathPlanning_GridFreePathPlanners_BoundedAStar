@@ -26,9 +26,11 @@ load(strcat(pwd,'\..\Test_Fixtures\shrunk_polytopes.mat'));
 
 flag_do_plot = 1;
 flag_do_slow_plot = 0;
+
 flag_do_animation = 0;
 do_phantom = 1;
 rng(10)
+
 if flag_do_plot
     %% plot the map
     figure; hold on; box on;
@@ -222,20 +224,20 @@ end
 
 function INTERNAL_fcn_format_timespace_plot()
     % define figure properties
-    opts.width      = 8.8;
-    opts.height     = 6;
-    opts.fontType   = 'Times New Roman';
-    opts.fontSize   = 14;
-    fig = gcf;
-    % scaling
-    fig.Units               = 'centimeters';
-    fig.Position(3)         = opts.width;
-    fig.Position(4)         = opts.height;
+    % opts.width      = 8.8;
+    % opts.height     = 6;
+    % opts.fontType   = 'Times New Roman';
+    % opts.fontSize   = 14;
+    % fig = gcf;
+    % % scaling
+    % fig.Units               = 'centimeters';
+    % fig.Position(3)         = opts.width;
+    % fig.Position(4)         = opts.height;
 
-    % set text properties
-    set(fig.Children, ...
-        'FontName',     'Times New Roman', ...
-        'FontSize',     14);
+    % % set text properties
+    % set(fig.Children, ...
+    %     'FontName',     'Times New Roman', ...
+    %     'FontSize',     14);
 
     % remove unnecessary white space
     set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))

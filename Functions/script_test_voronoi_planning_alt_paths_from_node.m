@@ -9,6 +9,7 @@ addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 %% mission options
 map_idx = 7;
 flag_do_plot = 1;
+flag_do_2nd_order_encirclement = 1;
 % load map
 [shrunk_polytopes, start_init, finish_init, resolution_scale] = fcn_util_load_test_map(map_idx, 1);
 
@@ -24,8 +25,8 @@ flag_do_plot = 1;
 
 %% planning through triangle graph
 % add start and goal to medial axis graph
-start_xy = start_init;
-finish_xy = finish_init;
+start_xy = start_init(1,:);
+finish_xy = finish_init(1,:);
 % add start and finish to nearest medial axis edge
 [adjacency_matrix, triangle_chains, nodes, start_closest_tri, start_closest_node] = fcn_MedialAxis_addPointToAdjacencyMatrixAndTriangleChains(start_xy, adjacency_matrix, triangle_chains, nodes, xcc, ycc, max_side_lengths_per_tri);
 [adjacency_matrix, triangle_chains, nodes, finish_closest_tri, finish_closest_node] = fcn_MedialAxis_addPointToAdjacencyMatrixAndTriangleChains(finish_xy, adjacency_matrix, triangle_chains, nodes, xcc, ycc, max_side_lengths_per_tri);
@@ -64,6 +65,26 @@ idx_of_start_node = route(step,3); % third column is node id
 % generate routes using every departing edge from the node of interest
 [alternate_routes, alternate_routes_nodes, alternate_routes_chain_ids, smallest_corridors, route_lengths] = fcn_MedialAxis_generateAltRoutesFromNode(idx_of_start_node, adjacency_matrix, triangle_chains, nodes, xcc, ycc, finish_xy, finish_closest_tri, finish_closest_node, w, min_corridor_width, denylist_route_chain_ids);
 
+if flag_do_2nd_order_encirclement
+    denylist_route_chain_ids = []; % no need to manually block edge
+    denylist_route_chain_ids = [denylist_route_chain_ids alternate_routes_chain_ids{1}(1)];
+    denylist_route_chain_ids = [denylist_route_chain_ids alternate_routes_chain_ids{2}(1)];
+    denylist_route_chain_ids = [denylist_route_chain_ids alternate_routes_chain_ids{3}(1)];
+    denylist_route_chain_ids = [denylist_route_chain_ids alternate_routes_chain_ids{1}(2)];
+    denylist_route_chain_ids = [denylist_route_chain_ids alternate_routes_chain_ids{2}(2)];
+    denylist_route_chain_ids = [denylist_route_chain_ids alternate_routes_chain_ids{3}(2)];
+    denylist_route_chain_ids =  denylist_route_chain_ids';
+    for i = 1:3
+        alt_route_of_interest = alternate_routes_nodes{i}; % pop off one of the 3 alternate routes
+        second_order_node = alt_route_of_interest(2,3); % want to go one step back (hence 2) and pick the node (hence 3)
+        % need to denylist chain IDs from initial alternate route set
+        [sec_alternate_routes, sec_alternate_routes_nodes, sec_alternate_routes_chain_ids, sec_smallest_corridors, sec_route_lengths] = fcn_MedialAxis_generateAltRoutesFromNode(second_order_node, adjacency_matrix, triangle_chains, nodes, xcc, ycc, finish_xy, finish_closest_tri, finish_closest_node, w, min_corridor_width, denylist_route_chain_ids);
+        alternate_routes{end+1} = sec_alternate_routes{1};
+        alternate_routes{end+1} = sec_alternate_routes{2};
+        alternate_routes{end+1} = sec_alternate_routes{3};
+    end
+end
+
 %% plot alternate routes
 figure; hold on; box on;
 leg_str = {};
@@ -86,7 +107,7 @@ for i = 1:length(alternate_routes)
         continue
     end
     plot(route_to_plot(:,1),route_to_plot(:,2),'LineWidth',length(alternate_routes)+1-i);
-    leg_str{end+1} = sprintf('route %i, corridors > %.3f [km]',i,smallest_corridors(i));
+    leg_str{end+1} = sprintf('route %i',i+1);
 end
 for j = 2:length(shrunk_polytopes)
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
@@ -120,7 +141,7 @@ for i = 1:length(alternate_routes)
         continue
     end
     plot(route_to_plot(:,1),route_to_plot(:,2),'k--','LineWidth',2);
-    leg_str{end+1} = sprintf('route %i, corridors > %.3f [km]',i,smallest_corridors(i));
+    leg_str{end+1} = sprintf('route %i',i+1);
 end
 for j = 2:length(shrunk_polytopes)
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
@@ -130,4 +151,47 @@ for i = 1:length(shrunk_polytopes)-2
     leg_str{end+1} = '';
 end
 legend(leg_str,'Location','best');
+title(strcat(sprintf('%i paths')));
+
+%% plot target entrapment/encirclement
+figure; hold on; box on;
+leg_str = {};
+% plot(start_xy(1),start_xy(2),'xg','MarkerSize',10);
+plot(finish_xy(1),finish_xy(2),'xg','MarkerSize',10);
+% plot(start(1),start(2),'.g','MarkerSize',10);
+plot(finish(1),finish(2),'.g','MarkerSize',10);
+% leg_str{end+1} = 'start';
+leg_str{end+1} = 'start';
+% leg_str{end+1} = 'start node';
+leg_str{end+1} = 'start node';
+xlabel('x [km]');
+ylabel('y [km]');
+route_to_plot = route_full;
+% plot(route_to_plot(:,1),route_to_plot(:,2),'LineWidth',length(alternate_routes)+1);
+route_counter = 1;
+% leg_str{end+1} = sprintf('route 1');
+skip_list = []; % useful to skip plotting paths that clutter the figure
+for i = 1:length(alternate_routes)
+    if ismember(i,skip_list)
+        continue
+    else
+        route_to_plot = alternate_routes{i};
+        if isnan(route_to_plot) % if the route wasn't calculated, just remove it
+            continue
+        end
+        plot(route_to_plot(:,1),route_to_plot(:,2),'LineWidth',length(alternate_routes)+1-i);
+        leg_str{end+1} = sprintf('route %i',route_counter);
+        route_counter = route_counter + 1;
+    end
+end
+for j = 2:length(shrunk_polytopes)
+    fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
+end
+leg_str{end+1} = 'obstacles';
+for i = 1:length(shrunk_polytopes)-2
+    leg_str{end+1} = '';
+end
+plot(xcc(nodes(idx_of_start_node)),ycc(nodes(idx_of_start_node)),'sr','MarkerFaceColor','r','MarkerSize',10)
+leg_str{end+1} = 'target';
+legend(leg_str,'Location','southwest');
 title(strcat(sprintf('%i paths')));
