@@ -1,4 +1,4 @@
-function [is_reachable, num_steps, rgraph_total] = fcn_check_reachability(vgraph,start,finish)
+function [is_reachable, num_steps, rgraph_total] = fcn_check_reachability(vgraph,start_id,finish_id)
 % fcn_check_reachability
 %
 % From the visibility graph describing node visible from each node,
@@ -13,9 +13,9 @@ function [is_reachable, num_steps, rgraph_total] = fcn_check_reachability(vgraph
 %
 % INPUTS:
 %
-%   start: the start point vector (x,t,t,id)
+%   start_id: integer ID of the start point
 %
-%   finish: the finish point matrix of all valid finishes where each row is a single finish point vector (x,y,t,id)
+%   finish_id: integer IDs of the finish points
 %
 %   vgraph: the visibility graph as an nxn matrix where n is the number of points (nodes) in the map.
 %       A 1 is in position i,j if point j is visible from point i.  0 otherwise.
@@ -52,8 +52,6 @@ function [is_reachable, num_steps, rgraph_total] = fcn_check_reachability(vgraph
 %
 % -- fill in to-do items here.
     num_pts = size(vgraph,1);
-    start_id = start(4);
-    finish_id = finish(:,4);
     start_id_repeated = ones(size(finish_id,1),size(finish_id,2))*start_id; % duplicate start IDs if multiple finishes
     is_reachable = 0; % initialize assuming not reachable
     rgraph_total = zeros(num_pts);

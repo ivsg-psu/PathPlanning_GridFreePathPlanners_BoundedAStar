@@ -74,7 +74,7 @@ try % try block the entire function so if it fails for being inside a polytope, 
 if nargin ~= 4
     error('Incorrect number of arguments');
 end
-% TODO @sjharnett replace bug with estimated R_lc function to define boundary in
+% TODO @sjharnett replace bug planner with estimated R_lc function to define boundary in
 % new heuristic bounded A*
 %% starting values
 max_dist = 0; % start the max_dist at 0

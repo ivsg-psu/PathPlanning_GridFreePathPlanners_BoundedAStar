@@ -7,8 +7,13 @@ The repo for grid-free path planning using Bounded A-star algorithm, first start
 - `fcn_algorithm_bound_Astar.m` – core planning algorithm
 - `fcn_algorithm_straight_planner.m` – alternative planner that only plans a straight path without diverting around obstacles
 - `fcn_algorithm_setup_bound_Astar_for_tiled_polytopes.m` – wraps and calls planning algorithms.  This is generally the entry point for calling the planner stack.  One purpose of this code is to find the search space boundary which will be explained later.
-- `fcn_visibility_clear_and_blocked_points.m` – creates the visibility graph for the polytope field from the given location
+- `fcn_visibility_clear_and_blocked_points.m` – creates the visibility graph for the polytope field from the given location.  An optional `is_concave` argument  allows for performing self-visibility checks between points on the same polytope which, for convex polytopes, were typically not checked.
 - `fcn_visibility_self_blocked_pts.m` – determines points blocked by the current obstacle (i.e. points that would be visible if the current obstacle was transparent)
+- `fcn_visibility_graph_{add,remove}_obstacle` - tools for adding and removing obstacles to a map without recalculating the entire visibility graph
+- `fcn_algorithm_generate_dilation_robustness_matrix` - a tool for estimating the corridor width, or robustness to obstacle dilation, around each vgraph edge
+- `fcn_util_load_test_map` - a simple utility for loading flood plain test fixtures with their associated starts and finishes
+- `fcn_polytopes_generate_all_pts_table` - this function contains a common dozen lines of boilerplate code block that was used in many places in this repo to generate a table of all possible points A* could visit from an input of polytopes, starts, and finishes.
+
 
 ## Key Features
 ### The Elliptical Boundary
@@ -31,7 +36,14 @@ For the purposes of replanning the path after probing an obstacle (i.e. navigati
 
 ![image](https://user-images.githubusercontent.com/67085752/200881638-3bcec94f-3e0a-45c1-9543-50afc77c5c3d.png)
 
+### Replanning
 
+There are demonstrations for replanning from partially along an initial route which may be planned in order to mitigate replanning risk, e.g., the route may prioritize passing through wider corridors or visiting nodes with more departing edges such that replanning is more possible.
+The main scripts demonstrating this behavior are:
+- `script_test_polytope_canyon_replan` - this script plans two paths: (1) a distance reducing path and (2) a path that visits more connected nodes.  Then random edges are deleted from the vgraph and replanning is triggered from midway down the initial path.  The final paths are then compared to show that replanning from the more connected path is less costly and more likely to be successful.
+- `script_test_polytope_canyon_replan_with_dilation` - This script is very similar to the above but it evaluates a corridor width cost function instead of a connectivity cost function.  This script plans two paths: (1) a distance reducing path and (2) a path that routes down edges with more free space around them.  Then obstacles are dilated to close off narrow corridors and replanning is triggered from midway down the initial path.  The final paths are then compared to show that replanning from the path that uses wider corridors is less costly and more likely to be successful.
+- `script_test_polytope_canyon_corridor_width_incentive_weighting` - This script plans a series of paths using a distance reducing and corridor width incentivizing cost function with a range of different relative weightings on the cost function terms to show how this affects the resulting paths.
+- `script_test_alternate_path_generation` - This script uses corridor width as a constraint rather than an objective and plans a series of paths, each with wider corridors to provide alternate routes if a route is too narrow to navigate.
 
 ## Planner Modes
 The argument `planner_mode` for `fcn_algorithm_bound_Astar` and `fcn_algorithm_setup_bound_Astar_for_tiled_polytopes` can be used to modify the planner modality to one of the following:
@@ -59,3 +71,16 @@ The argument `planner_mode` for `fcn_algorithm_bound_Astar` and `fcn_algorithm_s
 
 ![image](https://user-images.githubusercontent.com/67085752/200880072-0354dd56-1f0a-415a-afc0-22bdd5975bb2.png)
 ![image](https://user-images.githubusercontent.com/67085752/200880027-b5f986d4-0c2b-436c-836d-2c4f9f303293.png)
+
+## Cost Functions
+There are numerous cost functions that can be used when planning.  To see how some of these behave, there is an interactive GUI here for tuning cost function terms and viewing the resulting paths: `Functions\app_gui_cost_function_tuning_front_end.mlapp`.
+An outline of some of the cost functions and tools available for incentivizing different planner behaviors is below.  Note this is not an apples-to-apples list of different objective functions that can be interchanged with each other as some of these are fundamentally different planning paradigms. For example, the length cost matrix in row 1 and the visibility cost matrix in row 5 are both nxn matrices and can be linearly combined but the Pagan Path Planner in row 3 is a route post processer that operates in a fundamentally different manner.  The path angle penalty in row 4 is a cost placed on every pair of edges rather than a cost placed on each individual edge, like length cost, so while it can be used at the same time as length cost to reduce path length and path turns, they are not 1:1 cost functions that can be directly compared or interchanged.
+| Problem   |      Goal      |  Cost Function/tool | Location |
+|----------|---------|------|------|
+| in a spatial or timespace map, long paths can be slow to navigate and costly in terms of fuel | penalize path length | path length cost | `Functions\fcn_algorithm_generate_cost_graph.m` |
+| in a timespace map, high mission duration is undesirable | penalize expected path navigation time | path time cost | `Functions\fcn_algorithm_generate_cost_graph.m` |
+| in a spatial map, speed at which the mission is executed should be increaed | modify a point to point path to navigate it at maximum speed | Pagan Path Planner for transforming linear path segments to high-speed curves | `PathPlanning_PathKinematics_PathKinematicsClass` |
+| turning can slow down vehicles and be energy expensive in the case of skid-steer vehicles | limit turns in the path | add a cost term for change in angle between path segments | alpha version of this functionality is here: `Functions\fcn_algorithm_bound_Astar.m:305` |
+| obstacles that are not mapped can block edges that were thought to be available at the time of planning thus making rerouting difficult |  want to methodically lower the cost of visiting nodes with more departing edges | visibility/rechability based cost function | Example of this is in use here: `Functions\script_test_polytope_canyon_replan.m:148` |
+| mapped obstacles may have scale or position errors thus narrow spaces near obstacles may be cut off, making rereouring difficult | want to incentivize being in more open space | corridor width cost function will incentivize routing down wider corridors | cost matrix can be generated here: `Functions\fcn_algorithm_generate_dilation_robustness_matrix.m` this is shown in use here: `Functions\script_test_polytope_canyon_replan_with_dialation.m` |
+| obstacle fields may not be binary obstacle and free space maps, there may be zones with higher cost | need to represent cost scaling via polytopes that are traversable | cost function scaled by polytope cost | alpha version of this functionality is here: `Functions\fcn_algorithm_bound_Astar.m:278` multiple layers of overlapping polytopes can also be flattened to have their costs combined: `PathPlanning_MapTools_MapGenClassLibrary\Functions\fcn_MapGen_flattenPolytopeMap.m` |

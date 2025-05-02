@@ -55,7 +55,7 @@ function fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, ro
 
     % loop through all time steps
     for i = 1:num_dense_times
-        hold on; box on; title(sprintf('Animation of timespace path planning\n %.2f frame duration',dt/10))
+        hold on; box on; title(sprintf('Animation of timespace path planning\n %.2f min per frame', dt))
         % define figure properties
         opts.width      = 8;
         opts.height     = 6;
@@ -86,7 +86,10 @@ function fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, ro
             cur_time_locations = find(verts(:,3) == cur_time); % only care about x and y coords at this time
             cur_x = verts(cur_time_locations,1);
             cur_y = verts(cur_time_locations,2);
-            fill(cur_x,cur_y,'b','FaceAlpha',0.2);
+            P = [cur_x, cur_y];
+            k = convhull(P);
+            fill(P(k,1),P(k,2),'b','FaceAlpha',0.2);
+            % fill(cur_x,cur_y,'b','FaceAlpha',0.2);
         end
 
         cur_route_idx = find(route_dense(:,3) == cur_time); % find route waypoint based on current time
@@ -102,7 +105,8 @@ function fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, ro
         p_finish_traj = plot(finish(:,1),finish(:,2),'--r'); % plot past and future trajectory of finish if it moves
         % first call of the gif function is different from subsequent calls
         if i == 1
-            gif('timespace_animation.gif','LoopCount',1,'DelayTime',dt/10) % notice frame duration is dt/10 to speed up animations for convenient viewing
+            % gif('timespace_animation.gif','LoopCount',1,'DelayTime',dt/10) % notice frame duration is dt/10 to speed up animations for convenient viewing
+            gif('timespace_animation.gif','DelayTime',dt/10) % notice frame duration is dt/10 to speed up animations for convenient viewing
         else
             gif
         end

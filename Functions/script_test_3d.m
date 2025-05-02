@@ -47,7 +47,6 @@ verts = [1 1 0 1; 2 1 0 2;  3 1 20 2; 2 1 20 1]; % add IDs to vertices
 time_space_polytopes(1).vertices = verts; % create a single polytope for the line
 [verts, time_space_polytopes] = fcn_interpolate_polytopes_in_time(time_space_polytopes,dt);
 
-
 %% this code is required to vectorize the edge, triangle intersection checking
 verts = verts(:,1:3);
 all_pts = [verts; start; finish];
@@ -73,9 +72,11 @@ speed_limit = 100;
 vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit,time_space_polytopes, dt);
 start = all_pts(num_verts+1,:);
 finish = all_pts(num_verts+2:end,:);
-[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start,finish);
+[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(:,4),finish(:,4));
 
-mode = 'time or z only';
+% mode = 'time or z only';
+mode = 'xyz or xyt';
+% mode = 'xy spatial only';
 [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts(1:num_verts,:), all_pts(num_verts+1,:), all_pts(num_verts+2:end,:), mode);
 
 %% plan route
@@ -164,10 +165,14 @@ if flag_do_plot
     view([154 12])
 end
 
-route_dense = fcn_interpolate_route_in_time(route,dt);
-
 if flag_do_animation
-    fcn_animate_timespace_path_plan(start, finish, verts, route_dense, dt, [-1 3],[0 4]);
+    %% change some things for the animation...
+    dt = 0.25; % use denser interpolation for more frames
+    route_dense = fcn_interpolate_route_in_time(route,dt); % interpolate the route
+    [verts, time_space_polytopes] = fcn_interpolate_polytopes_in_time(time_space_polytopes,dt); % interpolate the polytopes
+    finish = [2*ones(11,1) 2*ones(11,1) (0:2:21)']; % show the finish at all times
+    finish = fcn_interpolate_route_in_time(finish,dt); % interpolate the finish
+    fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, route_dense, dt,[0 4], [-1 3]);
 end
 
 

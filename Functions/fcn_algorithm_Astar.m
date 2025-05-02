@@ -11,7 +11,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, star
 %
 % INPUTS:
 %
-%   start: the start point vector (x,t,id)
+%   start: the start point vector (x,y,id)
 %
 %   finish: the finish point matrix of all valid finishes where each row is a single finish point vector (x,y,id)
 %
@@ -34,7 +34,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, star
 %
 %     cost: the total cost of the selected route
 %
-%    route: the matrix as produced by fcn_algorithm_Astar3d consisting of waypoints.  Each row is a
+%    route: the matrix as produced by fcn_algorithm_Astar consisting of waypoints.  Each row is a
 %    waypoint, and each column is x, y, and point ID
 %
 %
@@ -133,7 +133,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, star
                 % at that nodes ID (i.e. parents(5) = 3 implies the best way to reach 5 is through 3,
                 % thus you could then look at parents(3) to find the best way to reach 3 until you have
                 % reached the start and therefore recovered the optimal path)
-                if cur_pt_idx == start(4)
+                if cur_pt_idx == start(3)
                     return
                 end
                 while parents(cur_pt_idx) ~= start(3)
@@ -149,7 +149,11 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, star
             else
             % if the finish is not a successor of q, find the cost of reaching the successor via q
             % this is the cost to reach q + the cost from q to successor
-            tentative_cost = open_set_gs(idx_of_q) + possible_gs(successor(3),q(3));
+            tentative_cost = open_set_gs(idx_of_q) + possible_gs(q(3),successor(3));
+            if isnan(possible_gs(q(3),successor(3)))
+                my_err = sprintf('cost to go from node %i to node %i is undefined or nan',q(3),successor(3));
+                error(my_err)
+            end
             % if this is less than the last recorded cost to reach successor,
             % update the cost to reach successor, add successor to the open set,
             % and set successor's parent to q

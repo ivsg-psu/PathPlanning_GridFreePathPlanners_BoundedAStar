@@ -65,7 +65,7 @@ end
 
 %% define start and finish
 start = [0 0.5 0];
-finish = [1 0.5 0; 1 0.2 20]; % moving finish
+finish = [1 0.5 0; 0.7 0.2 20]; % moving finish
 dt = 5;
 finish = fcn_interpolate_route_in_time(finish,dt);
 num_finish_pts = size(finish,1);
@@ -104,7 +104,7 @@ finish_with_ids = all_pts(num_verts+num_starts+1:num_verts+num_starts+num_finish
 all_pts_with_ids_no_start_and_fin = all_pts(1:num_verts,:);
 
 %% form reachability graph
-[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph, start_with_ids, finish_with_ids);
+[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph, start_with_ids(:,4), finish_with_ids(:,4));
 
 %% make cgraph
 % mode = "xy spatial only";
@@ -212,28 +212,33 @@ time2 = toc(outer_time)
 times2(time_sample_iter) = time2;
 end
 if flag_do_animation
+    %% change some things for the animation...
+    dt = 0.25; % use denser interpolation for more frames
+    route_dense = fcn_interpolate_route_in_time(route,dt); % interpolate the route
+    [verts, time_space_polytopes] = fcn_interpolate_polytopes_in_time(time_space_polytopes,dt); % interpolate the polytopes
+    finish = fcn_interpolate_route_in_time(finish,dt); % interpolate the finish
     fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, route_dense, dt, [0 1], [0 1]);
 end
 
 function INTERNAL_fcn_format_timespace_plot()
-    % % define figure properties
-    % opts.width      = 8.8;
-    % opts.height     = 6;
-    % opts.fontType   = 'Times New Roman';
-    % opts.fontSize   = 8;
-    % fig = gcf;
-    % % scaling
-    % fig.Units               = 'centimeters';
-    % fig.Position(3)         = opts.width;
-    % fig.Position(4)         = opts.height;
+    % define figure properties
+    opts.width      = 8.8;
+    opts.height     = 6;
+    opts.fontType   = 'Times New Roman';
+    opts.fontSize   = 14;
+    fig = gcf;
+    % scaling
+    fig.Units               = 'centimeters';
+    fig.Position(3)         = opts.width;
+    fig.Position(4)         = opts.height;
 
-    % % set text properties
-    % set(fig.Children, ...
-    %     'FontName',     'Times New Roman', ...
-    %     'FontSize',     8);
+    % set text properties
+    set(fig.Children, ...
+        'FontName',     'Times New Roman', ...
+        'FontSize',     14);
 
-    % % remove unnecessary white space
-    % set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+    % remove unnecessary white space
+    set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
     xlabel('x [km]')
     ylabel('y [km]')
     zlabel('t [min]')
