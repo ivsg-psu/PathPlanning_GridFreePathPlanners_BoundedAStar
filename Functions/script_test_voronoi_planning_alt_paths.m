@@ -13,6 +13,9 @@ flag_do_plot = 1;
 flag_do_animation = 0;
 flag_do_plot_slow = 0;
 [shrunk_polytopes, start_init, finish_init, resolution_scale] = fcn_util_load_test_map(map_idx, 1);
+% if the map loaded contains multiple starts and finishes, we only want to use the first one
+start_init = start_init(1,1:2);
+finish_init = finish_init(1,1:2);
 
 %% constrained delaunay triangulation
 [adjacency_matrix, triangle_chains, nodes, xcc, ycc, tr] = fcn_MedialAxis_makeAdjacencyMatrixAndTriangleChains(shrunk_polytopes, resolution_scale, flag_do_plot);
