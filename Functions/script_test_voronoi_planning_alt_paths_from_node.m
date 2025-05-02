@@ -107,7 +107,7 @@ for i = 1:length(alternate_routes)
         continue
     end
     plot(route_to_plot(:,1),route_to_plot(:,2),'LineWidth',length(alternate_routes)+1-i);
-    leg_str{end+1} = sprintf('route %i, corridors > %.3f [km]',i,smallest_corridors(i));
+    leg_str{end+1} = sprintf('route %i',i+1);
 end
 for j = 2:length(shrunk_polytopes)
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
@@ -141,7 +141,7 @@ for i = 1:length(alternate_routes)
         continue
     end
     plot(route_to_plot(:,1),route_to_plot(:,2),'k--','LineWidth',2);
-    leg_str{end+1} = sprintf('route %i, corridors > %.3f [km]',i,smallest_corridors(i));
+    leg_str{end+1} = sprintf('route %i',i+1);
 end
 for j = 2:length(shrunk_polytopes)
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
@@ -168,14 +168,21 @@ xlabel('x [km]');
 ylabel('y [km]');
 route_to_plot = route_full;
 % plot(route_to_plot(:,1),route_to_plot(:,2),'LineWidth',length(alternate_routes)+1);
+route_counter = 1;
 % leg_str{end+1} = sprintf('route 1');
+skip_list = []; % useful to skip plotting paths that clutter the figure
 for i = 1:length(alternate_routes)
-    route_to_plot = alternate_routes{i};
-    if isnan(route_to_plot) % if the route wasn't calculated, just remove it
+    if ismember(i,skip_list)
         continue
+    else
+        route_to_plot = alternate_routes{i};
+        if isnan(route_to_plot) % if the route wasn't calculated, just remove it
+            continue
+        end
+        plot(route_to_plot(:,1),route_to_plot(:,2),'LineWidth',length(alternate_routes)+1-i);
+        leg_str{end+1} = sprintf('route %i',route_counter);
+        route_counter = route_counter + 1;
     end
-    plot(route_to_plot(:,1),route_to_plot(:,2),'LineWidth',length(alternate_routes)+1-i);
-    leg_str{end+1} = sprintf('route %i',i);
 end
 for j = 2:length(shrunk_polytopes)
     fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
@@ -186,5 +193,5 @@ for i = 1:length(shrunk_polytopes)-2
 end
 plot(xcc(nodes(idx_of_start_node)),ycc(nodes(idx_of_start_node)),'sr','MarkerFaceColor','r','MarkerSize',10)
 leg_str{end+1} = 'target';
-legend(leg_str,'Location','best');
+legend(leg_str,'Location','southwest');
 title(strcat(sprintf('%i paths')));
