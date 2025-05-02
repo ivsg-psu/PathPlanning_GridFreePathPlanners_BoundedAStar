@@ -168,6 +168,13 @@ The following are the core algorithms that make 3D planning possible:
 
 `fcn_check_reachability.m` : Raises the visibility graph to the powers 1 through N where N is the number of nodes.  The visibility graph raised to the Nth power describes nodes reachable in N steps.  Thus this function can tell whether or not the goal is reachable from the start, and the minimum number of steps to perform this mission.
 
+`fcn_algorithm_create_phantom_goal.m` : Connects all input finishes to a single "phantom goal" point and outputs a new modified vgraph, cost matrix, heuristic vector, points table, and finish point for use with `fcn_algorithm_Astar3d.m`.  The phantom goal transforms the multi-goal problem to a single goal problem. See function docstring for citations to relevant literature.
+
+<pre align="center">
+<img src=".\Images\phantom_goal_distance.png">
+<figcaption>Example of connecting a single phantom goal to multiple valid goal locations when using a distance reducing cost function (right). Without the phantom goal (left) the mission costs more in terms of path length.  The goal points (red) are connected via zero-cost edges (purple lines) to the single phantom goal (purple circle).  The goal circled in green is the actual goal routed through on the way to the phantom goal.</figcaption>
+</pre>
+
 ### Infrastructure
 
 The following are more basic functions that support the above functions:

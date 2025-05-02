@@ -26,8 +26,11 @@ load(strcat(pwd,'\..\Test_Fixtures\shrunk_polytopes.mat'));
 
 flag_do_plot = 1;
 flag_do_slow_plot = 0;
-flag_do_animation = 1;
-rng(5)
+
+flag_do_animation = 0;
+do_phantom = 1;
+rng(10)
+
 if flag_do_plot
     %% plot the map
     figure; hold on; box on;
@@ -38,8 +41,12 @@ if flag_do_plot
          fill(shrunk_polytopes(i).vertices(:,1)',shrunk_polytopes(i).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
     end
 end
-
-tic
+number_of_time_samples = 10;
+times1 = nan(1,number_of_time_samples);
+times2 = nan(1,number_of_time_samples);
+for time_sample_iter = 1:number_of_time_samples
+rng(number_of_time_samples)
+outer_time = tic;
 %% make 2D spatial polytopes into 3D timespace polytopes with velocities, then break into triangular surfels
 max_translation_distance = 0.15;
 final_time = 20;
@@ -108,7 +115,19 @@ mode = 'time or z only';
 [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids, mode);
 
 %% plan route
-[cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids);
+inner_time = tic;
+if do_phantom
+    [vgraph_phantom, cgraph_phantom, hvec_phantom, finish_phantom, all_pts_with_ids_no_start_and_fin_phantom] = fcn_algorithm_create_phantom_goal(vgraph, cgraph, hvec, finish_with_ids, all_pts_with_ids_no_start_and_fin);
+    [cost, route] = fcn_algorithm_Astar3d(vgraph_phantom, cgraph_phantom, 0*hvec_phantom, all_pts_with_ids_no_start_and_fin_phantom, start_with_ids, finish_phantom);
+else
+    [cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids);
+end
+time1 = toc(inner_time);
+times1(time_sample_iter) = time1;
+if do_phantom
+    assert(isnan(route(end,1)))
+    route = route(1:end-1,:);
+end
 % route metrics follow
 total_time = max(route(:,3));
 route_x = route(:,1);
@@ -189,9 +208,11 @@ if flag_do_slow_plot
     end
     view([1 0 0])
 end
-
+return
 route_dense = fcn_interpolate_route_in_time(route,dt);
-toc
+time2 = toc(outer_time)
+times2(time_sample_iter) = time2;
+end
 if flag_do_animation
     %% change some things for the animation...
     dt = 0.25; % use denser interpolation for more frames

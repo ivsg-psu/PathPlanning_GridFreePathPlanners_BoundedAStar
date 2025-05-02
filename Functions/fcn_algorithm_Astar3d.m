@@ -83,7 +83,7 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, all_pts, st
 
     % make new all pts list including start and end
     all_pts_plus_start_and_fin = [all_pts; start; finish];
-
+    all_pts_plus_start_and_fin = sortrows(all_pts_plus_start_and_fin,4);
     % make cost matrix, g - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
     possible_gs = cgraph; % the cost graph is all the possible g values that can be added to the open set
     open_set_gs = inf*ones(1,num_nodes); % initialize costs of open set to infinity
