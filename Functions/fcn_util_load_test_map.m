@@ -201,7 +201,7 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
         points_scrambled = scramble(halton_points,'RR2'); % scramble values
 
         % pick values from halton set
-        Halton_range = [1801 1951];
+        Halton_range = [1801 1851];
         low_pt = Halton_range(1,1);
         high_pt = Halton_range(1,2);
         seed_points = points_scrambled(low_pt:high_pt,:);
@@ -220,7 +220,7 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
         stretched_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(stretched_polytopes);
 
         % shrink polytopes to desired radius
-        des_rad = 1; sigma_radius = 0.2; min_rad = 0.1;
+        des_rad = 2; sigma_radius = 0.4; min_rad = 0.1;
         [polytopes,mu_final,sigma_final] = fcn_MapGen_polytopesShrinkToRadius(stretched_polytopes,des_rad,sigma_radius,min_rad);
 
         clear Halton_range
@@ -306,7 +306,7 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
         datum = 'nad83';
         centre_co_avg_alt = 351.7392; % use average elevation
         lla0 = [40.765144 -77.87615 centre_co_avg_alt]; % approx cato base station location
-        if map_idx == 3
+        if ismember(map_idx,[3,5])
             start = lla2enu([start(2) start(1) centre_co_avg_alt], lla0, 'flat');
             start = start(1:2);
         else
@@ -315,7 +315,7 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
         end
         % start = ll2utm(start(2),start(1),datum);
         start = start/1000;
-        if map_idx == 3
+        if ismember(map_idx,[3,5])
             finish = lla2enu([finish(2) finish(1) centre_co_avg_alt], lla0, 'flat');
             finish = finish(1:2);
         else
@@ -332,7 +332,7 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
             alts = centre_co_avg_alt*ones(size(lats));
             wgs_verts = [];
             for j = 1:length(lats)
-                if map_idx == 3
+                if ismember(map_idx,[3,5])
                     xyz = lla2enu([lats(j),longs(j),alts(j)], lla0, 'flat');
                 else
                     xyz = INTERNAL_WGSLLA2xyz(lats(j),longs(j),alts(j));

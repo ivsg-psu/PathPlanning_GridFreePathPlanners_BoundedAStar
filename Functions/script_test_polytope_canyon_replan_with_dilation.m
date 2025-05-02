@@ -20,8 +20,8 @@ flag_save_plots = 1;
 % map_idx nominal_or_width_based polytope_size_increases polytope_size_increases init_route_length navigated_distance replan_route_length
 data = []; % initialize array for storing results
 %% mission options
-% for map_idx = [7, 8, 9] % Halton maps
-for map_idx = [3, 5, 6, 7, 8, 9] % flood plain maps
+for map_idx = [7, 8, 9] % Halton maps
+% for map_idx = [3, 5, 6] % flood plain maps
     [shrunk_polytopes, start_inits, finish_inits,~, length_cost_weights, navigated_portions] = fcn_util_load_test_map(map_idx); % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
 
     %% get stats for this map to find gap size
@@ -49,7 +49,7 @@ for map_idx = [3, 5, 6, 7, 8, 9] % flood plain maps
         navigated_portion = navigated_portions(mission_idx);
 
         % loop over dilation sizes
-        for polytope_size_increases = [0.01 0.02 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5]% 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9  0.95 1]
+        for polytope_size_increases = [0.01 0.02 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9  0.95 1]
             % loop over the nominal cost function and feature cost function
             for nominal_or_width_based = [1,2]
                 trial_identifier = sprintf('map idx: %i, nominal or corridor-width-based: %i,\npolytope size increase [km]: %.2f',str2num(strcat(num2str(map_idx),num2str(mission_idx))), nominal_or_width_based,polytope_size_increases)
@@ -584,7 +584,7 @@ init_success_data = data(find(~isnan(data(:,5))),:); % find non-nan initial path
 init_success_data_nominal = init_success_data(init_success_data(:,2)==1,:); % of those, find nominal ones
 init_success_data_reachable = init_success_data(init_success_data(:,2)==2,:); % of those, find reachable ones
 % polytope_size_bins = [0.005 0.015 0.03 0.075 0.15 0.25 0.35 0.45 0.55];
-sizes = [0.01 0.02 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 ];%0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9  0.95 1];
+sizes = [0.01 0.02 0.05 0.1 0.15 0.2 0.25 0.3 0.35 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9  0.95 1];
 polytope_size_bins = [0 diff(sizes)./2] + sizes;
 
 figure; hold on; box on;
