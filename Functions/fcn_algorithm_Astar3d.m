@@ -12,7 +12,7 @@ function [cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, all_pts, st
 %
 % INPUTS:
 %
-%   start: the start point vector (x,t,t,id)
+%   start: the start point vector (x,y,t,id)
 %
 %   finish: the finish point matrix of all valid finishes where each row is a single finish point vector (x,y,t,id)
 %
