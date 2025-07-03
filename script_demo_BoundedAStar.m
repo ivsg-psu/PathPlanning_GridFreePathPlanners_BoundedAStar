@@ -53,7 +53,7 @@ end
 
 %% Do we need to set up the work space?
 if ~exist('flag_BoundAStar_Folders_Initialized','var')
-    this_project_folders = {'Functions','Test_Fixtures','Utilities_gif','Utilities_TriangleRayIntersection'}; % {'Functions','Data'};
+    this_project_folders = {'Functions','Test_Fixtures','Utilities_gif','Utilities_TriangleRayIntersection','Example_Map_Generation_Code'}; % {'Functions','Data'};
     fcn_INTERNAL_initializeUtilities(library_name,library_folders,library_url,this_project_folders);  
     flag_BoundAStar_Folders_Initialized = 1;
 end

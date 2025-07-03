@@ -2,10 +2,6 @@ clear
 clc
 close all
 
-%% add necessary directories
-% addpath([pwd '\..\Example_Map_Generation_Code'])
-% addpath([pwd '\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
-
 %% map generation control
 % repetition controls and storage
 repetitions = 10;
@@ -79,7 +75,7 @@ for rep = 1:repetitions
     mode = 'xy spatial only';
     [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode)
 
-    [cost, path] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
+    [cost, path] = fcn_BoundedAStar_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
     % path: series of points [x y point_id obs_id beg_end]
     % cost: path length
     % err: marker indicating if there was an error in setup (1) or not (0)
