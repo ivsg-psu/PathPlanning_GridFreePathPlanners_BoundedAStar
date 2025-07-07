@@ -102,6 +102,8 @@ setenv('MATLABFLAG_BOUNDASTAR_FLAG_DO_DEBUG','0');
 disp('Welcome to the Bounded A-Star library!')
 
 
+
+
 %% Functions follow
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   ______                _   _
