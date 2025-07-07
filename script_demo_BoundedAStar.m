@@ -45,7 +45,7 @@ library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTool
 
 
 %% Clear paths and folders, if needed
-if 1==1
+if 1==0
     clear flag_BoundAStar_Folders_Initialized
     fcn_INTERNAL_clearUtilitiesFromPathAndFolders;
 
@@ -101,6 +101,25 @@ setenv('MATLABFLAG_BOUNDASTAR_FLAG_DO_DEBUG','0');
 
 disp('Welcome to the Bounded A-Star library!')
 
+%% 2d demo scripts
+% script_demo_fcn_BoundedAStar_Astar.m
+% a basic test of a 2D path planning scenario 
+% Generate an obstacle field and calculate an A-star path through it
+%
+% NOTE: should delete script_test_fcn_algorithm_Astar AFTER all codes are
+% tested and confirmed to work.
+
+script_demo_fcn_BoundedAStar_Astar
+
+%% 3d demo scripts that have been checked
+% Tested on 2025_07_07 - works and produces 5 plots that show avoidance of
+% a moving wall. This script is an update of script_test_3d.m written by S.
+% Harnett. 
+% 
+% NOTE: should delete script_test_3d AFTER all codes are tested
+% and confirmed to work.
+
+script_demo_fcn_BoundedAStar_Astar3d;
 
 
 

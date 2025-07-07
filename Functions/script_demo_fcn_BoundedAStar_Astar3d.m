@@ -27,13 +27,13 @@ close all
 
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
-% 
+%
 % %% DEMO case: call the function to show it operating on the 9th data set
 % fig_num = 10001;
 % titleString = sprintf('DEMO case: call the function to show it operating on the 9th data set');
 % fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 % figure(fig_num); clf;
-% 
+%
 
 
 clear; close all; clc
@@ -142,7 +142,7 @@ if flag_do_plot
 end
 
 if flag_do_plot
-%% vgraph plot
+    %% vgraph plot
     figure; hold on; box on; title('visibility graph');
     INTERNAL_fcn_format_timespace_plot();
     % start with surfels plot
@@ -207,26 +207,26 @@ end
 
 
 function INTERNAL_fcn_format_timespace_plot()
-    % define figure properties
-    opts.width      = 12;
-    opts.height     = 9;
-    opts.fontType   = 'Times New Roman';
-    opts.fontSize   = 12;
-    fig = gcf;
-    % scaling
-    fig.Units               = 'centimeters';
-    fig.Position(3)         = opts.width;
-    fig.Position(4)         = opts.height;
-    set(gcf,'color','white')
-    % set text properties
-    set(fig.Children, ...
-        'FontName',     'Times New Roman', ...
-        'FontSize',     12);
+% define figure properties
+opts.width      = 12;
+opts.height     = 9;
+opts.fontType   = 'Times New Roman';
+opts.fontSize   = 12;
+fig = gcf;
+% scaling
+fig.Units               = 'centimeters';
+fig.Position(3)         = opts.width;
+fig.Position(4)         = opts.height;
+set(gcf,'color','white')
+% set text properties
+set(fig.Children, ...
+    'FontName',     'Times New Roman', ...
+    'FontSize',     12);
 
-    % remove unnecessary white space
-    set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
-    xlabel('x [km]')
-    ylabel('y [km]')
-    zlabel('t [min]')
-    view([36 30])
+% remove unnecessary white space
+set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+xlabel('x [km]')
+ylabel('y [km]')
+zlabel('t [min]')
+view([36 30])
 end

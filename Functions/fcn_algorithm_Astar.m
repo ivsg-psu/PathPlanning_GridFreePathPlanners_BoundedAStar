@@ -44,7 +44,7 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, star
 %
 % EXAMPLES:
 %
-% See the script: script_test_fcn_algorithm_Astar
+% See the script: script_demo_fcn_BoundedAStar_Astar
 % for a full test suite.
 %
 % This function was written on spring 2023 by Steve Harnett
@@ -55,6 +55,10 @@ function [cost, route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, star
 %
 % 2023, spring by Steve Harnett
 % -- first write of function
+% 2025_07_07 S. Brennan and K. Hayes
+% -- changed demo script 
+%    from: script_test_fcn_algorithm_Astar
+%    to:   script_demo_fcn_BoundedAStar_Astar
 %
 % TO DO:
 %

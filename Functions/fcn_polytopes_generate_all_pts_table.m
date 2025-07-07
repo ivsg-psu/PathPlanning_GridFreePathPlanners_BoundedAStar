@@ -43,7 +43,7 @@ function [all_pts, start, finish] = fcn_polytopes_generate_all_pts_table(polytop
 %
 % EXAMPLES:
 %
-% See the script: script_test_fcn_algorithm_Astar
+% See the script: script_demo_fcn_BoundedAStar_Astar 
 % for demonstration of this function in use.
 %
 % This function was written on 8 May 2024 by Steve Harnett
@@ -52,8 +52,13 @@ function [all_pts, start, finish] = fcn_polytopes_generate_all_pts_table(polytop
 %
 % REVISION HISTORY:
 %
-% 2024_May_08, by Steve Harnett
+% 2024_05_08, by Steve Harnett
 % -- first write of function
+% 2025_07_07 S. Brennan and K. Hayes
+% -- changed demo script 
+%    from: script_test_fcn_algorithm_Astar
+%    to:   script_demo_fcn_BoundedAStar_Astar
+
 %
 % TO DO:
 %
