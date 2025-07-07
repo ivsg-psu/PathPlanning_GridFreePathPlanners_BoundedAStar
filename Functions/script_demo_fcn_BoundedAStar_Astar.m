@@ -113,7 +113,8 @@ for rep = 1:repetitions
     % The following code exists in MapGen, but MapGen needs to be updated
     % to correct it's format. It looks like it was dropped into library
     % without formatting, error checking, etc.
-
+    des_cost = 0.1;
+    
     shrunk_polytopes = fcn_polytope_editing_set_all_costs(shrunk_polytopes,des_cost);
 
     % if starting in a polytope, at 0.15, 0.45 per above, this controls its cost

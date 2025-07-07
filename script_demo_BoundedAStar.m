@@ -10,6 +10,9 @@
 % TO-DO:
 % 2025_07_03 - Sean Brennan
 % -- Where to start?! All functions need to be checked, verified, etc.
+% 2025_07_07 - Sean Brennan and Kaelea Hayes
+% -- Starting integration of MapGen into codes
+% -- Updated MapGen library to support integration
 
 clear library_name library_folders library_url
 
@@ -19,9 +22,9 @@ library_folders{ith_library} = {'Functions','Data'};
 library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/DebugTools_v2025_06_24.zip';
 
 ith_library = ith_library+1;
-library_name{ith_library}    = 'MapGenClass_v2023_04_27';
+library_name{ith_library}    = 'MapGenClass_v2025_07_07';
 library_folders{ith_library} = {'Functions','testFixtures'};
-library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTools_MapGenClassLibrary/archive/refs/tags/MapGenClass_v2023_04_27.zip?raw=true';
+library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTools_MapGenClassLibrary/archive/refs/tags/MapGenClass_v2025_07_07.zip?raw=true';
 
 % ith_library = ith_library+1;
 % library_name{ith_library}    = 'PathClass_v2025_07_02';
@@ -45,7 +48,7 @@ library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTool
 
 
 %% Clear paths and folders, if needed
-if 1==0
+if 1==1
     clear flag_BoundAStar_Folders_Initialized
     fcn_INTERNAL_clearUtilitiesFromPathAndFolders;
 
