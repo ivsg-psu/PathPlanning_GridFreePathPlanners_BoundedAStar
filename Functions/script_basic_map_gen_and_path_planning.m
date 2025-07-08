@@ -1,3 +1,8 @@
+% REVISION HISTORY
+% 2025_07_08 K. Hayes, kxh1031@psu.edu
+% -- changed planner version to 'legacy' as temporary patch for bug in
+%    bounded Astar function
+
 clear
 clc
 close all
@@ -30,7 +35,7 @@ fcn_plot_polytopes(shrunk_polytopes,fig,line_spec,line_width,axes_limits,axis_st
 %% plan path
 % starting (A) and finish (B) coordinates
 A.x = 0; A.y = 0.5; B.x = 1; B.y = 0.5;
-[path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes,A,B,'through or around');
+[path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(shrunk_polytopes,A,B,'legacy');
 % path: series of points [x y point_id obs_id beg_end]
 % cost: path length
 % err: marker indicating if there was an error in setup (1) or not (0)

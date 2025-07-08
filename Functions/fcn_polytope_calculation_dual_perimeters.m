@@ -75,8 +75,8 @@ end
 %% repeat the first values of vertices and distances if it does not close itself
 if sum(polytope.vertices(1,:)==polytope.vertices(end,:)) ~= 2
     check.v = [polytope.vertices; polytope.vertices(1,:)];
-    check.d = [polytope.distances; fcn_general_calculation_euclidean_point_to_point_distance(check.v(end-1),check.v(end))];
-    check.d2 = [polytope.distances; sum((check.v(end-1) - check.v(end)).^2,2).^0.5];
+    % check.d = [polytope.distances; fcn_general_calculation_euclidean_point_to_point_distance(check.v(end-1),check.v(end))];
+    check.d = [polytope.distances; sum((check.v(end-1) - check.v(end)).^2,2).^0.5];
 else
     check.v = polytope.vertices;
     check.d = polytope.distances;
@@ -230,7 +230,8 @@ if gap1 < gap2
     verts1 = [xing1;check.v(gap2,:)];
     verts2 = [check.v(gap1+1,:);xing2];
     sums = sum(check.d(gap1+1:gap2-1));
-    perim1 = sum(fcn_general_calculation_euclidean_point_to_point_distance(verts1,verts2)) + sums;
+    %perim1 = sum(fcn_general_calculation_euclidean_point_to_point_distance(verts1,verts2)) + sums;
+    perim1 = sum(sum((verts1 - verts2).^2,2).^0.5) + sums;
     if gap2 == verts
 %         path2 = [xing2; check.v(1:gap1,:); xing1];
 %         perim2 = sum(fcn_general_calculation_euclidean_point_to_point_distance([xing2;check.v(gap1,:)],[check.v(1,:);xing1])) + sum(check.d(1:gap1-1));

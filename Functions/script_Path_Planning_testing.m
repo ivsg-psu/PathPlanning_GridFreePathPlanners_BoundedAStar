@@ -14,6 +14,9 @@
 %   2025_07_08 - K. Hayes, kxh1031@psu.edu
 %   -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
 %      with vector sum method
+%   -- Added planner_mode input to Astar setup function for compatibility
+%      with newer function versions
+
 
 %% Prep the workspace
 close all
@@ -161,8 +164,9 @@ plot(bound_pts(:,1),bound_pts(:,2),'go','linewidth',1)
 % process is repeated until there are no more polytopes between the chosen 
 % start point and the goal point. path is the series of points used for the
 % ideal path and cost is the distance to travel along that path.
+planner_mode = 'through at vertices'
 [path,cost] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes...
-    (shrunk_polytopes,A,B);
+    (shrunk_polytopes,A,B,planner_mode);
 % plot the results showing the ideal path in black
 fcn_plot_polytopes(shrunk_polytopes,9996,'b-',2,[0 100 0 100],'square');
 plot(path(:,1),path(:,2),'k-','linewidth',2)

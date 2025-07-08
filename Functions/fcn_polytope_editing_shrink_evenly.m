@@ -40,6 +40,8 @@ function [shrunk_polytopes,point_polys] = fcn_polytope_editing_shrink_evenly(pol
 % 2025_07_08 - K. Hayes, kxh1031@psu.edu
 % -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
 %    with vector sum method
+% -- Added cost field to shrunk polytopes to fix bug in
+%    script_Path_Planning_testing
 
 %% Check input arguments
 if nargin ~= 2
@@ -49,7 +51,7 @@ end
 %% shrink the polytopes
 num_poly = size(polytopes,2); % number of polytopes
 % structure for the polytopes
-shrunk_polytopes(num_poly) = struct('vertices',[],'xv',[],'yv',[],'distances',[],'mean',[],'area',[],'max_radius',[]);
+shrunk_polytopes(num_poly) = struct('vertices',[],'xv',[],'yv',[],'distances',[],'mean',[],'area',[],'max_radius',[], 'cost', []);
 point_polys = []; % variable to store indices of single point polytopes
 for poly = 1:size(polytopes,2) % shrink each polytope
     shrinkable = 0; % assume the obstacle can't be shrunk by the amount until shown otherwise
@@ -151,6 +153,8 @@ for poly = 1:size(polytopes,2) % shrink each polytope
         shrunk_polytopes(poly).distances = sum((shrunk_polytopes(poly).vertices(1:end-1,:) - shrunk_polytopes(poly).vertices(2:end,:)).^2,2).^0.5;
         % calculate the maximum distance from center to a vertex
         shrunk_polytopes(poly).max_radius = max(sum((shrunk_polytopes(poly).vertices(1:end-1,:) - ones(length(xv),1)*shrunk_polytopes(poly).mean).^2,2).^0.5);
+        % add cost field back onto polytope after shrinking
+        shrunk_polytopes(poly).cost = polytopes(poly).cost
     else % if it was not shrinkable, make it a point polytope in shrunk_polytopes
         shrunk_polytopes(poly).xv = [Cx Cx Cx]; % keep vertices seperate for easier calculations
         shrunk_polytopes(poly).yv = [Cy Cy Cy];
@@ -161,6 +165,8 @@ for poly = 1:size(polytopes,2) % shrink each polytope
         shrunk_polytopes(poly).distances = zeros(3,1);
         % calculate the maximum distance from center to a vertex
         shrunk_polytopes(poly).max_radius = 0;
+        % add cost field back onto polytope after shrinking
+        shrunk_polytopes(poly).cost = polytopes(poly).cost
         point_polys = [point_polys; poly]; % add its index to the point_polys
     end
 end
