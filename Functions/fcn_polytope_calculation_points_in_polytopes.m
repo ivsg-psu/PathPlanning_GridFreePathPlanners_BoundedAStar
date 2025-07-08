@@ -48,10 +48,10 @@ function [err,Apoly,Bpoly] = fcn_polytope_calculation_points_in_polytopes(A,B,po
 %      polytopes.vertices = [[xv xv(1)]' [yv yv(1)]'];
 %      polytopes.xv = xv;
 %      polytopes.yv = yv;
-%      polytopes.distances = fcn_general_calculation_euclidean_point_to_point_distance(polytopes.vertices(1:end-1,:),polytopes.vertices(2:end,:));
+%      polytopes.distances = sum((polytopes.vertices(1:end-1,:) - polytopes.vertices(2:end,:)).^2,2).^0.5;
 %      [Cx,Cy,polytopes.area] = fcn_polytope_calculation_centroid_and_area([xv xv(1)],[yv yv(1)]);
 %      polytopes.mean = [Cx, Cy];
-%      polytopes.max_radius = max(fcn_general_calculation_euclidean_point_to_point_distance(polytopes.vertices(1:end-1,:),ones(length(xv),1)*polytopes.mean));
+%      polytopes.max_radius = max(sum((polytopes.vertices(1:end-1,:) - ones(length(xv),1)*polytopes.mean).^2,2).^0.5);
 %      A.x = 0;
 %      A.y = 0;
 %      B.x = 5;
@@ -76,10 +76,10 @@ function [err,Apoly,Bpoly] = fcn_polytope_calculation_points_in_polytopes(A,B,po
 %      polytopes.vertices = [[xv xv(1)]' [yv yv(1)]'];
 %      polytopes.xv = xv;
 %      polytopes.yv = yv;
-%      polytopes.distances = fcn_general_calculation_euclidean_point_to_point_distance(polytopes.vertices(1:end-1,:),polytopes.vertices(2:end,:));
+%      polytopes.distances = sum((polytopes.vertices(1:end-1) - polytopes.vertices(2:end,:)).^2,2).^0.5;
 %      [Cx,Cy,polytopes.area] = fcn_polytope_calculation_centroid_and_area([xv xv(1)],[yv yv(1)]);
 %      polytopes.mean = [Cx, Cy];
-%      polytopes.max_radius = max(fcn_general_calculation_euclidean_point_to_point_distance(polytopes.vertices(1:end-1,:),ones(length(xv),1)*polytopes.mean));
+%      polytopes.max_radius = max(sum((polytopes.vertices(1:end-1,:) - ones(length(xv),1)*polytopes.mean).^2,2).^0.5);
 %      A.x = -5;
 %      A.y = -5;
 %      B.x = 0;
@@ -104,10 +104,10 @@ function [err,Apoly,Bpoly] = fcn_polytope_calculation_points_in_polytopes(A,B,po
 %      polytopes.vertices = [[xv xv(1)]' [yv yv(1)]'];
 %      polytopes.xv = xv;
 %      polytopes.yv = yv;
-%      polytopes.distances = fcn_general_calculation_euclidean_point_to_point_distance(polytopes.vertices(1:end-1,:),polytopes.vertices(2:end,:));
+%      polytopes.distances = sum((polytopes.vertices(1:end-1,:) - polytopes.vertices(2:end,:)).^2,2).^0.5;
 %      [Cx,Cy,polytopes.area] = fcn_polytope_calculation_centroid_and_area([xv xv(1)],[yv yv(1)]);
 %      polytopes.mean = [Cx, Cy];
-%      polytopes.max_radius = max(fcn_general_calculation_euclidean_point_to_point_distance(polytopes.vertices(1:end-1,:),ones(length(xv),1)*polytopes.mean));
+%      polytopes.max_radius = max(sum((polytopes.vertices(1:end-1,:) - ones(length(xv),1)*polytopes.mean).^2,2).^0.5);
 %      A.x = -5;
 %      A.y = -5;
 %      B.x = 5;
@@ -123,6 +123,10 @@ function [err,Apoly,Bpoly] = fcn_polytope_calculation_points_in_polytopes(A,B,po
 % This function was written on 2018_12_18 by Seth Tau
 % Questions or comments? sat5340@psu.edu 
 %
+% Revision History:
+% 2025_07_08 - K. Hayes, kxh1031@psu.edu
+% -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
+%    with vector sum method in function usage examples
 
 
 % check input arguments

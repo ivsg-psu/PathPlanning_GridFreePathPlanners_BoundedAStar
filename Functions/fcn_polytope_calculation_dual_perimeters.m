@@ -34,10 +34,10 @@ function [perimeter1,perimeter2] = fcn_polytope_calculation_dual_perimeters(poly
 %      polytope.xv=[2 1 -1 -2 -2 -1 1 2];
 %      polytope.yv=[1 2 2 1 -1 -2 -2 -1];
 %      polytope.vertices=[[polytope.xv polytope.xv(1)]' [polytope.yv polytope.yv(1)]'];
-%      polytope.distances = fcn_general_calculation_euclidean_point_to_point_distance(polytope.vertices(1:end-1,:),polytope.vertices(2:end,:));
+%      polytope.distances = sum((polytope.vertices(1:end-1,:) - polytope.vertices(2:end,:)).^2,2).^0.5;
 %      [Cx,Cy,polytope.area] = fcn_polytope_calculation_centroid_and_area([xv xv(1)],[yv yv(1)]);
 %      polytope.mean = [Cx, Cy];
-%      polytope.max_radius = max(fcn_general_calculation_euclidean_point_to_point_distance(polytope.vertices(1:end-1,:),ones(length(xv),1)*polytope.mean));
+%      polytope.max_radius = max(sum((polytope.vertices(1:end-1) - ones(length(xv),1)*polytope.mean).^2,2).^0.5);
 %      xing1 = [-2 0];
 %      xing2 = [2 0];
 %      [perimeter1,perimeter2]=fcn_polytope_calculation_dual_perimeters(polytope,xing1,xing2)
@@ -76,6 +76,7 @@ end
 if sum(polytope.vertices(1,:)==polytope.vertices(end,:)) ~= 2
     check.v = [polytope.vertices; polytope.vertices(1,:)];
     check.d = [polytope.distances; fcn_general_calculation_euclidean_point_to_point_distance(check.v(end-1),check.v(end))];
+    check.d2 = [polytope.distances; sum((check.v(end-1) - check.v(end)).^2,2).^0.5];
 else
     check.v = polytope.vertices;
     check.d = polytope.distances;

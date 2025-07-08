@@ -36,6 +36,10 @@ function [shrunk_polytopes,point_polys] = fcn_polytope_editing_shrink_evenly(pol
 % This function was written on 2019_06_13 by Seth Tau
 % Questions or comments? sat5340@psu.edu 
 %
+% Revision History:
+% 2025_07_08 - K. Hayes, kxh1031@psu.edu
+% -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
+%    with vector sum method
 
 %% Check input arguments
 if nargin ~= 2
@@ -144,9 +148,9 @@ for poly = 1:size(polytopes,2) % shrink each polytope
         [Cx,Cy,shrunk_polytopes(poly).area] = fcn_polytope_calculation_centroid_and_area([xv; xv(1)],[yv; yv(1)]);
         shrunk_polytopes(poly).mean = [Cx, Cy]; % calculate the polytope mean
         % calculate perimeter distances around the polytope
-        shrunk_polytopes(poly).distances = fcn_general_calculation_euclidean_point_to_point_distance(shrunk_polytopes(poly).vertices(1:end-1,:),shrunk_polytopes(poly).vertices(2:end,:));
+        shrunk_polytopes(poly).distances = sum((shrunk_polytopes(poly).vertices(1:end-1,:) - shrunk_polytopes(poly).vertices(2:end,:)).^2,2).^0.5;
         % calculate the maximum distance from center to a vertex
-        shrunk_polytopes(poly).max_radius = max(fcn_general_calculation_euclidean_point_to_point_distance(shrunk_polytopes(poly).vertices(1:end-1,:),ones(length(xv),1)*shrunk_polytopes(poly).mean));
+        shrunk_polytopes(poly).max_radius = max(sum((shrunk_polytopes(poly).vertices(1:end-1,:) - ones(length(xv),1)*shrunk_polytopes(poly).mean).^2,2).^0.5);
     else % if it was not shrinkable, make it a point polytope in shrunk_polytopes
         shrunk_polytopes(poly).xv = [Cx Cx Cx]; % keep vertices seperate for easier calculations
         shrunk_polytopes(poly).yv = [Cy Cy Cy];

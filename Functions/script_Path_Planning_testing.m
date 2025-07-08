@@ -11,6 +11,9 @@
 % Revisions:
 %   2020_02_11  -- first write of code to demonstrate mapping functionality
 %   2020_03_26  -- edits made to comment and cleanup the code
+%   2025_07_08 - K. Hayes, kxh1031@psu.edu
+%   -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
+%      with vector sum method
 
 %% Prep the workspace
 close all
@@ -129,8 +132,7 @@ disp(['Minimum perimeter path distance: ' num2str(max_dist)]);
 % purposes, we use a rectangular bounding box that the ellipse is
 % circumscribed within.
 % Calculate the straight-line distance from start to goal
-straight = fcn_general_calculation_euclidean_point_to_point_distance...
-    (start(1:2),finish(1:2));
+straight = sum((start(1:2) - finish(1:2)).^2,2).^0.5;
 % Use the max_dist to determine how far to offset the edges of the
 % rectangular bounding box in the perpendicular and parallel directions in
 % order to circumscribe the ellipse, using triangular geometry

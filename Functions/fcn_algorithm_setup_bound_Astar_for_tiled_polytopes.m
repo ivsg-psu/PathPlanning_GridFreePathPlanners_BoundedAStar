@@ -58,6 +58,9 @@ function [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(p
 % This function was written on 2019_06_13 by Seth Tau
 % Questions or comments? sat5340@psu.edu
 %
+% 2025_07_08 - K. Hayes, kxh1031@psu.edu
+% -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
+%    with vector sum method 
 
 %% check if the start or end are now within combined polytopes
 throw_error = 0; % only gives soft errors errors that don't stop the code
@@ -72,7 +75,7 @@ if err == 0 % A and B outside the polytopes
         polytopes(Apoly).vertices = new_verts;
         polytopes(Apoly).xv = new_verts(1:end-1,1)';
         polytopes(Apoly).yv = new_verts(1:end-1,2)';
-        polytopes(Apoly).distances = fcn_general_calculation_euclidean_point_to_point_distance(new_verts(1:end-1,:),new_verts(2:end,:));
+        polytopes(Apoly).distances = sum((new_verts(1:end-1,:) - new_verts(2:end,:)).^2,2).^0.5;
     end
     if Bpoly ~= 0 % on obstacle edge
         vertices = polytopes(Bpoly).vertices;
@@ -81,7 +84,7 @@ if err == 0 % A and B outside the polytopes
         polytopes(Bpoly).vertices = new_verts;
         polytopes(Bpoly).xv = new_verts(1:end-1,1)';
         polytopes(Bpoly).yv = new_verts(1:end-1,2)';
-        polytopes(Bpoly).distances = fcn_general_calculation_euclidean_point_to_point_distance(new_verts(1:end-1,:),new_verts(2:end,:));
+        polytopes(Bpoly).distances = sum((new_verts(1:end-1,:) - new_verts(2:end,:)).^2,2).^0.5;
     end
 
     point_tot = length([polytopes.xv]); % total number of vertices in the convex polytopes
@@ -96,7 +99,7 @@ if err == 0 % A and B outside the polytopes
         polytopes(poly).xv = verts(:,1)';
         polytopes(poly).yv = verts(:,2)';
         polytopes(poly).vertices = [verts; verts(1,:)];
-        polytopes(poly).distances = fcn_general_calculation_euclidean_point_to_point_distance(polytopes(poly).vertices(1:end-1,:),polytopes(poly).vertices(2:end,:));
+        polytopes(poly).distances = sum((polytopes(poly).vertices(1:end-1,:) - polytopes(poly).vertices(2:end,:)).^2,2).^0.5;
         beg_end([curpt+1,curpt+num_verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
         curpt = curpt+num_verts;
         polytopes(poly).perimeter = sum(polytopes(poly).distances);

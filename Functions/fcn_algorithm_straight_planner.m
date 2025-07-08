@@ -33,7 +33,6 @@ function [cost,distance_in_polys,distance_outside_polys,num_polys_traversed] = .
     % num_polys_traversed - the integer number of polytopes encountered and traversed
     %
     % DEPENDENCIES:
-    %   fcn_general_calculation_euclidean_point_to_point_distance
     %   fcn_polytope_calculation_polytopes_near_the_line
     %   fcn_plot_polytopes
     %   fcn_geometry_findIntersectionOfSegments
@@ -47,7 +46,10 @@ function [cost,distance_in_polys,distance_outside_polys,num_polys_traversed] = .
     %
 
     % Revision History:
-
+    % 2025_07_08 - K. Hayes, kxh1031@psu.edu
+    % -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
+    %    with vector sum method 
+    
     % TO DO
 
     %% Debugging and Input checks
@@ -60,7 +62,7 @@ function [cost,distance_in_polys,distance_outside_polys,num_polys_traversed] = .
     distance_in_polys = 0;
     distance_outside_polys = 0;
     num_polys_traversed = 0;
-    a_b = fcn_general_calculation_euclidean_point_to_point_distance(start(1:2),finish(1:2));
+    a_b = sum((start(1:2) - finish(1:2)).^2,2).^0.5;
     % determine which polys are near the straight path
     close_polytopes = fcn_polytope_calculation_polytopes_near_the_line(start,finish,polytopes)
     if flag_do_plot
@@ -102,7 +104,7 @@ function [cost,distance_in_polys,distance_outside_polys,num_polys_traversed] = .
         if size(locations_of_crossings,1) == 2
             figure(111111); hold on;
             plot(locations_of_crossings(:,1),locations_of_crossings(:,2),"cx");
-            distance_through_poly = fcn_general_calculation_euclidean_point_to_point_distance(locations_of_crossings(1,:),locations_of_crossings(2,:));
+            distance_through_poly = sum((locations_of_crossings(1,:) - locations_of_crossings(2,:)).^2,2).^0.5;
             % increment traversed polytope counter
             num_polys_traversed = num_polys_traversed + 1;
         elseif size(locations_of_crossings,1) == 0

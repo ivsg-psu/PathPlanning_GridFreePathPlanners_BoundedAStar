@@ -58,6 +58,10 @@ function [close_polytopes] = fcn_polytope_calculation_polytopes_near_the_line(st
 % This function was written on 2018_12_18 by Seth Tau
 % Questions or comments? sat5340@psu.edu 
 %
+% Revision History:
+% 2025_07_08 - K. Hayes, kxh1031@psu.edu
+% -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
+%    with vector sum method 
 
 % check input arguments
 if nargin ~= 3
@@ -72,7 +76,7 @@ centers_of_polys = reshape([polytopes.mean],2,length(polytopes))';
 dist_from_line_to_polys_squared = fcn_general_calculation_point_to_line_distances_squared([centers_of_polys zeros(size(centers_of_polys,1),1)],[start(1:2) 0],[finish(1:2) 0]);
 
 ref_vec = ones(size(centers_of_polys,1),1)*(finish(1:2) - start(1:2));
-straight = fcn_general_calculation_euclidean_point_to_point_distance(start(1:2),finish(1:2));
+straight = sum((start(1:2) - finish(1:2)).^2,2).^0.5;
 para_dists = (dot(ref_vec,(centers_of_polys-start(1:2)),2))/straight;
 
 close_polytopes = polytopes((radius_of_polys_squared>dist_from_line_to_polys_squared).*(para_dists+radius_of_polys>=0).*(para_dists-radius_of_polys<=straight) == 1);

@@ -92,6 +92,10 @@ function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]
 % This function was written on 2018_11_17 by Seth Tau
 % Questions or comments? sat5340@psu.edu
 %
+% Revision History:
+% 2025_07_08 - K. Hayes, kxh1031@psu.edu
+% -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
+%    with vector sum method in function usage examples
 
 %% check input arguments
 if nargin < 3 || nargin > 4
@@ -222,10 +226,10 @@ function [xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = fcn_convert_to_vector_points(polyto
 %      polytopes.vertices = [[xv xv(1)]' [yv yv(1)]'];
 %      polytopes.xv = xv;
 %      polytopes.yv = yv;
-%      polytopes.distances = fcn_general_calculation_euclidean_point_to_point_distance(polytopes.vertices(1:end-1,:),polytopes.vertices(2:end,:));
+%      polytopes.distances = sum((polytopes.vertices(1:end-1,:) - polytopes.vertices(2:end,:)).^2,2).^0.5;
 %      [Cx,Cy,polytopes.area] = fcn_polytope_calculation_centroid_and_area([xv xv(1)],[yv yv(1)]);
 %      polytopes.mean = [Cx, Cy];
-%      polytopes.max_radius = max(fcn_general_calculation_euclidean_point_to_point_distance(polytopes.vertices(1:end-1,:),ones(length(xv),1)*polytopes.mean));
+%      polytopes.max_radius = max(sum((polytopes.vertices(1:end-1,:) - ones(length(xv),1)*polytopes.mean).^2,2).^0.5);
 %      point_tot = length(xv);
 %      start = [0 0 point_tot+1 -1 0];
 %      finish = [8 8 point_tot+2 0 0];
@@ -304,10 +308,10 @@ function [D,di,dj] = fcn_calculate_intersection_matrices(xiP,yiP,xiQ,yiQ,xjP,yjP
 %      polytopes.vertices = [[xv xv(1)]' [yv yv(1)]'];
 %      polytopes.xv = xv;
 %      polytopes.yv = yv;
-%      polytopes.distances = fcn_general_calculation_euclidean_point_to_point_distance(polytopes(1).vertices(1:end-1,:),polytopes(1).vertices(2:end,:));
+%      polytopes.distances = sum((polytopes.vertices(1:end-1,:) - polytopes.vertices(2:end,:)).^2,2).^0.5;
 %      [Cx,Cy,polytopes.area] = fcn_polytope_calculation_centroid_and_area([xv xv(1)],[yv yv(1)]);
 %      polytopes.mean = [Cx, Cy];
-%      polytopes.max_radius = max(fcn_general_calculation_euclidean_point_to_point_distance(polytopes.vertices(1:end-1,:),ones(length(xv),1)*polytopes.mean));
+%      polytopes.max_radius = max(sum((polytopes.vertices(1:end-1,:) - ones(length(xv),1)*polytopes.mean).^2,2).^0.5);
 %      point_tot = length(xv);
 %      start = [0 0 point_tot+1 -1 0];
 %      finish = [8 8 point_tot+2 0 0];

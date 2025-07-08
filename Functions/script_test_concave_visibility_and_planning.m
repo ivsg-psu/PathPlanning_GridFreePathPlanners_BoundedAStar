@@ -6,6 +6,9 @@
 %
 % 2022_10_28 by S. Harnett
 % -- first write of script
+% 2025_07_08 - K. Hayes, kxh1031@psu.edu
+% -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
+%    with vector sum method 
 %%%%%%%%%%%%%%§
 
 clear
@@ -52,7 +55,7 @@ for poly = 1:size(polytopes,2) % check each polytope
     polytopes(poly).xv = verts(:,1)';
     polytopes(poly).yv = verts(:,2)';
     polytopes(poly).vertices = [verts; verts(1,:)];
-    polytopes(poly).distances = fcn_general_calculation_euclidean_point_to_point_distance(polytopes(poly).vertices(1:end-1,:),polytopes(poly).vertices(2:end,:));
+    polytopes(poly).distances = sum((polytopes(poly).vertices(1:end-1,:) - polytopes(poly).vertices(2:end,:)).^2,2).^0.5;
     beg_end([curpt+1,curpt+num_verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
     curpt = curpt+num_verts;
     polytopes(poly).perimeter = sum(polytopes(poly).distances);
@@ -134,7 +137,7 @@ for poly = 1:size(polytopes,2) % check each polytope
     polytopes(poly).xv = verts(:,1)';
     polytopes(poly).yv = verts(:,2)';
     polytopes(poly).vertices = [verts; verts(1,:)];
-    polytopes(poly).distances = fcn_general_calculation_euclidean_point_to_point_distance(polytopes(poly).vertices(1:end-1,:),polytopes(poly).vertices(2:end,:));
+    polytopes(poly).distances = sum((polytopes(poly).vertices(1:end-1,:) - polytopes(poly).vertices(2:end,:)).^2,2).^0.5;
     beg_end([curpt+1,curpt+num_verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
     curpt = curpt+num_verts;
     polytopes(poly).perimeter = sum(polytopes(poly).distances);
@@ -214,7 +217,7 @@ for poly = 1:size(polytopes,2) % check each polytope
     polytopes(poly).xv = verts(:,1)';
     polytopes(poly).yv = verts(:,2)';
     polytopes(poly).vertices = [verts; verts(1,:)];
-    polytopes(poly).distances = fcn_general_calculation_euclidean_point_to_point_distance(polytopes(poly).vertices(1:end-1,:),polytopes(poly).vertices(2:end,:));
+    polytopes(poly).distances = sum((polytopes(poly).vertices(1:end-1,:) - polytopes(poly).vertices(2:end,:)).^2,2).^0.5;
     beg_end([curpt+1,curpt+num_verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
     curpt = curpt+num_verts;
     polytopes(poly).perimeter = sum(polytopes(poly).distances);

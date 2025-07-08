@@ -76,6 +76,10 @@ function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts
 % Cleaned code for Git and rewrote example on 2021_04_28 by Seth Tau
 % Questions or comments? sat5340@psu.edu
 %
+% Revision history
+% 2025_07_08 - K. Hayes, kxh1031@psu.edu
+% -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
+%    with vector sum method 
 
 % check variable argument
 if nargin == 7
@@ -104,8 +108,9 @@ parent = ones(size(all_pts,1)+2)*NaN; % no known parents
 parent(start(3)) = 0; % set start point with 0 as parent
 cost_in = ones(size(parent))*Inf; % cost to reach point from start, all start at infinity
 cost_in(start(3)) = 0; % cost from start to start is zero
-% find straight line cost from each point to finish
-heuristic_costs = fcn_general_calculation_euclidean_point_to_point_distance([all_pts(:,1:2); start(1:2); finish(1:2)],ones(size(all_pts,1)+2,1)*finish(1:2));
+% find straight line cost from each point to finish using Euclidean
+% distance
+heuristic_costs = sum((ones(size(all_pts,1)+2,1)*finish(1:2) - [all_pts(:,1:2); start(1:2); finish(1:2)]).^2,2).^0.5;
 cost_tot = cost_in; % total cost, heuristic_cost is used as cost out until real cost found, start all at infinity
 cost_tot(start(3)) = cost_in(start(3))+heuristic_costs(start(3)); % guess of cost to reach finish
 
@@ -155,7 +160,7 @@ while ~isempty(open_set) % continue until open set is empty
 
     % Check which case this is (intersection or not)
     if isempty(blocked_pts) % CASE 1: No intersections
-        tentative_cost = cost_in(cur_pt(3)) + fcn_general_calculation_euclidean_point_to_point_distance(cur_pt(1:2),finish(1:2)); % cost to reach current + cost to reach finish
+        tentative_cost = cost_in(cur_pt(3)) + sum((cur_pt(1:2) - finish(1:2)).^2,2).^0.5;
 
         if isempty(find(open_set==finish(3),1)) % not already in open set
             open_set = [open_set; finish(3)];
@@ -176,13 +181,13 @@ while ~isempty(open_set) % continue until open set is empty
         max_dist = fcn_bounding_ellipse_min_perimeter_path(xing_polytopes,xings,cur_pt,finish);
 
         %%% Step 3: Bound points with the same or less cost based on triangle inequality (bounding box based on ellipse major & minor axes)
-        straight = fcn_general_calculation_euclidean_point_to_point_distance(cur_pt(1:2),finish(1:2)); % straight distance start to finish
+        straight = sum((cur_pt(1:2) - finish(1:2)).^2,2).^0.5;  % straight distance start to finish
         perp_offset = ones(1,2)*sqrt((max_dist/2)^2 - (straight/2)^2); % split large triangle from start to mid point to end in half and calculate height
         para_offset = ones(1,2)*(max_dist - straight)/2; % extra distance traveled if moved directly away from the end point and then directly to it
 
         if min(para_offset)==0 % sometimes happens when the pependicular offset reaches the computing limit, but isn't actually zero
             % make it look like CASE 1
-            tentative_cost = cost_in(cur_pt(3)) + fcn_general_calculation_euclidean_point_to_point_distance(cur_pt(1:2),finish(1:2)); % cost to reach current + cost to reach finish
+            tentative_cost = cost_in(cur_pt(3)) + sum((cur_pt(1:2) - finish(1:2)).^2,2).^0.5; % cost to reach current + cost to reach finish
 
             if isempty(find(open_set==finish(3),1)) % not already in open set
                 open_set = [open_set; finish(3)];
@@ -274,11 +279,10 @@ while ~isempty(open_set) % continue until open set is empty
                     % that distance (which is only >1 for points that require crossing a polytope)
                     % need to scale cost based on cost of polytopes traversed (neightbor_pts(i,6))
                     if planner_mode == "legacy" || planner_mode == "through or around"
-                        tentative_cost = cost_in(cur_pt(3)) + fcn_general_calculation_euclidean_point_to_point_distance(cur_pt(1:2),all_pts(neighbor,1:2)); % cost to reach current + cost to reach neighbor
+                        tentative_cost = cost_in(cur_pt(3)) + sum((cur_pt(1:2) - all_pts(neighbor,1:2)).^2,2).^0.5; % cost to reach current + cost to reach neighbor
                     elseif planner_mode == "through at vertices"
                         tentative_cost = cost_in(cur_pt(3)) + ...
-                            (1+neighbor_pts(poly_cost_index,6))*fcn_general_calculation_euclidean_point_to_point_distance(...
-                            cur_pt(1:2),all_pts(neighbor,1:2));
+                            (1+neighbor_pts(poly_cost_index,6))*sum((cur_pt(1:2) - all_pts(neighbor,1:2)).^2,2).^0.5;
 
                         %% experimental hill model - scales cost if going one direction,
                         % but not in other directions

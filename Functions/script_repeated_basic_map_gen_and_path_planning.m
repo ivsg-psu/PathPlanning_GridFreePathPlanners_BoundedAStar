@@ -1,3 +1,8 @@
+% Revision History:
+% 2025_07_08 - K. Hayes, kxh1031@psu.edu
+% -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
+%    with vector sum method 
+
 clear
 clc
 close all
@@ -95,7 +100,7 @@ for rep = 1:repetitions
             else % pt(3) > other_beg_end_pt(3)
                 other_pt = all_pts(pt(3)-1,1:2);
             end
-            dist = fcn_general_calculation_euclidean_point_to_point_distance(ones(2,1)*prev_pt,[other_beg_end_pt(1:2); other_pt]);
+            dist = sum((ones(2,1)*prev_pt - [other_beg_end_pt(1:2); other_pt]).^2,2).^0.5;
             if dist(1) < dist(2) % other_pt farther
                 appex_x(app,2:3) = [other_beg_end_pt(1), other_pt(1)];
                 appex_y(app,2:3) = [other_beg_end_pt(2), other_pt(2)];
@@ -106,7 +111,7 @@ for rep = 1:repetitions
         else
             pt1 = all_pts(pt(3)-1,1:2);
             pt2 = all_pts(pt(3)+1,1:2);
-            dist = fcn_general_calculation_euclidean_point_to_point_distance(ones(2,1)*prev_pt,[pt1; pt2]);
+            dist = sum((ones(2,1)*prev_pt - [pt1; pt2]).^2,2).^0.5;
             if dist(1) < dist(2) % pt1 closer
                 appex_x(app,2:3) = [pt1(1), pt2(1)];
                 appex_y(app,2:3) = [pt1(2), pt2(2)];
