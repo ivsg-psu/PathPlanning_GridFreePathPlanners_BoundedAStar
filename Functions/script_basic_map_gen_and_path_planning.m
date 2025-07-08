@@ -3,6 +3,9 @@
 % -- changed planner version to 'legacy' as temporary patch for bug in
 %    bounded Astar function
 
+% TO DO: 'through or around' planner is broken. Pseudocode is in the
+% bounded Astar function for future implementation
+
 clear
 clc
 close all
