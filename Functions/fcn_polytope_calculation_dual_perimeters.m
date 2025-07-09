@@ -66,6 +66,11 @@ function [perimeter1,perimeter2] = fcn_polytope_calculation_dual_perimeters(poly
 % This function was written on 2018_11_28 by Seth Tau
 % Questions or comments? sat5340@psu.edu 
 %
+% REVISION HISTORY: 
+% 2025_07_09 - K. Hayes, kxh1031@psu.edu
+% -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
+%    with vector sum method 
+
 
 %% check input arguments
 if nargin ~= 3
@@ -75,7 +80,6 @@ end
 %% repeat the first values of vertices and distances if it does not close itself
 if sum(polytope.vertices(1,:)==polytope.vertices(end,:)) ~= 2
     check.v = [polytope.vertices; polytope.vertices(1,:)];
-    % check.d = [polytope.distances; fcn_general_calculation_euclidean_point_to_point_distance(check.v(end-1),check.v(end))];
     check.d = [polytope.distances; sum((check.v(end-1) - check.v(end)).^2,2).^0.5];
 else
     check.v = polytope.vertices;
@@ -222,6 +226,10 @@ function [perim1,perim2] = fcn_create_perimeter_paths(check,xing1,xing2,gap1,gap
 % This function was written on 2018_11_28 by Seth Tau
 % Questions or comments? sat5340@psu.edu 
 %
+% REVISION HISTORY:
+% 2025_07_09 - K. Hayes, kxh1031@psu.edu
+% -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
+%    with vector sum method 
 
 verts = size(check.v,1); % number of vertices
 % find paths and perimeters
@@ -230,7 +238,6 @@ if gap1 < gap2
     verts1 = [xing1;check.v(gap2,:)];
     verts2 = [check.v(gap1+1,:);xing2];
     sums = sum(check.d(gap1+1:gap2-1));
-    %perim1 = sum(fcn_general_calculation_euclidean_point_to_point_distance(verts1,verts2)) + sums;
     perim1 = sum(sum((verts1 - verts2).^2,2).^0.5) + sums;
     if gap2 == verts
 %         path2 = [xing2; check.v(1:gap1,:); xing1];
@@ -246,7 +253,7 @@ elseif gap1 > gap2
     verts2 = [xing2;check.v(gap1,:)];
     verts1 = [check.v(gap2+1,:);xing1];
     sums = sum(check.d(gap2+1:gap1-1));
-    perim2 = sum(fcn_general_calculation_euclidean_point_to_point_distance(verts2,verts1)) + sums;
+    perim2 = sum(sum((verts2 - verts1).^2,2).^0.5) + sums;
     if gap1 == verts
 %         path1 = [xing1; check.v(1:gap2,:); xing2];
 %         perim1 = sum(fcn_general_calculation_euclidean_point_to_point_distance([xing1;check.v(gap2,:)],[check.v(1,:);xing2])) + sum(check.d(1:gap2-1));
@@ -257,19 +264,19 @@ elseif gap1 > gap2
         perim1 = check.p-perim2;
     end
 else % gap1 == gap2 % not sure this will actually happen
-    gap_dist = fcn_general_calculation_euclidean_point_to_point_distance([xing1;xing2],[check.v(gap1,:);check.v(gap1,:)]);
+    gap_dist = sum(([xing1;xing2] - [check.v(gap1,:);check.v(gap1,:)]).^2,2).^0.5;
     if gap1 == verts
         if gap_dist(1) < gap_dist(2)
 %             path2 = [xing2; check.v; xing1];
 %             perim2 = sum(fcn_general_calculation_euclidean_point_to_point_distance([xing2;check.v(verts,:)],[check.v(1,:);xing1])) + sum(check.d);
 %             path1 = [xing1; xing2];
-            perim1 = fcn_general_calculation_euclidean_point_to_point_distance(xing1,xing2);
+            perim1 = sum((xing1 - xing2).^2,2).^0.5;
             perim2 = check.p-perim1;
         else
 %             path1 = [xing1; check.v; xing2];
 %             perim1 = sum(fcn_general_calculation_euclidean_point_to_point_distance([xing1;check.v(verts,:)],[check.v(1,:);xing2])) + sum(check.d);
 %             path2 = [xing2; xing1];
-            perim2 = fcn_general_calculation_euclidean_point_to_point_distance(xing2,xing1);
+            perim2 = sum((xing2 - xing1).^2,2).^0.5;
             perim1 = check.p-perim2;
         end
     else
@@ -277,13 +284,13 @@ else % gap1 == gap2 % not sure this will actually happen
 %             path2 = [xing2; check.v(gap1+1:verts,:); check.v(1:gap1,:); xing1];
 %             perim2 = sum(fcn_general_calculation_euclidean_point_to_point_distance([xing2;check.v(gap1,:)],[check.v(gap1+1,:);xing1])) + sum(check.d(gap1+1:end)) + sum(check.d(1:gap1-1));
 %             path1 = [xing1; xing2];
-            perim1 = fcn_general_calculation_euclidean_point_to_point_distance(xing1,xing2);
+            perim1 = sum((xing1 - xing2).^2,2).^0.5;
             perim2 = check.p-perim1;
         else
 %             path1 = [xing1; check.v(gap1+1:verts,:); check.v(1:gap1,:); xing2];
 %             perim1 = sum(fcn_general_calculation_euclidean_point_to_point_distance([xing1;check.v(gap1,:)],[check.v(gap1+1,:);xing2])) + sum(check.d(gap1+1:end)) + sum(check.d(1:gap1-1));
 %             path2 = [xing2; xing1];
-            perim2 = fcn_general_calculation_euclidean_point_to_point_distance(xing2,xing1);
+            perim2 = sum((xing2 - xing1).^2,2).^0.5;
             perim1 = check.p-perim2;
         end
     end
