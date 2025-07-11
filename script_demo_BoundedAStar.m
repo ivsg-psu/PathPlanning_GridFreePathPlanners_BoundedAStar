@@ -48,7 +48,7 @@ library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTool
 
 
 %% Clear paths and folders, if needed
-if 1==1
+if 1==0
     clear flag_BoundAStar_Folders_Initialized
     fcn_INTERNAL_clearUtilitiesFromPathAndFolders;
 
@@ -56,7 +56,7 @@ end
 
 %% Do we need to set up the work space?
 if ~exist('flag_BoundAStar_Folders_Initialized','var')
-    this_project_folders = {'Functions','Test_Fixtures','Utilities_gif','Utilities_TriangleRayIntersection','Example_Map_Generation_Code'}; % {'Functions','Data'};
+    this_project_folders = {'Functions','Functions_CostCalculation','Test_Fixtures','Utilities_gif','Utilities_TriangleRayIntersection','Example_Map_Generation_Code'}; % {'Functions','Data'};
     fcn_INTERNAL_initializeUtilities(library_name,library_folders,library_url,this_project_folders);  
     flag_BoundAStar_Folders_Initialized = 1;
 end
