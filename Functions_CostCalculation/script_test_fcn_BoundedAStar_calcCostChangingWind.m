@@ -4,6 +4,9 @@
 % Revision history
 % 2021_07_11 by Sean Brennan
 % -- first write of script
+% 2025_07_14 by K. Hayes, kxh1031@psu.edu
+% -- cleaned script
+% -- fixed issue with missing variable windVector
 
 %% Set up the workspace
 close all
@@ -32,11 +35,18 @@ titleString = sprintf('DEMO case: basic call to function with mixed E and N wind
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
+% Fill inputs
+randomSeed = [];
+windMagnitude = [];
+NpointsInSide = [];
+XY_range = [];
+
 % Fill wind fields
 [windFieldU, windFieldV, x, y]  = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (-1));
 
 % Call function
-windRadius = fcn_BoundedAStar_calcCostChangingWind(windVector, radius, windFieldU, windFieldV, x, y, (fig_num));
+radius = 5;
+windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 

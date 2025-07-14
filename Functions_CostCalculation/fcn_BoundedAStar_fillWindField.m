@@ -45,10 +45,12 @@ function [windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField(varargi
 % REVISION HISTORY:
 % 2025_07_11 by Sean Brennan
 % -- first write of function using fcn_MapGen_generatePolysFromTiling in
-% MapGen library as a starter
+%    MapGen library as a starter
+% 2025_07_14 by K. Hayes, kxh1031@psu.edu
+% -- added gaussian surface option to field generation
 
 % TO-DO
-% (none)
+% -- fix formatting and input checks
 
 %% Debugging and Input checks
 % Check if flag_max_speed set. This occurs if the fig_num variable input
@@ -175,43 +177,58 @@ end
 % Set random seed
 rng(randomSeed);
 
-design_min_x = -2;
-design_max_x = 2;
-design_min_y = -2;
-design_max_y = 2;
-xraw = linspace(design_min_x,design_max_x,NpointsInSide);
-yraw = linspace(design_min_y,design_max_y,NpointsInSide);
-[Xraw,Yraw] = meshgrid(xraw,yraw);
-windFieldU = peaks(Xraw,Yraw);
-windFieldV = windFieldU';
-
+% %%%%%% Peaks code
+% design_min_x = -2;
+% design_max_x = 2;
+% design_min_y = -2;
+% design_max_y = 2;
+% xraw = linspace(design_min_x,design_max_x,NpointsInSide);
+% yraw = linspace(design_min_y,design_max_y,NpointsInSide);
+% [Xraw,Yraw] = meshgrid(xraw,yraw);
+% 
+% windFieldU = peaks(Xraw,Yraw);
+% windFieldV = windFieldU';
+% 
 % Rescale X and Y
-X = (Xraw - design_min_x)*(XY_range(3)-XY_range(1))/(design_max_x - design_min_x) + XY_range(1);
-Y = (Yraw - design_min_y)*(XY_range(4)-XY_range(2))/(design_max_y - design_min_y) + XY_range(2);
-x = (xraw - design_min_x)*(XY_range(3)-XY_range(1))/(design_max_x - design_min_x) + XY_range(1);
-y = (yraw - design_min_x)*(XY_range(3)-XY_range(1))/(design_max_x - design_min_x) + XY_range(1);
+% X = (Xraw - design_min_x)*(XY_range(3)-XY_range(1))/(design_max_x - design_min_x) + XY_range(1);
+% Y = (Yraw - design_min_y)*(XY_range(4)-XY_range(2))/(design_max_y - design_min_y) + XY_range(2);
+% x = (xraw - design_min_x)*(XY_range(3)-XY_range(1))/(design_max_x - design_min_x) + XY_range(1);
+% y = (yraw - design_min_x)*(XY_range(3)-XY_range(1))/(design_max_x - design_min_x) + XY_range(1);
 
 
 
-% % Generate a random mesh
-% [x, y] = meshgrid(linspace(-10, 10, NpointsInSide)); % Create a 2D grid of x and y coordinates
-% 
-% 
-% z = imgaussfilt(randn(NpointsInSide), 20,'FilterDomain','spatial'); % Generate random heights and smooth them
-% 
-% % renormalize z
-% z_max = max(z,[],'all');
-% z_min = abs(min(z,[],'all'));
-% 
-% maxRange = max(z_max, z_min);
-% 
-% % Make the wind have the right magnitude
-% z = z*(windMagnitude/maxRange);
-% 
-% windField = z;
-% 
-% % Plotting
-% surf(x, y, z, 'EdgeColor', 'none'); % Plot the terrain as a surface
+% Generate a random mesh to represent u direction
+[X, Y] = meshgrid(linspace(-10, 10, NpointsInSide)); % Create a 2D grid of x and y coordinates 
+ufieldRaw = imgaussfilt(randn(NpointsInSide), 20,'Padding','symmetric'); % Generate random heights and smooth them
+
+% renormalize z
+ufieldRaw_max = max(ufieldRaw,[],'all');
+ufieldRaw_min = abs(min(ufieldRaw,[],'all'));
+
+maxRange = max(ufieldRaw_max, ufieldRaw_min);
+
+% Make the wind have the right magnitude
+windFieldU = ufieldRaw*(windMagnitude/maxRange);
+
+% Do the same for the v direction
+% Generate a random mesh to represent u direction
+vfieldRaw = imgaussfilt(randn(NpointsInSide), 20,'Padding','symmetric'); % Generate random heights and smooth them
+
+% renormalize z
+vfieldRaw_max = max(vfieldRaw,[],'all');
+vfieldRaw_min = abs(min(vfieldRaw,[],'all'));
+
+maxRange = max(vfieldRaw_max, vfieldRaw_min);
+
+% Make the wind have the right magnitude
+windFieldV = vfieldRaw*(windMagnitude/maxRange);
+
+% Get x, y vectors for plotting
+x = linspace(-10, 10, NpointsInSide);
+y = x;
+
+% Plotting
+% surf(x, y, windFieldU, 'EdgeColor', 'none'); % Plot the terrain as a surface
 % % colormap(summer); % Use a suitable colormap
 %  material dull; % Adjust material properties
 % camlight headlight; % Add lighting

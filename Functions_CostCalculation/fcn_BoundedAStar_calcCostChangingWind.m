@@ -1,4 +1,4 @@
-function windRadius = fcn_BoundedAStar_calcCostChangingWind(windVector, radius, windFieldU, windFieldV, x, y,  varargin)
+function windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y,  varargin)
 % fcn_BoundedAStar_calcCostChangingWind
 % calculates the resulting reachable radius from a point at the center of a
 % circle, where the circle has a radius equal to the zero-wind distance.
@@ -42,17 +42,21 @@ function windRadius = fcn_BoundedAStar_calcCostChangingWind(windVector, radius, 
 
 % REVISION HISTORY:
 % 2025_07_11 by Sean Brennan
-% -- first write of function using fcn_MapGen_generatePolysFromTiling in
-% MapGen library as a starter
+% -- first write of function 
+% 2025_07_14 by K. Hayes, kxh1031@psu.edu
+% -- removed windVector from inputs list 
+% -- cleaned function formatting
+% -- added fail case detection for when xIndex or yIndex is empty
 
 % TO-DO
-% (none)
+% -- input checking support
+% -- revise function description
 
 %% Debugging and Input checks
 % Check if flag_max_speed set. This occurs if the fig_num variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 7; % The largest Number of argument inputs to the function
+MAX_NARGIN = 6; % The largest Number of argument inputs to the function
 flag_max_speed = 0;
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; %     % Flag to plot the results for debugging
@@ -99,8 +103,8 @@ if 0==flag_max_speed
 
         % Check the windVector input, make sure it is '2column_of_numbers'
         % type with exactly 1 row
-        fcn_DebugTools_checkInputsToFunctions(...
-            windVector, '2column_of_numbers',[1 1]);
+        % fcn_DebugTools_checkInputsToFunctions(...
+        %     windVector, '2column_of_numbers',[1 1]);
 
         % Check the radius input, make sure it is '1column_of_numbers'
         % type, 1 row
@@ -183,6 +187,9 @@ for ith_angle = 1:Nangles
         yIndex = find(y>currentPosition(1,2),1,'first'); 
 
         % Make sure we didn't wander off the map!
+        if isempty(xIndex) || isempty(yIndex)
+            break;
+        end
         if xIndex<1 || xIndex>length(x)
             break;
         end
