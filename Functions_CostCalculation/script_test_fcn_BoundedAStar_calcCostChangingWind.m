@@ -45,11 +45,12 @@ XY_range = [];
 peaksMode = [];
 
 % Fill wind fields (running in fast mode)
-[windFieldU, windFieldV, x, y]  = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), peaksMode, (-1));
+[windFieldU, windFieldV, x, y]  = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (-1));
 
 % Call function
 radius = 5;
-windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (fig_num));
+startPoint = [];
+windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (startPoint), (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -83,7 +84,8 @@ peaksMode = 1;
 
 % Call function
 radius = 5;
-windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (fig_num));
+startPoint = [];
+windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (startPoint), (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -135,7 +137,8 @@ peaksMode = [];
 [windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (-1));
 
 radius = 5;
-windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (fig_num));
+startpoint = [];
+windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (startPoint), (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -167,7 +170,8 @@ peaksMode = [];
 [windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (-1));
 
 radius = 5;
-windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (fig_num));
+startPoint = [];
+windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (startPoint), (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -199,7 +203,8 @@ peaksMode = [];
 [windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (-1));
 
 radius = 5;
-windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (fig_num));
+startPoint = [];
+windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (startPoint), (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -231,7 +236,8 @@ peaksMode = [];
 [windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (-1));
 
 radius = 5;
-windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (fig_num));
+startPoint = [];
+windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (startPoint), (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -263,7 +269,41 @@ peaksMode = [];
 [windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (-1));
 
 radius = 6;
-windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (fig_num));
+startPoint = [];
+windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (startPoint), (fig_num));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(windRadius));
+
+% Check variable sizes
+Npoints = 629;
+assert(size(windRadius,1)==Npoints); 
+assert(size(windRadius,2)==2); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% TEST case: Non-default start point
+fig_num = 20006;
+titleString = sprintf('TEST case: Non-default start point');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
+
+% Fill inputs
+randomSeed = [];
+windMagnitude = [];
+NpointsInSide = [];
+XY_range = [];
+peaksMode = [];
+
+% Call function
+[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (-1));
+
+radius = 5;
+startPoint = [-2,4];
+windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (startPoint), (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 

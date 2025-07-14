@@ -1,4 +1,4 @@
-function windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y,  varargin)
+function windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, varargin)
 % fcn_BoundedAStar_calcCostChangingWind
 % calculates the resulting reachable radius from a point at the center of a
 % circle, where the circle has a radius equal to the zero-wind distance.
@@ -6,7 +6,7 @@ function windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, 
 % direction.
 %
 % FORMAT:
-% windRadius = fcn_BoundedAStar_calcCostChangingWind(windVector, radius, (fig_num))
+% windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (startPoint), (fig_num))
 %
 % INPUTS:
 %
@@ -23,6 +23,9 @@ function windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, 
 %     y: a vector containing the y values assigned to each grid point  
 %
 %     (optional inputs)
+%
+%     startPoint: a 1x2 vector representing the [x,y] values of the start
+%     point. Defaults to [0,0] if no value is entered
 %
 %     fig_num: a figure number to plot results. If set to -1, skips any
 %     input checking or debugging, no figures will be generated, and sets
@@ -54,15 +57,16 @@ function windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, 
 % -- removed windVector from inputs list 
 % -- cleaned function formatting and description
 % -- added fail case detection for when xIndex or yIndex is empty
+% -- added ability to choose flight trajectory start point
 
 % TO-DO
-% -- add variable start point capabilities
+% (none)
 
 %% Debugging and Input checks
 % Check if flag_max_speed set. This occurs if the fig_num variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 6; % The largest Number of argument inputs to the function
+MAX_NARGIN = 7; % The largest Number of argument inputs to the function
 flag_max_speed = 0;
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; %     % Flag to plot the results for debugging
@@ -114,6 +118,15 @@ if 0==flag_max_speed
     end
 end
 
+% Does user want to specify startPoint input?
+startPoint = [0 0]; % Default is origin
+if 1 <= nargin
+    temp = varargin{1};
+    if ~isempty(temp)
+        startPoint = temp;
+    end
+end
+
 % Does user want to show the plots?
 flag_do_plots = 0; % Default is to NOT show plots
 if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
@@ -137,7 +150,7 @@ end
 %See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
-centers = [0 0];
+centers = startPoint;
 circle_points = fcn_INTERNAL_plotCircle(centers,radius);
 
 
@@ -167,7 +180,7 @@ for ith_angle = 1:Nangles
     % dynamics
     
     % Set initial position
-    currentPosition = [0 0];
+    currentPosition = startPoint;
     trajectory = nan(NintegrationSteps,2);
     
     for ith_step = 1:NintegrationSteps

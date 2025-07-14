@@ -38,9 +38,10 @@ figure(fig_num); clf;
 % Fill inputs
 windVector = [1 2];
 radius = 5; % Usually, radius should be less than windVector
+startPoint = [];
 
 % Call function
-windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, (fig_num));
+windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, (startPoint), (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -68,9 +69,10 @@ figure(fig_num); clf;
 % Fill inputs
 windVector = [1 0];
 radius = 5; % Usually, radius should be less than windVector
+startPoint = [];
 
 % Call function
-windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, (fig_num));
+windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, (startPoint), (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -109,12 +111,30 @@ assert(isequal(get(gcf,'Number'),fig_num));
 close all;
 fprintf(1,'Figure: 2XXXXXX: TEST mode cases\n');
 
-% %% TEST case: This one returns nothing since there is no portion of the path in criteria
-% fig_num = 20001;
-% titleString = sprintf('TEST case: This one returns nothing since there is no portion of the path in criteria');
-% fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
-% figure(fig_num); clf;
+%% TEST case: Non-default start point
+fig_num = 20001;
+titleString = sprintf('TEST case: Non-default start point');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
 
+% Call function
+radius = 5;
+windVector = [1 2];
+startPoint = [-2,4];
+windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, (startPoint), (fig_num));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(windRadius));
+
+% Check variable sizes
+Npoints = 629;
+assert(size(windRadius,1)==Npoints); 
+assert(size(windRadius,2)==2); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -142,8 +162,9 @@ figure(fig_num); close(fig_num);
 % Fill inputs
 windVector = [1 2];
 radius = 5; % Usually, radius should be less than windVector
+startPoint = [];
 
-windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, ([]));
+windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, (startPoint), ([]));
 
 % Check variable types
 assert(isnumeric(windRadius));
@@ -166,8 +187,9 @@ figure(fig_num); close(fig_num);
 % Fill inputs
 windVector = [1 2];
 radius = 5; % Usually, radius should be less than windVector
+startPoint = [];
 
-windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, (-1));
+windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, (startPoint), (-1));
 
 % Check variable types
 assert(isnumeric(windRadius));
@@ -191,6 +213,7 @@ close(fig_num);
 % Fill inputs
 windVector = [1 2];
 radius = 5; % Usually, radius should be less than windVector
+startPoint = [];
 
 Niterations = 10;
 
@@ -198,7 +221,7 @@ Niterations = 10;
 tic;
 for ith_test = 1:Niterations
     % Call the function
-    windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, ([]));
+    windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, (startPoint), ([]));
 end
 slow_method = toc;
 
@@ -206,7 +229,7 @@ slow_method = toc;
 tic;
 for ith_test = 1:Niterations
     % Call the function
-    windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, (-1));
+    windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, (startPoint), (-1));
 end
 fast_method = toc;
 

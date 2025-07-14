@@ -15,6 +15,9 @@ function windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, 
 %
 %     (optional inputs)
 %
+%     startPoint: a 1x2 vector representing the [x,y] values of the start
+%     point. Defaults to [0,0] if no value is entered
+%
 %     fig_num: a figure number to plot results. If set to -1, skips any
 %     input checking or debugging, no figures will be generated, and sets
 %     up code to maximize speed. As well, if given, this forces the
@@ -42,6 +45,8 @@ function windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, 
 % 2025_07_11 by Sean Brennan
 % -- first write of function using fcn_MapGen_generatePolysFromTiling in
 % MapGen library as a starter
+% 2025_07_14 by K. Hayes, kxh1031@psu.edu
+% -- added support for different start points
 
 % TO-DO
 % (none)
@@ -50,7 +55,7 @@ function windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, 
 % Check if flag_max_speed set. This occurs if the fig_num variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 3; % The largest Number of argument inputs to the function
+MAX_NARGIN = 4; % The largest Number of argument inputs to the function
 flag_max_speed = 0;
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; %     % Flag to plot the results for debugging
@@ -107,15 +112,14 @@ if 0==flag_max_speed
     end
 end
 
-
-% % Does user want to specify the flag_removeEdgePolytopes input?
-% flag_removeEdgePolytopes = 0; % Default is to NOT remove the edges
-% if 6 <= nargin
-%     temp = varargin{1};
-%     if ~isempty(temp)
-%         flag_removeEdgePolytopes = temp;
-%     end
-% end
+% Does user want to specify startPoint input?
+startPoint = [0 0]; % Default is origin
+if 1 <= nargin
+    temp = varargin{1};
+    if ~isempty(temp)
+        startPoint = temp;
+    end
+end
 
 % Does user want to show the plots?
 flag_do_plots = 0; % Default is to NOT show plots
@@ -140,7 +144,7 @@ end
 %See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
-centers = [0 0];
+centers = startPoint;
 circle_points = fcn_INTERNAL_plotCircle(centers,radius);
 
 % Solution is trivial: take the final position, add the "push" direction
