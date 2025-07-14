@@ -3,7 +3,7 @@ function [windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField(varargi
 % fills in a windField grid with random [U V] components
 %
 % FORMAT:
-% windField = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (fig_num))
+% windField = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (fig_num))
 %
 % INPUTS:
 %
@@ -15,9 +15,13 @@ function [windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField(varargi
 %     NpointsInSide: The number of partitions on each side of the grid. For
 %     example, NpointsInSide=10 produces a 10x10 grid
 %
-%     windMagnitude: the largest value of wind to use
+%     windMagnitude: the largest value of wind to use, in knots
 %  
-%     randomSeed: the random number generator to use
+%     randomSeed: the random number generation seed to use
+%
+%     peaksMode: a logical input indicating whether to randomly generate a
+%     wind field (== 0) or to use the standard 'peaks' function as a base
+%     (==1)
 %
 %     fig_num: a figure number to plot results. If set to -1, skips any
 %     input checking or debugging, no figures will be generated, and sets
@@ -27,8 +31,17 @@ function [windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField(varargi
 %
 % OUTPUTS:
 %
-%     windRadius: a set of points defining the distance conversion of the
-%     original travel locations to locations with wind
+%     windFieldU: a nxn matrix containing the u-direction components of the
+%     wind velocity at each grid point, where n is equal to NpointsInSide
+%
+%     windFieldV: a nxn matrix containing the v-direction components of the
+%     wind velocity at each grid point, where n is equal to NpointsInSide
+%
+%     x: a 1xn vector containing the x values assigned to each grid point
+%     within the specfied XY_range
+%
+%     y: a 1xn vector containing the y values assigned to each grid point
+%     within the specified XY_range
 %
 % DEPENDENCIES:
 %
@@ -48,15 +61,19 @@ function [windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField(varargi
 %    MapGen library as a starter
 % 2025_07_14 by K. Hayes, kxh1031@psu.edu
 % -- added gaussian surface option to field generation
+% -- changed default wind magnitude to 10 knots
+% -- cleaned function formatting and description
+% -- fixed bug where function would only generate 20x20 plots with -10:10
+%    range
 
 % TO-DO
-% -- fix formatting and input checks
+% -- input checking?
 
 %% Debugging and Input checks
 % Check if flag_max_speed set. This occurs if the fig_num variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 5; % The largest Number of argument inputs to the function
+MAX_NARGIN = 6; % The largest Number of argument inputs to the function
 flag_max_speed = 0;
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; %     % Flag to plot the results for debugging
@@ -100,11 +117,12 @@ if 0==flag_max_speed
     if flag_check_inputs
         % Are there the right number of inputs?
         narginchk(0,MAX_NARGIN);
-
-        % % Check the windVector input, make sure it is '2column_of_numbers'
+        
+        %%%%% No required inputs, delete these?
+        % % Check the XY_range input, make sure it is '4column_of_numbers'
         % % type with exactly 1 row
         % fcn_DebugTools_checkInputsToFunctions(...
-        %     windVector, '2column_of_numbers',[1 1]);
+        %     XY_range, '4column_of_numbers',[1 1]);
         % 
         % % Check the radius input, make sure it is '1column_of_numbers'
         % % type, 1 row
@@ -132,7 +150,7 @@ if 2 <= nargin
 end
 
 % Does user want to specify the NpointsInSide input?
-windMagnitude = 50; % Default is 50 knots
+windMagnitude = 10; % Default is 10 knots
 if 3 <= nargin
     temp = varargin{3};
     if ~isempty(temp)
@@ -142,10 +160,19 @@ end
 
 % Does user want to specify the randomSeed input?
 randomSeed = 1; % Default is 1
-if 3 <= nargin
-    temp = varargin{3};
+if 4 <= nargin
+    temp = varargin{4};
     if ~isempty(temp)
         randomSeed = temp;
+    end
+end
+
+% Does user want to specify peaksMode input?
+peaksMode = 0; % Default is off/0
+if 5 <= nargin
+    temp = varargin{5};
+    if ~isempty(temp)
+        peaksMode = temp;
     end
 end
 
@@ -177,62 +204,64 @@ end
 % Set random seed
 rng(randomSeed);
 
-% %%%%%% Peaks code
-% design_min_x = -2;
-% design_max_x = 2;
-% design_min_y = -2;
-% design_max_y = 2;
-% xraw = linspace(design_min_x,design_max_x,NpointsInSide);
-% yraw = linspace(design_min_y,design_max_y,NpointsInSide);
-% [Xraw,Yraw] = meshgrid(xraw,yraw);
-% 
-% windFieldU = peaks(Xraw,Yraw);
-% windFieldV = windFieldU';
-% 
-% Rescale X and Y
-% X = (Xraw - design_min_x)*(XY_range(3)-XY_range(1))/(design_max_x - design_min_x) + XY_range(1);
-% Y = (Yraw - design_min_y)*(XY_range(4)-XY_range(2))/(design_max_y - design_min_y) + XY_range(2);
-% x = (xraw - design_min_x)*(XY_range(3)-XY_range(1))/(design_max_x - design_min_x) + XY_range(1);
-% y = (yraw - design_min_x)*(XY_range(3)-XY_range(1))/(design_max_x - design_min_x) + XY_range(1);
+% Check for peaksMode flag
+if peaksMode == 1
+    % Generate wind map using peaks()
+    
+    % Set up smaller grid to crop to 2x2 center of peaks()
+    design_min_x = -2;
+    design_max_x = 2;
+    design_min_y = -2;
+    design_max_y = 2;
 
+    % Set up initial x and y vectors, mesh with correct number of grid elements
+    xraw = linspace(design_min_x,design_max_x,NpointsInSide);
+    yraw = linspace(design_min_y,design_max_y,NpointsInSide);
+    [Xraw,Yraw] = meshgrid(xraw,yraw);
 
+    % Assign u,v values to discretized wind field
+    windFieldU = peaks(Xraw,Yraw);
+    windFieldV = windFieldU';
+    
+    % Rescale smaller X and Y to fit within the specified XY range
+    X = (Xraw - design_min_x)*(XY_range(3)-XY_range(1))/(design_max_x - design_min_x) + XY_range(1);
+    Y = (Yraw - design_min_y)*(XY_range(4)-XY_range(2))/(design_max_y - design_min_y) + XY_range(2);
+    x = (xraw - design_min_x)*(XY_range(3)-XY_range(1))/(design_max_x - design_min_x) + XY_range(1);
+    y = (yraw - design_min_x)*(XY_range(3)-XY_range(1))/(design_max_x - design_min_x) + XY_range(1);
 
-% Generate a random mesh to represent u direction
-[X, Y] = meshgrid(linspace(-10, 10, NpointsInSide)); % Create a 2D grid of x and y coordinates 
-ufieldRaw = imgaussfilt(randn(NpointsInSide), 20,'Padding','symmetric'); % Generate random heights and smooth them
+else
+    % Randomly generate a wind field using a Gaussian smoothing filter
 
-% renormalize z
-ufieldRaw_max = max(ufieldRaw,[],'all');
-ufieldRaw_min = abs(min(ufieldRaw,[],'all'));
+    % Get x, y vectors for wind field sizing
+    x = linspace(XY_range(1), XY_range(3), NpointsInSide);
+    y = linspace(XY_range(2), XY_range(4), NpointsInSide);
 
-maxRange = max(ufieldRaw_max, ufieldRaw_min);
-
-% Make the wind have the right magnitude
-windFieldU = ufieldRaw*(windMagnitude/maxRange);
-
-% Do the same for the v direction
-% Generate a random mesh to represent u direction
-vfieldRaw = imgaussfilt(randn(NpointsInSide), 20,'Padding','symmetric'); % Generate random heights and smooth them
-
-% renormalize z
-vfieldRaw_max = max(vfieldRaw,[],'all');
-vfieldRaw_min = abs(min(vfieldRaw,[],'all'));
-
-maxRange = max(vfieldRaw_max, vfieldRaw_min);
-
-% Make the wind have the right magnitude
-windFieldV = vfieldRaw*(windMagnitude/maxRange);
-
-% Get x, y vectors for plotting
-x = linspace(-10, 10, NpointsInSide);
-y = x;
-
-% Plotting
-% surf(x, y, windFieldU, 'EdgeColor', 'none'); % Plot the terrain as a surface
-% % colormap(summer); % Use a suitable colormap
-%  material dull; % Adjust material properties
-% camlight headlight; % Add lighting
-% % lighting gouraud; % Set lighting model
+    % Generate a random mesh to represent u direction
+    [X, Y] = meshgrid(x, y); % Create a 2D grid of x and y coordinates
+    ufieldRaw = imgaussfilt(randn(NpointsInSide), 20,'Padding','circular'); % Generate random heights and smooth them
+    
+    % renormalize z
+    ufieldRaw_max = max(ufieldRaw,[],'all');
+    ufieldRaw_min = abs(min(ufieldRaw,[],'all'));
+    
+    maxRange = max(ufieldRaw_max, ufieldRaw_min);
+    
+    % Make the wind have the right magnitude
+    windFieldU = ufieldRaw*(windMagnitude/maxRange);
+    
+    % Do the same for the v direction
+    % Generate a random mesh to represent u direction
+    vfieldRaw = imgaussfilt(randn(NpointsInSide), 20,'Padding','circular'); % Generate random heights and smooth them
+    
+    % renormalize z
+    vfieldRaw_max = max(vfieldRaw,[],'all');
+    vfieldRaw_min = abs(min(vfieldRaw,[],'all'));
+    
+    maxRange = max(vfieldRaw_max, vfieldRaw_min);
+    
+    % Make the wind have the right magnitude
+    windFieldV = vfieldRaw*(windMagnitude/maxRange);
+end
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -276,96 +305,6 @@ if flag_do_plots
 
     indicesToPlot = intersect(indicesX,indicesY);
     quiver(X(indicesToPlot),Y(indicesToPlot),windFieldU(indicesToPlot),windFieldV(indicesToPlot));
-
-
-    % TO DO: Make the quiver smaller so we can see the arrows (use modulo
-% operator on index matrix to do this. Will require reshaping the matrix)
-
-
-    % Make the plotting indicies
-    % quiver(X,Y,windFieldU,windFieldV)
-
-
-    % % Prep the figure for plotting
-    % temp_h = figure(fig_num);
-    % flag_rescale_axis = 0;
-    % if isempty(get(temp_h,'Children'))
-    %     flag_rescale_axis = 1;
-    % end      
-    % 
-    % % Is this 2D or 3D?
-    % dimension_of_points = 2; 
-    % 
-    % % Find size of plotting domain
-    % allPointsBeingPlotted = [circle_points; nan nan];
-    % 
-    % max_plotValues = max(allPointsBeingPlotted);
-    % min_plotValues = min(allPointsBeingPlotted);
-    % sizePlot = max(max_plotValues) - min(min_plotValues);
-    % nudge = sizePlot*0.006; %#ok<NASGU>
-    % 
-    % % Find size of plotting domain
-    % if flag_rescale_axis
-    %     percent_larger = 0.3;
-    %     axis_range = max_plotValues - min_plotValues;
-    %     if (0==axis_range(1,1))
-    %         axis_range(1,1) = 2/percent_larger;
-    %     end
-    %     if (0==axis_range(1,2))
-    %         axis_range(1,2) = 2/percent_larger;
-    %     end
-    %     if dimension_of_points==3 && (0==axis_range(1,3))
-    %         axis_range(1,3) = 2/percent_larger;
-    %     end
-    % 
-    %     % Force the axis to be equal?
-    %     if 1==1
-    %         min_valuesInPlot = min(min_plotValues);
-    %         max_valuesInPlot = max(max_plotValues);
-    %     else
-    %         min_valuesInPlot = min_plotValues;
-    %         max_valuesInPlot = max_plotValues;
-    %     end
-    % 
-    %     % Stretch the axes
-    %     stretched_min_vertexValues = min_valuesInPlot - percent_larger.*axis_range;
-    %     stretched_max_vertexValues = max_valuesInPlot + percent_larger.*axis_range;
-    %     axesTogether = [stretched_min_vertexValues; stretched_max_vertexValues];
-    %     newAxis = reshape(axesTogether, 1, []);
-    %     axis(newAxis);
-    % 
-    % end
-    % goodAxis = axis;
-    % 
-    % % Check to see if hold is already on. If it is not, set a flag to turn it
-    % % off after this function is over so it doesn't affect future plotting
-    % flag_shut_hold_off = 0;
-    % if ~ishold
-    %     flag_shut_hold_off = 1;
-    %     hold on
-    % end
-    % 
-    % hold on;
-    % grid on;
-    % 
-    % % Plot the inputs:
-    % plot(centers(:,1),centers(:,2),'b.','MarkerSize',30, 'DisplayName','Input: origin')
-    % plot(circle_points(:,1),circle_points(:,2),'b-','DisplayName','Input: original radius')
-    % 
-    % % Plot the outputs:
-    % plot(windRadius(:,1),windRadius(:,2),'-','DisplayName','Output: windRadius')
-    % 
-    % legend('Interpreter','none');
-    % xlabel('X-East');
-    % ylabel('Y-North');
-    % 
-    % axis(goodAxis);
-    % axis equal;
-    % 
-    % % Shut the hold off?
-    % if flag_shut_hold_off
-    %     hold off;
-    % end
 
 end % Ends the flag_do_plot if statement
 

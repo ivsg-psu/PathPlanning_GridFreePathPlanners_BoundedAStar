@@ -7,6 +7,8 @@
 % 2025_07_14 by K. Hayes, kxh1031@psu.edu
 % -- cleaned script
 % -- fixed issue with missing variable windVector
+% -- added test cases for non-default map generation parameters
+% -- added fast mode test cases
 
 %% Set up the workspace
 close all
@@ -29,9 +31,9 @@ close all
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
 
-%% DEMO case: basic call to function with mixed E and N wind velocities
+%% DEMO case: basic call to function with randomly generated wind field
 fig_num = 10001;
-titleString = sprintf('DEMO case: basic call to function with mixed E and N wind velocities');
+titleString = sprintf('DEMO case: basic call to function with randomly generated wind field');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
@@ -40,9 +42,10 @@ randomSeed = [];
 windMagnitude = [];
 NpointsInSide = [];
 XY_range = [];
+peaksMode = [];
 
-% Fill wind fields
-[windFieldU, windFieldV, x, y]  = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (-1));
+% Fill wind fields (running in fast mode)
+[windFieldU, windFieldV, x, y]  = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), peaksMode, (-1));
 
 % Call function
 radius = 5;
@@ -58,25 +61,29 @@ Npoints = 629;
 assert(size(windRadius,1)==Npoints); 
 assert(size(windRadius,2)==2); 
 
-% Check variable values
-% assert(isequal(2,min(cell_array_of_lap_indices{1})));
-
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
 
 
-%% DEMO case: basic call to function with pure E wind velocities
+%% DEMO case: basic call to function with peaks mode enabled
 fig_num = 10002;
-titleString = sprintf('DEMO case: basic call to function with pure E wind velocities');
+titleString = sprintf('DEMO case: basic call to function with peaks mode enabled');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
 % Fill inputs
-windVector = [1 0];
-radius = 5; % Usually, radius should be less than windVector
+randomSeed = [];
+windMagnitude = [];
+NpointsInSide = [];
+XY_range = [];
+peaksMode = 1;
+
+% Fill wind fields (running in fast mode)
+[windFieldU, windFieldV, x, y]  = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), peaksMode, (-1));
 
 % Call function
-windRadius = fcn_BoundedAStar_calcCostChangingWind(windVector, radius, (fig_num));
+radius = 5;
+windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -88,12 +95,8 @@ Npoints = 629;
 assert(size(windRadius,1)==Npoints); 
 assert(size(windRadius,2)==2); 
 
-% Check variable values
-% assert(isequal(2,min(cell_array_of_lap_indices{1})));
-
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
-
 
 
 %% Test cases start here. These are very simple, usually trivial
@@ -115,12 +118,165 @@ assert(isequal(get(gcf,'Number'),fig_num));
 close all;
 fprintf(1,'Figure: 2XXXXXX: TEST mode cases\n');
 
-% %% TEST case: This one returns nothing since there is no portion of the path in criteria
-% fig_num = 20001;
-% titleString = sprintf('TEST case: This one returns nothing since there is no portion of the path in criteria');
-% fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
-% figure(fig_num); clf;
+%% TEST case: Non-default, non-uniform XY range for random map generation
+fig_num = 20001;
+titleString = sprintf('TEST case: Non-default, non-uniform XY range for random map generation');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
 
+% Fill inputs
+randomSeed = [];
+windMagnitude = [];
+NpointsInSide = [];
+XY_range = [-20, -5, 15, 25];
+peaksMode = [];
+
+% Call function
+[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (-1));
+
+radius = 5;
+windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (fig_num));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(windRadius));
+
+% Check variable sizes
+Npoints = 629;
+assert(size(windRadius,1)==Npoints); 
+assert(size(windRadius,2)==2); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% TEST case: Non-default NpointsInSide for random map generation
+fig_num = 20002;
+titleString = sprintf('TEST case: Non-default NpointsInSide for random map generation');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
+
+% Fill inputs
+randomSeed = [];
+windMagnitude = [];
+NpointsInSide = 500;
+XY_range = [];
+peaksMode = [];
+
+% Call function
+[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (-1));
+
+radius = 5;
+windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (fig_num));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(windRadius));
+
+% Check variable sizes
+Npoints = 629;
+assert(size(windRadius,1)==Npoints); 
+assert(size(windRadius,2)==2); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% TEST case: Non-default windMagnitude for random map generation
+fig_num = 20003;
+titleString = sprintf('TEST case: Non-default windMagnitude for random map generation');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
+
+% Fill inputs
+randomSeed = [];
+windMagnitude = 2;
+NpointsInSide = [];
+XY_range = [];
+peaksMode = [];
+
+% Call function
+[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (-1));
+
+radius = 5;
+windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (fig_num));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(windRadius));
+
+% Check variable sizes
+Npoints = 629;
+assert(size(windRadius,1)==Npoints); 
+assert(size(windRadius,2)==2); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% TEST case: Non-default randomSeed for random map generation
+fig_num = 20004;
+titleString = sprintf('TEST case: Non-default randomSeed for random map generation');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
+
+% Fill inputs
+randomSeed = 4584531;
+windMagnitude = [];
+NpointsInSide = [];
+XY_range = [];
+peaksMode = [];
+
+% Call function
+[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (-1));
+
+radius = 5;
+windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (fig_num));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(windRadius));
+
+% Check variable sizes
+Npoints = 629;
+assert(size(windRadius,1)==Npoints); 
+assert(size(windRadius,2)==2); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% TEST case: Non-default radius of travel pre-wind
+fig_num = 20005;
+titleString = sprintf('TEST case: Non-default radius of travel pre-wind');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
+
+% Fill inputs
+randomSeed = [];
+windMagnitude = [];
+NpointsInSide = [];
+XY_range = [];
+peaksMode = [];
+
+% Call function
+[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (-1));
+
+radius = 6;
+windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (fig_num));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(windRadius));
+
+% Check variable sizes
+Npoints = 629;
+assert(size(windRadius,1)==Npoints); 
+assert(size(windRadius,2)==2); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -145,25 +301,33 @@ fig_num = 80001;
 fprintf(1,'Figure: %.0f: FAST mode, empty fig_num\n',fig_num);
 figure(fig_num); close(fig_num);
 
-% % Fill in seed points, V, and C
-% [seed_points, V, C] = fcn_INTERNAL_loadExampleData;
-% 
-% % fill polytopes from tiling
-% AABB = [0 0 1 1];
-% stretch = [1 1];
-% flag_removeEdgePolytopes = 1; % do NOT fill in polytopes to edge
-% 
-% polytopes = fcn_MapGen_generatePolysFromTiling(seed_points, V, C, AABB, stretch, (flag_removeEdgePolytopes), ([]));
-% 
-% % Check variable types
-% assert(isstruct(polytopes));
-% 
-% % Check variable sizes
-% Npolys = 68;
-% assert(isequal(Npolys,length(polytopes))); 
-% 
-% % Check variable values
-% % assert(isequal(2,min(cell_array_of_lap_indices{1})));
+% Fill inputs
+randomSeed = [];
+windMagnitude = [];
+NpointsInSide = [];
+XY_range = [];
+peaksMode = [];
+
+% Fill wind fields (running in fast mode)
+[windFieldU, windFieldV, x, y]  = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (-1));
+
+% Call function
+radius = 5;
+windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, ([]));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(windRadius));
+
+% Check variable sizes
+Npoints = 629;
+assert(size(windRadius,1)==Npoints); 
+assert(size(windRadius,2)==2); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -175,25 +339,33 @@ fig_num = 80002;
 fprintf(1,'Figure: %.0f: FAST mode, fig_num=-1\n',fig_num);
 figure(fig_num); close(fig_num);
 
-% % Fill in seed points, V, and C
-% [seed_points, V, C] = fcn_INTERNAL_loadExampleData;
-% 
-% % fill polytopes from tiling
-% AABB = [0 0 1 1];
-% stretch = [1 1];
-% flag_removeEdgePolytopes = 1; % do NOT fill in polytopes to edge
-% 
-% polytopes = fcn_MapGen_generatePolysFromTiling(seed_points, V, C, AABB, stretch, (flag_removeEdgePolytopes), (-1));
-% 
-% % Check variable types
-% assert(isstruct(polytopes));
-% 
-% % Check variable sizes
-% Npolys = 68;
-% assert(isequal(Npolys,length(polytopes))); 
-% 
-% % Check variable values
-% % assert(isequal(2,min(cell_array_of_lap_indices{1})));
+% Fill inputs
+randomSeed = [];
+windMagnitude = [];
+NpointsInSide = [];
+XY_range = [];
+peaksMode = [];
+
+% Fill wind fields (running in fast mode)
+[windFieldU, windFieldV, x, y]  = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), peaksMode, (-1));
+
+% Call function
+radius = 5;
+windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (-1));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(windRadius));
+
+% Check variable sizes
+Npoints = 629;
+assert(size(windRadius,1)==Npoints); 
+assert(size(windRadius,2)==2); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -206,13 +378,17 @@ fprintf(1,'Figure: %.0f: FAST mode comparisons\n',fig_num);
 figure(fig_num);
 close(fig_num);
 
-% % Fill in seed points, V, and C
-% [seed_points, V, C] = fcn_INTERNAL_loadExampleData;
-% 
-% % fill polytopes from tiling
-% AABB = [0 0 1 1];
-% stretch = [1 1];
-% flag_removeEdgePolytopes = 1; % do NOT fill in polytopes to edge
+% Fill inputs
+randomSeed = [];
+windMagnitude = [];
+NpointsInSide = [];
+XY_range = [];
+peaksMode = [];
+
+% Fill wind fields (running in fast mode)
+[windFieldU, windFieldV, x, y]  = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), peaksMode, (-1));
+
+radius = 5;
 
 Niterations = 10;
 
@@ -220,7 +396,7 @@ Niterations = 10;
 tic;
 for ith_test = 1:Niterations
     % Call the function
-%    polytopes = fcn_MapGen_generatePolysFromTiling(seed_points, V, C, AABB, stretch, (flag_removeEdgePolytopes), ([]));
+    windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, ([]));
 end
 slow_method = toc;
 
@@ -228,7 +404,7 @@ slow_method = toc;
 tic;
 for ith_test = 1:Niterations
     % Call the function
- %   polytopes = fcn_MapGen_generatePolysFromTiling(seed_points, V, C, AABB, stretch, (flag_removeEdgePolytopes), (-1));
+    windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (-1));
 end
 fast_method = toc;
 
@@ -291,19 +467,3 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
 
-% %% fcn_INTERNAL_loadExampleData
-% function [seed_points, V, C] = fcn_INTERNAL_loadExampleData
-% 
-% 
-% % pull halton set
-% halton_points = haltonset(2);
-% points_scrambled = scramble(halton_points,'RR2'); % scramble values
-% 
-% % pick values from halton set
-% Halton_range = [1801 1901];
-% low_pt = Halton_range(1,1);
-% high_pt = Halton_range(1,2);
-% seed_points = points_scrambled(low_pt:high_pt,:);
-% [V,C] = voronoin(seed_points);
-% % V = V.*stretch;
-% end % Ends fcn_INTERNAL_loadExampleData

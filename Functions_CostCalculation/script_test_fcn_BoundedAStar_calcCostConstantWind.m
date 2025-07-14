@@ -2,8 +2,11 @@
 % Tests: fcn_BoundedAStar_calcCostConstantWind
 
 % Revision history
-% 2021_07_11 by Sean Brennan
+% 2025_07_11 by Sean Brennan
 % -- first write of script
+% 2025_07_14 by K. Hayes, kxh1031@psu.edu
+% -- cleaned old comments
+% -- added fast mode tests
 
 %% Set up the workspace
 close all
@@ -136,25 +139,19 @@ fig_num = 80001;
 fprintf(1,'Figure: %.0f: FAST mode, empty fig_num\n',fig_num);
 figure(fig_num); close(fig_num);
 
-% % Fill in seed points, V, and C
-% [seed_points, V, C] = fcn_INTERNAL_loadExampleData;
-% 
-% % fill polytopes from tiling
-% AABB = [0 0 1 1];
-% stretch = [1 1];
-% flag_removeEdgePolytopes = 1; % do NOT fill in polytopes to edge
-% 
-% polytopes = fcn_MapGen_generatePolysFromTiling(seed_points, V, C, AABB, stretch, (flag_removeEdgePolytopes), ([]));
-% 
-% % Check variable types
-% assert(isstruct(polytopes));
-% 
-% % Check variable sizes
-% Npolys = 68;
-% assert(isequal(Npolys,length(polytopes))); 
-% 
-% % Check variable values
-% % assert(isequal(2,min(cell_array_of_lap_indices{1})));
+% Fill inputs
+windVector = [1 2];
+radius = 5; % Usually, radius should be less than windVector
+
+windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, ([]));
+
+% Check variable types
+assert(isnumeric(windRadius));
+
+% Check variable sizes
+Npoints = 629;
+assert(size(windRadius,1)==Npoints); 
+assert(size(windRadius,2)==2); 
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -166,25 +163,19 @@ fig_num = 80002;
 fprintf(1,'Figure: %.0f: FAST mode, fig_num=-1\n',fig_num);
 figure(fig_num); close(fig_num);
 
-% % Fill in seed points, V, and C
-% [seed_points, V, C] = fcn_INTERNAL_loadExampleData;
-% 
-% % fill polytopes from tiling
-% AABB = [0 0 1 1];
-% stretch = [1 1];
-% flag_removeEdgePolytopes = 1; % do NOT fill in polytopes to edge
-% 
-% polytopes = fcn_MapGen_generatePolysFromTiling(seed_points, V, C, AABB, stretch, (flag_removeEdgePolytopes), (-1));
-% 
-% % Check variable types
-% assert(isstruct(polytopes));
-% 
-% % Check variable sizes
-% Npolys = 68;
-% assert(isequal(Npolys,length(polytopes))); 
-% 
-% % Check variable values
-% % assert(isequal(2,min(cell_array_of_lap_indices{1})));
+% Fill inputs
+windVector = [1 2];
+radius = 5; % Usually, radius should be less than windVector
+
+windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, (-1));
+
+% Check variable types
+assert(isnumeric(windRadius));
+
+% Check variable sizes
+Npoints = 629;
+assert(size(windRadius,1)==Npoints); 
+assert(size(windRadius,2)==2); 
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -197,13 +188,9 @@ fprintf(1,'Figure: %.0f: FAST mode comparisons\n',fig_num);
 figure(fig_num);
 close(fig_num);
 
-% % Fill in seed points, V, and C
-% [seed_points, V, C] = fcn_INTERNAL_loadExampleData;
-% 
-% % fill polytopes from tiling
-% AABB = [0 0 1 1];
-% stretch = [1 1];
-% flag_removeEdgePolytopes = 1; % do NOT fill in polytopes to edge
+% Fill inputs
+windVector = [1 2];
+radius = 5; % Usually, radius should be less than windVector
 
 Niterations = 10;
 
@@ -211,7 +198,7 @@ Niterations = 10;
 tic;
 for ith_test = 1:Niterations
     % Call the function
-%    polytopes = fcn_MapGen_generatePolysFromTiling(seed_points, V, C, AABB, stretch, (flag_removeEdgePolytopes), ([]));
+    windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, ([]));
 end
 slow_method = toc;
 
@@ -219,7 +206,7 @@ slow_method = toc;
 tic;
 for ith_test = 1:Niterations
     % Call the function
- %   polytopes = fcn_MapGen_generatePolysFromTiling(seed_points, V, C, AABB, stretch, (flag_removeEdgePolytopes), (-1));
+    windRadius = fcn_BoundedAStar_calcCostConstantWind(windVector, radius, (-1));
 end
 fast_method = toc;
 
@@ -280,21 +267,3 @@ end
 %
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
-
-
-% %% fcn_INTERNAL_loadExampleData
-% function [seed_points, V, C] = fcn_INTERNAL_loadExampleData
-% 
-% 
-% % pull halton set
-% halton_points = haltonset(2);
-% points_scrambled = scramble(halton_points,'RR2'); % scramble values
-% 
-% % pick values from halton set
-% Halton_range = [1801 1901];
-% low_pt = Halton_range(1,1);
-% high_pt = Halton_range(1,2);
-% seed_points = points_scrambled(low_pt:high_pt,:);
-% [V,C] = voronoin(seed_points);
-% % V = V.*stretch;
-% end % Ends fcn_INTERNAL_loadExampleData

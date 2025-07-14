@@ -10,10 +10,17 @@ function windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, 
 %
 % INPUTS:
 %
-%     windVector: a 1x2 vector of [U V] data where U is wind speed in the
-%     East direction and V is wind speed in the N direction
-%
 %     radius: a 1x1 scalar representing the radius of travel without wind
+%
+%     windFieldU:  a matrix containing the u-direction components of the
+%     wind velocity at each grid point
+%
+%     windFieldV:  a matrix containing the v-direction components of the
+%     wind velocity at each grid point
+%
+%     x: a vector containing the x values assigned to each grid point
+% 
+%     y: a vector containing the y values assigned to each grid point  
 %
 %     (optional inputs)
 %
@@ -45,12 +52,11 @@ function windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, 
 % -- first write of function 
 % 2025_07_14 by K. Hayes, kxh1031@psu.edu
 % -- removed windVector from inputs list 
-% -- cleaned function formatting
+% -- cleaned function formatting and description
 % -- added fail case detection for when xIndex or yIndex is empty
 
 % TO-DO
-% -- input checking support
-% -- revise function description
+% -- add variable start point capabilities
 
 %% Debugging and Input checks
 % Check if flag_max_speed set. This occurs if the fig_num variable input
@@ -99,12 +105,7 @@ end
 if 0==flag_max_speed
     if flag_check_inputs
         % Are there the right number of inputs?
-        narginchk(6,MAX_NARGIN);
-
-        % Check the windVector input, make sure it is '2column_of_numbers'
-        % type with exactly 1 row
-        % fcn_DebugTools_checkInputsToFunctions(...
-        %     windVector, '2column_of_numbers',[1 1]);
+        narginchk(5,MAX_NARGIN);
 
         % Check the radius input, make sure it is '1column_of_numbers'
         % type, 1 row
@@ -112,16 +113,6 @@ if 0==flag_max_speed
             radius, '1column_of_numbers',[1 1]);
     end
 end
-
-
-% % Does user want to specify the flag_removeEdgePolytopes input?
-% flag_removeEdgePolytopes = 0; % Default is to NOT remove the edges
-% if 6 <= nargin
-%     temp = varargin{1};
-%     if ~isempty(temp)
-%         flag_removeEdgePolytopes = temp;
-%     end
-% end
 
 % Does user want to show the plots?
 flag_do_plots = 0; % Default is to NOT show plots
