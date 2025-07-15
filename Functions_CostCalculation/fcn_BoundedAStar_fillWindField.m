@@ -65,9 +65,12 @@ function [windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField(varargi
 % -- cleaned function formatting and description
 % -- fixed bug where function would only generate 20x20 plots with -10:10
 %    range
+% 2025_07_15 by K. Hayes
+% -- fixed plotting bug for coarse grids
 
 % TO-DO
-% -- input checking?
+% -- current renormalization method results in very homogenous random maps
+%    for small NpointsInSide
 
 %% Debugging and Input checks
 % Check if flag_max_speed set. This occurs if the fig_num variable input
@@ -241,7 +244,7 @@ else
     ufieldRaw = imgaussfilt(randn(NpointsInSide), 20,'Padding','circular'); % Generate random heights and smooth them
     
     % renormalize z
-    ufieldRaw_max = max(ufieldRaw,[],'all');
+    ufieldRaw_max = abs(max(ufieldRaw,[],'all'));
     ufieldRaw_min = abs(min(ufieldRaw,[],'all'));
     
     maxRange = max(ufieldRaw_max, ufieldRaw_min);
@@ -289,22 +292,29 @@ if flag_do_plots
     title('Y-direction magnitude');
 
     subplot(1,3,3);
-
-    indices = (1:NpointsInSide); % Row vector
-    Xindices = repmat(indices,NpointsInSide,1);
-    Yindices = repmat(indices',1,NpointsInSide);
-
-    moduloX = mod(Xindices,25); % Keep only 1 of every 25
-    moduloY = mod(Yindices,25); % Keep only 1 of every 25
+    % Plot the wind field
+    if numel(windFieldU) > 250
+        NpointsInSide = length(windFieldU(:,1));
+        indices = (1:NpointsInSide); % Row vector
+        Xindices = repmat(indices,NpointsInSide,1);
+        Yindices = repmat(indices',1,NpointsInSide);
     
-    moduloXreshaped = reshape(moduloX,[],1);
-    moduloYreshaped = reshape(moduloY,[],1);
-
-    indicesX = find(moduloXreshaped==1);
-    indicesY = find(moduloYreshaped==1);
-
-    indicesToPlot = intersect(indicesX,indicesY);
-    quiver(X(indicesToPlot),Y(indicesToPlot),windFieldU(indicesToPlot),windFieldV(indicesToPlot));
+        moduloX = mod(Xindices,25); % Keep only 1 of every 25
+        moduloY = mod(Yindices,25); % Keep only 1 of every 25
+        
+        moduloXreshaped = reshape(moduloX,[],1);
+        moduloYreshaped = reshape(moduloY,[],1);
+    
+        indicesX = find(moduloXreshaped==1);
+        indicesY = find(moduloYreshaped==1);
+    
+        [X,Y] = meshgrid(x,y);
+    
+        indicesToPlot = intersect(indicesX,indicesY);
+        quiver(X(indicesToPlot),Y(indicesToPlot),windFieldU(indicesToPlot),windFieldV(indicesToPlot));
+    else 
+        quiver(x,y,windFieldU,windFieldV);
+    end
 
 end % Ends the flag_do_plot if statement
 

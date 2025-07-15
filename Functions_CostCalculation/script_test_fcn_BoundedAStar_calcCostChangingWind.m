@@ -9,6 +9,8 @@
 % -- fixed issue with missing variable windVector
 % -- added test cases for non-default map generation parameters
 % -- added fast mode test cases
+% 2025_07_15 by K. Hayes
+% -- added plotting support for coarse grids (small NpointsInSide)
 
 %% Set up the workspace
 close all
@@ -162,12 +164,12 @@ figure(fig_num); clf;
 % Fill inputs
 randomSeed = [];
 windMagnitude = [];
-NpointsInSide = 500;
+NpointsInSide = 6;
 XY_range = [];
 peaksMode = [];
 
 % Call function
-[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (-1));
+[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), 4564869);
 
 radius = 5;
 startPoint = [];

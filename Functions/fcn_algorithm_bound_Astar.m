@@ -43,7 +43,7 @@ function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts
 %
 %      map_name = "HST 1 100 SQT 0 1 0 1 SMV 0.04 0.008 1e-6 1111";
 %      plot_flag = 0; disp_name = 0; fig_num = 654654;
-%      [polytopes,fig]=fcn_Map_Generation_map_name_to_map(map_name,plot_flag,disp_name);
+%      [polytopes,fig]=fcn_MapGen_nameToMap(map_name,plot_flag,disp_name);
 %
 %      % shrunk_polytopes path planning
 %      xv = [polytopes.xv];

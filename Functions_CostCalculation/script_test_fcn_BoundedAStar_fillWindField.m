@@ -184,7 +184,7 @@ figure(fig_num); clf;
 % Fill inputs
 randomSeed = [];
 windMagnitude = [];
-NpointsInSide = 500;
+NpointsInSide = 6;
 XY_range = [];
 peaksMode = [];
 
@@ -200,7 +200,7 @@ assert(isnumeric(x));
 assert(isnumeric(y));
 
 % Check variable sizes
-Npoints = 500;
+Npoints = 6;
 assert(size(windFieldU,1)==Npoints); 
 assert(size(windFieldU,2)==Npoints); 
 

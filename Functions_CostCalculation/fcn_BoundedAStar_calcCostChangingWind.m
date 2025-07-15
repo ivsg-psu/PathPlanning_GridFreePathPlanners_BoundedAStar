@@ -58,6 +58,8 @@ function windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, 
 % -- cleaned function formatting and description
 % -- added fail case detection for when xIndex or yIndex is empty
 % -- added ability to choose flight trajectory start point
+% 2025_07_15 by K. Hayes
+% -- added plotting support for coarse vector grids
 
 % TO-DO
 % (none)
@@ -302,24 +304,28 @@ if flag_do_plots
     plot(windRadius(:,1),windRadius(:,2),'-','DisplayName','Output: windRadius')
 
     % Plot the wind field
-    NpointsInSide = length(windFieldU(:,1));
-    indices = (1:NpointsInSide); % Row vector
-    Xindices = repmat(indices,NpointsInSide,1);
-    Yindices = repmat(indices',1,NpointsInSide);
-
-    moduloX = mod(Xindices,25); % Keep only 1 of every 25
-    moduloY = mod(Yindices,25); % Keep only 1 of every 25
+    if numel(windFieldU) > 250
+        NpointsInSide = length(windFieldU(:,1));
+        indices = (1:NpointsInSide); % Row vector
+        Xindices = repmat(indices,NpointsInSide,1);
+        Yindices = repmat(indices',1,NpointsInSide);
     
-    moduloXreshaped = reshape(moduloX,[],1);
-    moduloYreshaped = reshape(moduloY,[],1);
-
-    indicesX = find(moduloXreshaped==1);
-    indicesY = find(moduloYreshaped==1);
-
-    [X,Y] = meshgrid(x,y);
-
-    indicesToPlot = intersect(indicesX,indicesY);
-    quiver(X(indicesToPlot),Y(indicesToPlot),windFieldU(indicesToPlot),windFieldV(indicesToPlot));
+        moduloX = mod(Xindices,25); % Keep only 1 of every 25
+        moduloY = mod(Yindices,25); % Keep only 1 of every 25
+        
+        moduloXreshaped = reshape(moduloX,[],1);
+        moduloYreshaped = reshape(moduloY,[],1);
+    
+        indicesX = find(moduloXreshaped==1);
+        indicesY = find(moduloYreshaped==1);
+    
+        [X,Y] = meshgrid(x,y);
+    
+        indicesToPlot = intersect(indicesX,indicesY);
+        quiver(X(indicesToPlot),Y(indicesToPlot),windFieldU(indicesToPlot),windFieldV(indicesToPlot));
+    else 
+        quiver(x,y,windFieldU,windFieldV);
+    end
 
     legend('Interpreter','none');
     xlabel('X-East');
