@@ -239,9 +239,12 @@ else
     x = linspace(XY_range(1), XY_range(3), NpointsInSide);
     y = linspace(XY_range(2), XY_range(4), NpointsInSide);
 
+    % Choose smoothing factor based on number of points in side
+    sg = 2;
+
     % Generate a random mesh to represent u direction
     [X, Y] = meshgrid(x, y); % Create a 2D grid of x and y coordinates
-    ufieldRaw = imgaussfilt(randn(NpointsInSide), 20,'Padding','circular'); % Generate random heights and smooth them
+    ufieldRaw = imgaussfilt(randn(NpointsInSide), sg,'Padding','circular'); % Generate random heights and smooth them
     
     % renormalize z
     ufieldRaw_max = abs(max(ufieldRaw,[],'all'));
@@ -253,8 +256,8 @@ else
     windFieldU = ufieldRaw*(windMagnitude/maxRange);
     
     % Do the same for the v direction
-    % Generate a random mesh to represent u direction
-    vfieldRaw = imgaussfilt(randn(NpointsInSide), 20,'Padding','circular'); % Generate random heights and smooth them
+    % Generate a random mesh to represent v direction
+    vfieldRaw = imgaussfilt(randn(NpointsInSide), sg,'Padding','circular'); % Generate random heights and smooth them
     
     % renormalize z
     vfieldRaw_max = max(vfieldRaw,[],'all');
@@ -293,7 +296,7 @@ if flag_do_plots
 
     subplot(1,3,3);
     % Plot the wind field
-    if numel(windFieldU) > 250
+    if numel(windFieldU) > 500
         NpointsInSide = length(windFieldU(:,1));
         indices = (1:NpointsInSide); % Row vector
         Xindices = repmat(indices,NpointsInSide,1);

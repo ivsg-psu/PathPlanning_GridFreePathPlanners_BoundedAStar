@@ -360,9 +360,9 @@ if flag_do_plots
                 coloridx = find(colorBreakpoints>=costgraph(i,j),1,'first');
                 thiscolor = colorMap(coloridx,:);
                 if i < j
-                    plot([vertices(i,1), vertices(j,1)], [vertices(i,2), vertices(j,2)],'->','Color',thiscolor,'LineWidth',5)
+                    plot([vertices(i,1), vertices(j,1)], [vertices(i,2), vertices(j,2)],'-','Color',thiscolor,'LineWidth',5)
                 else
-                    plot([vertices(i,1), vertices(j,1)], [vertices(i,2), vertices(j,2)],'->','Color',thiscolor,'LineWidth',1.5)
+                    plot([vertices(i,1), vertices(j,1)], [vertices(i,2), vertices(j,2)],'-','Color',thiscolor,'LineWidth',1.5)
                 end
             end
         end

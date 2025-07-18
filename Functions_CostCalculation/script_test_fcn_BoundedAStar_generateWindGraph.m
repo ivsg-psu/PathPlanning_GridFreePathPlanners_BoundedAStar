@@ -45,7 +45,9 @@ n_nodes = 5;
 [windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode),(-1));
 
 % Call graph generation function
-[vertices, edges, costgraph] = fcn_BoundedAStar_generateWindGraph(windFieldU, windFieldV, x, y, n_nodes, (randomSeed), (fig_num));
+start = [0, 0.3 , n_nodes+1, -1, 0];
+finish = [0.8, 0.8, n_nodes+2, -1, 0];
+[vertices, edges, costgraph] = fcn_BoundedAStar_generateWindGraph(windFieldU, windFieldV, x, y, n_nodes, start, finish, (randomSeed), (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -55,7 +57,7 @@ assert(isnumeric(edges));
 assert(isnumeric(costgraph));
 
 % Check variable sizes
-Npoints = n_nodes;
+Npoints = n_nodes+2;
 assert(size(vertices,1)==Npoints); 
 assert(size(vertices,2)==2); 
 
