@@ -240,7 +240,7 @@ else
     y = linspace(XY_range(2), XY_range(4), NpointsInSide);
 
     % Choose smoothing factor based on number of points in side
-    sg = 2;
+    sg = NpointsInSide/10;
 
     % Generate a random mesh to represent u direction
     [X, Y] = meshgrid(x, y); % Create a 2D grid of x and y coordinates
@@ -296,7 +296,7 @@ if flag_do_plots
 
     subplot(1,3,3);
     % Plot the wind field
-    if numel(windFieldU) > 500
+    if numel(windFieldU) > 1000
         NpointsInSide = length(windFieldU(:,1));
         indices = (1:NpointsInSide); % Row vector
         Xindices = repmat(indices,NpointsInSide,1);

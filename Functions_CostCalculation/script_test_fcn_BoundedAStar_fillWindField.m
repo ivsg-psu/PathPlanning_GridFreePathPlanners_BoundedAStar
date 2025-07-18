@@ -184,7 +184,7 @@ figure(fig_num); clf;
 % Fill inputs
 randomSeed = [];
 windMagnitude = [];
-NpointsInSide = 7;
+NpointsInSide = 6;
 XY_range = [];
 peaksMode = [];
 
