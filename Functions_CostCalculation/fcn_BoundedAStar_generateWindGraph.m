@@ -196,12 +196,14 @@ edges(end,end-1) = 0;
 %%%%% steps over the wind field in the specified direction.
 
 Nedges = numel(edges);
-NintegrationSteps = 10;
+stepDistance = 0.1;
 costgraph = nan*ones(size(edges));
 for ith_edge = 1:Nedges
     this_edge = (ith_edge);
-    stepDistance(1) = edgeVectorX(this_edge)/NintegrationSteps;
-    stepDistance(2) = edgeVectorY(this_edge)/NintegrationSteps;
+    lengthEdge = sum((edgeVectorX(this_edge) - edgeVectorY(this_edge)).^2,2).^0.5;
+    NintegrationSteps = lengthEdge/stepDistance;
+    % stepDistance(1) = edgeVectorX(this_edge)/NintegrationSteps;
+    % stepDistance(2) = edgeVectorY(this_edge)/NintegrationSteps;
     % get i,j coordinates for vertex search
     [thisi,thisj] = ind2sub(size(edges),this_edge);
     %%%%%
@@ -212,7 +214,7 @@ for ith_edge = 1:Nedges
     currentPosition = [vertices(thisi,:)];
     costtotal = 0;
     for ith_step = 1:NintegrationSteps
-        directionInHeading = [edgeVectorX(this_edge)*stepDistance(1), edgeVectorY(this_edge)*stepDistance(2)];
+        directionInHeading = [edgeVectorX(this_edge)*stepDistance, edgeVectorY(this_edge)*stepDistance];
 
         % windFieldU, windFieldV, x, y
         xIndex = find(x>currentPosition(1,1),1,'first');
