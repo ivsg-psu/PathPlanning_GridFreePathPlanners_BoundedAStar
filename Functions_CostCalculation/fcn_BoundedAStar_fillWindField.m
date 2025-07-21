@@ -3,7 +3,7 @@ function [windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField(varargi
 % fills in a windField grid with random [U V] components
 %
 % FORMAT:
-% windField = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (fig_num))
+% [windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (fig_num))
 %
 % INPUTS:
 %
@@ -302,8 +302,8 @@ if flag_do_plots
         Xindices = repmat(indices,NpointsInSide,1);
         Yindices = repmat(indices',1,NpointsInSide);
     
-        moduloX = mod(Xindices,25); % Keep only 1 of every 25
-        moduloY = mod(Yindices,25); % Keep only 1 of every 25
+        moduloX = mod(Xindices,10); % Keep only 1 of every 10
+        moduloY = mod(Yindices,10); % Keep only 1 of every 10
         
         moduloXreshaped = reshape(moduloX,[],1);
         moduloYreshaped = reshape(moduloY,[],1);

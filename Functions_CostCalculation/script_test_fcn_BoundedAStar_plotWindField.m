@@ -1,13 +1,11 @@
-% script_test_fcn_BoundedAStar_fillWindField
-% Tests: fcn_BoundedAStar_fillWindField
+% script_test_fcn_BoundedAStar_plotWindField
+% Tests: fcn_BoundedAStar_plotWindField
 
 % Revision history
-% 2025_07_11 by Sean Brennan
-% -- first write of script
-% 2025_07_14 by K. Hayes, kxh1031@psu.edu
-% -- added separate peaks and random modes for wind field generation
-% -- cleaned script to remove comments for other functions
-% -- wrote test cases for variable inputs
+% 2025_07_21 by K. Hayes, kxh1031@psu.edu
+% -- first write of script using
+%    script_test_fcn_BoundedAStar_generateWindField as starter
+
 
 %% Set up the workspace
 close all
@@ -30,9 +28,9 @@ close all
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
 
-%% DEMO case: basic call to produce random wind field
+%% DEMO case: plot a randomly generated wind field 
 fig_num = 10001;
-titleString = sprintf('DEMO case: basic call to produce random wind field');
+titleString = sprintf('DEMO case: plot a randomly generated wind field ');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
@@ -43,74 +41,22 @@ NpointsInSide = [];
 XY_range = [];
 peaksMode = [];
 
-% Call function
-[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode),(fig_num));
+% Call wind field generation function
+[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode),(-1));
+
+% Plot wind field
+fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, x, y, (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
-
-% Check variable types
-assert(isnumeric(windFieldU));
-assert(isnumeric(windFieldV));
-assert(isnumeric(x));
-assert(isnumeric(y));
-
-% Check variable sizes
-Npoints = 200;
-assert(size(windFieldU,1)==Npoints); 
-assert(size(windFieldU,2)==Npoints); 
-
-assert(size(windFieldV,1)==Npoints); 
-assert(size(windFieldV,2)==Npoints); 
-
-assert(size(x,1)==1);
-assert(size(x,2)==Npoints);
-
-assert(size(y,1)==1);
-assert(size(y,2)==Npoints);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
 
-%% DEMO case: basic call to function with peaksMode flag enabled
+%% DEMO case: use A* planner to find a path between start and finish
 fig_num = 10002;
-titleString = sprintf('DEMO case: basic call to function with peaksMode flag enabled');
+titleString = sprintf('DEMO case: use A* planner to find a path between two nodes');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
-
-% Fill inputs
-randomSeed = [];
-windMagnitude = [];
-NpointsInSide = [];
-XY_range = [];
-peaksMode = 1;
-
-% Call function
-[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (fig_num));
-
-sgtitle(titleString, 'Interpreter','none');
-
-% Check variable types
-assert(isnumeric(windFieldU));
-assert(isnumeric(windFieldV));
-assert(isnumeric(x));
-assert(isnumeric(y));
-
-% Check variable sizes
-Npoints = 200;
-assert(size(windFieldU,1)==Npoints); 
-assert(size(windFieldU,2)==Npoints); 
-
-assert(size(windFieldV,1)==Npoints); 
-assert(size(windFieldV,2)==Npoints); 
-
-assert(size(x,1)==1);
-assert(size(x,2)==Npoints);
-
-assert(size(y,1)==1);
-assert(size(y,2)==Npoints);
-
-% Make sure plot opened up
-assert(isequal(get(gcf,'Number'),fig_num));
 
 
 
@@ -139,40 +85,6 @@ titleString = sprintf('TEST case: Non-default, non-uniform XY range for random m
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
-% Fill inputs
-randomSeed = [];
-windMagnitude = [];
-NpointsInSide = [];
-XY_range = [-20, -5, 15, 25];
-peaksMode = [];
-
-% Call function
-[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (fig_num));
-
-sgtitle(titleString, 'Interpreter','none');
-
-% Check variable types
-assert(isnumeric(windFieldU));
-assert(isnumeric(windFieldV));
-assert(isnumeric(x));
-assert(isnumeric(y));
-
-% Check variable sizes
-Npoints = 200;
-assert(size(windFieldU,1)==Npoints); 
-assert(size(windFieldU,2)==Npoints); 
-
-assert(size(windFieldV,1)==Npoints); 
-assert(size(windFieldV,2)==Npoints); 
-
-assert(size(x,1)==1);
-assert(size(x,2)==Npoints);
-
-assert(size(y,1)==1);
-assert(size(y,2)==Npoints);
-
-% Make sure plot opened up
-assert(isequal(get(gcf,'Number'),fig_num));
 
 
 %% TEST case: Non-default NpointsInSide for random map generation
@@ -181,40 +93,7 @@ titleString = sprintf('TEST case: Non-default NpointsInSide for random map gener
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
-% Fill inputs
-randomSeed = [];
-windMagnitude = [];
-NpointsInSide = 100;
-XY_range = [];
-peaksMode = [];
 
-% Call function
-[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (fig_num));
-
-sgtitle(titleString, 'Interpreter','none');
-
-% Check variable types
-assert(isnumeric(windFieldU));
-assert(isnumeric(windFieldV));
-assert(isnumeric(x));
-assert(isnumeric(y));
-
-% Check variable sizes
-Npoints = 6;
-assert(size(windFieldU,1)==Npoints); 
-assert(size(windFieldU,2)==Npoints); 
-
-assert(size(windFieldV,1)==Npoints); 
-assert(size(windFieldV,2)==Npoints); 
-
-assert(size(x,1)==1);
-assert(size(x,2)==Npoints);
-
-assert(size(y,1)==1);
-assert(size(y,2)==Npoints);
-
-% Make sure plot opened up
-assert(isequal(get(gcf,'Number'),fig_num));
 
 %% TEST case: Non-default windMagnitude for random map generation
 fig_num = 20003;
@@ -222,40 +101,7 @@ titleString = sprintf('TEST case: Non-default windMagnitude for random map gener
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
-% Fill inputs
-randomSeed = [];
-windMagnitude = 80;
-NpointsInSide = [];
-XY_range = [];
-peaksMode = [];
 
-% Call function
-[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (fig_num));
-
-sgtitle(titleString, 'Interpreter','none');
-
-% Check variable types
-assert(isnumeric(windFieldU));
-assert(isnumeric(windFieldV));
-assert(isnumeric(x));
-assert(isnumeric(y));
-
-% Check variable sizes
-Npoints = 200;
-assert(size(windFieldU,1)==Npoints); 
-assert(size(windFieldU,2)==Npoints); 
-
-assert(size(windFieldV,1)==Npoints); 
-assert(size(windFieldV,2)==Npoints); 
-
-assert(size(x,1)==1);
-assert(size(x,2)==Npoints);
-
-assert(size(y,1)==1);
-assert(size(y,2)==Npoints);
-
-% Make sure plot opened up
-assert(isequal(get(gcf,'Number'),fig_num));
 
 %% TEST case: Non-default randomSeed for random map generation
 fig_num = 20004;
@@ -263,40 +109,7 @@ titleString = sprintf('TEST case: Non-default randomSeed for random map generati
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
-% Fill inputs
-randomSeed = 2564516;
-windMagnitude = [];
-NpointsInSide = [];
-XY_range = [];
-peaksMode = [];
 
-% Call function
-[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode), (fig_num));
-
-sgtitle(titleString, 'Interpreter','none');
-
-% Check variable types
-assert(isnumeric(windFieldU));
-assert(isnumeric(windFieldV));
-assert(isnumeric(x));
-assert(isnumeric(y));
-
-% Check variable sizes
-Npoints = 200;
-assert(size(windFieldU,1)==Npoints); 
-assert(size(windFieldU,2)==Npoints); 
-
-assert(size(windFieldV,1)==Npoints); 
-assert(size(windFieldV,2)==Npoints); 
-
-assert(size(x,1)==1);
-assert(size(x,2)==Npoints);
-
-assert(size(y,1)==1);
-assert(size(y,2)==Npoints);
-
-% Make sure plot opened up
-assert(isequal(get(gcf,'Number'),fig_num));
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

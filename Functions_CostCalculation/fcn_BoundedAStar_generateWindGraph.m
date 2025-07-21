@@ -62,7 +62,7 @@ function [vertices, edges, costgraph] = fcn_BoundedAStar_generateWindGraph(windF
 % -- first write of function
 %
 % TO-DO
-% (none)
+% -- graph scaling to match any XY_range, not just 0-1 values
 
 %% Debugging and Input checks
 % Check if flag_max_speed set. This occurs if the fig_num variable input
