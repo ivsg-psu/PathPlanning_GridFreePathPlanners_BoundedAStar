@@ -179,7 +179,7 @@ end
         
         % Plot streamlines
         obj = streamslice(x,y,windFieldU,windFieldV);
-        set(obj,'Color','white', 'LineWidth', 2)
+        set(obj,'Color','white', 'LineWidth', 0.5)
         cb.Label.String = 'Wind Speed (knots)';
     case 'layer'
         % Create x, y grids for Streamcolor

@@ -4,6 +4,14 @@
 % Revision history
 % 2025_07_16 by K. Hayes, kxh1031@psu.edu
 % -- first write of script
+% 2025_07_22 by K. Hayes
+% -- changed wind field plotting to use automatic wind field plotting
+%    function
+% -- added fcn_GridMapGen_generateRandomOccupancyMap for more realistic wind maps
+
+% TO DO:
+% -- take wind post-processing out of this script and put it into another
+%    separate function
 
 
 %% Set up the workspace
@@ -70,14 +78,116 @@ assert(size(costgraph,2)==Npoints);
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
 
-%% DEMO case: use A* planner to find a path between start and finish
+%% DEMO case: create a graph within a realistic wind field
 fig_num = 10002;
+%titleString = sprintf('DEMO case: create a graph within a realistic wind field');
+fprintf(1,'Figure %.0f: %s\n',fig_num) %,titleString);
+figure(fig_num); clf;
+
+% Fill inputs
+randomSeed = [];
+windMagnitude = [];
+NpointsInSide = [];
+XY_range = [0 0 1 1];
+peaksMode = [];
+n_nodes = 5;
+
+% Call random occupancy map function - code taken from
+% script_demo_generateRandomOccupancyAnimated
+nRows = 200;
+mColumns = 200;
+mapSize = [nRows mColumns];
+
+Nsteps = 50;
+Ncontours = 30;
+movementSideways = 1; % 0.6; %.5; %2.3;
+
+occupancyRatio = 0.2;
+dilationLevel = 400;
+seedMap = rand(nRows,mColumns);
+initialSeedMap = seedMap;
+Nseeds = numel(seedMap);
+leftDilationMultiplier = [];
+rightDilationMultiplier = [];
+optimizedThreshold = [];
+flag_firstDraw = 1;
+
+% Call the function once to initialize settings for upcoming calls
+[occupancyMatrix, randomMatrixDilated, forcedThreshold, leftDilationMultiplier, rightDilationMultiplier] = ...
+    fcn_GridMapGen_generateRandomOccupancyMap(...
+    'mapSize', (mapSize),... % [nRows mCols])
+    'occupancyRatio',(occupancyRatio),... % [1x1] value between 0 and 1
+    'dilationLevel',(dilationLevel),.... % [1x1] strictly positive int
+    'seedMap', (seedMap),... % [1x1] integer to be a random seed or NxM matrix of random numbers
+    'leftDilationMultiplier', (leftDilationMultiplier),... %  [nRows nRows], ...
+    'rightDilationMultiplier', (rightDilationMultiplier),... % [mCols mCols], ...
+    'thresholdForced', (optimizedThreshold), ... % [1x1] scalar
+    'flagSkipThresholdOptimization',(0),...% [1x1] scalar
+    'figNum',(15456));
+
+colorMin = min(randomMatrixDilated,[],"all");
+colorMax = max(randomMatrixDilated,[],"all");
+
+figure(99); clf;
+numColors = 256;
+cmap = turbo(numColors);
+colormap(cmap);
+
+h_fig = figure(99);
+%set(h_fig,'Name','animatedRandom','NumberTitle','off'); %, 'Position',[684 85 592 317]);
+
+%%%% WIND POST-PROCESSING SHOULD BE MADE INTO AN ALTERNATE FUNCTION (?). FOR
+%%%% NOW THE CODE IS JUST COPIED.
+% Use the gradient to estimate wind direction
+[px,py] = gradient(randomMatrixDilated);
+eastWind  = py;
+northWind = -px;
+
+% Solve for the wind magnitude
+windMagnitude = (eastWind.^2+northWind.^2).^0.5;
+maxWind = max(windMagnitude,[],'all');
+normalizedWindMagnitude = windMagnitude./maxWind;
+normalizedEastWind = eastWind./maxWind;
+normalizedNorthWind = northWind./maxWind;
+
+%%%%
+
+% Call graph generation function
+x = linspace(XY_range(1), XY_range(3), nRows);
+y = linspace(XY_range(2), XY_range(4), mColumns);
+start = [0, 0.3 , n_nodes+1, -1, 0];
+finish = [0.8, 0.8, n_nodes+2, -1, 0];
+[vertices, edges, costgraph] = fcn_BoundedAStar_generateWindGraph(eastWind, northWind, x, y, n_nodes, start, finish, (randomSeed), (fig_num));
+
+% sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(vertices));
+assert(isnumeric(edges));
+assert(isnumeric(costgraph));
+
+% Check variable sizes
+Npoints = n_nodes+2;
+assert(size(vertices,1)==Npoints); 
+assert(size(vertices,2)==2); 
+
+assert(size(edges,1)==Npoints); 
+assert(size(edges,2)==Npoints); 
+
+assert(size(costgraph,1)==Npoints);
+assert(size(costgraph,2)==Npoints);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% DEMO case: use A* planner to find a path between start and finish
+fig_num = 10003;
 titleString = sprintf('DEMO case: use A* planner to find a path between two nodes');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
 % Fill inputs
-randomSeed = 66428;
+randomSeed = 4822262;
 windMagnitude = [];
 NpointsInSide = [];
 XY_range = [0 0 1 1];
@@ -86,11 +196,11 @@ n_nodes = 5;
 rngSeed = [];
 
 % Call wind field generation function
-[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode),(-1));
+%[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode),(-1));
 
 % Call graph generation function
-start = [0, 0.3 , n_nodes+1, -1, 0];
-finish = [0, 1, n_nodes+2, -1, 0];
+start = [0.1, 0.1 , n_nodes+1, -1, 0];
+finish = [0.8, 0.8, n_nodes+2, -1, 0];
 
 [vertices, edges, costgraph] = fcn_BoundedAStar_generateWindGraph(windFieldU, windFieldV, x, y, n_nodes, start, finish, (rngSeed), (fig_num));
 
@@ -141,7 +251,134 @@ assert(size(costgraph,2)==Npoints+2);
 % Make sure plot opened up
 % assert(isequal(get(gcf,'Number'),fig_num));
 
+%% DEMO case: use A* planner to find a path between start and finish
+fig_num = 10004;
+titleString = sprintf('DEMO case: use A* planner to find a path between two nodes');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
 
+% Fill inputs
+randomSeed = 4822262;
+windMagnitude = [];
+NpointsInSide = [];
+XY_range = [0 0 1 1];
+peaksMode = [];
+n_nodes = 5;
+rngSeed = [];
+
+% Call random occupancy map function - code taken from
+% script_demo_generateRandomOccupancyAnimated
+nRows = 200;
+mColumns = 200;
+mapSize = [nRows mColumns];
+
+Nsteps = 50;
+Ncontours = 30;
+movementSideways = 1; % 0.6; %.5; %2.3;
+
+occupancyRatio = 0.2;
+dilationLevel = 400;
+seedMap = rand(nRows,mColumns);
+initialSeedMap = seedMap;
+Nseeds = numel(seedMap);
+leftDilationMultiplier = [];
+rightDilationMultiplier = [];
+optimizedThreshold = [];
+flag_firstDraw = 1;
+
+% Call the function once to initialize settings for upcoming calls
+[occupancyMatrix, randomMatrixDilated, forcedThreshold, leftDilationMultiplier, rightDilationMultiplier] = ...
+    fcn_GridMapGen_generateRandomOccupancyMap(...
+    'mapSize', (mapSize),... % [nRows mCols])
+    'occupancyRatio',(occupancyRatio),... % [1x1] value between 0 and 1
+    'dilationLevel',(dilationLevel),.... % [1x1] strictly positive int
+    'seedMap', (seedMap),... % [1x1] integer to be a random seed or NxM matrix of random numbers
+    'leftDilationMultiplier', (leftDilationMultiplier),... %  [nRows nRows], ...
+    'rightDilationMultiplier', (rightDilationMultiplier),... % [mCols mCols], ...
+    'thresholdForced', (optimizedThreshold), ... % [1x1] scalar
+    'flagSkipThresholdOptimization',(0),...% [1x1] scalar
+    'figNum',(15456));
+
+colorMin = min(randomMatrixDilated,[],"all");
+colorMax = max(randomMatrixDilated,[],"all");
+
+figure(99); clf;
+numColors = 256;
+cmap = turbo(numColors);
+colormap(cmap);
+
+h_fig = figure(99);
+%set(h_fig,'Name','animatedRandom','NumberTitle','off'); %, 'Position',[684 85 592 317]);
+
+%%%% WIND POST-PROCESSING SHOULD BE MADE INTO AN ALTERNATE FUNCTION (?). FOR
+%%%% NOW THE CODE IS JUST COPIED.
+% Use the gradient to estimate wind direction
+[px,py] = gradient(randomMatrixDilated);
+eastWind  = py;
+northWind = -px;
+
+% Solve for the wind magnitude
+windMagnitude = (eastWind.^2+northWind.^2).^0.5;
+maxWind = max(windMagnitude,[],'all');
+normalizedWindMagnitude = windMagnitude./maxWind;
+normalizedEastWind = eastWind./maxWind;
+normalizedNorthWind = northWind./maxWind;
+
+%%%%
+
+% Call graph generation function
+x = linspace(XY_range(1), XY_range(3), nRows);
+y = linspace(XY_range(2), XY_range(4), mColumns);
+start = [0, 0.3 , n_nodes+1, -1, 0];
+finish = [0.8, 0.8, n_nodes+2, -1, 0];
+[vertices, edges, costgraph] = fcn_BoundedAStar_generateWindGraph(eastWind, northWind, x, y, n_nodes, start, finish, (randomSeed), (fig_num));
+
+% Call A*
+%hvec = sum((vertices - finish(1:2)).^2,2).^0.5';
+
+% Use calculated costs to go from any node to end node as heuristic
+% function
+hvec = costgraph(:,end)';
+all_pts = [vertices(1:n_nodes,:), [1:n_nodes]',-1*ones(n_nodes,1), zeros(n_nodes,1)];
+
+[cost, route] = fcn_algorithm_Astar(edges, costgraph, hvec, all_pts, start, finish);
+
+    
+    % Plot wind field automatically 
+    fcn_BoundedAStar_plotWindField(eastWind, northWind, x, y, 'default', (99));
+
+    figure(99)
+    hold on
+    plot(vertices(:,1),vertices(:,2),'.','MarkerSize',10)
+    plot(route(:,1),route(:,2),'Color','black','Linewidth',3)
+    plot(start(1),start(2),'x','Color','red','MarkerSize',10)
+    plot(finish(1),finish(2),'x','Color','green','MarkerSize',10)
+
+    xlabel('X-East');
+    ylabel('Y-North');
+
+    axis equal;
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(vertices));
+assert(isnumeric(edges));
+assert(isnumeric(costgraph));
+
+% Check variable sizes
+Npoints = n_nodes;
+assert(size(vertices,1)==Npoints+2); 
+assert(size(vertices,2)==2); 
+
+assert(size(edges,1)==Npoints+2); 
+assert(size(edges,2)==Npoints+2); 
+
+assert(size(costgraph,1)==Npoints+2);
+assert(size(costgraph,2)==Npoints+2);
+
+% Make sure plot opened up
+% assert(isequal(get(gcf,'Number'),fig_num));
 %% Test cases start here. These are very simple, usually trivial
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

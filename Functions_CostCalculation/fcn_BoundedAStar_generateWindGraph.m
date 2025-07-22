@@ -60,6 +60,10 @@ function [vertices, edges, costgraph] = fcn_BoundedAStar_generateWindGraph(windF
 % REVISION HISTORY:
 % 2025_07_15 by K. Hayes
 % -- first write of function
+% 2025_07_22 by K. Hayes
+% -- added call to plotWindField function
+% -- fixed bug where edges close to edge of field would automatically get 0
+%    cost values, sometimes skewing planner outcomes
 %
 % TO-DO
 % -- graph scaling to match any XY_range, not just 0-1 values
@@ -222,6 +226,7 @@ for ith_edge = 1:Nedges
 
         % Make sure we didn't wander off the map!
         if isempty(xIndex) || isempty(yIndex)
+            costtotal = nan;
             break;
         end
         % if xIndex<1 || xIndex>length(x)
@@ -252,10 +257,14 @@ end
 
 minval = min(min(costgraph));
 costgraph = costgraph - minval*ones(size(costgraph));
+maxval = max(max(costgraph));
 
-% Re-clean cost graph to make diagonal zero
+% Re-clean cost graph to make diagonal zero and clean exceptions
 for i = 1:n_nodes+2
     for j = 1:n_nodes+2
+        if costgraph(i,j) == nan;
+            costgraph(i,j) = maxval
+        end
         if i == j
             costgraph(i,j) = 0;
         end
@@ -360,19 +369,26 @@ if flag_do_plots
         
     % Plot streamlines
     obj = streamslice(x,y,windFieldU,windFieldV);
-    set(obj,'Color','black', 'LineWidth', 0.5)
+    set(obj,'Color',[0.597 0.597 0.597], 'LineWidth', 0.5)
+
+    % Determine which edges to plot
+    beelineVector = [(finish(1)-start(1)), (finish(2)-start(2))];     % 'beeline' vector from start to finish
+    unitVector = beelineVector/sum(beelineVector.^2).^0.5;            % unit vector matching 'beeline' vector
 
     % Plot edges
     for i = 1:n_nodes+2
         for j = 1:n_nodes+2
             if edges(i,j) == 1
-                coloridx = find(colorBreakpoints>=costgraph(i,j),1,'first');
-                thiscolor = colorMap(coloridx,:);
-                if i < j
-                    plot([vertices(i,1), vertices(j,1)], [vertices(i,2), vertices(j,2)],'-','Color',thiscolor,'LineWidth',5)
-                else
-                    plot([vertices(i,1), vertices(j,1)], [vertices(i,2), vertices(j,2)],'-','Color',thiscolor,'LineWidth',1.5)
-                end
+                % Calculate dot product of edge vector and beeline unit
+                % vector
+                thisVector = [vertices(j,1) - vertices(i,1), vertices(j,2) - vertices(i,2)];
+                dotProd = dot(unitVector,thisVector);
+    
+               if dotProd > 0 
+                    coloridx = find(colorBreakpoints>=costgraph(i,j),1,'first');
+                    thiscolor = colorMap(coloridx,:);
+                    plot([vertices(i,1), vertices(j,1)], [vertices(i,2), vertices(j,2)],'-','Color',thiscolor,'LineWidth',3)
+               end
             end
         end
     end
@@ -385,6 +401,7 @@ if flag_do_plots
     %legend('Interpreter','none');
     xlabel('X-East');
     ylabel('Y-North');
+    title('Calculated Cost of Edges (moving towards goal)')
 
     axis(goodAxis);
     axis equal;

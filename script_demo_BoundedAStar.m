@@ -22,9 +22,9 @@ library_folders{ith_library} = {'Functions','Data'};
 library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/DebugTools_v2025_06_24.zip';
 
 ith_library = ith_library+1;
-library_name{ith_library}    = 'MapGenClass_v2025_07_07';
+library_name{ith_library}    = 'MapGenClass_v2025_07_22';
 library_folders{ith_library} = {'Functions','testFixtures'};
-library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTools_MapGenClassLibrary/archive/refs/tags/MapGenClass_v2025_07_07.zip?raw=true';
+library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTools_MapGenClassLibrary/archive/refs/tags/MapGenClass_v2025_07_22.zip';
 
 % ith_library = ith_library+1;
 % library_name{ith_library}    = 'PathClass_v2025_07_02';
@@ -56,7 +56,7 @@ end
 
 %% Do we need to set up the work space?
 if ~exist('flag_BoundAStar_Folders_Initialized','var')
-    this_project_folders = {'Functions','Functions_CostCalculation','Test_Fixtures','Utilities_gif','Utilities_TriangleRayIntersection','Utilities_streamcolor',Example_Map_Generation_Code'}; % {'Functions','Data'};
+    this_project_folders = {'Functions','Functions_CostCalculation','Test_Fixtures','Utilities_gif','Utilities_TriangleRayIntersection','Utilities_streamcolor','Example_Map_Generation_Code'}; % {'Functions','Data'};
     fcn_INTERNAL_initializeUtilities(library_name,library_folders,library_url,this_project_folders);  
     flag_BoundAStar_Folders_Initialized = 1;
 end
