@@ -82,7 +82,7 @@ windMagnitude = [];
 NpointsInSide = [];
 XY_range = [0 0 1 1];
 peaksMode = [];
-n_nodes = 25;
+n_nodes = 5;
 rngSeed = [];
 
 % Call wind field generation function
@@ -104,38 +104,17 @@ all_pts = [vertices(1:n_nodes,:), [1:n_nodes]',-1*ones(n_nodes,1), zeros(n_nodes
 
 [cost, route] = fcn_algorithm_Astar(edges, costgraph, hvec, all_pts, start, finish);
 
-figure(99)
-hold on
-plot(vertices(:,1),vertices(:,2),'.','MarkerSize',10)
-plot(route(:,1),route(:,2),'Color','black','Linewidth',3)
-plot(start(1),start(2),'x','Color','red','MarkerSize',10)
-plot(finish(1),finish(2),'x','Color','green','MarkerSize',10)
+    
+    % Plot wind field automatically 
+    fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, x, y, 'default', (99));
 
-% Plot the wind field
-    if numel(windFieldU) > 250
-        NpointsInSide = length(windFieldU(:,1));
-        indices = (1:NpointsInSide); % Row vector
-        Xindices = repmat(indices,NpointsInSide,1);
-        Yindices = repmat(indices',1,NpointsInSide);
-    
-        moduloX = mod(Xindices,25); % Keep only 1 of every 25
-        moduloY = mod(Yindices,25); % Keep only 1 of every 25
-        
-        moduloXreshaped = reshape(moduloX,[],1);
-        moduloYreshaped = reshape(moduloY,[],1);
-    
-        indicesX = find(moduloXreshaped==1);
-        indicesY = find(moduloYreshaped==1);
-    
-        [X,Y] = meshgrid(x,y);
-    
-        indicesToPlot = intersect(indicesX,indicesY);
-        quiver(X(indicesToPlot),Y(indicesToPlot),windFieldU(indicesToPlot),windFieldV(indicesToPlot));
-    else 
-        quiver(x,y,windFieldU,windFieldV);
-    end
+    figure(99)
+    hold on
+    plot(vertices(:,1),vertices(:,2),'.','MarkerSize',10)
+    plot(route(:,1),route(:,2),'Color','black','Linewidth',3)
+    plot(start(1),start(2),'x','Color','red','MarkerSize',10)
+    plot(finish(1),finish(2),'x','Color','green','MarkerSize',10)
 
-    %legend('Interpreter','none');
     xlabel('X-East');
     ylabel('Y-North');
 

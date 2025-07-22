@@ -353,9 +353,16 @@ if flag_do_plots
     percentVec = 0:0.1:1;
 
     colorBreakpoints = costScale*percentVec;
-    colorMap = jet(11);
+    colorMap = turbo(11);
     colormap(colorMap)
 
+    hold on
+        
+    % Plot streamlines
+    obj = streamslice(x,y,windFieldU,windFieldV);
+    set(obj,'Color','black', 'LineWidth', 0.5)
+
+    % Plot edges
     for i = 1:n_nodes+2
         for j = 1:n_nodes+2
             if edges(i,j) == 1
@@ -373,31 +380,8 @@ if flag_do_plots
     cb = colorbar;
     cb.Label.String = 'wind-based cost';
     cb.TickLabels = colorBreakpoints;
-
-    % Plot the wind field
-    if numel(windFieldU) > 250
-        NpointsInSide = length(windFieldU(:,1));
-        indices = (1:NpointsInSide); % Row vector
-        Xindices = repmat(indices,NpointsInSide,1);
-        Yindices = repmat(indices',1,NpointsInSide);
-    
-        moduloX = mod(Xindices,25); % Keep only 1 of every 25
-        moduloY = mod(Yindices,25); % Keep only 1 of every 25
         
-        moduloXreshaped = reshape(moduloX,[],1);
-        moduloYreshaped = reshape(moduloY,[],1);
-    
-        indicesX = find(moduloXreshaped==1);
-        indicesY = find(moduloYreshaped==1);
-    
-        [X,Y] = meshgrid(x,y);
-    
-        indicesToPlot = intersect(indicesX,indicesY);
-        quiver(X(indicesToPlot),Y(indicesToPlot),windFieldU(indicesToPlot),windFieldV(indicesToPlot));
-    else 
-        quiver(x,y,windFieldU,windFieldV);
-    end
-
+        
     %legend('Interpreter','none');
     xlabel('X-East');
     ylabel('Y-North');

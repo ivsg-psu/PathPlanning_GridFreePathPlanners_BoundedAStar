@@ -171,7 +171,7 @@ end
  switch plotType
     case 'default'      
         % Plot magnitude layer
-        colormap jet
+        colormap turbo
         contourf(x, y, magField, 20, 'EdgeColor', 'none')
         cb = colorbar;
         
@@ -189,7 +189,7 @@ end
         [SX, SY] = meshgrid(sx, sy)
         
         % Set up color formatting
-        colormap jet
+        colormap turbo
         cb = colorbar;
         cb.Label.String = 'Wind Speed (knots)'
 
