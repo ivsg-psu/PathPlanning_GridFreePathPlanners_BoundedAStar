@@ -4,7 +4,7 @@ function [] = fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, x, y, varar
 % coordinates
 %
 % FORMAT:
-% [] = fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, x, y, (fig_num))
+% [] = fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, x, y, (plotType), (fig_num))
 %
 % INPUTS:
 %
@@ -21,6 +21,13 @@ function [] = fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, x, y, varar
 %     within the specified XY_range
 %
 %     (optional inputs)
+%
+%     plotType: a string indicating what type of wind field plot to create.
+%      -- 'default' creates the default plot type, which is a filled contour
+%         plot representing wind speed magnitude with white streamlines
+%         indicating direction.
+%      -- 'layer' creates a colored streamline layer, compressing the two
+%         aspects of the default plot
 %
 %     fig_num: a figure number to plot results. If set to -1, skips any
 %     input checking or debugging, no figures will be generated, and sets
@@ -46,6 +53,8 @@ function [] = fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, x, y, varar
 % 2025_07_21 by K. Hayes
 % -- first write of function using fcn_BoundedAStar_fillWindField as a
 %    starter
+% 2025_07_22 by K. Hayes
+% -- added 'default' and 'layer' settings
 
 % TO-DO
 % -- input checks?
@@ -55,7 +64,7 @@ function [] = fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, x, y, varar
 % Check if flag_max_speed set. This occurs if the fig_num variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 5; % The largest Number of argument inputs to the function
+MAX_NARGIN = 6; % The largest Number of argument inputs to the function
 flag_max_speed = 0;
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; %     % Flag to plot the results for debugging
@@ -100,7 +109,7 @@ if 0==flag_max_speed
         % Are there the right number of inputs?
         narginchk(0,MAX_NARGIN);
         
-        %%%%% No required inputs, delete these?
+        % %%%%% No required inputs, delete these?
         % % Check the XY_range input, make sure it is '4column_of_numbers'
         % % type with exactly 1 row
         % fcn_DebugTools_checkInputsToFunctions(...
@@ -126,6 +135,15 @@ if (0==flag_max_speed) && (MAX_NARGIN == nargin)
     end
 end
 
+% Does user want to change plotting mode?
+plotType = 'default'; 
+if 1 <= nargin
+    temp = varargin{1};
+    if ~isempty(temp)
+        plotType = temp;
+    end
+end
+
 %% Main code
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   __  __       _
@@ -140,8 +158,9 @@ end
 
 figure(fig_num)
 
-magField = nan*ones(size(windFieldU));
 
+    magField = nan*ones(size(windFieldU));
+    
 % Get magnitude for plot 
 for i = 1:size(windFieldU,1)
     for j = 1:size(windFieldU, 2)
@@ -149,18 +168,34 @@ for i = 1:size(windFieldU,1)
     end
 end
 
-% Plot magnitude layer
-colormap jet
-contourf(x, y, magField, 20, 'EdgeColor', 'none')
-cb = colorbar;
+ switch plotType
+    case 'default'      
+        % Plot magnitude layer
+        colormap jet
+        contourf(x, y, magField, 20, 'EdgeColor', 'none')
+        cb = colorbar;
+        
+        hold on
+        
+        % Plot streamlines
+        obj = streamslice(x,y,windFieldU,windFieldV);
+        set(obj,'Color','white', 'LineWidth', 2)
+        cb.Label.String = 'Wind Speed (knots)';
+    case 'layer'
+        % Create x, y grids for Streamcolor
+        [X, Y] = meshgrid(x, y);
+        sx = linspace(min(x),max(x),15);
+        sy = linspace(min(y),max(y),15);
+        [SX, SY] = meshgrid(sx, sy)
+        
+        % Set up color formatting
+        colormap jet
+        cb = colorbar;
+        cb.Label.String = 'Wind Speed (knots)'
 
-hold on
-
-% Plot streamlines
-obj = streamslice(x,y,windFieldU,windFieldV);
-set(obj,'Color','white', 'LineWidth', 2)
-cb.Label.String = 'Wind Speed (knots)';
-
-
+        % Call streamcolor
+        h = Streamcolor(X, Y, windFieldU, windFieldV, SX, SY, magField);
+        
+end
 end % Ends the main function
 

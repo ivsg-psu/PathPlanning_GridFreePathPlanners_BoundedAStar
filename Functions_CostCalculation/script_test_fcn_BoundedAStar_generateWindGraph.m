@@ -77,7 +77,7 @@ fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
 % Fill inputs
-randomSeed = 682189;
+randomSeed = 66428;
 windMagnitude = [];
 NpointsInSide = [];
 XY_range = [0 0 1 1];
@@ -90,7 +90,7 @@ rngSeed = [];
 
 % Call graph generation function
 start = [0, 0.3 , n_nodes+1, -1, 0];
-finish = [0.8, 0.8, n_nodes+2, -1, 0];
+finish = [0, 1, n_nodes+2, -1, 0];
 
 [vertices, edges, costgraph] = fcn_BoundedAStar_generateWindGraph(windFieldU, windFieldV, x, y, n_nodes, start, finish, (rngSeed), (fig_num));
 

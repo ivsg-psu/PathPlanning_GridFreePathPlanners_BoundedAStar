@@ -44,21 +44,41 @@ peaksMode = [];
 % Call wind field generation function
 [windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode),(-1));
 
+plotType = 'default';
+
 % Plot wind field
-fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, x, y, (fig_num));
+fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, x, y, (plotType), (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
 
-%% DEMO case: use A* planner to find a path between start and finish
+%% DEMO case: plot a randomly generated wind field for use as a layer in another plot
 fig_num = 10002;
-titleString = sprintf('DEMO case: use A* planner to find a path between two nodes');
+titleString = sprintf(' DEMO case: plot a randomly generated wind field for use as a layer in another plot');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
+% Fill inputs
+randomSeed = [];
+windMagnitude = [];
+NpointsInSide = [];
+XY_range = [];
+peaksMode = [];
 
+% Call wind field generation function
+[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode),(-1));
+
+plotType = 'layer';
+
+% Plot wind field
+fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, x, y, (plotType), (fig_num));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 %% Test cases start here. These are very simple, usually trivial
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
