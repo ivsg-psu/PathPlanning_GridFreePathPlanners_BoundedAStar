@@ -187,20 +187,20 @@ fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
 % Fill inputs
-randomSeed = 4822262;
+randomSeed = [];
 windMagnitude = [];
 NpointsInSide = [];
 XY_range = [0 0 1 1];
-peaksMode = [];
-n_nodes = 5;
+peaksMode = 1;
+n_nodes = 25;
 rngSeed = [];
 
 % Call wind field generation function
-%[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode),(-1));
+[windFieldU, windFieldV, x, y] = fcn_BoundedAStar_fillWindField( (XY_range), (NpointsInSide), (windMagnitude), (randomSeed), (peaksMode),(-1));
 
 % Call graph generation function
-start = [0.1, 0.1 , n_nodes+1, -1, 0];
-finish = [0.8, 0.8, n_nodes+2, -1, 0];
+start = [0, 0.9 , n_nodes+1, -1, 0];
+finish = [0.9, 0, n_nodes+2, -1, 0];
 
 [vertices, edges, costgraph] = fcn_BoundedAStar_generateWindGraph(windFieldU, windFieldV, x, y, n_nodes, start, finish, (rngSeed), (fig_num));
 
@@ -220,15 +220,16 @@ all_pts = [vertices(1:n_nodes,:), [1:n_nodes]',-1*ones(n_nodes,1), zeros(n_nodes
 
     figure(99)
     hold on
-    plot(vertices(:,1),vertices(:,2),'.','MarkerSize',10)
-    plot(route(:,1),route(:,2),'Color','black','Linewidth',3)
-    plot(start(1),start(2),'x','Color','red','MarkerSize',10)
-    plot(finish(1),finish(2),'x','Color','green','MarkerSize',10)
+    plot(vertices(:,1),vertices(:,2),'o','MarkerSize',5,'MarkerFaceColor','white','MarkerEdgeColor','black','DisplayName','Nodes')
+    plot(route(:,1),route(:,2),'Color','black','Linewidth',3,'DisplayName','Route')
+    plot(start(1),start(2),'x','Color','red','MarkerSize',10,'LineWidth',3,'DisplayName','Start')
+    plot(finish(1),finish(2),'x','Color','green','MarkerSize',10,'LineWidth',3,'DisplayName','Goal')
 
     xlabel('X-East');
     ylabel('Y-North');
 
     axis equal;
+    legend('Location','best');
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -263,13 +264,14 @@ windMagnitude = [];
 NpointsInSide = [];
 XY_range = [0 0 1 1];
 peaksMode = [];
-n_nodes = 5;
+n_nodes = 10;
 rngSeed = [];
 
 % Call random occupancy map function - code taken from
 % script_demo_generateRandomOccupancyAnimated
-nRows = 200;
-mColumns = 200;
+rng(2020)
+nRows = 19;
+mColumns = 19;
 mapSize = [nRows mColumns];
 
 Nsteps = 50;
@@ -321,17 +323,18 @@ northWind = -px;
 windMagnitude = (eastWind.^2+northWind.^2).^0.5;
 maxWind = max(windMagnitude,[],'all');
 normalizedWindMagnitude = windMagnitude./maxWind;
-normalizedEastWind = eastWind./maxWind;
-normalizedNorthWind = northWind./maxWind;
+normalizedEastWind = 10*eastWind./maxWind;
+normalizedNorthWind = 10*northWind./maxWind;
 
 %%%%
 
 % Call graph generation function
 x = linspace(XY_range(1), XY_range(3), nRows);
 y = linspace(XY_range(2), XY_range(4), mColumns);
-start = [0, 0.3 , n_nodes+1, -1, 0];
-finish = [0.8, 0.8, n_nodes+2, -1, 0];
-[vertices, edges, costgraph] = fcn_BoundedAStar_generateWindGraph(eastWind, northWind, x, y, n_nodes, start, finish, (randomSeed), (fig_num));
+start = [0.9, 0.5 , n_nodes+1, -1, 0];
+finish = [0.1, 0.1, n_nodes+2, -1, 0];
+
+[vertices, edges, costgraph] = fcn_BoundedAStar_generateWindGraph(normalizedEastWind, normalizedNorthWind, x, y, n_nodes, start, finish, (randomSeed), (fig_num));
 
 % Call A*
 %hvec = sum((vertices - finish(1:2)).^2,2).^0.5';
@@ -345,19 +348,20 @@ all_pts = [vertices(1:n_nodes,:), [1:n_nodes]',-1*ones(n_nodes,1), zeros(n_nodes
 
     
     % Plot wind field automatically 
-    fcn_BoundedAStar_plotWindField(eastWind, northWind, x, y, 'default', (99));
+    fcn_BoundedAStar_plotWindField(normalizedEastWind, normalizedNorthWind, x, y, 'default', (99));
 
     figure(99)
     hold on
-    plot(vertices(:,1),vertices(:,2),'.','MarkerSize',10)
-    plot(route(:,1),route(:,2),'Color','black','Linewidth',3)
-    plot(start(1),start(2),'x','Color','red','MarkerSize',10)
-    plot(finish(1),finish(2),'x','Color','green','MarkerSize',10)
+    plot(vertices(:,1),vertices(:,2),'o','MarkerSize',5,'MarkerFaceColor','white','MarkerEdgeColor','black','DisplayName','Nodes')
+    plot(route(:,1),route(:,2),'Color','black','Linewidth',3,'DisplayName','Route')
+    plot(start(1),start(2),'x','Color','red','MarkerSize',10,'LineWidth',3,'DisplayName','Start')
+    plot(finish(1),finish(2),'x','Color','green','MarkerSize',10,'LineWidth',3,'DisplayName','Goal')
 
     xlabel('X-East');
     ylabel('Y-North');
 
     axis equal;
+    legend('Location','best');
 
 sgtitle(titleString, 'Interpreter','none');
 

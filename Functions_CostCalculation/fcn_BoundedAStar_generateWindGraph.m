@@ -64,6 +64,8 @@ function [vertices, edges, costgraph] = fcn_BoundedAStar_generateWindGraph(windF
 % -- added call to plotWindField function
 % -- fixed bug where edges close to edge of field would automatically get 0
 %    cost values, sometimes skewing planner outcomes
+% 2025_07_23 by K. Hayes
+% -- fixed bug in cost calculation 
 %
 % TO-DO
 % -- graph scaling to match any XY_range, not just 0-1 values
@@ -205,7 +207,7 @@ costgraph = nan*ones(size(edges));
 for ith_edge = 1:Nedges
     this_edge = (ith_edge);
     lengthEdge = sum((edgeVectorX(this_edge) - edgeVectorY(this_edge)).^2,2).^0.5;
-    NintegrationSteps = lengthEdge/stepDistance;
+    NintegrationSteps = ceil(lengthEdge/stepDistance);
     % stepDistance(1) = edgeVectorX(this_edge)/NintegrationSteps;
     % stepDistance(2) = edgeVectorY(this_edge)/NintegrationSteps;
     % get i,j coordinates for vertex search
@@ -218,7 +220,8 @@ for ith_edge = 1:Nedges
     currentPosition = [vertices(thisi,:)];
     costtotal = 0;
     for ith_step = 1:NintegrationSteps
-        directionInHeading = [edgeVectorX(this_edge)*stepDistance, edgeVectorY(this_edge)*stepDistance];
+         directionInHeading = [edgeVectorX(this_edge)*stepDistance, edgeVectorY(this_edge)*stepDistance];
+        %directionInHeading = [edgeVectorX(this_edge), edgeVectorY(this_edge)];
 
         % windFieldU, windFieldV, x, y
         xIndex = find(x>currentPosition(1,1),1,'first');
@@ -226,6 +229,7 @@ for ith_edge = 1:Nedges
 
         % Make sure we didn't wander off the map!
         if isempty(xIndex) || isempty(yIndex)
+            disp(xIndex), disp(yIndex), disp(thisi), disp(thisj)
             costtotal = nan;
             break;
         end
@@ -241,14 +245,20 @@ for ith_edge = 1:Nedges
         windSpeedV_here =  windFieldV(xIndex,yIndex);
         windSpeedVector = [windSpeedU_here windSpeedV_here];
         directionInWind = windSpeedVector/NintegrationSteps;
+
+        % Get vectors for cost calculation
+        edgeUnitVector = [edgeVectorX(this_edge) edgeVectorY(this_edge)]/(edgeVectorX(this_edge)^2 + edgeVectorY(this_edge)^2)^0.5;
+        cDotProduct = dot(edgeUnitVector,windSpeedVector);
         
         if thisi == thisj
             cost = 0;
         else
-            cost = sum(directionInHeading - directionInWind);
+            % cost = abs(sum(directionInHeading - directionInWind));
+            cost = -cDotProduct;
         end
 
         costtotal = costtotal + cost;
+        currentPosition = directionInHeading + directionInWind;
     end
     costgraph(ith_edge) = costtotal;
 end
@@ -262,7 +272,7 @@ maxval = max(max(costgraph));
 % Re-clean cost graph to make diagonal zero and clean exceptions
 for i = 1:n_nodes+2
     for j = 1:n_nodes+2
-        if costgraph(i,j) == nan;
+        if isnan(costgraph(i,j)) 
             costgraph(i,j) = maxval
         end
         if i == j
