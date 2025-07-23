@@ -220,8 +220,8 @@ for ith_edge = 1:Nedges
     currentPosition = [vertices(thisi,:)];
     costtotal = 0;
     for ith_step = 1:NintegrationSteps
-         directionInHeading = [edgeVectorX(this_edge)*stepDistance, edgeVectorY(this_edge)*stepDistance];
-        %directionInHeading = [edgeVectorX(this_edge), edgeVectorY(this_edge)];
+        directionInHeading = [edgeVectorX(this_edge)*stepDistance, edgeVectorY(this_edge)*stepDistance];
+        % directionInHeading = [edgeVectorX(this_edge), edgeVectorY(this_edge)];
 
         % windFieldU, windFieldV, x, y
         xIndex = find(x>currentPosition(1,1),1,'first');
@@ -265,8 +265,8 @@ end
 
 % Rescale cost graph to minval = 0
 
-minval = min(min(costgraph));
-costgraph = costgraph - minval*ones(size(costgraph));
+% minval = min(min(costgraph));
+% costgraph = costgraph - minval*ones(size(costgraph));
 maxval = max(max(costgraph));
 
 % Re-clean cost graph to make diagonal zero and clean exceptions
@@ -368,10 +368,11 @@ if flag_do_plots
     min_cost  = min(min(costgraph));    % should be == 0 if previous scaling was correct
     max_cost = max(max(costgraph));
 
-    costScale = max_cost - min_cost;
-    percentVec = 0:0.1:1;
-
-    colorBreakpoints = costScale*percentVec;
+    % costScale = max_cost - min_cost;
+    % percentVec = 0:0.1:1;
+    % 
+    % colorBreakpoints = costScale*percentVec;
+    colorBreakpoints = linspace(min_cost,max_cost,11);
     colorMap = turbo(11);
     colormap(colorMap)
 
