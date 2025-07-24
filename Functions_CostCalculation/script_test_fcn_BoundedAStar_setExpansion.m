@@ -15,9 +15,9 @@ rngSeed = [];
 
 % Call random occupancy map function - code taken from
 % script_demo_generateRandomOccupancyAnimated
-rng(1996)
-nRows = 40;
-mColumns = 40;
+rng(2020)
+nRows = 50;
+mColumns = 50;
 mapSize = [nRows mColumns];
 
 Nsteps = 50;
@@ -59,8 +59,8 @@ northWind = -px;
 windMagnitude = (eastWind.^2+northWind.^2).^0.5;
 maxWind = max(windMagnitude,[],'all');
 normalizedWindMagnitude = windMagnitude./maxWind;
-normalizedEastWind = 1*eastWind./maxWind;
-normalizedNorthWind = 1*northWind./maxWind;
+normalizedEastWind = 10*eastWind./maxWind;
+normalizedNorthWind = 10*northWind./maxWind;
 
 %%%%
 
@@ -71,7 +71,7 @@ start = [0.2, 0.9 , n_nodes+1, -1, 0];
 finish = [0.6, 0.1, n_nodes+2, -1, 0];
 
 % Call set expansion methods
-radius = 7.5;
+radius = 5;
 centerPoint = [0 0];
 expandedSets = fcn_BoundedAStar_setExpansion(radius,normalizedEastWind,normalizedNorthWind,x,y, (centerPoint), (-1));
 

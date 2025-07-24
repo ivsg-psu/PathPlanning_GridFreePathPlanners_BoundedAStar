@@ -154,7 +154,7 @@ x0 = circle_points;
 n = length(x0);
 
 % Create state matrices
-numSteps = 10;
+numSteps = 100;
 stepLength = radius/numSteps;
 angles = (0:0.01:2*pi);
 A = eye(n);
@@ -174,11 +174,15 @@ for k = 1:numSteps
         indices(i,:) = [xIndex yIndex];
         heading(i,:) = [cos(angles(i)) sin(angles(i))]*stepLength;
     end
-
-    Wu = diag(windFieldU(indices(:,1),indices(:,2)));
-    Wv = diag(windFieldV(indices(:,1),indices(:,2)));
     
-    W = [Wu Wv]*stepLength + heading;
+    % Convert indices into linear indices for indexing wind fields
+    linearInd = sub2ind(size(windFieldU),indices(:,1),indices(:,2));
+
+    Wu = windFieldU(linearInd);
+    Wv = windFieldV(linearInd);
+    
+    W = [Wu Wv]/numSteps + heading;
+    %W = heading;
     
     expandedSets(:,:,k+1) = A*expandedSets(:,:,k) + W;
 end

@@ -332,7 +332,7 @@ normalizedNorthWind = 1*northWind./maxWind;
 x = linspace(XY_range(1), XY_range(3), nRows);
 y = linspace(XY_range(2), XY_range(4), mColumns);
 start = [0.2, 0.9 , n_nodes+1, -1, 0];
-finish = [0.8, 0.3, n_nodes+2, -1, 0];
+finish = [0.6, 0.1, n_nodes+2, -1, 0];
 
 [vertices, edges, costgraph] = fcn_BoundedAStar_generateWindGraph(normalizedEastWind, normalizedNorthWind, x, y, n_nodes, start, finish, (randomSeed), (fig_num));
 
