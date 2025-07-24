@@ -1,12 +1,12 @@
 function expandedSets = fcn_BoundedAStar_setExpansion(radius, windFieldU, windFieldV, x, y, varargin)
-% fcn_BoundedAStar_calcCostChangingWind
+% fcn_BoundedAStar_setExpansion
 % calculates the resulting reachable radius from a point at the center of a
 % circle, where the circle has a radius equal to the zero-wind distance.
 % Uses a changing wind field and does line integrals from each starting
 % direction.
 %
 % FORMAT:
-% windRadius = fcn_BoundedAStar_calcCostChangingWind(radius, windFieldU, windFieldV, x, y, (startPoint), (fig_num))
+% windRadius = fcn_BoundedAStar_setExpansion(radius, windFieldU, windFieldV, x, y, (startPoint), (fig_num))
 %
 % INPUTS:
 %
@@ -45,19 +45,23 @@ function expandedSets = fcn_BoundedAStar_setExpansion(radius, windFieldU, windFi
 %
 % EXAMPLES:
 %
-% See the script: script_test_fcn_BoundedAStar_calcCostChangingWind
+% See the script: script_test_fcn_BoundedAStar_setExpansion
 % for a full test suite.
 %
-% This function was written on 2025_07_11 by Sean Brennan
-% Questions or comments? contact sbrennan@psu.edu
+% This function was written on 2025_07_23 by K. Hayes
+% Questions or comments? contact kxh1031@psu.edu
 
 % REVISION HISTORY:
 % 2025_07_23 by K. Hayes
 % -- first write of function using fcn_BoundedAStar_calcCostChangingWind as
 %    a starter
+% 2025_07_24 by K. Hayes
+% -- fixed bug with incorrect expansion set
+% -- fixed function documentation
+% -- added plotting capability
 
 % TO-DO
-% (none)
+% -- add flag_do_animation to turn animation off
 
 %% Debugging and Input checks
 % Check if flag_max_speed set. This occurs if the fig_num variable input
@@ -161,6 +165,8 @@ A = eye(n);
 % [X,Y] = meshgrid(x,y,size(windFieldU,1));
 expandedSets = nan*ones(n,2,numSteps);
 expandedSets(:,:,1) = startPoint.*ones(n,2,1);
+indices = nan*ones(n,2);
+heading = nan*ones(n,2);
 for k = 1:numSteps
     for i = 1:n
         xIndex = find(x>expandedSets(i,1,k),1,'first');
@@ -259,60 +265,41 @@ if flag_do_plots
         flag_shut_hold_off = 1;
         hold on
     end
+    
+    % Get meshgrid for streamline plotting
+    [X,Y] = meshgrid(x,y);
 
     hold on;
     grid on;
 
-    % Plot the inputs:
-    plot(centers(:,1),centers(:,2),'b.','MarkerSize',30, 'DisplayName','Input: origin')
-    plot(circle_points(:,1),circle_points(:,2),'b-','DisplayName','Input: original radius')
+    % Plot expanded sets
+    figure(fig_num)
+    axis([min(x), max(x), min(y), max(y)])
+    for j = 1:size(expandedSets,3)
+        axis equal
+        hold on
+        grid on
+        % Visually expand envelope
+        s = streamslice(X,Y,windFieldU,windFieldV);
+        set(s,'Color',[0.6 0.6 0.6])
+        plot(expandedSets(:,1,j),expandedSets(:,2,j),'LineWidth',2,'Color','black')
+        drawnow
+        clf
+    end
 
-    % Plot the outputs:
-    plot(windRadius(:,1),windRadius(:,2),'-','DisplayName','Output: windRadius')
 
     % Plot the wind field
-    if numel(windFieldU) > 250
-        NpointsInSide = length(windFieldU(:,1));
-        indices = (1:NpointsInSide); % Row vector
-        Xindices = repmat(indices,NpointsInSide,1);
-        Yindices = repmat(indices',1,NpointsInSide);
+    fcn_BoundedAStar_plotWindField(windFieldU,windFieldV,x,y,'default',fig_num)
     
-        moduloX = mod(Xindices,25); % Keep only 1 of every 25
-        moduloY = mod(Yindices,25); % Keep only 1 of every 25
-        
-        moduloXreshaped = reshape(moduloX,[],1);
-        moduloYreshaped = reshape(moduloY,[],1);
-    
-        indicesX = find(moduloXreshaped==1);
-        indicesY = find(moduloYreshaped==1);
-    
-        [X,Y] = meshgrid(x,y);
-    
-        indicesToPlot = intersect(indicesX,indicesY);
-        quiver(X(indicesToPlot),Y(indicesToPlot),windFieldU(indicesToPlot),windFieldV(indicesToPlot));
-    else 
-        quiver(x,y,windFieldU,windFieldV);
-    end
+    % Plot the inputs
+    plot(centers(:,1),centers(:,2),'k.','MarkerSize',30, 'DisplayName','Input: origin')
+    plot(circle_points(:,1),circle_points(:,2),'k--','LineWidth',2,'DisplayName','Input: original radius')
 
-    legend('Interpreter','none');
-    xlabel('X-East');
-    ylabel('Y-North');
+    % Plot the final output
+    plot(expandedSets(:,1,size(expandedSets,3)),expandedSets(:,2,size(expandedSets,3)),'LineWidth',2,'Color','black','DisplayName','Output: wind radius')
 
-    axis(goodAxis);
-    axis equal;
-
-    % Animate streamlines?
-    for ith_angle = 1:5:Nangles
-        thisTrajectory = allTrajectories{ith_angle,1};
-        if ith_angle == 1
-            h_streamline = plot(thisTrajectory(:,1),thisTrajectory(:,2),'.');
-        else
-            set(h_streamline,'Xdata',thisTrajectory(:,1),'Ydata',thisTrajectory(:,2));
-        end
-        pause(0.01);
-    end
-
-
+    % Turn on legend
+    legend
 
     % Shut the hold off?
     if flag_shut_hold_off

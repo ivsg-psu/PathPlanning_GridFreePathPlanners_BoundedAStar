@@ -173,6 +173,7 @@ finalPosition = nan(Nangles,2);
 
 % For each angle, do numerical simulation
 allTrajectories = cell(Nangles,1);
+tic
 for ith_angle = 1:Nangles
     this_angle = angles(ith_angle);
     thisHeading = [cos(this_angle) sin(this_angle)];
@@ -216,6 +217,7 @@ for ith_angle = 1:Nangles
     % Save our final position
     finalPosition(ith_angle,:) = currentPosition;
 end
+toc
 
 % Save results for output and plotting
 windRadius = finalPosition;
