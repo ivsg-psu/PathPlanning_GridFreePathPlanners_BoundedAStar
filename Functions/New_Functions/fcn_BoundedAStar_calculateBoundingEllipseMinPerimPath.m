@@ -1,69 +1,52 @@
-function [max_dist] = fcn_BoundedAStar_calculateBoundingEllipseMinPerimPath(int_polytopes,intersections,start,finish)
-% fcn_BoundedAStar_calculateBoundingEllipseMinPerimPath adds up all the distances
+function [max_dist] = fcn_BoundedAStar_calculateBoundingEllipseMinPerimPath(int_polytopes,intersections,start,finish,varargin)
+% fcn_BoundedAStar_calculateBoundingEllipseMinPerimPath 
+% 
+% adds up all the distances
 % between intersections along the start and finish and adds in the shortest
 % perimeter distance around each intersected obstacle
 %
-% [MAX_DIST]=fcn_BoundedAStar_calculateBoundingEllipseMinPerimPath(INT_POLYTOPES,INTERSECTIONS,START,FINISH)
-% returns:
-% MAX_DIST: sum of all the distances between intersections and along
-%   minimum perimeters
+% FORMAT:
 %
-% with inputs:
-% INT_POLYTOPES: a 1-by-p seven field structure of intersected polytopes,
+% [max_dist] = fcn_BoundedAStar_calculateBoundingEllipseMinPerimPath(int_polytopes,intersections,start,finish,(fig_num))
+%
+% INPUTS:
+% 
+%   int_polytopes: a 1-by-p seven field structure of intersected polytopes,
 %   where p = number of intersected polytopes, with fields:
-% vertices: a m+1-by-2 matrix of xy points with row1 = rowm+1, where m is
-%   the number of the individual polytope vertices
-% xv: a 1-by-m vector of vertice x-coordinates
-% yv: a 1-by-m vector of vertice y-coordinates
-% distances: a 1-by-m vector of perimeter distances from one point to the
-%   next point, distances(i) = distance from vertices(i) to vertices(i+1)
-% mean: average xy coordinate of the polytope
-% area: area of the polytope
-% max_radius: distance from the mean to the furthest vertex
-% INTERSECTIONS: a 1-by-f three field structure of intersection information, where
+%
+%   intersections: a 1-by-f three field structure of intersection information, where
 %   f = number of finish points, with fields:
-% points: i-by-2 matrix of xy coordinates, where i=number of intersections
-% index: 1-by-i vector of intersecting line indices
-% obstacles: 1-by-i vector of obstacles intersecting the line
-% START: a 1-by-5 vector of starting point information, including:
-%   x-coordinate
-%   y-coordinate
-%   point id number
-%   obstacle id number
-%   beginning/ending indication (1 if the point is a beginning or ending
-%   point and 0 otherwise)
-%   Ex: [x y point_id obs_id beg_end]
-% FINISH: a 1-by-5 vector of ending point information, including the same
+%       points: i-by-2 matrix of xy coordinates, where i=number of intersections
+%       index: 1-by-i vector of intersecting line indices
+%       obstacles: 1-by-i vector of obstacles intersecting the line
+%
+%   start:  a 1-by-5 vector of starting point information, including:
+%       x-coordinate
+%       y-coordinate
+%       point id number
+%       obstacle id number
+%       beginning/ending indication (1 if the point is a beginning or ending
+%           point and 0 otherwise)
+%       Ex: [x y point_id obs_id beg_end]
+%
+%   finish: a 1-by-5 vector of ending point information, including the same
 %   information as START
 %
-% Examples:
+%   (optional inputs)
 %
-%      % BASIC example
-%      cur_path = pwd;
-%      main_folder = '!Voronoi Tiling Obstacles - Organized';
-%      parent_dir = cur_path(1:strfind(cur_path,main_folder)-2);
-%      addpath([parent_dir '\' main_folder '\Plotting'])
-%      addpath([parent_dir '\' main_folder '\Map_Generation\polytope_generation'])
-%      addpath([parent_dir '\' main_folder '\Map_Generation\polytope_editing'])
-%      addpath([parent_dir '\' main_folder '\Path_Planning\bounding_ellipse'])
-%      addpath([parent_dir '\' main_folder '\Path_Planning\visibility'])
-%      polytopes=fcn_polytope_generation_halton_voronoi_tiling(1,100,[100,100]);
-%      trim_polytopes=fcn_polytope_editing_remove_edge_polytopes(polytopes,0,100,0,100);
-%      shrunk_polytopes=fcn_BoundedAStar_polytopeEditingShrinkEvenly(trim_polytopes,2.5);
-%      point_tot = length([shrunk_polytopes.xv]);
-%      start = [0 50 point_tot+1 0 0];
-%      finish = [100 50 point_tot+2 -1 0];
-%      [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]=fcn_Visibility_clearAndBlockedPoints(shrunk_polytopes,start,finish);
-%      intersections=fcn_Visibility_linePolytopeIntersections(xiP,yiP,xiQ,yiQ,xjP,yjP,D,di,num_int,shrunk_polytopes);
-%      int_polytopes = shrunk_polytopes(intersections(end).obstacles);
-%      max_dist=fcn_BoundedAStar_calculateBoundingEllipseMinPerimPath(int_polytopes,intersections,start,finish);
-%      fcn_BoundedAStar_plotPolytopes(shrunk_polytopes,99,'b-',2,[0 100 0 100],'square')
-%      fcn_BoundedAStar_plotPolytopes(int_polytopes,99,'r-',2)
-%      plot([start(1) finish(1)],[start(2) finish(2)],'k--','linewidth',2)
-%      for xing = 1:length(intersections(end).index)
-%          plot(intersections(end).points(xing,1),intersections(end).points(xing,2),'kx','linewidth',1)
-%      end
+%   fig_num: a figure number to plot results. If set to -1, skips any
+%     input checking or debugging, no figures will be generated, and sets
+%     up code to maximize speed. As well, if given, this forces the
+%     variable types to be displayed as output and as well makes the input
+%     check process verbose
 %
+% OUTPUTS: 
+%   max_dist: sum of all the distances between intersections and along
+%   minimum perimeters
+%
+% DEPENDENCIES:
+%   
+%   fcn_DebugTools_checkInputsToFunctions
 %
 % This function was written on 2018_11_17 by Seth Tau
 % Questions or comments? sat5340@psu.edu
@@ -74,13 +57,100 @@ function [max_dist] = fcn_BoundedAStar_calculateBoundingEllipseMinPerimPath(int_
 %    with vector sum method
 % -- copied to new function from fcn_bounding_ellipse_min_perimeter_path.m
 %    to follow library convention
+% 2025_07_25 - K. Hayes
+% -- fixed function format 
+% -- added input checking and debugging
 %
+% TO DO:
+% (none)
+
+%% Debugging and Input checks
+% Check if flag_max_speed set. This occurs if the fig_num variable input
+% argument (varargin) is given a number of -1, which is not a valid figure
+% number.
+MAX_NARGIN = 5; % The largest Number of argument inputs to the function
+flag_max_speed = 0;
+if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
+    flag_check_inputs = 0; % Flag to perform input checking
+    flag_max_speed = 1;
+else
+    % Check to see if we are externally setting debug mode to be "on"
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
+    flag_check_inputs = 1; % Flag to perform input checking
+    MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS");
+    MATLABFLAG_MAPGEN_FLAG_DO_DEBUG = getenv("MATLABFLAG_MAPGEN_FLAG_DO_DEBUG");
+    if ~isempty(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG)
+        flag_do_debug = str2double(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG);
+        flag_check_inputs  = str2double(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS);
+    end
+end
+
+% flag_do_debug = 1;
+
+if flag_do_debug
+    st = dbstack; %#ok<*UNRCH>
+    fprintf(1,'STARTING function: %s, in file: %s\n',st(1).name,st(1).file);
+    debug_fig_num = 999978; %#ok<NASGU>
+else
+    debug_fig_num = []; %#ok<NASGU>
+end
+
+%% check input arguments?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____                   _
+%  |_   _|                 | |
+%    | |  _ __  _ __  _   _| |_ ___
+%    | | | '_ \| '_ \| | | | __/ __|
+%   _| |_| | | | |_) | |_| | |_\__ \
+%  |_____|_| |_| .__/ \__,_|\__|___/
+%              | |
+%              |_|
+% See: http://patorjk.com/software/taag/#p=display&f=Big&t=Inputs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if 0==flag_max_speed
+    if flag_check_inputs
+        % Are there the right number of inputs?
+        narginchk(4,MAX_NARGIN);
+
+        % Check the start input, make sure it has 5 columns
+        fcn_DebugTools_checkInputsToFunctions(...
+            start, '5column_of_numbers');
+
+        % Check the finish input, make sure it has 5 columns
+        fcn_DebugTools_checkInputsToFunctions(...
+            finish, '5column_of_numbers');
+
+    end
+end
+
+% Does user want to show the plots?
+flag_do_plots = 0; % Default is to NOT show plots
+if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
+    temp = varargin{end};
+    if ~isempty(temp) % Did the user NOT give an empty figure number?
+        fig_num = temp;
+        figure(fig_num);
+        flag_do_plots = 1;
+    end
+end
+
+%% Main code
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   __  __       _
+%  |  \/  |     (_)
+%  | \  / | __ _ _ _ __
+%  | |\/| |/ _` | | '_ \
+%  | |  | | (_| | | | | |
+%  |_|  |_|\__,_|_|_| |_|
+%
+%See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+
 try % try block the entire function so if it fails for being inside a polytope, we can just assume
     % a large boundary
-%% check input arguments
-if nargin ~= 4
-    error('Incorrect number of arguments');
-end
+
 % TODO @sjharnett replace bug planner with estimated R_lc function to define boundary in
 % new heuristic bounded A*
 %% starting values
@@ -233,3 +303,28 @@ catch % just assume a maximum distance of double the distance between start and 
       % inside a polytope
     max_dist = 2*sum((startpt - finishpt).^2,2).^0.5;
 end
+%% Plot the results (for debugging)?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____       _
+%  |  __ \     | |
+%  | |  | | ___| |__  _   _  __ _
+%  | |  | |/ _ \ '_ \| | | |/ _` |
+%  | |__| |  __/ |_) | |_| | (_| |
+%  |_____/ \___|_.__/ \__,_|\__, |
+%                            __/ |
+%                           |___/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+
+
+end
+%% Functions follow
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   ______                _   _
+%  |  ____|              | | (_)
+%  | |__ _   _ _ __   ___| |_ _  ___  _ __  ___
+%  |  __| | | | '_ \ / __| __| |/ _ \| '_ \/ __|
+%  | |  | |_| | | | | (__| |_| | (_) | | | \__ \
+%  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
+%
+% See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§

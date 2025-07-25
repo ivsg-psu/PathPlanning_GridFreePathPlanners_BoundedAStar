@@ -1,63 +1,66 @@
-function [path,cost,err] = fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes(polytopes,A,B,planner_mode,varargin)
-% fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes sets up the information needed to for the Dijkstra
+function [path,cost,err] = fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes(polytopes,start,finish,planner_mode,varargin)
+% fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes 
+% 
+% sets up the information needed for the Dijkstra
 % Astar hybrid function and calls the function when the input polytopes are
 % generated from the voronoi diagram
 %
-% [PATH,COST,ERR]=fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes(POLYTOPES,A,B,BOUNDS)
-% returns:
-% PATH: a series of points along the near optimal path
-% COST: the distance along that path
-% ERR: error flag for reporting errors without stopping the code
+% FORMAT:
 %
-% with intputs:
-% POLTYOPES: a 1-by-n seven field structure of voronoi polytopes, where
-%   n <= number of polytopes
-%   with fields:
-%   vertices: a m+1-by-2 matrix of xy points with row1 = rowm+1, where m is
-%       the number of the individual polytope vertices
-%   xv: a 1-by-m vector of vertice x-coordinates
-%   yv: a 1-by-m vector of vertice y-coordinates
-%   distances: a 1-by-m vector of perimeter distances from one point to the
-%       next point, distances(i) = distance from vertices(i) to vertices(i+1)
-%   mean: average xy coordinate of the polytope
-%   area: area of the polytope
-%   max_radius: distance from the mean to the farthest vertex
-% A: starting point structure with fields for the x and y coordinates
-% B: finishing point structure with fields for the x and y coordinates
-% BOUNDS: b-by-2 matrix of xy coordinates of the boundaries the path
-% planner must stay within, where b is the number of boundary points and
-% b>=3. If this argument not specified, there are no bounds.
-% PLANNER_MODE: string containing option for planner behavior
-% indicates the planner mode
-% "legacy" only goes around obstacles
-% "through at vertices" allows the planner to go through or around each obstacle
-% but only entering or exiting at vertices
-% "through or around" allows the planner to go through all obstacles or around all
-% "straight through" the planner only goes straight from the start to the goal, calculating the cost
+% [path,cost,err] = fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes(polytopes,A,B,planner_mode,(bounds),(fig_num))
 %
-% Examples:
+% INPUTS:
 %
-%      Example 1:
-%      cur_path = pwd;
-%      main_folder = '!Voronoi Tiling Obstacles - Organized';
-%      parent_dir = cur_path(1:strfind(cur_path,main_folder)-2);
-%      addpath([parent_dir '\' main_folder '\Plotting'])
-%      addpath([parent_dir '\' main_folder '\Map_Generation\polytope_generation'])
-%      addpath([parent_dir '\' main_folder '\Map_Generation\polytope_editing'])
-%      addpath([parent_dir '\' main_folder '\Path_Planning\algorithm_setup'])
-%      polytopes=fcn_polytope_generation_halton_voronoi_tiling(1,100,[100,100]);
-%      trim_polytopes=fcn_polytope_editing_remove_edge_polytopes(polytopes,0,100,0,100);
-%      shrunk_polytopes=fcn_BoundedAStar_polytopeEditingShrinkEvenly(trim_polytopes,2.5);
-%      A.x = 0; A.y = 50; B.x = 100; B.y = 50;
-%      [path,cost,err]=fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes(shrunk_polytopes,A,B);
-%      disp(['Path Cost: ' num2str(cost)])
-%      fcn_BoundedAStar_plotPolytopes(shrunk_polytopes,100,'b-',2,[0 100 0 100],'square')
-%      plot(path(:,1),path(:,2),'k-','linewidth',2)
-%      plot([A.x B.x],[A.y B.y],'kx','linewidth',2)
+%     polytopes: 
+%
+%     start: the start point vector (x, y, id, obs_id, beg_end)
+%
+%     finish: the finish point matrix of all valid finishes where each row
+%     is a single finish point vector (x, y, id, obs_id, beg_end)
+%
+%     planner_mode: string containing option for planner behavior that indicates the planner mode
+%       "legacy" only goes around obstacles
+%       "through at vertices" allows the planner to go through or around each obstacle
+%           but only entering or exiting at vertices
+%       "through or around" allows the planner to go through all obstacles or around all
+%       "straight through" the planner only goes straight from the start to the goal, calculating the cost
+%     
+%     (optional inputs)
+%
+%     bounds: b-by-2 matrix of xy coordinates of the boundaries the path
+%       planner must stay within, where b is the number of boundary points and
+%       b>=3. If this argument not specified, there are no bounds.
+%
+%     fig_num: a figure number to plot results. If set to -1, skips any
+%     input checking or debugging, no figures will be generated, and sets
+%     up code to maximize speed. As well, if given, this forces the
+%     variable types to be displayed as output and as well makes the input
+%     check process verbose
+%
+% OUTPUTS:
+%
+%    path: the mx5 matrix as produced by consisting of waypoints.  Each row is a
+%       waypoint, and each column is [x-coordinate, y-coordinate, point id, obstacle id,
+%       beginning or end of an obstacle set (1 or 0)]
+%
+%    cost: the total cost of the selected route
+%    
+%    err: error flag for reporting errors without stopping the code
+%
+% DEPENDENCIES:
+%
+% fcn_DebugTools_checkInputsToFunctions
+%
+% EXAMPLES:
+%
+% See the script:
+% script_test_fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes
+% for a full test suite.
 %
 % This function was written on 2019_06_13 by Seth Tau
 % Questions or comments? sat5340@psu.edu
 %
+% Revision History:
 % 2025_07_08 - K. Hayes, kxh1031@psu.edu
 % -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
 %    with vector sum method 
@@ -65,35 +68,136 @@ function [path,cost,err] = fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes(p
 % -- Copied function from
 %    fcn_algorithm_setup_bound_Astar_for_tiled_polytopes.m to follow library
 %    conventions
+% 2025_07_25 - K. Hayes
+% -- fixed function formatting
+% -- added input and debug checks
+%
+% TO DO:
+% -- input checking and description in header for polytopes
 
-%% check if the start or end are now within combined polytopes
-throw_error = 0; % only gives soft errors errors that don't stop the code
-check_edge = 1; % checks for A or B on polytope edges
-[err,Apoly,Bpoly] = fcn_BoundedAStar_polytopePointsInPolytopes(A,B,polytopes,throw_error,check_edge); err = 0;% check that start and end are outside of obstacles
-if err == 0 % A and B outside the polytopes
-    %% add points for start and finish if on an edge
-    if Apoly ~= -1 % on obstacle edge
-        vertices = polytopes(Apoly).vertices;
-        A_gap = fcn_BoundedAStar_polytopePointGapLocation([A.x A.y],vertices(:,1:2));
-        new_verts = [vertices(1:A_gap,:); A.x A.y; vertices(A_gap+1:end,:)];
-        polytopes(Apoly).vertices = new_verts;
-        polytopes(Apoly).xv = new_verts(1:end-1,1)';
-        polytopes(Apoly).yv = new_verts(1:end-1,2)';
-        polytopes(Apoly).distances = sum((new_verts(1:end-1,:) - new_verts(2:end,:)).^2,2).^0.5;
+%% Debugging and Input checks
+% Check if flag_max_speed set. This occurs if the fig_num variable input
+% argument (varargin) is given a number of -1, which is not a valid figure
+% number.
+MAX_NARGIN = 6; % The largest Number of argument inputs to the function
+flag_max_speed = 0;
+if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
+    flag_check_inputs = 0; % Flag to perform input checking
+    flag_max_speed = 1;
+else
+    % Check to see if we are externally setting debug mode to be "on"
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
+    flag_check_inputs = 1; % Flag to perform input checking
+    MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS");
+    MATLABFLAG_MAPGEN_FLAG_DO_DEBUG = getenv("MATLABFLAG_MAPGEN_FLAG_DO_DEBUG");
+    if ~isempty(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG)
+        flag_do_debug = str2double(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG);
+        flag_check_inputs  = str2double(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS);
     end
-    if Bpoly ~= 0 % on obstacle edge
-        vertices = polytopes(Bpoly).vertices;
-        B_gap = fcn_BoundedAStar_polytopePointGapLocation([B.x B.y],vertices(:,1:2));
-        new_verts = [vertices(1:B_gap,:); B.x B.y; vertices(B_gap+1:end,:)];
-        polytopes(Bpoly).vertices = new_verts;
-        polytopes(Bpoly).xv = new_verts(1:end-1,1)';
-        polytopes(Bpoly).yv = new_verts(1:end-1,2)';
-        polytopes(Bpoly).distances = sum((new_verts(1:end-1,:) - new_verts(2:end,:)).^2,2).^0.5;
+end
+
+% flag_do_debug = 1;
+
+if flag_do_debug
+    st = dbstack; %#ok<*UNRCH>
+    fprintf(1,'STARTING function: %s, in file: %s\n',st(1).name,st(1).file);
+    debug_fig_num = 999978; %#ok<NASGU>
+else
+    debug_fig_num = []; %#ok<NASGU>
+end
+
+%% check input arguments?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____                   _
+%  |_   _|                 | |
+%    | |  _ __  _ __  _   _| |_ ___
+%    | | | '_ \| '_ \| | | | __/ __|
+%   _| |_| | | | |_) | |_| | |_\__ \
+%  |_____|_| |_| .__/ \__,_|\__|___/
+%              | |
+%              |_|
+% See: http://patorjk.com/software/taag/#p=display&f=Big&t=Inputs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if 0==flag_max_speed
+    if flag_check_inputs
+        % Are there the right number of inputs?
+        narginchk(4,MAX_NARGIN);
+
+        % % Check the start input, make sure it has 2 columns
+        % fcn_DebugTools_checkInputsToFunctions(...
+        %     start, '2column_of_numbers');
+        % 
+        % % Check the finish input, make sure it has 2 columns
+        % fcn_DebugTools_checkInputsToFunctions(...
+        %     finish, '2column_of_numbers');
+    end
+end
+
+% Does user want to specify the bounds input?
+bounds = []; % Default is 1
+if 5 <= nargin
+    temp = varargin{1};
+    if ~isempty(temp)
+        bounds = temp;
+    end
+end
+
+% Does user want to show the plots?
+flag_do_plots = 0; % Default is to NOT show plots
+if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
+    temp = varargin{end};
+    if ~isempty(temp) % Did the user NOT give an empty figure number?
+        fig_num = temp;
+        figure(fig_num);
+        flag_do_plots = 1;
+    end
+end
+
+
+%% Main code
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   __  __       _
+%  |  \/  |     (_)
+%  | \  / | __ _ _ _ __
+%  | |\/| |/ _` | | '_ \
+%  | |  | | (_| | | | | |
+%  |_|  |_|\__,_|_|_| |_|
+%
+%See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+
+% check if the start or end are now within combined polytopes
+throw_error = 0; % only gives soft errors errors that don't stop the code
+check_edge = 1; % checks for start or finish on polytope edges
+[err,startPoly,finishPoly] = fcn_BoundedAStar_polytopePointsInPolytopes(start,finish,polytopes,throw_error,check_edge); err = 0;% check that start and end are outside of obstacles
+
+if err == 0 % start and finish outside the polytopes
+    % add points for start and finish if on an edge
+    if startPoly ~= -1 % on obstacle edge
+        vertices = polytopes(startPoly).vertices;
+        start_gap = fcn_BoundedAStar_polytopePointGapLocation([start.x start.y],vertices(:,1:2));
+        new_verts = [vertices(1:start_gap,:); start.x start.y; vertices(start_gap+1:end,:)];
+        polytopes(startPoly).vertices = new_verts;
+        polytopes(startPoly).xv = new_verts(1:end-1,1)';
+        polytopes(startPoly).yv = new_verts(1:end-1,2)';
+        polytopes(startPoly).distances = sum((new_verts(1:end-1,:) - new_verts(2:end,:)).^2,2).^0.5;
+    end
+
+    if finishPoly ~= 0 % on obstacle edge
+        vertices = polytopes(finishPoly).vertices;
+        finish_gap = fcn_BoundedAStar_polytopePointGapLocation([finish.x finish.y],vertices(:,1:2));
+        new_verts = [vertices(1:finish_gap,:); finish.x finish.y; vertices(finish_gap+1:end,:)];
+        polytopes(finishPoly).vertices = new_verts;
+        polytopes(finishPoly).xv = new_verts(1:end-1,1)';
+        polytopes(finishPoly).yv = new_verts(1:end-1,2)';
+        polytopes(finishPoly).distances = sum((new_verts(1:end-1,:) - new_verts(2:end,:)).^2,2).^0.5;
     end
 
     point_tot = length([polytopes.xv]); % total number of vertices in the convex polytopes
 
-    %% information about each point
+    % information about each point
     beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
     curpt = 0;
     for poly = 1:size(polytopes,2) % check each polytope
@@ -108,70 +212,83 @@ if err == 0 % A and B outside the polytopes
         curpt = curpt+num_verts;
         polytopes(poly).perimeter = sum(polytopes(poly).distances);
     end
+
     obs_id = [polytopes.obs_id];
     point_tot = length([polytopes.xv]); % need to recheck total points
     beg_end = beg_end(1:point_tot); % remove any extra points
-
+    
+    % Create all_pts for future call to path planning function
     all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
 
     % give the same information to the starting and ending points
-    if Apoly ~= -1 % on obstacle edge
+    if startPoly ~= -1 % on obstacle edge
         % find adjacent points
-        adj_pts = all_pts(all_pts(:,4)==Apoly,:);
+        adj_pts = all_pts(all_pts(:,4)==startPoly,:);
 
-        A_id = adj_pts(A_gap+1,3);
-        A_beg_end = all_pts(A_id,5);
-%         if A_gap == size(adj_pts,1)
-%             A_beg_end = 1;
-%         else
-%             A_beg_end = 0;
-%         end
+        start_id = adj_pts(start_gap+1,3);
+        start_beg_end = all_pts(start_id,5);
     else
-        A_id = point_tot+1;
-        A_beg_end = 0;
+        start_id = point_tot+1;
+        start_beg_end = 0;
     end
-    if Bpoly ~= 0 % on obstacle edge
+    if finishPoly ~= 0 % on obstacle edge
         % find adjacent points
-        adj_pts = all_pts(all_pts(:,4)==Bpoly);
+        adj_pts = all_pts(all_pts(:,4)==finishPoly);
 
-        B_id = adj_pts(B_gap+1,3);
-        B_beg_end = all_pts(B_id,5);
-%         if B_gap == size(vertices,1)
-%             B_beg_end = 1;
-%         else
-%             B_beg_end = 0;
-%         end
+        finish_id = adj_pts(finish_gap+1,3);
+        finish_beg_end = all_pts(finish_id,5);
     else
-        B_id = point_tot+2;
-        B_beg_end = 0;
+        finish_id = point_tot+2;
+        finish_beg_end = 0;
     end
-    start = [A.x A.y A_id Apoly A_beg_end];
-    finish = [B.x B.y B_id Bpoly B_beg_end];
 
-    if nargin > 4
-        bounds = varargin{1};
+    % Set up start and finish points with IDs for planner processing
+    start = [start.x start.y start_id startPoly start_beg_end];
+    finish = [finish.x finish.y finish_id finishPoly finish_beg_end];
+    
+    % Impose bounds, if they exist
+    if ~isempty(bounds)
         bound_pts = all_pts(inpolygon(all_pts(:,1),all_pts(:,2),bounds(:,1),bounds(:,2)),:); % bound points at the start
     else
         bound_pts = all_pts;
     end
 
-    %% find valid points
+    % find valid points
     [~,ia,ic] = unique(bound_pts(:,1:2),'rows','stable');
     h = accumarray(ic, 1);
     valid_pts = bound_pts(ia(h==1),:);
-%     plot(valid_pts(:,1),valid_pts(:,2),'mx','linewidth',2)
 
-
-
-
-    %% create polytopes for finding ellipses %%%%%%%%%%%%%%%%%%%%%%% needs debugging for 3+ verts in a straight line
-%     ellipse_polytopes =
-%     fcn_polytope_editing_tiling_loop_polytopes(polytopes);
+    % Create polytopes for finding ellipses %%%%%%%% needs debugging for 3+
+    % verts in a straight line
     ellipse_polytopes = polytopes;
-    %% calculate path
-    [cost,path] = fcn_BoundedAStar_AstarBounded(start,finish,polytopes,all_pts,valid_pts,planner_mode,ellipse_polytopes);
+    
+    % calculate path
+    [cost,path] = fcn_BoundedAStar_AstarBounded(start,finish,polytopes,all_pts,valid_pts,planner_mode,ellipse_polytopes, (-1));
 
-else % A or B are in the polytopes
+else % start or finish are in the polytopes
    path = [];
    cost = [];
+
+%% Plot the results (for debugging)?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____       _
+%  |  __ \     | |
+%  | |  | | ___| |__  _   _  __ _
+%  | |  | |/ _ \ '_ \| | | |/ _` |
+%  | |__| |  __/ |_) | |_| | (_| |
+%  |_____/ \___|_.__/ \__,_|\__, |
+%                            __/ |
+%                           |___/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 end
+%% Functions follow
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   ______                _   _
+%  |  ____|              | | (_)
+%  | |__ _   _ _ __   ___| |_ _  ___  _ __  ___
+%  |  __| | | | '_ \ / __| __| |/ _ \| '_ \/ __|
+%  | |  | |_| | | | | (__| |_| | (_) | | | \__ \
+%  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
+%
+% See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§

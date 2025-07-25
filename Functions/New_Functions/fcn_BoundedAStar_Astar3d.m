@@ -1,21 +1,14 @@
-function [cost, route] = fcn_BoundedAStar_Astar3d(vgraph, cgraph, hvec, all_pts, start, finish)
+function [cost, route] = fcn_BoundedAStar_Astar3d(vgraph, cgraph, hvec, all_pts, start, finish, varargin)
 % fcn_BoundedAStar_Astar3d
 %
 % A minimal version of the A* algorithm for graph searching.  Designed to contain minimal subproceses e.g. visibility graph
 % This assumes points are 3D e.g. having an x, y, and z or t dimensions
 %
 % FORMAT:
-% [cost, route] = fcn_BoundedAStar_Astar3d(vgraph, all_pts, start, finish, rgraph)
+% [cost, route] = fcn_BoundedAStar_Astar3d(vgraph, cgraph, hvec, all_pts, start, finish, (fig_num))
 %
 %
 % INPUTS:
-%
-%   start: the start point vector (x,y,t,id)
-%
-%   finish: the finish point matrix of all valid finishes where each row is a single finish point vector (x,y,t,id)
-%
-%   all_pts: the point matrix of all point that can be in the route, except the start and finish where
-%       each row is a single point vector (x,y,t,id)
 %
 %   vgraph: the visibility graph as an nxn matrix where n is the number of points (nodes) in the map.
 %       A 1 is in position i,j if point j is visible from point i.  0 otherwise.
@@ -29,6 +22,22 @@ function [cost, route] = fcn_BoundedAStar_Astar3d(vgraph, cgraph, hvec, all_pts,
 %      The value of element k is the estimated cost of routing from point k to
 %      the finish based on a heuristic cost estimation method.
 %
+%   start: the start point vector (x,y,t,id)
+%
+%   finish: the finish point matrix of all valid finishes where each row is a single finish point vector (x,y,t,id)
+%
+%   all_pts: the (n-2)x4 point matrix of all point that can be in the route, except the start and finish where
+%       each row is a single point vector (x,y,t,id)
+%
+%   (optional inputs)
+%
+%   fig_num: a figure number to plot results. If set to -1, skips any
+%     input checking or debugging, no figures will be generated, and sets
+%     up code to maximize speed. As well, if given, this forces the
+%     variable types to be displayed as output and as well makes the input
+%     check process verbose
+%
+%
 % OUTPUTS:
 %
 %     cost: the total cost of the selected route
@@ -39,11 +48,13 @@ function [cost, route] = fcn_BoundedAStar_Astar3d(vgraph, cgraph, hvec, all_pts,
 %
 % DEPENDENCIES:
 %
-% none but several functions exist to create visibility matrices and fcn_BoundedAStar_generateCostGraph can create cost matrices (cgraph) and heuristic cost vectors (hvec)
+% fcn_DebugTools_checkInputsToFunctions
+%
+%    also, several functions exist to create visibility matrices and fcn_BoundedAStar_generateCostGraph can create cost matrices (cgraph) and heuristic cost vectors (hvec)
 %
 % EXAMPLES:
 %
-% See the script: script_test_3d*
+% See the script: script_test_fcn_BoundedAStar_AStar3d
 % for a full test suite.
 %
 % This function was written on summer 2023 by Steve Harnett
@@ -58,20 +69,100 @@ function [cost, route] = fcn_BoundedAStar_Astar3d(vgraph, cgraph, hvec, all_pts,
 % -- remove cost graph generation code and place in fcn_algorithm_generate_cost_graph
 % 2025_07_03 by S. Brennan
 % -- renamed function to fcn_BoundedAStar_Astar3d from
-% fcn_algorithm_Astar3d
-
+%    fcn_algorithm_Astar3d
+% 2025_07_25 by K. Hayes, kxh1031@psu.edu
+% -- fixed formatting and function header details
 
 % TO DO:
 % -- fill in to-do items here.
 
-    % vgraph is nxn matrix of 1s and 0s where n is the number of points including the start and goal
-    % 1 implies reachability and 0 implies blocked
-    % vgrah is indexed from row to col (i.e. vgraph(3,4) is the reachability of 4 from 3)
+%% Debugging and Input checks
+% Check if flag_max_speed set. This occurs if the fig_num variable input
+% argument (varargin) is given a number of -1, which is not a valid figure
+% number.
+MAX_NARGIN = 7; % The largest Number of argument inputs to the function
+flag_max_speed = 0;
+if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
+    flag_check_inputs = 0; % Flag to perform input checking
+    flag_max_speed = 1;
+else
+    % Check to see if we are externally setting debug mode to be "on"
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
+    flag_check_inputs = 1; % Flag to perform input checking
+    MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS");
+    MATLABFLAG_MAPGEN_FLAG_DO_DEBUG = getenv("MATLABFLAG_MAPGEN_FLAG_DO_DEBUG");
+    if ~isempty(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG)
+        flag_do_debug = str2double(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG);
+        flag_check_inputs  = str2double(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS);
+    end
+end
 
-    % all_pts is (n-2)x3 matrix where each row is a point and the columns are x,y, and point ID
+% flag_do_debug = 1;
 
-    % start and finish are points of the same format as all points
+if flag_do_debug
+    st = dbstack; %#ok<*UNRCH>
+    fprintf(1,'STARTING function: %s, in file: %s\n',st(1).name,st(1).file);
+    debug_fig_num = 999978; %#ok<NASGU>
+else
+    debug_fig_num = []; %#ok<NASGU>
+end
 
+%% check input arguments?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____                   _
+%  |_   _|                 | |
+%    | |  _ __  _ __  _   _| |_ ___
+%    | | | '_ \| '_ \| | | | __/ __|
+%   _| |_| | | | |_) | |_| | |_\__ \
+%  |_____|_| |_| .__/ \__,_|\__|___/
+%              | |
+%              |_|
+% See: http://patorjk.com/software/taag/#p=display&f=Big&t=Inputs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if 0==flag_max_speed
+    if flag_check_inputs
+        % Are there the right number of inputs?
+        narginchk(6,MAX_NARGIN);
+
+        % Check the all_points input, make sure it has 4 columns
+        fcn_DebugTools_checkInputsToFunctions(...
+            all_pts, '4column_of_numbers');
+
+        % Check the start input, make sure it has 4 columns
+        fcn_DebugTools_checkInputsToFunctions(...
+            start, '4column_of_numbers');
+
+        % Check the finish input, make sure it has 4 columns
+        fcn_DebugTools_checkInputsToFunctions(...
+            finish, '4column_of_numbers');
+
+    end
+end
+
+% Does user want to show the plots?
+flag_do_plots = 0; % Default is to NOT show plots
+if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
+    temp = varargin{end};
+    if ~isempty(temp) % Did the user NOT give an empty figure number?
+        fig_num = temp;
+        figure(fig_num);
+        flag_do_plots = 1;
+    end
+end
+
+%% Main code
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   __  __       _
+%  |  \/  |     (_)
+%  | \  / | __ _ _ _ __
+%  | |\/| |/ _` | | '_ \
+%  | |  | | (_| | | | | |
+%  |_|  |_|\__,_|_|_| |_|
+%
+%See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
     % set the diagonal to 0 because while points are technically visible from
     % themselves, A* should not consider them as such else the lowest cost
     % neighbor of any point is itself
@@ -85,6 +176,7 @@ function [cost, route] = fcn_BoundedAStar_Astar3d(vgraph, cgraph, hvec, all_pts,
     % make new all pts list including start and end
     all_pts_plus_start_and_fin = [all_pts; start; finish];
     all_pts_plus_start_and_fin = sortrows(all_pts_plus_start_and_fin,4);
+
     % make cost matrix, g - WARNING h and g must measure the same thing (e.g. the heuristic cannot be time while the actual cost, g, is distance)
     possible_gs = cgraph; % the cost graph is all the possible g values that can be added to the open set
     open_set_gs = inf*ones(1,num_nodes); % initialize costs of open set to infinity
@@ -118,6 +210,7 @@ function [cost, route] = fcn_BoundedAStar_Astar3d(vgraph, cgraph, hvec, all_pts,
         % pop q off the open list
         open_set_fs(idx_of_q) = inf;
         open_set(idx_of_q) = NaN;
+
         % generate q's successors (points reachable from q)
         qs_row = vgraph(idx_of_q,:);
         successor_idxs = [];
@@ -132,6 +225,7 @@ function [cost, route] = fcn_BoundedAStar_Astar3d(vgraph, cgraph, hvec, all_pts,
         successors_with_gs = [gs_from_q_to_successors' successor_idxs'];
         successors_with_gs_sorted = sortrows(successors_with_gs);
         successor_idxs = successors_with_gs_sorted(:,2);
+
         % for each successor...
         for i = 1:length(successor_idxs)
             nodes_explored = nodes_explored + 1;
@@ -143,11 +237,14 @@ function [cost, route] = fcn_BoundedAStar_Astar3d(vgraph, cgraph, hvec, all_pts,
                 % total path cost is the cost so far to reach q, plus the distance
                 % from q to the goal
                 cost = open_set_gs(idx_of_q) + hs(idx_of_q);
+
                 % in the multiple finish case, we need to know which finish was selected
                 selected_finish_idx = find(successor(4) == finish(:,4));
+
                 % initialize the route consisting of q and the finish
                 route = [q; finish(selected_finish_idx,:)];
                 cur_pt_idx = q(4);
+
                 % then walk back through the parents array until the start is reached
                 % recall the parent array contains the lowest cost predecessor to each node
                 % at that nodes ID (i.e. parents(5) = 3 implies the best way to reach 5 is through 3,
@@ -163,6 +260,7 @@ function [cost, route] = fcn_BoundedAStar_Astar3d(vgraph, cgraph, hvec, all_pts,
                     % set current point to the current point's parent
                     cur_pt_idx = parents(cur_pt_idx);
                 end
+
                 % return the route
                 route = [start; route];
                 sprintf('total nodes expanded: \n %0f',nodes_expanded)
@@ -175,14 +273,39 @@ function [cost, route] = fcn_BoundedAStar_Astar3d(vgraph, cgraph, hvec, all_pts,
                 % if this is less than the last recorded cost to reach successor,
                 % update the cost to reach successor, add successor to the open set,
                 % and set successor's parent to q
+
                 if tentative_cost < open_set_gs(successor(4))
                     parents(successor(4)) = idx_of_q;
                     open_set_gs(successor(4)) = tentative_cost;
                     open_set_fs(successor(4)) = tentative_cost + hs(successor(4));
                     open_set(successor(4)) = successor(4);
                 end % end tentative cost comparison check
+
         end % end looping through successors
+
         % having checked all of q's successors, push q on the closed list
         closed_set(idx_of_q) = idx_of_q;
     end % end while loop through open set
+%% Plot the results (for debugging)?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____       _
+%  |  __ \     | |
+%  | |  | | ___| |__  _   _  __ _
+%  | |  | |/ _ \ '_ \| | | |/ _` |
+%  | |__| |  __/ |_) | |_| | (_| |
+%  |_____/ \___|_.__/ \__,_|\__, |
+%                            __/ |
+%                           |___/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 end % end function
+%% Functions follow
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   ______                _   _
+%  |  ____|              | | (_)
+%  | |__ _   _ _ __   ___| |_ _  ___  _ __  ___
+%  |  __| | | | '_ \ / __| __| |/ _ \| '_ \/ __|
+%  | |  | |_| | | | | (__| |_| | (_) | | | \__ \
+%  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
+%
+% See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§

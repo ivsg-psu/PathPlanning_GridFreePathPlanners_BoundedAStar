@@ -1,76 +1,60 @@
 function [cost,route] = fcn_BoundedAStar_AstarBounded(start,finish,polytopes,all_pts,bound_pts,planner_mode,varargin)
-% fcn_BoundedAStar_AStarBounded performs Astar path planning algorithm from
+% fcn_BoundedAStar_AStarBounded 
+% 
+% performs Astar path planning algorithm from
 % start to finish around polytopes while constantly reducing boundaries
 %
-% [COST,ROUTE]=fcn_BoundedAStar_AstarBounded(START,FINISH,POLYTOPES,ALL_PTS,BOUND_PTS)
-% returns:
-% COST: distance along the shortest path
-% ROUTE: m-by-5 matrix of route points with information for each point
-% [x-coordinate, y-coordinate, point id, obstace id,
-%       begginning or end of an obstacle set (1 or 0)]
+% FORMAT:
 %
-% with inputs:
-% START: 1-by-5 vector with the same info as route for the starting point
-% FINISH: same as start for the finish point
-% POLYTOPES: a 1-by-n seven field structure of shrunken polytopes,
-% where n <= number of polytopes with fields:
-%   vertices: a m+1-by-2 matrix of xy points with row1 = rowm+1, where m is
-%     the number of the individual polytope vertices
-%   xv: a 1-by-m vector of vertice x-coordinates
-%   yv: a 1-by-m vector of vertice y-coordinates
-%   distances: a 1-by-m vector of perimeter distances from one point to the
-%     next point, distances(i) = distance from vertices(i) to vertices(i+1)
-%   mean: centroid xy coordinate of the polytope
-%   area: area of the polytope
-% ALL_PTS: p-by-5 matrix of all the points except start and finish
-% BOUND_PTS: subset of valid points that are usable
-% PLANNER_MODE: string containing option for planner behavior
-% indicates the planner mode
-% "legacy" only goes around obstacles
-% "through at vertices" allows the planner to go through or around each obstacle
-% but only entering or exiting at vertices
-% "through or around" allows the planner to go through all obstacles or around all
-% "straight through" the planner only goes straight from the start to the goal, calculating the cost
+% [cost,route] = fcn_BoundedAStar_AstarBounded(start,finish,polytopes,all_pts,bound_pts,planner_mode,(ellipse_polytopes),(fig_num))
 %
-% [COST,ROUTE]=fcn_BoundedAStar_AstarBounded(START,FINISH,POLYTOPES,ALL_PTS,BOUND_PTS,ELLIPSE_POLYTOPES)
-% with input:
-% ELLIPSE_POLYTOPES: polytopes used to determine the ellipse used for
-%   bounding the points
+% INPUTS:
 %
-% Examples:
+%     start: the start point vector (x, y, id, obs_id, beg_end)
 %
-%      addpath([pwd '\Example_Map_Generation_Code'])
+%     finish: the finish point matrix of all valid finishes where each row
+%     is a single finish point vector (x, y, id, obs_id, beg_end)
 %
-%      map_name = "HST 1 100 SQT 0 1 0 1 SMV 0.04 0.008 1e-6 1111";
-%      plot_flag = 0; disp_name = 0; fig_num = 654654;
-%      [polytopes,fig]=fcn_MapGen_nameToMap(map_name,plot_flag,disp_name);
+%     polytopes: 
 %
-%      % shrunk_polytopes path planning
-%      xv = [polytopes.xv];
-%      yv = [polytopes.yv];
-%      point_tot = length(xv);
-%      start = [0 0.5 point_tot+1 0 0];
-%      finish = [1 0.5 point_tot+2 -1 0];
-%      beg_end = zeros(point_tot,1);
-%      obs_id = zeros(point_tot,1);
-%      curpt = 0;
-%      for poly = 1:size(polytopes,2) % check each polytope
-%          verts = length(polytopes(poly).xv);
-%          obs_id(curpt+1:curpt+verts) = ones(verts,1)*poly; % obs_id is the same for every vertex on a single polytope
-%          beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-%          curpt = curpt+verts;
-%      end
-%      all_pts = [xv' yv' [1:length(xv)]' obs_id beg_end];
-%      bound_pts = all_pts;
-%      [cost,route]=fcn_BoundedAStar_AstarBounded(start,finish,polytopes,all_pts,bound_pts);
-%      disp(['Path Cost: ' num2str(cost)])
-%      fcn_BoundedAStar_plotPolytopes(polytopes,100,'b-',2,[0 1 0 1],'square')
-%      plot(route(:,1),route(:,2),'k-','linewidth',2)
-%      plot([start(1) finish(1)],[start(2) finish(2)],'kx','linewidth',2)
-%      box on
-%      xlabel('X Position')
-%      ylabel('Y Position')
+%     all_pts: the p-by-5 matrix of all the points except start and finish
 %
+%     bound_pts: subset of valid points that are usable
+%
+%     planner_mode: string containing option for planner behavior that indicates the planner mode
+%       "legacy" only goes around obstacles
+%       "through at vertices" allows the planner to go through or around each obstacle
+%           but only entering or exiting at vertices
+%       "through or around" allows the planner to go through all obstacles or around all
+%       "straight through" the planner only goes straight from the start to the goal, calculating the cost
+%
+%     (optional inputs)
+%
+%     ellipse_polytopes: polytopes used to determine the ellipse used for
+%     bounding the points
+%
+%     fig_num: a figure number to plot results. If set to -1, skips any
+%     input checking or debugging, no figures will be generated, and sets
+%     up code to maximize speed. As well, if given, this forces the
+%     variable types to be displayed as output and as well makes the input
+%     check process verbose
+%
+% OUTPUTS:
+%
+%     cost: the total cost of the selected route
+%
+%    route: the mx5 matrix as produced by consisting of waypoints.  Each row is a
+%    waypoint, and each column is [x-coordinate, y-coordinate, point id, obstacle id,
+%       beginning or end of an obstacle set (1 or 0)]
+%
+% DEPENDENCIES:
+%
+% fcn_DebugTools_checkInputsToFunctions
+%
+% EXAMPLES:
+%
+% See the script: script_test_fcn_BoundedAStar_AStar3d
+% for a full test suite.
 %
 % This function was written on 2020_02_05 by Seth Tau
 % Cleaned code for Git and rewrote example on 2021_04_28 by Seth Tau
@@ -80,17 +64,110 @@ function [cost,route] = fcn_BoundedAStar_AstarBounded(start,finish,polytopes,all
 % 2025_07_17 - K. Hayes, kxh1031@psu.edu
 % -- created renamed version of function to match convention from
 %    fcn_algorithm_bound_Astar.m
+% 2025_07_25 - K. Hayes
+% -- reformatted function
+% -- updated function header information
+% -- added input checking
+%
+% TO DO:
+% (none)
 
-% check variable argument
-if nargin == 7
-    ellipse_polytopes = varargin{1};
-elseif nargin ==6
-    ellipse_polytopes = polytopes;
+%% Debugging and Input checks
+% Check if flag_max_speed set. This occurs if the fig_num variable input
+% argument (varargin) is given a number of -1, which is not a valid figure
+% number.
+MAX_NARGIN = 8; % The largest Number of argument inputs to the function
+flag_max_speed = 0;
+if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
+    flag_check_inputs = 0; % Flag to perform input checking
+    flag_max_speed = 1;
 else
-    error('incorrect number of inputs')
+    % Check to see if we are externally setting debug mode to be "on"
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
+    flag_check_inputs = 1; % Flag to perform input checking
+    MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS");
+    MATLABFLAG_MAPGEN_FLAG_DO_DEBUG = getenv("MATLABFLAG_MAPGEN_FLAG_DO_DEBUG");
+    if ~isempty(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG)
+        flag_do_debug = str2double(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG);
+        flag_check_inputs  = str2double(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS);
+    end
+end
+
+% flag_do_debug = 1;
+
+if flag_do_debug
+    st = dbstack; %#ok<*UNRCH>
+    fprintf(1,'STARTING function: %s, in file: %s\n',st(1).name,st(1).file);
+    debug_fig_num = 999978; %#ok<NASGU>
+else
+    debug_fig_num = []; %#ok<NASGU>
+end
+%% check input arguments?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____                   _
+%  |_   _|                 | |
+%    | |  _ __  _ __  _   _| |_ ___
+%    | | | '_ \| '_ \| | | | __/ __|
+%   _| |_| | | | |_) | |_| | |_\__ \
+%  |_____|_| |_| .__/ \__,_|\__|___/
+%              | |
+%              |_|
+% See: http://patorjk.com/software/taag/#p=display&f=Big&t=Inputs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if 0==flag_max_speed
+    if flag_check_inputs
+        % Are there the right number of inputs?
+        narginchk(6,MAX_NARGIN);
+
+        % Check the all_points input, make sure it has 5 columns
+        fcn_DebugTools_checkInputsToFunctions(...
+            all_pts, '5column_of_numbers');
+
+        % Check the start input, make sure it has 5 columns
+        fcn_DebugTools_checkInputsToFunctions(...
+            start, '5column_of_numbers');
+
+        % Check the finish input, make sure it has 5 columns
+        fcn_DebugTools_checkInputsToFunctions(...
+            finish, '5column_of_numbers');
+
+    end
+end
+
+% Does user want to specify the ellipse_polytopes input?
+ellipse_polytopes = polytopes; % Default is 1
+if 7 <= nargin
+    temp = varargin{1};
+    if ~isempty(temp)
+        ellipse_polytopes = temp;
+    end
 end
 
 
+% Does user want to show the plots?
+flag_do_plots = 0; % Default is to NOT show plots
+if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
+    temp = varargin{end};
+    if ~isempty(temp) % Did the user NOT give an empty figure number?
+        fig_num = temp;
+        figure(fig_num);
+        flag_do_plots = 1;
+    end
+end
+
+%% Main code
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   __  __       _
+%  |  \/  |     (_)
+%  | \  / | __ _ _ _ __
+%  | |\/| |/ _` | | '_ \
+%  | |  | | (_| | | | | |
+%  |_|  |_|\__,_|_|_| |_|
+%
+%See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 % main code
 cost = inf;
 route = [];
@@ -364,4 +441,26 @@ while ~isempty(open_set) % continue until open set is empty
             route = [start; finish];
         end
     end
+    %% Plot the results (for debugging)?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____       _
+%  |  __ \     | |
+%  | |  | | ___| |__  _   _  __ _
+%  | |  | |/ _ \ '_ \| | | |/ _` |
+%  | |__| |  __/ |_) | |_| | (_| |
+%  |_____/ \___|_.__/ \__,_|\__, |
+%                            __/ |
+%                           |___/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 end
+%% Functions follow
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   ______                _   _
+%  |  ____|              | | (_)
+%  | |__ _   _ _ __   ___| |_ _  ___  _ __  ___
+%  |  __| | | | '_ \ / __| __| |/ _ \| '_ \/ __|
+%  | |  | |_| | | | | (__| |_| | (_) | | | \__ \
+%  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
+%
+% See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
