@@ -13,13 +13,15 @@
 % 2025_07_07 - Sean Brennan and Kaelea Hayes
 % -- Starting integration of MapGen into codes
 % -- Updated MapGen library to support integration
+% 2025_07_26 - Sean Brennan
+% -- Updated DebugTools to DebugTools_v2025_07_15
 
 clear library_name library_folders library_url
 
 ith_library = 1;
-library_name{ith_library}    = 'DebugTools_v2025_06_24';
+library_name{ith_library}    = 'DebugTools_v2025_07_15';
 library_folders{ith_library} = {'Functions','Data'};
-library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/DebugTools_v2025_06_24.zip';
+library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/DebugTools_v2025_07_15.zip';
 
 ith_library = ith_library+1;
 library_name{ith_library}    = 'MapGenClass_v2025_07_22';

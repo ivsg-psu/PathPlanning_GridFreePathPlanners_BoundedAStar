@@ -5,6 +5,9 @@
 % Revision history
 % 2025_07_07 - S. Brennan, sbrennan@psu.edu and K. Hayes, kxh1031@psu.edu
 % -- created code from script_test_fcn_algorithm_Astar.m written by S. Harnett
+% 2025_07_26 - S. Brennan
+% -- merging updates of MapGen into this script. Not quite done as found
+%    % bugs in MapGen that should be fixed for consistency
 
 clear
 clc
@@ -83,8 +86,12 @@ for rep = 1:repetitions
 
     %%%%
     % NEW method
-    trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt high_pt],[1 1],38373);
+    % trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt high_pt],[1 1],38373);
 
+    %%%%
+    % NEW NEW method
+    trim_polytopes2 = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [low_pt high_pt],[],[],38372);
+    trim_Polytopes3 = fcn_MapGen_polytopeCropEdges( trim_polytopes2, [0.001 0.001; 0.999 0.999], (57575));
 
     %%%%
     % OLD method
@@ -161,8 +168,8 @@ for rep = 1:repetitions
     % index of Npts plus 1 or 2, so that they are indexed as the last 2
     % points. They have a special obstacle ID of -1 (because they aren't
     % obstacles), and they are both flagged as start/end points.
-    start = [startPoint Npts+1 -1 1]
-    finish = [endPoint Npts+2 -1 1]
+    start = [startPoint Npts+1 -1 1];
+    finish = [endPoint Npts+2 -1 1];
 
     % Why are these repeated?
     finishes = [all_pts; start; finish];
