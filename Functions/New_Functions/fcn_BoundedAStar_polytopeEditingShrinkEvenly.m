@@ -134,7 +134,7 @@ for poly = 1:size(polytopes,2) % shrink each polytope
                 dist_angs = abs((angs - pi/2) - (shrink_angs - pi)); % used to calculate distance to move the point
                 dists = (rad-tot_dist)./cos(dist_angs); % distance to move each point
             else % no more points can be removed remove
-                [Cx,Cy] = fcn_polytope_calculation_centroid_and_area([xv; xv(1)],[yv; yv(1)]);
+                [Cx,Cy] = fcn_MapGen_polytopeCentroidAndArea ([[xv; xv(1)],[yv; yv(1)]]);
             end 
         else % able to shrink enough
             % shrink by the appropriate distance
@@ -150,7 +150,8 @@ for poly = 1:size(polytopes,2) % shrink each polytope
         shrunk_polytopes(poly).xv = xv'; % keep vertices seperate for easier calculations
         shrunk_polytopes(poly).yv = yv';
         shrunk_polytopes(poly).vertices = [[xv; xv(1)] [yv; yv(1)]]; % repeat first vertice for easy plotting
-        [Cx,Cy,shrunk_polytopes(poly).area] = fcn_polytope_calculation_centroid_and_area([xv; xv(1)],[yv; yv(1)]);
+        [Cx,Cy,shrunk_polytopes(poly).area] = fcn_MapGen_polytopeCentroidAndArea ([[xv; xv(1)],[yv; yv(1)]]);
+
         shrunk_polytopes(poly).mean = [Cx, Cy]; % calculate the polytope mean
         % calculate perimeter distances around the polytope
         shrunk_polytopes(poly).distances = sum((shrunk_polytopes(poly).vertices(1:end-1,:) - shrunk_polytopes(poly).vertices(2:end,:)).^2,2).^0.5;

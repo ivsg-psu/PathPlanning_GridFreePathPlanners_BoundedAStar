@@ -27,10 +27,19 @@
 %    % * now: fcn_MapGen_polytopesSetCosts
 % - Updated script_demo_fcn_BoundedAStar_Astar with MapGen functions
 % - Working through all other scripts
+% - DEPRECATED fcn_general_calculation_euclidean_point_to_point_distance
+%   % * now hard-coded as sum((diff).^2,2).^0.5;
+% - DEPRECATED fcn_Map_Generation_map_name_to_map
+%   % * now fcn_MapGen_generatePolysFromName
+% - DEPRECATED fcn_polytope_calculation_centroid_and_area
+%   % * now fcn_MapGen_polytopeCentroidAndArea
+% - Removed folder: Example_Map_Generation_Code
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
 % -- Where to start?! All functions need to be checked, verified, etc.
+% 2025_07_28 - Sean Brennan
+% -- Remove all "addpath" commands nested inside scripts and functions
 
 clear library_name library_folders library_url
 
@@ -74,7 +83,7 @@ end
 
 %% Do we need to set up the work space?
 if ~exist('flag_BoundAStar_Folders_Initialized','var')
-    this_project_folders = {'Functions','Functions_CostCalculation','Test_Fixtures','Utilities_gif','Utilities_TriangleRayIntersection','Utilities_streamcolor','Example_Map_Generation_Code'}; % {'Functions','Data'};
+    this_project_folders = {'Functions','Functions_CostCalculation','Test_Fixtures','Utilities_gif','Utilities_TriangleRayIntersection','Utilities_streamcolor'}; % {'Functions','Data'};
     fcn_INTERNAL_initializeUtilities(library_name,library_folders,library_url,this_project_folders);  
     flag_BoundAStar_Folders_Initialized = 1;
 end

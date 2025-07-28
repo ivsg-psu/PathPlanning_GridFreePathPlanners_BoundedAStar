@@ -5,6 +5,8 @@
 % Revision history
 % 2025_07_07 - S. Brennan, sbrennan@psu.edu and K. Hayes, kxh1031@psu.edu
 % -- created code from script_test_fcn_algorithm_Astar.m written by S. Harnett
+% 2025_07_28 - S. Brennan, sbrennan@psu.edu
+% -- Updated dependencies to use MapGen library
 
 clear
 clc
@@ -106,8 +108,8 @@ for rep = 1:repetitions
     % index of Npts plus 1 or 2, so that they are indexed as the last 2
     % points. They have a special obstacle ID of -1 (because they aren't
     % obstacles), and they are both flagged as start/end points.
-    start = [startPoint Npts+1 -1 1]
-    finish = [endPoint Npts+2 -1 1]
+    start = [startPoint Npts+1 -1 1];
+    finish = [endPoint Npts+2 -1 1];
 
     % Why are these repeated?
     finishes = [all_pts; start; finish];

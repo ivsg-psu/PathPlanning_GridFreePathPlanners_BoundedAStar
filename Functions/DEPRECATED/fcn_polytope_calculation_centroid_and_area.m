@@ -1,4 +1,10 @@
 function [Cx,Cy,Area] = fcn_polytope_calculation_centroid_and_area(x,y)
+
+warning('on','backtrace');
+warning('fcn_polytope_calculation_centroid_and_area is being deprecated. Use fcn_MapGen_polytopeCentroidAndArea instead.');
+
+% [centroid, area] = fcn_MapGen_polytopeCentroidAndArea( vertices, (fig_num))
+
 % FCN_POLYTOPE_CALCULATION_CENTROID_AND_AREA calculates the centroid and area of a closed 
 % polytope
 %
