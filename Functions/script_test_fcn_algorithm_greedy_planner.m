@@ -41,13 +41,15 @@ for rep = 1:repetitions
     %% generate map
     % generate Voronoi tiling from Halton points
     low_pt = low_pts(rep); high_pt = high_pts(rep)-50; % range of Halton points to use to generate the tiling
-    tiled_polytopes = fcn_polytope_generation_halton_voronoi_tiling(low_pt,high_pt);
-    % remove the edge polytope that extend past the high and low points
-    trim_polytopes = fcn_polytope_editing_remove_edge_polytopes(tiled_polytopes,xlow,xhigh,ylow,yhigh);
+    tiled_polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [low_pt,high_pt],[],[],-1);
+    % remove the edge polytope that extend past the high and low points    
+    trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( tiled_polytopes, [xlow ylow xhigh yhigh], (-1));
+
     % shink the polytopes so that they are no longer tiled
-    rng(shrink_seed) % set the random number generator with the shrink seed
-    shrunk_polytopes = fcn_polytope_editing_shrink_to_average_max_radius_with_variance(trim_polytopes,des_radius,sigma_radius,min_rad);
-    shrunk_polytopes = fcn_polytope_editing_set_all_costs(shrunk_polytopes,des_cost);
+    rng(shrink_seed) % set the random number generator with the shrink seed    
+    shrunk_polytopes = fcn_MapGen_polytopesShrinkToRadius(trim_polytopes,des_radius,sigma_radius,min_rad, -1);
+    shrunk_polytopes = fcn_MapGen_polytopesSetCosts(shrunk_polytopes, des_cost, (-1));
+
     % if starting in a polytope, at 0.15, 0.45 per above, this controls its cost
     % shrunk_polytopes(31).cost = 0.1;
     % plot the map

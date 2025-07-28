@@ -28,7 +28,7 @@ function [shrunk_polytopes,point_polys] = fcn_BoundedAStar_polytopeEditingShrink
 %   addpath([parent_dir '\' main_folder '\Plotting'])
 %   addpath([parent_dir '\' main_folder '\Map_Generation\polytope_generation'])
 %   addpath([parent_dir '\' main_folder '\Map_Generation\polytope_editing'])
-%   polytopes = fcn_polytope_generation_halton_voronoi_tiling(1,1000);
+%   polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 1000],[],[],-1);
 %   fig = fcn_BoundedAStar_plotPolytopes(polytopes,[],'b',2,[0 1 0 1]);
 %   shrunk_polytopes = fcn_BoundedAStar_polytopeEditingShrinkEvenly(polytopes,0.01);
 %   fcn_BoundedAStar_plotPolytopes(shrunk_polytopes,fig,'g',2,[0 1 0 1]);

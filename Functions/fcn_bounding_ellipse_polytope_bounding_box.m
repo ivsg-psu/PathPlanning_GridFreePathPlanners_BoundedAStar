@@ -53,8 +53,8 @@ function [bound_polytopes,bound_box,bound_pts,all_bound]= fcn_bounding_ellipse_p
 %      addpath([parent_dir '\' main_folder '\Map_Generation\polytope_generation'])
 %      addpath([parent_dir '\' main_folder '\Map_Generation\polytope_editing'])
 %      addpath([parent_dir '\' main_folder '\Path_Planning\bounding_ellipse'])
-%      polytopes=fcn_polytope_generation_halton_voronoi_tiling(1,100,[100,100]);
-%      trim_polytopes=fcn_polytope_editing_remove_edge_polytopes(polytopes,0,100,0,100);
+%      polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 100],[100 100],[],-1);
+%      trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0 0 100 100], (-1));
 %      shrunk_polytopes=fcn_polytope_editing_shrink_evenly(trim_polytopes,2.5);
 %      xv = [shrunk_polytopes.xv];
 %      yv = [shrunk_polytopes.yv];

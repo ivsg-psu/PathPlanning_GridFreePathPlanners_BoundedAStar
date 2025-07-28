@@ -8,6 +8,8 @@
 % 2025_07_26 - S. Brennan
 % -- merging updates of MapGen into this script. Not quite done as found
 %    % bugs in MapGen that should be fixed for consistency
+% 2025_07_28 - S. Brennan
+% -- merged updates of MapGen into this script. 
 
 clear
 clc
@@ -61,86 +63,30 @@ endPoint   = [B.x B.y];
 
 % plotting control
 flag_do_plot = 1; % 1 if you would like to see plots, anything else if not
+fig_num = 99;
 
 %% Start of repetitions
 
 for rep = 1:repetitions
-    %% generate map
-
-    %%%%
-    % OLD method
+    %%%%%%%%
+    % generate a new map
     % generate Voronoi tiling from Halton points
     low_pt = low_pts(rep); high_pt = high_pts(rep)-50; % range of Halton points to use to generate the tiling
-    tiled_polytopes_OLD = fcn_polytope_generation_halton_voronoi_tiling(low_pt,high_pt);
-
+    tiled_polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [low_pt high_pt],[],[],-1);
+    
     % remove the edge polytope that extend past the high and low points
-    trim_polytopes_OLD = fcn_polytope_editing_remove_edge_polytopes(tiled_polytopes_OLD,xlow,xhigh,ylow,yhigh);
-    if flag_do_plot
-        fig = 99; % figure to plot on
-        line_spec = 'b-'; % edge line plotting
-        line_width = 2; % linewidth of the edge
-        axes_limits = [0 1 0 1]; % x and y axes limits
-        axis_style = 'square'; % plot axes style
-        fcn_plot_polytopes(trim_polytopes_OLD,fig,line_spec,line_width,axes_limits,axis_style);
-    end
-
-    %%%%
-    % NEW method
-    % trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt high_pt],[1 1],38373);
-
-    %%%%
-    % NEW NEW method
-    trim_polytopes2 = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [low_pt high_pt],[],[],38372);
-    trim_Polytopes3 = fcn_MapGen_polytopeCropEdges( trim_polytopes2, [0.001 0.001; 0.999 0.999], (57575));
-
-    %%%%
-    % OLD method
+    trim_polytopes  = fcn_MapGen_polytopesDeleteByAABB( tiled_polytopes, [0.001 0.001, 0.999 0.999], (-1));
+    
     % shink the polytopes so that they are no longer tiled
     rng(shrink_seed) % set the random number generator with the shrink seed
-    shrunk_polytopes_OLD = fcn_polytope_editing_shrink_to_average_max_radius_with_variance(trim_polytopes,des_radius,sigma_radius,min_rad);
-    
-    % NEW method
-    shrunk_polytopes = fcn_MapGen_polytopesShrinkToRadius(trim_polytopes,des_radius,sigma_radius,min_rad, 747447);
+    shrunk_polytopes = fcn_MapGen_polytopesShrinkToRadius(trim_polytopes,des_radius,sigma_radius,min_rad, (fig_num));
 
-    if flag_do_plot
-        fig = 4646; % figure to plot on
-        line_spec = 'b-'; % edge line plotting
-        line_width = 2; % linewidth of the edge
-        axes_limits = [0 1 0 1]; % x and y axes limits
-        axis_style = 'square'; % plot axes style
-        fcn_plot_polytopes(shrunk_polytopes_OLD,fig,line_spec,line_width,axes_limits,axis_style);
-
-        line_spec = 'r-'; % edge line plotting
-        line_width = 1; % linewidth of the edge
-        fcn_plot_polytopes(shrunk_polytopes,fig,line_spec,line_width,axes_limits,axis_style);
-    end
-
-    
-    %%%%%
-    % The following code exists in MapGen, but MapGen needs to be updated
-    % to correct it's format. It looks like it was dropped into library
-    % without formatting, error checking, etc.
     des_cost = 0.1;
-    
-    shrunk_polytopes = fcn_polytope_editing_set_all_costs(shrunk_polytopes,des_cost);
-
-    % if starting in a polytope, at 0.15, 0.45 per above, this controls its cost
-    % shrunk_polytopes(31).cost = 0.1;
-    % plot the map
-    if flag_do_plot
-        fig = 99; % figure to plot on
-        line_spec = 'b-'; % edge line plotting
-        line_width = 2; % linewidth of the edge
-        axes_limits = [0 1 0 1]; % x and y axes limits
-        axis_style = 'square'; % plot axes style
-        fcn_plot_polytopes(shrunk_polytopes,fig,line_spec,line_width,axes_limits,axis_style);
-    end
-
-    %%% 
-    % EVERYTHING ABOVE IS IN MAPGEN
+    shrunk_polytopes = fcn_MapGen_polytopesSetCosts(shrunk_polytopes, des_cost, (-1));
 
 
-    %% Calculate info needed for visibility graph generation
+    %%%%%
+    % Calculate info needed for visibility graph generation
     % gather data on all the points
     point_tot = length([shrunk_polytopes.xv]); % total number of vertices in the polytopes
     flag_thisIsABeginningEnd = zeros(1,point_tot); % is the point the start/end of an obstacle
@@ -294,9 +240,9 @@ for rep = 1:repetitions
         my_title = sprintf('Path length [m]: %.4f',cost);
         title(my_title)
         box on
-        return
+        % return
         pause(2)
-        close(99)
+        figure(fig_num); clf;
     end
 
     %% Final Info

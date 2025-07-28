@@ -2,6 +2,8 @@
 % 2025_07_08 K. Hayes, kxh1031@psu.edu
 % -- changed planner version to 'legacy' as temporary patch for bug in
 %    bounded Astar function
+% 2025_07_28 S. Brennan, sbrennan@psu.edu
+% -- updated polytope generation to fcn_MapGen_generatePolysFromSeedGeneratorNames
 
 % TO DO: 'through or around' planner is broken. Pseudocode is in the
 % bounded Astar function for future implementation
@@ -18,8 +20,8 @@ addpath([pwd '\..\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 %% generate map
 % generate Voronoi tiling from Halton points
 low_pt = 1; high_pt = 100; % range of Halton points to use to generate the tiling
-tiled_polytopes_legacy = fcn_polytope_generation_halton_voronoi_tiling(low_pt,high_pt);
-tiled_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
+tiled_polytopes_legacy = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [low_pt,high_pt],[],[],-1);
+tiled_polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [low_pt,high_pt],[1 1],[],-1);
 % remove the edge polytope that extend past the high and low points
 % shink the polytopes so that they are no longer tiled
 des_radius = 0.05; % desired average maximum radius

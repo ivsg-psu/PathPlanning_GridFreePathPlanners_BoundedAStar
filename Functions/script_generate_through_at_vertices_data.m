@@ -53,8 +53,9 @@ for Halton_seed = 1:20:101
 
         %% begin loop of costs
         for cost_idx=1%:length(des_costs)
-            des_cost = des_costs(cost_idx);
-            shrunk_polytopes = fcn_polytope_editing_set_all_costs(shrunk_polytopes,des_cost);
+            des_cost = des_costs(cost_idx);            
+            shrunk_polytopes = fcn_MapGen_polytopesSetCosts(shrunk_polytopes, des_cost, (-1));
+
 
             %% plan path
             % starting (A) and finish (B) coordinates

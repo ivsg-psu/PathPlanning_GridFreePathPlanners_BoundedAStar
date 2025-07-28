@@ -4,17 +4,33 @@
 
 % Revision history:
 % 2025_07_03 - Sean Brennan / Kaelea Hayes
-% -- First write of the function, using the "MapGen" library demo script as
-% starter
+% - First write of the function, using the "MapGen" library as starter
+%
+% 2025_07_07 - Sean Brennan and Kaelea Hayes
+% - Starting integration of MapGen into codes
+% - Updated MapGen library to support integration
+%
+% 2025_07_26 - Sean Brennan
+% - Updated DebugTools to DebugTools_v2025_07_15
+%
+% 2025_07_28 - Sean Brennan
+% - Updated MapGen to MapGenClass_v2025_07_28b
+% - Added Path library, PathClass_v2025_07_06
+% - DEPRECATED fcn_polytope_generation_halton_voronoi_tiling
+%    % * now: fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset',
+%    %   % [low_pt high_pt])
+% - DEPRECATED fcn_polytope_editing_remove_edge_polytopes
+%    % * now: fcn_MapGen_polytopesDeleteByAABB
+% - DEPRECATED fcn_polytope_editing_shrink_to_average_max_radius_with_variance
+%    % * now: fcn_MapGen_polytopesShrinkToRadius
+% - DEPRECATED fcn_polytope_editing_set_all_costs
+%    % * now: fcn_MapGen_polytopesSetCosts
+% - Updated script_demo_fcn_BoundedAStar_Astar with MapGen functions
+% - Working through all other scripts
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
 % -- Where to start?! All functions need to be checked, verified, etc.
-% 2025_07_07 - Sean Brennan and Kaelea Hayes
-% -- Starting integration of MapGen into codes
-% -- Updated MapGen library to support integration
-% 2025_07_26 - Sean Brennan
-% -- Updated DebugTools to DebugTools_v2025_07_15
 
 clear library_name library_folders library_url
 
@@ -24,15 +40,15 @@ library_folders{ith_library} = {'Functions','Data'};
 library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/DebugTools_v2025_07_15.zip';
 
 ith_library = ith_library+1;
-library_name{ith_library}    = 'MapGenClass_v2025_07_22';
+library_name{ith_library}    = 'MapGenClass_v2025_07_28b';
 library_folders{ith_library} = {'Functions','testFixtures'};
-library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTools_MapGenClassLibrary/archive/refs/tags/MapGenClass_v2025_07_22.zip';
+library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTools_MapGenClassLibrary/archive/refs/tags/MapGenClass_v2025_07_28b.zip';
 
-% ith_library = ith_library+1;
-% library_name{ith_library}    = 'PathClass_v2025_07_02';
-% library_folders{ith_library} = {'Functions'};                                
-% library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_PathTools_PathClassLibrary/blob/main/Releases/PathClass_v2025_07_02.zip?raw=true';
-% 
+ith_library = ith_library+1;
+library_name{ith_library}    = 'PathClass_v2025_07_06';
+library_folders{ith_library} = {'Functions', 'Data'};                                
+library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_PathTools_PathClassLibrary/archive/refs/tags/PathClass_v2025_07_06.zip';
+
 % ith_library = ith_library+1;
 % library_name{ith_library}    = 'GPSClass_v2023_04_21';
 % library_folders{ith_library} = {''};
@@ -50,7 +66,7 @@ library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTool
 
 
 %% Clear paths and folders, if needed
-if 1==0
+if 1==1
     clear flag_BoundAStar_Folders_Initialized
     fcn_INTERNAL_clearUtilitiesFromPathAndFolders;
 

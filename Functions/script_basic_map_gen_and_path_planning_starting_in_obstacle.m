@@ -10,8 +10,8 @@ addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 %% generate map
 % generate Voronoi tiling from Halton points
 low_pt = 1; high_pt = 100; % range of Halton points to use to generate the tiling
-tiled_polytopes_legacy = fcn_polytope_generation_halton_voronoi_tiling(low_pt,high_pt);
-tiled_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
+tiled_polytopes_legacy = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [low_pt,high_pt],[],[],-1);
+tiled_polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [low_pt,high_pt],[1 1],[],-1);
 % remove the edge polytope that extend past the high and low points
 % shink the polytopes so that they are no longer tiled
 des_radius = 0.065; % desired average maximum radius
@@ -21,7 +21,8 @@ min_rad = 0.0001; % minimum possible maximum radius for any obstacle
 
 des_cost = [0.1,0.4,1.0];
 for i = 1:length(des_cost)
-    shrunk_polytopes = fcn_polytope_editing_set_all_costs(shrunk_polytopes,des_cost(i));
+    shrunk_polytopes = fcn_MapGen_polytopesSetCosts(shrunk_polytopes, des_cost(i), (-1));
+
     % plot the map
     fig = 110+i; % figure to plot on
     line_spec = 'b-'; % edge line plotting

@@ -52,8 +52,9 @@ est_d_eff7 = [];
 
         %% find measured occupancy
         % set polytope traversal cost. it doesn't matter what this is, as long as it's known.
-        des_cost = 0.2;
-        shrunk_polytopes_known_cost = fcn_polytope_editing_set_all_costs(shrunk_polytopes,des_cost);
+        des_cost = 0.2;        
+        shrunk_polytopes = fcn_MapGen_polytopesSetCosts(shrunk_polytopes, des_cost, (-1));
+
         % find measured occupancy at different heights
         for height_of_path = 0.1:0.2:0.9
             %% plan path
