@@ -1,7 +1,16 @@
-function [fig] = fcn_plot_polytopes(polytopes,fig_num,line_spec,line_width,varargin)
-% FCN_PLOT_POLYTOPES plot the polytopes as specified
+function [fig] = fcn_BoundedAStar_plotPolytopes(polytopes,fig_num,line_spec,line_width,varargin)
+
+warning('on','backtrace');
+warning('fcn_BoundedAStar_plotPolytopes is being deprecated. Use fcn_MapGen_plotPolytopes instead.');
+
+% FORMAT:
 %
-% [FIG]=FCN_PLOT_POLYTOPES(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH)
+%      h_plot = fcn_MapGen_plotPolytopes(polytopes, (plotFormat), (fillFormat), (fig_num))
+%      See: script_test_fcn_MapGen_plotPolytopes
+
+% fcn_BoundedAStar_plotPolytopes plot the polytopes as specified
+%
+% [FIG]=fcn_BoundedAStar_plotPolytopes(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH)
 % returns:
 % a figure with the polytopes plotted as specified
 %
@@ -23,26 +32,26 @@ function [fig] = fcn_plot_polytopes(polytopes,fig_num,line_spec,line_width,varar
 % LINE_WIDTH: width of the line to be plotted
 % By default the axes will be determined by the plot function
 %
-% [FIG]=FCN_PLOT_POLYTOPES(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH,COLOR)
+% [FIG]=fcn_BoundedAStar_plotPolytopes(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH,COLOR)
 % allows the user to specify the input:
 % COLOR: a 1-by-3 vector to specify the RGB plot colors [Red Green Blue],
 % where 0 <= Red,Green,Blue <= 1
 %
-% [FIG]=FCN_PLOT_POLYTOPES(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH,AXIS_LIMITS)
+% [FIG]=fcn_BoundedAStar_plotPolytopes(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH,AXIS_LIMITS)
 % allows the user to specify the input:
 % AXIS_LIMTS: a 1-by-4 vector to specify the start and end of the x and y
 % axes, [xstart xend ystart yend]
 %
-% [FIG]=FCN_PLOT_POLYTOPES(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH,AXIS_STYLE)
+% [FIG]=fcn_BoundedAStar_plotPolytopes(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH,AXIS_STYLE)
 % allows the user to specify the input:
 % AXIS_STYLE: controls the style of the axis, such as square or equal
 %
-% [FIG]=FCN_PLOT_POLYTOPES(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH,FILL_INFO)
+% [FIG]=fcn_BoundedAStar_plotPolytopes(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH,FILL_INFO)
 % allows the user to specify the input:
 % FILL_INFO: a 1-by-5 vector to specify wether or not there is fill, the
 % color of fill, and the opacity of the fill [Y/N, R, G, B, alpha]
 %
-% [FIG]=FCN_PLOT_POLYTOPES(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH,COLOR,AXIS_LIMITS,AXIS_STYLE,FILL_INFO)
+% [FIG]=fcn_BoundedAStar_plotPolytopes(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH,COLOR,AXIS_LIMITS,AXIS_STYLE,FILL_INFO)
 % allows the user to specify any combination of all four inputs in any
 % order after LINE_WIDTH
 %
@@ -52,19 +61,21 @@ function [fig] = fcn_plot_polytopes(polytopes,fig_num,line_spec,line_width,varar
 %      mapy = 1;
 %      low_pt = 1;
 %      high_pt = 100;
-%      polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [low_pt,high_pt],[],[],-1);
-%      fig1 = fcn_plot_polytopes(polytopes,[],'-',2,[0.5 0 0]);
-%      fig2 = fcn_plot_polytopes(polytopes,998,'-',2,[0 0 0.5],[0 mapx 0 mapy]);
-%      fig3 = fcn_plot_polytopes(polytopes,999,'-',2,[0 0.5 0],[0 mapx 0 mapy],'square');
-%      fig4 = fcn_plot_polytopes(polytopes,1000,'-',2,[0 0 0],[0 mapx 0 mapy],'square',[1 0 0 0 0.5]);
-%      fig5 = fcn_plot_polytopes(polytopes([7 10 35]),123,'m--',2,[0 mapx 0 mapy],'square');
-%      fig5 = fcn_plot_polytopes(polytopes([5 20 83]),fig5,'k-',2,[1 0.5 0.5 0.5 0.5]);
+%      polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [low_pt, high_pt],[],[],-1);
+%      fig1 = fcn_BoundedAStar_plotPolytopes(polytopes,[],'-',2,[0.5 0 0]);
+%      fig2 = fcn_BoundedAStar_plotPolytopes(polytopes,998,'-',2,[0 0 0.5],[0 mapx 0 mapy]);
+%      fig3 = fcn_BoundedAStar_plotPolytopes(polytopes,999,'-',2,[0 0.5 0],[0 mapx 0 mapy],'square');
+%      fig4 = fcn_BoundedAStar_plotPolytopes(polytopes,1000,'-',2,[0 0 0],[0 mapx 0 mapy],'square',[1 0 0 0 0.5]);
+%      fig5 = fcn_BoundedAStar_plotPolytopes(polytopes([7 10 35]),123,'m--',2,[0 mapx 0 mapy],'square');
+%      fig5 = fcn_BoundedAStar_plotPolytopes(polytopes([5 20 83]),fig5,'k-',2,[1 0.5 0.5 0.5 0.5]);
 %
 % This function was written on 2018_12_10 by Seth Tau
 % Added comments on 2021_02_23 by Seth Tau
 % Removed old add path stuff and adjusted example on 2021_03_05 by Seth Tau
 % Questions or comments? sat5340@psu.edu
-%
+% 2025_07_17 - K. Hayes, kxh1031@psu.edu
+% -- copied to new function from fcn_plot_polytopes to follow library
+%    convention
 
 %% chec input arguments
 if nargin < 4 || nargin > 8

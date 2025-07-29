@@ -1,5 +1,5 @@
 % script_demo_fcn_BoundedAStar_Astar.m
-% a basic test of a 2D path planning scenario 
+% a basic test of a 2D path planning scenario
 % Generate an obstacle field and calculate an A-star path through it
 
 % Revision history
@@ -64,15 +64,15 @@ flag_do_plot = 1; % 1 if you would like to see plots, anything else if not
 %% Start of repetitions
 
 for rep = 1:repetitions
-      %%%%%%%%
+    %%%%%%%%
     % generate a new map
     % generate Voronoi tiling from Halton points
     low_pt = low_pts(rep); high_pt = high_pts(rep)-50; % range of Halton points to use to generate the tiling
     tiled_polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [low_pt high_pt],[],[],-1);
-    
+
     % remove the edge polytope that extend past the high and low points
     trim_polytopes  = fcn_MapGen_polytopesDeleteByAABB( tiled_polytopes, [0.001 0.001, 0.999 0.999], (-1));
-    
+
     % shink the polytopes so that they are no longer tiled
     rng(shrink_seed) % set the random number generator with the shrink seed
     shrunk_polytopes = fcn_MapGen_polytopesShrinkToRadius(trim_polytopes,des_radius,sigma_radius,min_rad, (fig_num));
@@ -95,19 +95,21 @@ for rep = 1:repetitions
 
     % Make a list of all possible visible point. These are simply the
     % vertices of the polytopes. For each vertex, save the index of the
-    % vertex in the 3rd column, the index of the obstacle in 
+    % vertex in the 3rd column, the index of the obstacle in
     % 4th column column (this is called obstacle_ID), and the flag
     % indicating if the point is a beginning_end point.
     % all points has the following format:
     % [x y point_id obstacle_ID beg_end]
-    all_pts = [[shrunk_polytopes.xv]; [shrunk_polytopes.yv]; 1:point_tot; obstacle_ID; flag_thisIsABeginningEnd]'; 
+    all_pts = [[shrunk_polytopes.xv]; [shrunk_polytopes.yv]; 1:point_tot; obstacle_ID; flag_thisIsABeginningEnd]';
     Npts = size(all_pts,1);
 
-    %% plan path
+    %%%%%
+    % Plan Path
     % Add the start and finish points to the all_pts list. Give these the
     % index of Npts plus 1 or 2, so that they are indexed as the last 2
     % points. They have a special obstacle ID of -1 (because they aren't
     % obstacles), and they are both flagged as start/end points.
+    
     start = [startPoint Npts+1 -1 1];
     finish = [endPoint Npts+2 -1 1];
 
@@ -150,7 +152,7 @@ for rep = 1:repetitions
     for app = 1:Npath-2
         current_point = path(app+1,:);
         current_point_ID = current_point(3);
-        current_point_obstacle = current_point(4); 
+        current_point_obstacle = current_point(4);
 
         % Find the points that are next to the current contact point. These
         % are the points that are adjacent, on each polytope, to the points
@@ -163,7 +165,7 @@ for rep = 1:repetitions
         % Check if current point has a start/finish flag
         if current_point(5) == 1
             % This point is flagged as a start/finish
-            
+
             % Get the beginning/end point that is on the obstacle that the
             % current point belongs to, making sure not to select the
             % current point. Each obstacle has 2 beginning/end points, so
@@ -189,7 +191,7 @@ for rep = 1:repetitions
             % function call to fcn_general_calculation_euclidean_point_to_point_distance
 
             dist = sum((ones(2,1)*prev_pt -[other_beg_end_pt(1:2); other_pt]).^2,2).^0.5;
-            
+
             if dist(1) < dist(2) % other_pt farther
                 appex_x(app,2:3) = [other_beg_end_pt(1), other_pt(1)];
                 appex_y(app,2:3) = [other_beg_end_pt(2), other_pt(2)];
@@ -214,7 +216,7 @@ for rep = 1:repetitions
             previousPolytopePoint = all_pts(current_point_ID-1,1:2); % Grabs the previous point on the polytope
             nextPolytopePoint = all_pts(current_point_ID+1,1:2); % Grabs the next point on the polytope
             dist = sum((ones(2,1)*prev_pt - [previousPolytopePoint; nextPolytopePoint]).^2,2).^0.5;
-            
+
             if dist(1) < dist(2) % pt1 closer
                 appex_x(app,2:3) = [previousPolytopePoint(1), nextPolytopePoint(1)];
                 appex_y(app,2:3) = [previousPolytopePoint(2), nextPolytopePoint(2)];
@@ -239,7 +241,8 @@ for rep = 1:repetitions
         close(99)
     end
 
-    %% Final Info
+    %%%%%
+    % Save Final Info
     % A, B, appex_x, appex_y
     final_info(rep).polytopes = shrunk_polytopes;
     final_info(rep).start = A;
