@@ -44,6 +44,19 @@
 % - DEPRECATED: fcn_BoundedAStar_polytopeEditingShrinkEvenly
 %   % * now trying to get this to be fixed in script_test_fcn_Visibility_clearAndBlockedPoints
 %   % * moved this function to MapGen
+%   % * now called fcn_MapGen_polytopesShrinkEvenly
+% - updated MapGen to MapGenClass_v2025_07_29, to address issues above
+% - In fcn_BoundedAStar_AstarBounded
+%   % * added plotting as part of standard debug output
+%   % * pulled plotting out of test script
+%   % * converted if-then (break) into if/then/else for clear code
+%   %   % pass-through
+% - In fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes
+%   % * added plotting as part of standard debug output
+%   % * pulled plotting out of test script
+%   % * fixed incorrect argument list in docstrings
+% (still need to finish cleanup of fcn_BoundedAStar_plotPolytopes and
+% fcn_plot_polytopes function calls)
 %
 % 2025_07_28 - K. Hayes
 % - DEPRECATED: fcn_algorithm_Astar
@@ -60,20 +73,6 @@
 %    % * now: fcn_Visibility_clearAndBlockedPoints
 % - Added test script starters for new function versions
 
-
-%   % * now called fcn_MapGen_polytopesShrinkEvenly
-% - updated MapGen to MapGenClass_v2025_07_29, to address issues above
-% - In fcn_BoundedAStar_AstarBounded
-%   % * added plotting as part of standard debug output
-%   % * pulled plotting out of test script
-%   % * converted if-then (break) into if/then/else for clear code
-%   %   % pass-through
-% - In fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes
-%   % * added plotting as part of standard debug output
-%   % * pulled plotting out of test script
-%   % * fixed incorrect argument list in docstrings
-% (still need to finish cleanup of fcn_BoundedAStar_plotPolytopes and
-% fcn_plot_polytopes function calls)
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
