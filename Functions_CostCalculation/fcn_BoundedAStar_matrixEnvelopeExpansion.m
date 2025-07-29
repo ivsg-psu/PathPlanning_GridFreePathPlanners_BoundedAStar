@@ -1,4 +1,4 @@
-function expandedSets = fcn_BoundedAStar_matrixEnvelopeExpansion(radius, windFieldU, windFieldV, x, y, varargin)
+function [expandedSets indices] = fcn_BoundedAStar_matrixEnvelopeExpansion(radius, windFieldU, windFieldV, x, y, varargin)
 % fcn_BoundedAStar_setExpansion
 % calculates the resulting reachable radius from a point at the center of a
 % circle, where the circle has a radius equal to the zero-wind distance.
@@ -158,9 +158,9 @@ x0 = circle_points;
 n = length(x0);
 
 % Create state matrices
-numSteps = 10;
+numSteps = 100;
 stepLength = radius/numSteps;
-angles = (0:0.1:2*pi);
+angles = (0:0.01:2*pi);
 A = eye(n);
 % [X,Y] = meshgrid(x,y,size(windFieldU,1));
 expandedSets = nan*ones(n,2,numSteps);
@@ -172,25 +172,29 @@ for k = 1:numSteps
         xIndex = find(x>expandedSets(i,1,k),1,'first');
         yIndex = find(y>expandedSets(i,2,k),1,'first');
         if isempty(xIndex)
-            xIndex = 1;
+            xIndex = find(x<expandedSets(i,1,k),1,'first');
         end
         if isempty(yIndex)
-            yIndex = 1;
+            yIndex = find(y<expandedSets(i,2,k),1,'first');
         end
-        indices(i,:) = [xIndex yIndex];
+        indices(i,:,k) = [xIndex yIndex];
         heading(i,:) = [cos(angles(i)) sin(angles(i))]*stepLength;
     end
     
     % Convert indices into linear indices for indexing wind fields
-    linearInd = sub2ind(size(windFieldU),indices(:,1),indices(:,2));
+    linearInd = sub2ind(size(windFieldU),indices(:,2,k),indices(:,1,k));
 
     Wu = windFieldU(linearInd);
     Wv = windFieldV(linearInd);
     
     W = [Wu Wv]/numSteps + heading;
     %W = heading;
+    %W = [Wu Wv]/numSteps;
     
     expandedSets(:,:,k+1) = A*expandedSets(:,:,k) + W;
+    linearInd = [];
+    Wu = [];
+    Wv = [];
 end
 
 %% Plot the results (for debugging)?
@@ -337,7 +341,7 @@ function circle_points = fcn_INTERNAL_plotCircle(centers,radii)
 Ncircles = length(centers(:,1));
 
 % Set angles for plotting
-angles = (0:0.1:2*pi)';
+angles = (0:0.01:2*pi)';
 
 % Loop through the arcs, prepping data for plotting each
 if Ncircles>1
