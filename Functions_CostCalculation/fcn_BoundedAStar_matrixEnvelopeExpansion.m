@@ -1,4 +1,4 @@
-function expandedSets = fcn_BoundedAStar_setExpansion(radius, windFieldU, windFieldV, x, y, varargin)
+function expandedSets = fcn_BoundedAStar_matrixEnvelopeExpansion(radius, windFieldU, windFieldV, x, y, varargin)
 % fcn_BoundedAStar_setExpansion
 % calculates the resulting reachable radius from a point at the center of a
 % circle, where the circle has a radius equal to the zero-wind distance.
@@ -6,7 +6,7 @@ function expandedSets = fcn_BoundedAStar_setExpansion(radius, windFieldU, windFi
 % direction.
 %
 % FORMAT:
-% windRadius = fcn_BoundedAStar_setExpansion(radius, windFieldU, windFieldV, x, y, (startPoint), (fig_num))
+% windRadius = fcn_BoundedAStar_matrixEnvelopeExpansion(radius, windFieldU, windFieldV, x, y, (startPoint), (fig_num))
 %
 % INPUTS:
 %
@@ -158,9 +158,9 @@ x0 = circle_points;
 n = length(x0);
 
 % Create state matrices
-numSteps = 100;
+numSteps = 10;
 stepLength = radius/numSteps;
-angles = (0:0.01:2*pi);
+angles = (0:0.1:2*pi);
 A = eye(n);
 % [X,Y] = meshgrid(x,y,size(windFieldU,1));
 expandedSets = nan*ones(n,2,numSteps);
@@ -337,7 +337,7 @@ function circle_points = fcn_INTERNAL_plotCircle(centers,radii)
 Ncircles = length(centers(:,1));
 
 % Set angles for plotting
-angles = (0:0.01:2*pi)';
+angles = (0:0.1:2*pi)';
 
 % Loop through the arcs, prepping data for plotting each
 if Ncircles>1

@@ -1,5 +1,5 @@
-% script_test_fcn_BoundedAStar_setExpansion
-% Tests: fcn_BoundedAStar_setExpansion
+% script_test_fcn_BoundedAStar_matrixEnvelopeExpansion
+% Tests: fcn_BoundedAStar_matrixEnvelopeExpansion
 
 % Revision history
 % 2025_07_23 by K. Hayes, kxh1031@psu.edu
@@ -80,7 +80,7 @@ flag_firstDraw = 1;
     'rightDilationMultiplier', (rightDilationMultiplier),... % [mCols mCols], ...
     'thresholdForced', (optimizedThreshold), ... % [1x1] scalar
     'flagSkipThresholdOptimization',(0),...% [1x1] scalar
-    'figNum',(15456));
+    'figNum',(-1));
 
 
 %%%% WIND POST-PROCESSING SHOULD BE MADE INTO AN ALTERNATE FUNCTION (?). FOR
@@ -94,8 +94,8 @@ northWind = -px;
 windMagnitude = (eastWind.^2+northWind.^2).^0.5;
 maxWind = max(windMagnitude,[],'all');
 normalizedWindMagnitude = windMagnitude./maxWind;
-normalizedEastWind = 10*eastWind./maxWind;
-normalizedNorthWind = 10*northWind./maxWind;
+normalizedEastWind = 50*eastWind./maxWind;
+normalizedNorthWind = 50*northWind./maxWind;
 
 %%%%
 
@@ -108,7 +108,7 @@ finish = [0.6, 0.1, n_nodes+2, -1, 0];
 % Call set expansion methods
 radius = 5;
 centerPoint = [0 0];
-expandedSets = fcn_BoundedAStar_setExpansion(radius,normalizedEastWind,normalizedNorthWind,x,y, (centerPoint), (fig_num));
+expandedSets = fcn_BoundedAStar_matrixEnvelopeExpansion(radius,normalizedEastWind,normalizedNorthWind,x,y, (centerPoint), (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -119,7 +119,7 @@ assert(isnumeric(expandedSets));
 Npoints = 629;
 assert(size(expandedSets,1)==Npoints); 
 assert(size(expandedSets,2)==2);
-assert(size(expandedSets,3)==101);
+assert(size(expandedSets,3)==11);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
