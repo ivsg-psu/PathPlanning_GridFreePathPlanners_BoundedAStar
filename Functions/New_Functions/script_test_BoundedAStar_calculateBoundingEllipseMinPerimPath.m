@@ -36,7 +36,7 @@ fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
 % Generate polytopes
-polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 100],[100 100],[],-1);
+polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 100],[],[100 100],-1);
 
 % Trim polytopes from edges
 trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0 0 100 100], (-1));
@@ -60,8 +60,26 @@ int_polytopes = shrunk_polytopes(intersections(end).obstacles);
 max_dist=fcn_BoundedAStar_calculateBoundingEllipseMinPerimPath(int_polytopes,intersections,start,finish,(fig_num));
 
 % Plot results
-fcn_BoundedAStar_plotPolytopes(shrunk_polytopes,fig_num,'b-',2,[0 100 0 100],'square')
-fcn_BoundedAStar_plotPolytopes(int_polytopes,fig_num,'r-',2)
+plotFormat.LineWidth = 2;
+plotFormat.MarkerSize = 10;
+plotFormat.LineStyle = '-';
+plotFormat.Color = [0 0 1];
+
+% fillFormat = [1 0 0 0 0.5];
+fillFormat = [];
+fcn_MapGen_plotPolytopes(shrunk_polytopes, (plotFormat),(fillFormat),(fig_num));
+
+plotFormat.LineWidth = 2;
+plotFormat.MarkerSize = 10;
+plotFormat.LineStyle = '-';
+plotFormat.Color = [1 0 0];
+
+% fillFormat = [1 0 0 0 0.5];
+fillFormat = [];
+fcn_MapGen_plotPolytopes(int_polytopes, (plotFormat),(fillFormat),(fig_num));
+
+
+
 plot([start(1) finish(1)],[start(2) finish(2)],'k--','linewidth',2)
 for xing = 1:length(intersections(end).index)
  plot(intersections(end).points(xing,1),intersections(end).points(xing,2),'kx','linewidth',1)

@@ -37,7 +37,7 @@ fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
 % Use tiling to generate polytopes
-polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 100],[100 100],[],-1);
+polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 100],[],[100 100],-1);
 
 % Trim polytopes along edge
 trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0 0 100 100], (-1));

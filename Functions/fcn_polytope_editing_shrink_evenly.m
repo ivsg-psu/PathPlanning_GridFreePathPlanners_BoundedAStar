@@ -147,14 +147,16 @@ for poly = 1:size(polytopes,2) % shrink each polytope
         shrunk_polytopes(poly).xv = xv'; % keep vertices seperate for easier calculations
         shrunk_polytopes(poly).yv = yv';
         shrunk_polytopes(poly).vertices = [[xv; xv(1)] [yv; yv(1)]]; % repeat first vertice for easy plotting
-        [Cx,Cy,shrunk_polytopes(poly).area] = fcn_polytope_calculation_centroid_and_area([xv; xv(1)],[yv; yv(1)]);
+        [centroid,shrunk_polytopes(poly).area] = fcn_polytope_calculation_centroid_and_area([xv; xv(1)],[yv; yv(1)]);
+        Cx = centroid(1,1);
+        Cy = centroid(1,2);
         shrunk_polytopes(poly).mean = [Cx, Cy]; % calculate the polytope mean
         % calculate perimeter distances around the polytope
         shrunk_polytopes(poly).distances = sum((shrunk_polytopes(poly).vertices(1:end-1,:) - shrunk_polytopes(poly).vertices(2:end,:)).^2,2).^0.5;
         % calculate the maximum distance from center to a vertex
         shrunk_polytopes(poly).max_radius = max(sum((shrunk_polytopes(poly).vertices(1:end-1,:) - ones(length(xv),1)*shrunk_polytopes(poly).mean).^2,2).^0.5);
         % add cost field back onto polytope after shrinking
-        shrunk_polytopes(poly).cost = polytopes(poly).cost
+        shrunk_polytopes(poly).cost = polytopes(poly).cost;
     else % if it was not shrinkable, make it a point polytope in shrunk_polytopes
         shrunk_polytopes(poly).xv = [Cx Cx Cx]; % keep vertices seperate for easier calculations
         shrunk_polytopes(poly).yv = [Cy Cy Cy];

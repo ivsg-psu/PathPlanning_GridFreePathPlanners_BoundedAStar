@@ -150,7 +150,9 @@ for poly = 1:size(polytopes,2) % shrink each polytope
         shrunk_polytopes(poly).xv = xv'; % keep vertices seperate for easier calculations
         shrunk_polytopes(poly).yv = yv';
         shrunk_polytopes(poly).vertices = [[xv; xv(1)] [yv; yv(1)]]; % repeat first vertice for easy plotting
-        [Cx,Cy,shrunk_polytopes(poly).area] = fcn_MapGen_polytopeCentroidAndArea ([[xv; xv(1)],[yv; yv(1)]]);
+        [centroid,shrunk_polytopes(poly).area] = fcn_MapGen_polytopeCentroidAndArea ([[xv; xv(1)],[yv; yv(1)]]);
+        Cx = centroid(1,1);
+        Cy = centroid(1,2);
 
         shrunk_polytopes(poly).mean = [Cx, Cy]; % calculate the polytope mean
         % calculate perimeter distances around the polytope

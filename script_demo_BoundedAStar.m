@@ -34,12 +34,22 @@
 % - DEPRECATED fcn_polytope_calculation_centroid_and_area
 %   % * now fcn_MapGen_polytopeCentroidAndArea
 % - Removed folder: Example_Map_Generation_Code
+% 2025_07_29 - Sean Brennan (in progress)
+% - Fixed bug with generation of polys
+%   % * AABB and expansion were switched in argument ordering
+% - DEPRECATED: fcn_BoundedAStar_plotPolytopes
+% - DEPRECATED: fcn_plot_polytopes
+%   % * now fcn_MapGen_plotPolytopes
+% - DEPRECATED: fcn_BoundedAStar_polytopeEditingShrinkEvenly
+%   % * now trying to get this to be fixed in script_test_fcn_Visibility_clearAndBlockedPoints
+%   % * moved this function to MapGen
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
 % -- Where to start?! All functions need to be checked, verified, etc.
 % 2025_07_28 - Sean Brennan
 % -- Remove all "addpath" commands nested inside scripts and functions
+% -- DEPRECATE: fcn_polytope_editing_shrink_evenly
 
 clear library_name library_folders library_url
 

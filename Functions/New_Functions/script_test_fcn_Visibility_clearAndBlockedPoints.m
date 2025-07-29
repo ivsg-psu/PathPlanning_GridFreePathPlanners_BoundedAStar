@@ -38,13 +38,15 @@ fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
 % Create polytope field
-polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 100],[100 100],[],-1);
+polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 100],[],[100 100],-1);
 
 % Trim polytopes on edge of boundary
-trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0 0 100 100], (-1));
+trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0.1 0.1 99.9 99.9], (23));
 
 % Shrink polytopes to form obstacle field
 shrunk_polytopes=fcn_BoundedAStar_polytopeEditingShrinkEvenly(trim_polytopes,2.5);
+URHERE
+shrunk_polytopes = fcn_MapGen_polytopesShrinkFromEdges
 
 % Get x and y coordinates of each polytope
 xvert = [shrunk_polytopes.xv];
@@ -60,7 +62,15 @@ isConcave = [];
 [clear_pts,blocked_pts]=fcn_Visibility_clearAndBlockedPoints(shrunk_polytopes,start,finish,(isConcave),(-1));
 
 % Plot results
-fcn_BoundedAStar_plotPolytopes(shrunk_polytopes,fig_num,'b-',2,[0 100 0 100],'square');
+plotFormat.LineWidth = 3;
+plotFormat.MarkerSize = 10;
+plotFormat.LineStyle = '-';
+plotFormat.Color = [0 0 1];
+
+% fillFormat = [1 0 0 0 0.5];
+fillFormat = [];
+h_plot = fcn_MapGen_plotPolytopes(shrunk_polytopes, (plotFormat),(fillFormat),(fig_num));
+
 plot([start(1) finish(1,1)],[start(2) finish(1,2)],'kx','linewidth',1)
 plot(clear_pts(:,1),clear_pts(:,2),'go','linewidth',1)
 plot(blocked_pts(:,1),blocked_pts(:,2),'rx','linewidth',1)

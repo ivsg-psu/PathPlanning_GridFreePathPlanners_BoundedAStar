@@ -42,7 +42,7 @@ addpath([parent_dir '\' main_folder '\Path_Planning\algorithm'])
 %% generate the map
 % Details on what each of these functions do can be found in the
 % Map_Generation folder in scrpt_Map_Generation_testing.m.
-polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 100],[100 100],[],-1);
+polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 100],[],[100 100],-1);
 trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0 0 100 100], (-1));
 shrunk_polytopes=fcn_polytope_editing_shrink_evenly(trim_polytopes,2.5);
 

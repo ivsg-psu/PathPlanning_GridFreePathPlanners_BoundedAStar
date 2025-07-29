@@ -74,7 +74,7 @@ function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]
 %      addpath([parent_dir '\' main_folder '\Map_Generation\polytope_generation'])
 %      addpath([parent_dir '\' main_folder '\Map_Generation\polytope_editing'])
 %      addpath([parent_dir '\' main_folder '\Path_Planning\visibility'])
-%      polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 100],[100 100],[],-1);
+%      polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 100],[],[100 100],-1);
 %      trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0 0 100 100], (-1));
 %      shrunk_polytopes=fcn_polytope_editing_shrink_evenly(trim_polytopes,2.5);
 %      xvert = [shrunk_polytopes.xv];
