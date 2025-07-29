@@ -1,4 +1,4 @@
-function [path,cost,err] = fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes(polytopes,start,finish,planner_mode,varargin)
+function [path,cost,err] = fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes(polytopes, start, finish, planner_mode, varargin)
 % fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes 
 % 
 % sets up the information needed for the Dijkstra
@@ -7,7 +7,7 @@ function [path,cost,err] = fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes(p
 %
 % FORMAT:
 %
-% [path,cost,err] = fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes(polytopes,A,B,planner_mode,(bounds),(fig_num))
+% [path,cost,err] = fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes(polytopes, start, finish, planner_mode, (bounds), (fig_num))
 %
 % INPUTS:
 %
@@ -71,7 +71,10 @@ function [path,cost,err] = fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes(p
 % 2025_07_25 - K. Hayes
 % -- fixed function formatting
 % -- added input and debug checks
-%
+% 2025_07_29 - S. Brennan
+% -- added plotting as part of standard debug output
+% -- fixed incorrect argument list
+
 % TO DO:
 % -- input checking and description in header for polytopes
 
@@ -171,7 +174,7 @@ end
 % check if the start or end are now within combined polytopes
 throw_error = 0; % only gives soft errors errors that don't stop the code
 check_edge = 1; % checks for start or finish on polytope edges
-[err,startPoly,finishPoly] = fcn_BoundedAStar_polytopePointsInPolytopes(start,finish,polytopes,throw_error,check_edge); err = 0;% check that start and end are outside of obstacles
+[err startPoly, finishPoly] = fcn_BoundedAStar_polytopePointsInPolytopes(start,finish,polytopes,throw_error,check_edge); err = 0; %#ok<NCOMMA,ASGLU> % check that start and end are outside of obstacles
 
 if err == 0 % start and finish outside the polytopes
     % add points for start and finish if on an edge
@@ -268,6 +271,8 @@ if err == 0 % start and finish outside the polytopes
 else % start or finish are in the polytopes
    path = [];
    cost = [];
+end
+
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -280,7 +285,54 @@ else % start or finish are in the polytopes
 %                            __/ |
 %                           |___/
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+if flag_do_plots
+
+    figure(fig_num);
+    hold on
+
+    allPointsPlotted = all_pts(:,1:2);
+    minX = min(allPointsPlotted(:,1));
+    minY = min(allPointsPlotted(:,2));
+    maxX = max(allPointsPlotted(:,1));
+    maxY = max(allPointsPlotted(:,2));
+
+    scaleX = maxX - minX;
+    scaleY = maxY - minY;
+    percentLarger = 0.3;
+    new_axis = [minX-scaleX*percentLarger maxX+scaleX*percentLarger minY-scaleY*percentLarger maxY+scaleY*percentLarger];
+    axis(new_axis);
+
+
+    % Plot results
+    plotFormat.LineWidth = 3;
+    plotFormat.MarkerSize = 10;
+    plotFormat.LineStyle = '-';
+    plotFormat.Color = [0 0 1];
+
+    % fillFormat = [1 0 0 0 0.5];
+    fillFormat = [];
+    h_plot = fcn_MapGen_plotPolytopes(polytopes, (plotFormat),(fillFormat),(fig_num));
+    set(h_plot,'DisplayName','Input: polytopes');
+    plot([start(1) finish(1)],[start(2) finish(2)],'kx','LineWidth',2,'DisplayName','Input: start and end pts')
+    plot(path(:,1),path(:,2),'k-','linewidth',2,'DisplayName','Output: route');
+    box on
+    xlabel('X Position')
+    ylabel('Y Position')
+
+    legend('Interpreter','none','Location','best');
+
+end % Ends the flag_do_plot if statement
+
+
+
+if flag_do_debug
+    fprintf(1,'ENDING function: %s, in file: %s\n\n',st(1).name,st(1).file);
 end
+
+end % Ends main function
+
+
+
 %% Functions follow
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   ______                _   _

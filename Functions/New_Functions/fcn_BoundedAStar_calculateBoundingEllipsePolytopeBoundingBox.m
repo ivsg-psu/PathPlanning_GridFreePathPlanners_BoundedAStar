@@ -55,7 +55,7 @@ function [bound_polytopes,bound_box,bound_pts,all_bound]= fcn_BoundedAStar_calcu
 %      addpath([parent_dir '\' main_folder '\Path_Planning\bounding_ellipse'])
 %      polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1, 100],[100, 100],[],47474);
 %      trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0 0 100 100], (57575));
-%      shrunk_polytopes=fcn_BoundedAStar_polytopeEditingShrinkEvenly(trim_polytopes,2.5);
+%      shrunk_polytopes = fcn_MapGen_polytopesShrinkEvenly(trim_polytopes, 2.5, (-1));
 %      xv = [shrunk_polytopes.xv];
 %      yv = [shrunk_polytopes.yv];
 %      point_tot = length(xv);

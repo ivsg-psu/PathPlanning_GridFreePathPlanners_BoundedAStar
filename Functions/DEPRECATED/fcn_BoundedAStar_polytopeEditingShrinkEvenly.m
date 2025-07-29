@@ -1,4 +1,9 @@
 function [shrunk_polytopes,point_polys] = fcn_BoundedAStar_polytopeEditingShrinkEvenly(polytopes,dist)
+
+warning('on','backtrace');
+warning(['fcn_BoundedAStar_polytopeEditingShrinkEvenly is being deprecated.' ...
+    ' Use fcn_MapGen_polytopesShrinkEvenly instead.']);
+
 % fcn_BoundedAStar_polytopeEditingShrinkEvenly shrinks each polytope in poltyopes 
 % specified evenly on all sides by dist
 %

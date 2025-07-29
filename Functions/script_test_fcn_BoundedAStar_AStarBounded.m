@@ -38,50 +38,44 @@ figure(fig_num); clf;
 
 addpath([pwd '\Example_Map_Generation_Code'])
 
- % Load map from name 
- map_name = "HST 1 100 SQT 0 1 0 1 SMV 0.04 0.008 1e-6 1111";
- plot_flag = 0; disp_name = 0; fig_num = 654654;
- [polytopes,fig]=fcn_MapGen_generatePolysFromName(map_name,plot_flag,disp_name);
+% Load map from name
+map_name = "HST 1 100 SQT 0 1 0 1 SMV 0.04 0.008 1e-6 1111";
+plot_flag = 0; disp_name = 0;
+[polytopes,fig]=fcn_MapGen_generatePolysFromName(map_name,plot_flag,disp_name);
 
- % Do path planning with shrunk polytopes
- % Get x and y locations of vertices
- xv = [polytopes.xv];
- yv = [polytopes.yv];
- point_tot = length(xv);
+% Do path planning with shrunk polytopes
+% Get x and y locations of vertices
+xv = [polytopes.xv];
+yv = [polytopes.yv];
+point_tot = length(xv);
 
- % Specify start and finish point locations and IDs
- start = [0 0.5 point_tot+1 0 0];
- finish = [1 0.5 point_tot+2 -1 0];
+% Specify start and finish point locations and IDs
+start = [0 0.5 point_tot+1 0 0];
+finish = [1 0.5 point_tot+2 -1 0];
 
- % Initialize beginning/end and obstacle ID vectors
- beg_end = zeros(point_tot,1);
- obs_id = zeros(point_tot,1);
- 
- % Loop through polytopes to assign obstacle ID and beginning/end flags to
- % vertices
- curpt = 0;
- for poly = 1:size(polytopes,2) % check each polytope
-     verts = length(polytopes(poly).xv);
-     obs_id(curpt+1:curpt+verts) = ones(verts,1)*poly; % obs_id is the same for every vertex on a single polytope
-     beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-     curpt = curpt+verts;
- end
+% Initialize beginning/end and obstacle ID vectors
+beg_end = zeros(point_tot,1);
+obs_id = zeros(point_tot,1);
 
- % Create all_pts matrix
- all_pts = [xv' yv' [1:length(xv)]' obs_id beg_end];
+% Loop through polytopes to assign obstacle ID and beginning/end flags to
+% vertices
+curpt = 0;
+for poly = 1:size(polytopes,2) % check each polytope
+    verts = length(polytopes(poly).xv);
+    obs_id(curpt+1:curpt+verts) = ones(verts,1)*poly; % obs_id is the same for every vertex on a single polytope
+    beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
+    curpt = curpt+verts;
+end
 
- % Create set of bound_pts
- bound_pts = all_pts;
+% Create all_pts matrix
+all_pts = [xv' yv' (1:length(xv))' obs_id beg_end];
 
- % Set planner mode and call path planner
- planner_mode = 'legacy';
- [cost,route]=fcn_BoundedAStar_AstarBounded(start,finish,polytopes,all_pts,bound_pts,planner_mode,(ellipse_polytopes),([]));
- disp(['Path Cost: ' num2str(cost)])
- 
- % Plot results
- fcn_BoundedAStar_plotPolytopes(polytopes,100,'b-',2,[0 1 0 1],'square')
- plot(route(:,1),route(:,2),'k-','linewidth',2)
- plot([start(1) finish(1)],[start(2) finish(2)],'kx','linewidth',2)
- box on
- xlabel('X Position')
- ylabel('Y Position')
+% Create set of bound_pts
+bound_pts = all_pts;
+
+% Set planner mode and call path planner
+planner_mode = 'legacy';
+ellipse_polytopes = [];
+[cost,route] = fcn_BoundedAStar_AstarBounded(start,finish,polytopes,all_pts,bound_pts,planner_mode,(ellipse_polytopes),(fig_num));
+disp(['Path Cost: ' num2str(cost)])
+

@@ -37,25 +37,23 @@ fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
 % Use tiling to generate polytopes
-polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 100],[],[100 100],-1);
+polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 100], ([]), ([100 100]), -1);
 
 % Trim polytopes along edge
 trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0 0 100 100], (-1));
 
 % Shrink polytopes to form obstacles
-shrunk_polytopes=fcn_BoundedAStar_polytopeEditingShrinkEvenly(trim_polytopes,2.5);
+shrunk_polytopes = fcn_MapGen_polytopesShrinkEvenly(trim_polytopes, 2.5, (-1));
 
 % Set start and end points
+clear start finish
+start = struct;
+finish = struct;
 start.x = 0; start.y = 50;
 finish.x = 100; finish.y = 50;
 
 % Set up and find path
 planner_mode = 'legacy';
 bounds = [];
-[path,cost,err]=fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes(shrunk_polytopes, start, finish, planner_mode,(bounds),(-1));
+[path,cost,err] = fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes(shrunk_polytopes, start, finish, planner_mode,(bounds),(fig_num));
 disp(['Path Cost: ' num2str(cost)])
-
-% Plot results
-fcn_BoundedAStar_plotPolytopes(shrunk_polytopes,100,'b-',2,[0 100 0 100],'square')
-plot(path(:,1),path(:,2),'k-','linewidth',2)
-plot([start.x finish.x],[start.y finish.y],'kx','linewidth',2)

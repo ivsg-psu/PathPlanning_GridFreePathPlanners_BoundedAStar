@@ -42,7 +42,7 @@ function [close_polytopes] = fcn_BoundedAStar_polytopesNearLine(start,finish,pol
 %      addpath([parent_dir '\' main_folder '\Map_Generation\polytope_calculation'])
 %      polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 100],[],[100 100],-1);
 %      trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0 0 100 100], (-1));
-%      shrunk_polytopes=fcn_BoundedAStar_polytopeEditingShrinkEvenly(trim_polytopes,2.5);
+%      shrunk_polytopes = fcn_MapGen_polytopesShrinkEvenly(trim_polytopes, 2.5, (-1));
 %      point_tot = length([shrunk_polytopes.xv]);
 %      A = struct('x',0,'y',50);
 %      B = struct('x',100,'y',50);

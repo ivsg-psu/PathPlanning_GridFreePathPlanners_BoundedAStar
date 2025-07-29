@@ -34,6 +34,7 @@
 % - DEPRECATED fcn_polytope_calculation_centroid_and_area
 %   % * now fcn_MapGen_polytopeCentroidAndArea
 % - Removed folder: Example_Map_Generation_Code
+%
 % 2025_07_29 - Sean Brennan (in progress)
 % - Fixed bug with generation of polys
 %   % * AABB and expansion were switched in argument ordering
@@ -60,6 +61,19 @@
 % - Added test script starters for new function versions
 
 
+%   % * now called fcn_MapGen_polytopesShrinkEvenly
+% - updated MapGen to MapGenClass_v2025_07_29, to address issues above
+% - In fcn_BoundedAStar_AstarBounded
+%   % * added plotting as part of standard debug output
+%   % * pulled plotting out of test script
+%   % * converted if-then (break) into if/then/else for clear code
+%   %   % pass-through
+% - In fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes
+%   % * added plotting as part of standard debug output
+%   % * pulled plotting out of test script
+%   % * fixed incorrect argument list in docstrings
+% (still need to finish cleanup of fcn_BoundedAStar_plotPolytopes and
+% fcn_plot_polytopes function calls)
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
@@ -67,6 +81,8 @@
 % 2025_07_28 - Sean Brennan
 % -- Remove all "addpath" commands nested inside scripts and functions
 % -- DEPRECATE: fcn_polytope_editing_shrink_evenly
+% -- need to de-spaghetti fcn_BoundedAStar_AStarBounded
+
 
 clear library_name library_folders library_url
 
@@ -76,9 +92,9 @@ library_folders{ith_library} = {'Functions','Data'};
 library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/DebugTools_v2025_07_15.zip';
 
 ith_library = ith_library+1;
-library_name{ith_library}    = 'MapGenClass_v2025_07_28b';
+library_name{ith_library}    = 'MapGenClass_v2025_07_29';
 library_folders{ith_library} = {'Functions','testFixtures'};
-library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTools_MapGenClassLibrary/archive/refs/tags/MapGenClass_v2025_07_28b.zip';
+library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTools_MapGenClassLibrary/archive/refs/tags/MapGenClass_v2025_07_29.zip';
 
 ith_library = ith_library+1;
 library_name{ith_library}    = 'PathClass_v2025_07_06';
