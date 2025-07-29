@@ -6,6 +6,8 @@
 % -- first write of script
 % 2025_07_24 by K. Hayes
 % -- fixed formatting of script
+% 2025_07_29 by K. Hayes
+% -- added test case for debugging of streamline-following behavior
 
 % TO DO:
 % -- take wind post-processing out of this script and put it into another
@@ -51,8 +53,8 @@ rngSeed = [];
 % Call random occupancy map function - code taken from
 % script_demo_generateRandomOccupancyAnimated
 rng(2020)
-nRows = 50;
-mColumns = 50;
+nRows = 30;
+mColumns = 30;
 mapSize = [nRows mColumns];
 
 Nsteps = 50;
@@ -145,7 +147,7 @@ fprintf(1,'Figure: 2XXXXXX: TEST mode cases\n');
 
 %% TEST case: Drop a point on a streamline
 fig_num = 20001;
-titleString = sprintf('TEST case: Non-default, non-uniform XY range for random map generation');
+titleString = sprintf('TEST case: Drop a point on a streamline');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
@@ -217,8 +219,8 @@ finish = [0.6, 0.1, n_nodes+2, -1, 0];
 
 % Call set expansion methods
 radius = 5;
-centerPoint = [0 0];
-[expandedSets indices] = fcn_BoundedAStar_matrixEnvelopeExpansion(radius,normalizedEastWind,normalizedNorthWind,x,y, (centerPoint), (-1));
+centerPoint = [2 8];
+[expandedSets] = fcn_BoundedAStar_matrixEnvelopeExpansion(radius,normalizedEastWind,normalizedNorthWind,x,y, (centerPoint), (-1));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -230,7 +232,6 @@ s = streamslice(x,y,normalizedEastWind,normalizedNorthWind);
 set(s,'Color',[0.6 0.6 0.6])
 for i = 1:size(expandedSets,3)
     plot(expandedSets(1,1,i),expandedSets(1,2,i),'b.','MarkerSize', 10)
-    plot(x(indices(1,1,i)),y(indices(1,2,i)),'r.', 'MarkerSize',20)
     drawnow
 end
 

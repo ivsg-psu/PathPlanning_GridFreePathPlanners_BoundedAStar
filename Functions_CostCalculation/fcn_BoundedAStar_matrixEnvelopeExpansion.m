@@ -1,5 +1,5 @@
-function [expandedSets indices] = fcn_BoundedAStar_matrixEnvelopeExpansion(radius, windFieldU, windFieldV, x, y, varargin)
-% fcn_BoundedAStar_setExpansion
+function [expandedSets] = fcn_BoundedAStar_matrixEnvelopeExpansion(radius, windFieldU, windFieldV, x, y, varargin)
+% fcn_BoundedAStar_matrixEnvelopeExpansion
 % calculates the resulting reachable radius from a point at the center of a
 % circle, where the circle has a radius equal to the zero-wind distance.
 % Uses a changing wind field and does line integrals from each starting
@@ -59,6 +59,8 @@ function [expandedSets indices] = fcn_BoundedAStar_matrixEnvelopeExpansion(radiu
 % -- fixed bug with incorrect expansion set
 % -- fixed function documentation
 % -- added plotting capability
+% 2025_07_29 by K. Hayes
+% -- fixed bug in wind sampling
 
 % TO-DO
 % -- add flag_do_animation to turn animation off
