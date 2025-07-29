@@ -43,6 +43,23 @@
 % - DEPRECATED: fcn_BoundedAStar_polytopeEditingShrinkEvenly
 %   % * now trying to get this to be fixed in script_test_fcn_Visibility_clearAndBlockedPoints
 %   % * moved this function to MapGen
+%
+% 2025_07_28 - K. Hayes
+% - DEPRECATED: fcn_algorithm_Astar
+%    % * now: fcn_BoundedAStar_Astar
+% - DEPRECATED: fcn_algorithm_Astar3d
+%    % * now: fcn_BoundedAStar_Astar3d
+% - DEPRECATED: fcn_algorithm_bound_Astar
+%    % * now: fcn_BoundedAStar_AstarBounded
+% - DEPRECATED: fcn_algorithm_setup_bound_Astar_for_tiled_polytopes
+%    % * now: fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes
+% - DEPRECATED: fcn_bounding_ellipse_min_perimeter_path
+%    % * now: fcn_BoundedAStar_calculateBoundingEllipseMinPerimPath
+% - DEPRECATED: fcn_visibility_clear_and_blocked_points
+%    % * now: fcn_Visibility_clearAndBlockedPoints
+% - Added test script starters for new function versions
+
+
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
