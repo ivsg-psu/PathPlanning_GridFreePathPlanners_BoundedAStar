@@ -72,9 +72,11 @@
 %   % * fixed incorrect argument list in docstrings
 % (still need to finish cleanup of fcn_BoundedAStar_plotPolytopes and
 % fcn_plot_polytopes function calls)
-
+%
 % 2025_07_30 - Sean Brennan (in progress)
 % - Added MATLABs TSP example
+% - Added missing folder to MapGen install to support GridMapGen
+% - Working on fcn_BoundedAStar_reachabilityWithInputs (in progress)
 
 
 % TO-DO:
@@ -95,7 +97,7 @@ library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_Deb
 
 ith_library = ith_library+1;
 library_name{ith_library}    = 'MapGenClass_v2025_07_29';
-library_folders{ith_library} = {'Functions','testFixtures'};
+library_folders{ith_library} = {'Functions','testFixtures','GridMapGen'};
 library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTools_MapGenClassLibrary/archive/refs/tags/MapGenClass_v2025_07_29.zip';
 
 ith_library = ith_library+1;
