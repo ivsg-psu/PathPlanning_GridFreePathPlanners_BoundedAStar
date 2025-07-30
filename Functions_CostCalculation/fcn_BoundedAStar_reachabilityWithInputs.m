@@ -1,9 +1,7 @@
-function [expandedSets] = fcn_BoundedAStar_matrixEnvelopeExpansion(radius, windFieldU, windFieldV, x, y, varargin)
-% fcn_BoundedAStar_matrixEnvelopeExpansion
-% calculates the resulting reachable radius from a point at the center of a
-% circle, where the circle has a radius equal to the zero-wind distance.
-% Uses a changing wind field and does line integrals from each starting
-% direction.
+function [expandedSets] = fcn_BoundedAStar_reachabilityWithInputs(radius, windFieldU, windFieldV, x, y, varargin)
+% fcn_BoundedAStar_reachabilityWithInputs
+% recursively calculates the reachable region of the wind field accounting
+% for control inputs
 %
 % FORMAT:
 % windRadius = fcn_BoundedAStar_matrixEnvelopeExpansion(radius, windFieldU, windFieldV, x, y, (startPoint), (fig_num))
@@ -45,26 +43,19 @@ function [expandedSets] = fcn_BoundedAStar_matrixEnvelopeExpansion(radius, windF
 %
 % EXAMPLES:
 %
-% See the script: script_test_fcn_BoundedAStar_setExpansion
+% See the script: script_test_fcn_BoundedAStar_reachabilityWithInputs
 % for a full test suite.
 %
-% This function was written on 2025_07_23 by K. Hayes
+% This function was written on 2025_07_29 by K. Hayes
 % Questions or comments? contact kxh1031@psu.edu
 
 % REVISION HISTORY:
-% 2025_07_23 by K. Hayes
-% -- first write of function using fcn_BoundedAStar_calcCostChangingWind as
-%    a starter
-% 2025_07_24 by K. Hayes
-% -- fixed bug with incorrect expansion set
-% -- fixed function documentation
-% -- added plotting capability
 % 2025_07_29 by K. Hayes
-% -- fixed bug in wind sampling
+% -- first write of function using fcn_BoundedAStar_matrixEnvelopeExpansion as
+%    a starter
 
 % TO-DO
-% -- add flag_do_animation to turn animation off
-% -- vectorize the inner for loop in MAIN
+% -- update header
 
 %% Debugging and Input checks
 % Check if flag_max_speed set. This occurs if the fig_num variable input
@@ -155,55 +146,99 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
 % Generate circle points and assign them to x0 initial set
-centers = startPoint;
-circle_points = fcn_INTERNAL_plotCircle(centers,radius);
-x0 = circle_points;
-n = length(x0);
+% centers = startPoint;
+% circle_points = fcn_INTERNAL_plotCircle(centers,radius);
+% x0 = circle_points;
+% n = length(x0);
+n = 630;
 
-% Create state matrices
+% Fill in discrete time info 
 numSteps = 100;
 stepLength = radius/numSteps;
 angles = (0:0.01:2*pi);
+angles = [angles 0];
+
+% Create state matrices
+% A - the vehicle remains in the same position unless moved
 A = eye(n);
-% [X,Y] = meshgrid(x,y,size(windFieldU,1));
-expandedSets = nan*ones(n,2,numSteps);
-expandedSets(:,:,1) = startPoint.*ones(n,2,1);
+% B - the vehicle can move in any heading it chooses
+B = eye(n);
+
+% Initialize storage variables
+expandedSets{1} = startPoint.*ones(n,2,1);
 indices = nan*ones(n,2);
-heading = nan*ones(n,2);
+U = nan*ones(n,2);
+chStore = nan*ones(n,numSteps);
+preDist = nan*ones(n,2,numSteps);
+
+% Predetermine all allowable movement directions
+U = [cos(angles') sin(angles')].*stepLength;
+    
+figure
+hold on
+s = streamslice(x,y,windFieldU,windFieldV);
+set(s,'Color',[0.6 0.6 0.6])
+
+% Loop through discrete time steps
 for k = 1:numSteps
-    for i = 1:n
-        xIndex = find(x>expandedSets(i,1,k),1,'first');
-        yIndex = find(y>expandedSets(i,2,k),1,'first');
+    %%%% 'Step 1': Xk+1 = Axk + Bu
+    preDist = A*expandedSets{k} + B*U;
+    plot(preDist(:,1),preDist(:,2),'Color','Blue')
+
+    %%%% 'Step 2': Find outer convex hull
+    chStore = convhull(preDist,'Simplify',true);
+    plot(preDist(chStore,1),preDist(chStore,2),'--','Color','Green')
+
+    %%%% 'Step 3': Find and apply disturbances 
+    for i = 1:length(chStore)
+        % Find index in wind field corresponding to the point on the convex
+        % hull
+        xIndex = find(x>expandedSets{k}(chStore(i),1),1,'first');
+        yIndex = find(y>expandedSets{k}(chStore(i),2),1,'first');
         if isempty(xIndex)
-            xIndex = find(x<expandedSets(i,1,k),1,'first');
+            xIndex = find(x<expandedSets{k}(chStore(i),1),1,'first');
         end
         if isempty(yIndex)
-            yIndex = find(y<expandedSets(i,2,k),1,'first');
+            yIndex = find(y<expandedSets{k}(chStore(i),2),1,'first');
         end
         indices(i,:,k) = [xIndex yIndex];
-        heading(i,:) = [cos(angles(i)) sin(angles(i))]*stepLength;
+
+        % Break if we hit a NaN value, which indicates that the end of the
+        % convex hull has been reached
+        if isnan(chStore(i))
+            break
+        end
     end
     
+    if indices(end) == 0
+        zeroind = find(indices(:,:,k) == 0);
+        fillIn = ones(numel(zeroind)/2,2);
+        indices(length(chStore)+1:end,:,k) = fillIn;
+    end
+
     % Convert indices into linear indices for indexing wind fields
     linearInd = sub2ind(size(windFieldU),indices(:,2,k),indices(:,1,k));
 
+    % Index wind fields
     Wu = windFieldU(linearInd);
     Wv = windFieldV(linearInd);
-    
-    W = [Wu Wv]/numSteps + heading;
+    W = [Wu Wv]/numSteps;
 
     % Debug options:
     % uncomment (and comment out W above) to make sure that not adding
     % disturbances results in a circle
-    %W = heading;
+    %W = U;
     % uncomment (and comment out W above) to make sure that a point follows
     % the streamlines appropriately
     %W = [Wu Wv]/numSteps;
     
-    expandedSets(:,:,k+1) = A*expandedSets(:,:,k) + W;
-    linearInd = [];
-    Wu = [];
-    Wv = [];
+    % Apply disturbances and save results
+    expandedSets{k+1} = preDist+W;
+    plot(expandedSets{k+1}(:,1),expandedSets{k+1}(:,2),'Color','red')
+
+    %%%% 'Step 4': Find outer convex hull
+
+
 end
 
 %% Plot the results (for debugging)?

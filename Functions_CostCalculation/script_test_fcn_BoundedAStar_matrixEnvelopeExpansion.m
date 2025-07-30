@@ -53,8 +53,8 @@ rngSeed = [];
 % Call random occupancy map function - code taken from
 % script_demo_generateRandomOccupancyAnimated
 rng(2020)
-nRows = 30;
-mColumns = 30;
+nRows = 50;
+mColumns = 50;
 mapSize = [nRows mColumns];
 
 Nsteps = 50;
@@ -206,8 +206,8 @@ northWind = -px;
 windMagnitude = (eastWind.^2+northWind.^2).^0.5;
 maxWind = max(windMagnitude,[],'all');
 normalizedWindMagnitude = windMagnitude./maxWind;
-normalizedEastWind = 10*eastWind./maxWind;
-normalizedNorthWind = 10*northWind./maxWind;
+normalizedEastWind = 1*eastWind./maxWind;
+normalizedNorthWind = 1*northWind./maxWind;
 
 %%%%
 
