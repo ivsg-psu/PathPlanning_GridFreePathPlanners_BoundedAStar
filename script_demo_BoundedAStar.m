@@ -35,6 +35,21 @@
 %   % * now fcn_MapGen_polytopeCentroidAndArea
 % - Removed folder: Example_Map_Generation_Code
 %
+% 2025_07_28 - K. Hayes
+% - DEPRECATED: fcn_algorithm_Astar
+%    % * now: fcn_BoundedAStar_Astar
+% - DEPRECATED: fcn_algorithm_Astar3d
+%    % * now: fcn_BoundedAStar_Astar3d
+% - DEPRECATED: fcn_algorithm_bound_Astar
+%    % * now: fcn_BoundedAStar_AstarBounded
+% - DEPRECATED: fcn_algorithm_setup_bound_Astar_for_tiled_polytopes
+%    % * now: fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes
+% - DEPRECATED: fcn_bounding_ellipse_min_perimeter_path
+%    % * now: fcn_BoundedAStar_calculateBoundingEllipseMinPerimPath
+% - DEPRECATED: fcn_visibility_clear_and_blocked_points
+%    % * now: fcn_Visibility_clearAndBlockedPoints
+% - Added test script starters for new function versions
+%
 % 2025_07_29 - Sean Brennan (in progress)
 % - Fixed bug with generation of polys
 %   % * AABB and expansion were switched in argument ordering
@@ -57,21 +72,9 @@
 %   % * fixed incorrect argument list in docstrings
 % (still need to finish cleanup of fcn_BoundedAStar_plotPolytopes and
 % fcn_plot_polytopes function calls)
-%
-% 2025_07_28 - K. Hayes
-% - DEPRECATED: fcn_algorithm_Astar
-%    % * now: fcn_BoundedAStar_Astar
-% - DEPRECATED: fcn_algorithm_Astar3d
-%    % * now: fcn_BoundedAStar_Astar3d
-% - DEPRECATED: fcn_algorithm_bound_Astar
-%    % * now: fcn_BoundedAStar_AstarBounded
-% - DEPRECATED: fcn_algorithm_setup_bound_Astar_for_tiled_polytopes
-%    % * now: fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes
-% - DEPRECATED: fcn_bounding_ellipse_min_perimeter_path
-%    % * now: fcn_BoundedAStar_calculateBoundingEllipseMinPerimPath
-% - DEPRECATED: fcn_visibility_clear_and_blocked_points
-%    % * now: fcn_Visibility_clearAndBlockedPoints
-% - Added test script starters for new function versions
+
+% 2025_07_30 - Sean Brennan (in progress)
+% - Added MATLABs TSP example
 
 
 % TO-DO:
