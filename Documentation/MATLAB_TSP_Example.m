@@ -3,8 +3,6 @@
 %
 
 
-
-
 %% Traveling Salesman Problem: Problem-Based
 % This example shows how to use binary integer programming to solve the
 % classic traveling salesman problem. This problem involves finding the
@@ -46,7 +44,10 @@
 load('usborder.mat','x','y','xx','yy');
 rng(3,'twister') % Makes a plot with stops in Maine & Florida, and is reproducible
 
-nValues = [10, 20, 50,100, 100]';
+fig_num = 1234;
+
+% nValues = [5, 10, 15,  20, 40, 50, 80, 100]';
+nValues = round(linspace(50,5,100)); 
 % nStops = 200; % You can use any number, but the problem size scales as N^2
 NumberSearches = length(nValues);
 
@@ -100,7 +101,8 @@ for ith_N = 1:NumberSearches
 
     % Display the stops using a graph plot. Plot the nodes without the graph edges.
 
-    figure
+    figure(fig_num)
+    clf;
     hGraph = plot(G,'XData',stopsLon,'YData',stopsLat,'LineStyle','none','NodeLabel',{});
     hold on
     % Draw the outside border
@@ -116,7 +118,7 @@ for ith_N = 1:NumberSearches
     for ii = 1:nStops
         whichIdxs = (idxs == ii); % Find the trips that include stop ii
         whichIdxs = sparse(sum(whichIdxs,2)); % Include trips where ii is at either end
-        Aeq(ii,:) = whichIdxs'; % Include in the constraint matrix
+        Aeq(ii,:) = whichIdxs'; %#ok<SPRIX> % Include in the constraint matrix
     end
     beq = 2*ones(nStops,1);
 
@@ -188,8 +190,8 @@ for ith_N = 1:NumberSearches
     b = [];
     while numtours > 1 % Repeat until there is just one subtour
         % Add the subtour constraints
-        b = [b;zeros(numtours,1)]; % allocate b
-        A = [A;spalloc(numtours,lendist,nStops)]; % A guess at how many nonzeros to allocate
+        b = [b;zeros(numtours,1)]; %#ok<AGROW> % allocate b
+        A = [A;spalloc(numtours,lendist,nStops)]; %#ok<AGROW> % A guess at how many nonzeros to allocate
         for ii = 1:numtours
             rowIdx = size(A,1) + 1; % Counter for indexing
             subTourIdx = find(tourIdxs == ii); % Extract the current subtour
@@ -200,7 +202,7 @@ for ith_N = 1:NumberSearches
             for jj = 1:length(variations)
                 whichVar = (sum(idxs==subTourIdx(variations(jj,1)),2)) & ...
                     (sum(idxs==subTourIdx(variations(jj,2)),2));
-                A(rowIdx,whichVar) = 1;
+                A(rowIdx,whichVar) = 1; %#ok<SPRIX>
             end
             b(rowIdx) = length(subTourIdx) - 1; % One less trip than subtour stops
         end
@@ -234,35 +236,44 @@ for ith_N = 1:NumberSearches
     %
 
     %% Distance traveled?
+    % Note: the from and to are NOT ordered, but simply a listing of all
+    % edges
     fromCity = idxs(x_tsp,1);
     toCity = idxs(x_tsp,2);
-    total_distance = 0;
-    num_cities = length(fromCity);
+    from_location = [stopsLon(fromCity) stopsLat(fromCity)];
+    to_location   = [stopsLon(toCity) stopsLat(toCity)];
+    num_edges = length(fromCity);
+    % Scaling between units used in plotting and actual miles is about 1800
+    % miles is one unit
+    allEdgeDistances = 1700*sum((to_location-from_location).^2,2).^0.5;
+    actualLength = sum(allEdgeDistances);
 
-    for i = 1:(num_cities - 1)
-        city1_idx = optimal_route(i);
-        city2_idx = optimal_route(i+1);
-        total_distance = total_distance + distance_matrix(city1_idx, city2_idx);
+    % PLOT? (for debugging)
+    if 1==0
+        for ith_edge = 1:num_edges
+            plot(...
+                [from_location(ith_edge,1); to_location(ith_edge,1)],...
+                [from_location(ith_edge,2); to_location(ith_edge,2)],...
+                'b-', 'LineWidth',4);
+        end
     end
-
-    % Add the distance from the last city back to the first city
-    total_distance = total_distance + distance_matrix(optimal_route(num_cities), optimal_route(1));
 
     %% Size estimation
     squareMilesUS = 2500*1600;
     edgeArea = squareMilesUS/nStops;
     edgeLength = (edgeArea)^0.5;
     estimatedLength = edgeLength*nStops;
-    actualLength = sum(A*dist);
 
     allActual(ith_N,1) = actualLength;
     allEstimated(ith_N,1) = estimatedLength;
 
 end
 %%  Plot results
-figure;
-plot(allEstimated/1000,allActual/1000,'b.','MarkerSize',40);
+figure(8765);
+plot(0.8*allEstimated/1000,allActual/1000,'b.','MarkerSize',40,'DisplayName','Actual results');
 xlabel('Estimated (thousands of miles)');
 ylabel('Actual (thousands of miles)');
 hold on;
-plot([0 max(allActual/1000)],[0 max(allActual/1000)],'k-');
+grid on
+plot([0 max(allActual/1000)],[0 max(allActual/1000)],'k-', 'DisplayName','Line of Perfect Agreement');
+legend('Interpreter','none','Location','best');
