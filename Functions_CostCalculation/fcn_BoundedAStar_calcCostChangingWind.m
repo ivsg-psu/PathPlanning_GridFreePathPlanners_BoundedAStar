@@ -188,25 +188,8 @@ for ith_angle = 1:Nangles
     
     for ith_step = 1:NintegrationSteps
         directionInHeading = thisHeading*stepDistance;
-
-        % windFieldU, windFieldV, x, y
-        xIndex = find(x>currentPosition(1,1),1,'first');
-        yIndex = find(y>currentPosition(1,2),1,'first'); 
-
-        % Make sure we didn't wander off the map!
-        if isempty(xIndex) || isempty(yIndex)
-            break;
-        end
-        if xIndex<1 || xIndex>length(x)
-            break;
-        end
-        if yIndex<1 || yIndex>length(y)
-            break;
-        end
-       
-        windSpeedU_here =  windFieldU(xIndex,yIndex);
-        windSpeedV_here =  windFieldV(xIndex,yIndex);
-        windSpeedVector = [windSpeedU_here windSpeedV_here];
+        
+        windSpeedVector = fcn_BoundedAStar_sampleWindField(currentPosition, x, y, windFieldU, windFieldV, (-1));
         directionInWind = windSpeedVector/NintegrationSteps;
 
         currentPosition = currentPosition + directionInHeading + directionInWind;

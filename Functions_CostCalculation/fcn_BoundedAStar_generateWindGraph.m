@@ -223,27 +223,7 @@ for ith_edge = 1:Nedges
         directionInHeading = [edgeVectorX(this_edge)*stepDistance, edgeVectorY(this_edge)*stepDistance];
         % directionInHeading = [edgeVectorX(this_edge), edgeVectorY(this_edge)];
 
-        % windFieldU, windFieldV, x, y
-        xIndex = find(x>currentPosition(1,1),1,'first');
-        yIndex = find(y>currentPosition(1,2),1,'first'); 
-
-        % Make sure we didn't wander off the map!
-        if isempty(xIndex) || isempty(yIndex)
-            disp(xIndex), disp(yIndex), disp(thisi), disp(thisj)
-            costtotal = nan;
-            break;
-        end
-        % if xIndex<1 || xIndex>length(x)
-        %     break;
-        % end
-        % if yIndex<1 || yIndex>length(y)
-        %     break;
-        % end
-        % 
-
-        windSpeedU_here =  windFieldU(xIndex,yIndex);
-        windSpeedV_here =  windFieldV(xIndex,yIndex);
-        windSpeedVector = [windSpeedU_here windSpeedV_here];
+        windSpeedVector = fcn_BoundedAStar_sampleWindField(currentPosition,x,y,windFieldU,windFieldV,(-1));
         directionInWind = windSpeedVector/NintegrationSteps;
 
         % Get vectors for cost calculation

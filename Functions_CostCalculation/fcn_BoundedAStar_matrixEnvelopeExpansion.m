@@ -189,7 +189,7 @@ for k = 1:numSteps
 
     Wu = windFieldU(linearInd);
     Wv = windFieldV(linearInd);
-    
+    % windVector = fcn_BoundedAStar_sampleWindField(expandedSets(i,:,k),x,y,windFieldU,windFieldV,(-1));
     W = [Wu Wv]/numSteps + heading;
 
     % Debug options:
