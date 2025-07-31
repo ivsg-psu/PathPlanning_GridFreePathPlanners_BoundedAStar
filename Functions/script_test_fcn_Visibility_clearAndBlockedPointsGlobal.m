@@ -1,5 +1,5 @@
-% script_test_fcn_visibility_clear_and_blocked_points_global
-% Tests: fcn_visibility_clear_and_blocked_points_global
+% script_test_fcn_Visibility_clearAndBlockedPointsGlobal
+% Tests: fcn_Visibility_clearAndBlockedPointsGlobal
 
 %
 % REVISION HISTORY:
@@ -96,20 +96,20 @@ convex_obstacle_vgraph = [1 1 0 0 1 0 1;
                           0 0 1 1 1 1 0;
                           1 1 1 0 0 0 1];
 % test without concavity flag
-[vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts);
+[vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts);
 assert(isequal(vgraph,convex_obstacle_vgraph));
 % test with concavity flag explicitly off
-[vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts,0);
+[vgraph, visibility_results] =fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts,0);
 assert(isequal(vgraph,convex_obstacle_vgraph));
 % test with invalid concavity flag
 try
-    [vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts,10);
+    [vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts,10);
 catch ME
     assert(strcmp(ME.message,'optional argument is the is_concave flag and can either be 1 or 0'));
 end
 % test with concavity flag explicitly on
 tic
-[vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts,1);
+[vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts,1);
 toc
 assert(isequal(vgraph,convex_obstacle_vgraph));
 % plot visibility graph edges
@@ -133,7 +133,7 @@ if flag_do_plot
 end
 %% nonconvex polytope
 convex_polytope(1).vertices = [0 0; 1 1; 0.5, 2.5; -2, 2.5; -1 2; -2 1; -1 0; 0 0];
-polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(convex_polytope);
+polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(convex_polytope,1);
 
 % plot the map
 if flag_do_plot
@@ -217,21 +217,21 @@ concave_obstacle_vgraph_optimal_result = [1 1 0 0 0 0 1 0 1;
                                           1 1 1 0 0 0 0 0 1];
 
 % test without concavity flag
-[vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts);
+[vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts);
 assert(isequal(vgraph,concave_obstacle_vgraph_sub_optimal_result));
 % test with concavity flag explicitly off
-[vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts,0);
+[vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts,0);
 assert(isequal(vgraph,concave_obstacle_vgraph_sub_optimal_result));
 num_edges_in_suboptimal_case = sum(sum(vgraph));
 % test with invalid concavity flag
 try
-    [vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts,10);
+    [vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts,10);
 catch ME
     assert(strcmp(ME.message,'optional argument is the is_concave flag and can either be 1 or 0'));
 end
 % test with appropriately set concavity flag
 tic
-[vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts,1);
+[vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts,1);
 toc
 assert(isequal(vgraph,concave_obstacle_vgraph_optimal_result));
 num_edges_in_optimal_case = sum(sum(vgraph));
@@ -303,7 +303,7 @@ all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all poi
 
 %% calculate vibility graph
 tic
-[vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts);
+[vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts);
 toc
 % plot visibility graph edges
 if flag_do_plot
@@ -363,7 +363,7 @@ all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all poi
 
 %% calculate vibility graph
 tic
-vgraph = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts);
+vgraph = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts);
 toc
 deduped_pts = fcn_convert_polytope_struct_to_deduped_points(all_pts);
 % plot visibility graph edges
@@ -433,7 +433,7 @@ end
 %
 % %% calculate vibility graph
 % tic
-% vgraph = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts);
+% vgraph = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts);
 % toc
 % deduped_pts = fcn_convert_polytope_struct_to_deduped_points(all_pts);
 % % plot visibility graph edges

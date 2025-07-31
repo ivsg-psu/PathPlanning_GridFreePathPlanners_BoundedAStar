@@ -123,7 +123,7 @@ for rep = 1:repetitions
 
     % Calculate the visibility graph
     % TO-DO - put into a visibility library later?
-    [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes);
+    [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPoints(shrunk_polytopes, starts, finishes);
 
     % Generate the cost graph. Flag the cost type (using a string) to
     % calculate cost based on XY spatial distance only (not energy)

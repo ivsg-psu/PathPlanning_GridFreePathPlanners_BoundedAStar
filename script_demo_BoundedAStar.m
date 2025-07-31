@@ -77,6 +77,17 @@
 % - Added MATLABs TSP example
 % - Added missing folder to MapGen install to support GridMapGen
 % - Working on fcn_BoundedAStar_reachabilityWithInputs (in progress)
+%
+% 2025_07_31 - K. Hayes
+% - DEPRECATED: fcn_visibility_clear_and_blocked_points_global
+%   % * now fcn_Visibility_clearAndBlockedPointsGlobal
+% - DEPRECATED: fcn_BoundedAStar_AstarOLD
+% - DEPRECATED: fcn_BoundedAStar_Astar3dOLD
+% - DEPRECATED: fcn_visibility_graph_3d_global
+%   % * now fcn_Visibility_3dGraphAddPoints
+% - DEPRECATED: fcn_visibility_self_blocked_pts
+%   % * now fcn_Visibility_selfBlockedPoints
+
 
 
 % TO-DO:
