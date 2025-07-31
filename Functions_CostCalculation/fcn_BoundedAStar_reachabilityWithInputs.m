@@ -174,11 +174,13 @@ if flag_do_debug
     clf;
     hold on;
     
+    % Plot the windfield as an image
     fcn_BoundedAStar_plotWindField(windFieldU,windFieldV,windFieldX,windFieldY,'default',debug_figNum)
     s = streamslice(meshX,meshY,windFieldU,windFieldV);
     set(s,'Color',[0.6 0.6 0.6])
 
-    plot(startPoints(:,1),startPoints(:,2),'.-','Color',[0 0 1],'MarkerSize',30);
+    % Plot the start points
+    plot(startPoints(:,1),startPoints(:,2),'.-','Color',[0 0 1],'MarkerSize',30,'DisplayName','Input: startPoints');
 
 end
 
@@ -229,107 +231,88 @@ controlInputPerturbations = radius*[cos(angles) sin(angles)];
 
 %%%%
 % For each of the points, convert its expansion into a polytope, and merge
-% them all into one
+% them all into one polytope
 
-% Fill in first value
-polyPoints = repmat(movedPoints(1,:),Ndirections-1,1) + controlInputPerturbations;
-allPolys = polyshape(polyPoints);
+% Fill in first value with the region defined by the startPoints, if there
+% are enough startPoints
+if length(startPoints(:,1))>2
+    boundingPolytope = polyshape(startPoints);
+    firstIndex = 1;
+else
+    polyPoints = repmat(movedPoints(1,:),Ndirections-1,1) + controlInputPerturbations;
+    boundingPolytope = polyshape(polyPoints);
+    firstIndex = 2;
+end
 if flag_do_debug
     figure(debug_figNum);
-    h_allPoly = plot(allPolys);
+    h_allPoly = plot(boundingPolytope);
 end
 
-for ith_start = 2:NstartPoints
-
+% Merge the polytopes created by the expansion of each of the start points
+for ith_start = firstIndex:NstartPoints
     polyPoints = repmat(movedPoints(ith_start,:),Ndirections-1,1) + controlInputPerturbations;
     thisPoly = polyshape(polyPoints);
-    allPolys = union(allPolys,thisPoly);
+    boundingPolytope = union(boundingPolytope,thisPoly);
     if flag_do_debug
         figure(debug_figNum);
         set(h_allPoly,'Visible','off');
-        plot(allPolys);
+        plot(boundingPolytope);
     end
 end
 
-URHERE
+% Pull the polytope vertices
+boundingPolytopeVertices = boundingPolytope.Vertices;
 
+%%%%
+% Apply disturbance to each vertex. To do this, we first find the indices
+% in the wind disturbance matrices that match the XY location of each
+% vertex
+NboundingVertices = length(boundingPolytopeVertices);
+indices = zeros(NboundingVertices,2);
+for ith_vertex = 1:NboundingVertices
+    % Find index in wind field corresponding to the point on the convex
+    % hull
+    thisVertex = boundingPolytopeVertices(ith_vertex,:);
+    thisX = thisVertex(1,1);
+    thisY = thisVertex(1,2);
+    xIndex = find(windFieldX>thisX,1,'first');
+    yIndex = find(windFieldY>thisY,1,'first');    
+    if isempty(xIndex)
+        if thisX>windFieldX(1,end)
+            xIndex = length(windFieldX(1,:));
+        elseif thisX<windFieldX(1,1)
+            xIndex = 1;
+        else
+            error('unknown situation occurred matching x value: %.2f to windFieldX',thisX);
+        end        
+    end
+    if isempty(yIndex)
+        if thisY>windFieldY(1,end)
+            yIndex = length(windFieldY(1,:));
+        elseif thisY<windFieldY(1,1)
+            yIndex = 1;
+        else
+            error('unknown situation occurred matching y value: %.2f to windFieldY',thisY);
+        end        
+    end
+    indices(ith_vertex,:) = [xIndex yIndex];
+end
 
-% Initialize storage variables
-% reachableSet{1} = startPoints.*ones(Ndirections,2,1);
-% indices = nan*ones(Ndirections,2);
-% U = nan*ones(Ndirections,2);
-% chStore = nan*ones(Ndirections,numSteps);
-% preDist = nan*ones(Ndirections,2,numSteps);
-% 
-% % Predetermine all allowable movement directions
-% U = [cos(angles') sin(angles')].*stepLength;
-% 
-% figure
-% hold on
-% s = streamslice(windFieldX,windFieldY,windFieldU,windFieldV);
-% set(s,'Color',[0.6 0.6 0.6])
-% 
-% % Loop through discrete time steps
-% for k = 1:numSteps
-%     %%%% 'Step 1': Xk+1 = Axk + Bu
-%     preDist = A*reachableSet{k} + B*U;
-%     plot(preDist(:,1),preDist(:,2),'Color','Blue')
-% 
-%     %%%% 'Step 2': Find outer convex hull
-%     chStore = convhull(preDist,'Simplify',true);
-%     plot(preDist(chStore,1),preDist(chStore,2),'--','Color','Green')
-% 
-%     %%%% 'Step 3': Find and apply disturbances 
-%     for i = 1:length(chStore)
-%         % Find index in wind field corresponding to the point on the convex
-%         % hull
-%         xIndex = find(windFieldX>reachableSet{k}(chStore(i),1),1,'first');
-%         yIndex = find(windFieldY>reachableSet{k}(chStore(i),2),1,'first');
-%         if isempty(xIndex)
-%             xIndex = find(windFieldX<reachableSet{k}(chStore(i),1),1,'first');
-%         end
-%         if isempty(yIndex)
-%             yIndex = find(windFieldY<reachableSet{k}(chStore(i),2),1,'first');
-%         end
-%         indices(i,:,k) = [xIndex yIndex];
-% 
-%         % Break if we hit a NaN value, which indicates that the end of the
-%         % convex hull has been reached
-%         if isnan(chStore(i))
-%             break
-%         end
-%     end
-% 
-%     if indices(end) == 0
-%         zeroind = find(indices(:,:,k) == 0);
-%         fillIn = ones(numel(zeroind)/2,2);
-%         indices(length(chStore)+1:end,:,k) = fillIn;
-%     end
-% 
-%     % Convert indices into linear indices for indexing wind fields
-%     linearInd = sub2ind(size(windFieldU),indices(:,2,k),indices(:,1,k));
-% 
-%     % Index wind fields
-%     Wu = windFieldU(linearInd);
-%     Wv = windFieldV(linearInd);
-%     W = [Wu Wv]/numSteps;
-% 
-%     % Debug options:
-%     % uncomment (and comment out W above) to make sure that not adding
-%     % disturbances results in a circle
-%     %W = U;
-%     % uncomment (and comment out W above) to make sure that a point follows
-%     % the streamlines appropriately
-%     %W = [Wu Wv]/numSteps;
-% 
-%     % Apply disturbances and save results
-%     reachableSet{k+1} = preDist+W;
-%     plot(reachableSet{k+1}(:,1),reachableSet{k+1}(:,2),'Color','red')
-% 
-%     %%%% 'Step 4': Find outer convex hull
-% 
-% 
-% end
+% Convert indices into linear indices for indexing wind fields. Note the
+% switch here from rows/columns into X and Y, for the indexing, is swapping
+% the order. This is because the wind fields are transposed because they
+% were created with the image toolbox. A nice to-do item later would be to
+% fix this so that the XY indexing is consistent with typical matrix
+% representations of points as [x y]
+linearInd = sub2ind(size(windFieldU),indices(:,2),indices(:,1));
+
+% Index wind fields to find wind disturbance for each point
+Wu = windFieldU(linearInd);
+Wv = windFieldV(linearInd);
+W = [Wu Wv];
+
+% Apply disturbances and save results
+reachableSet = boundingPolytopeVertices + W;
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -343,7 +326,6 @@ URHERE
 %                           |___/
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 if flag_do_plots
     % Prep the figure for plotting
     temp_h = figure(figNum);
@@ -356,7 +338,7 @@ if flag_do_plots
     dimension_of_points = 2; 
 
     % Find size of plotting domain
-    allPointsBeingPlotted = [circle_points; nan nan];
+    allPointsBeingPlotted = [reachableSet; nan nan];
 
     max_plotValues = max(allPointsBeingPlotted);
     min_plotValues = min(allPointsBeingPlotted);
@@ -365,33 +347,34 @@ if flag_do_plots
 
     % Find size of plotting domain
     if flag_rescale_axis
-        percent_larger = 0.3;
-        axis_range = max_plotValues - min_plotValues;
-        if (0==axis_range(1,1))
-            axis_range(1,1) = 2/percent_larger;
-        end
-        if (0==axis_range(1,2))
-            axis_range(1,2) = 2/percent_larger;
-        end
-        if dimension_of_points==3 && (0==axis_range(1,3))
-            axis_range(1,3) = 2/percent_larger;
-        end
-
-        % Force the axis to be equal?
-        if 1==1
-            min_valuesInPlot = min(min_plotValues);
-            max_valuesInPlot = max(max_plotValues);
-        else
-            min_valuesInPlot = min_plotValues;
-            max_valuesInPlot = max_plotValues;
-        end
-
-        % Stretch the axes
-        stretched_min_vertexValues = min_valuesInPlot - percent_larger.*axis_range;
-        stretched_max_vertexValues = max_valuesInPlot + percent_larger.*axis_range;
-        axesTogether = [stretched_min_vertexValues; stretched_max_vertexValues];
-        newAxis = reshape(axesTogether, 1, []);
-        axis(newAxis);
+        % NO NEED TO RESIZE THE AXIS FOR IMAGE PLOTTING
+        % percent_larger = 0.3;
+        % axis_range = max_plotValues - min_plotValues;
+        % if (0==axis_range(1,1))
+        %     axis_range(1,1) = 2/percent_larger;
+        % end
+        % if (0==axis_range(1,2))
+        %     axis_range(1,2) = 2/percent_larger;
+        % end
+        % if dimension_of_points==3 && (0==axis_range(1,3))
+        %     axis_range(1,3) = 2/percent_larger;
+        % end
+        % 
+        % % Force the axis to be equal?
+        % if 1==1
+        %     min_valuesInPlot = min(min_plotValues);
+        %     max_valuesInPlot = max(max_plotValues);
+        % else
+        %     min_valuesInPlot = min_plotValues;
+        %     max_valuesInPlot = max_plotValues;
+        % end
+        % 
+        % % Stretch the axes
+        % stretched_min_vertexValues = min_valuesInPlot - percent_larger.*axis_range;
+        % stretched_max_vertexValues = max_valuesInPlot + percent_larger.*axis_range;
+        % axesTogether = [stretched_min_vertexValues; stretched_max_vertexValues];
+        % newAxis = reshape(axesTogether, 1, []);
+        % axis(newAxis);
 
     end
     goodAxis = axis;
@@ -404,36 +387,19 @@ if flag_do_plots
         hold on
     end   
 
-    % Plot the wind field
-    fcn_BoundedAStar_plotWindField(windFieldU,windFieldV,windFieldX,windFieldY,'default',figNum)
+    % Plot the windfield as an image
+    fcn_BoundedAStar_plotWindField(windFieldU,windFieldV,windFieldX,windFieldY,'default',debug_figNum)
+    s = streamslice(meshX,meshY,windFieldU,windFieldV);
+    set(s,'Color',[0.6 0.6 0.6])
 
-
-    % Plot expanded sets
-    figure(figNum)
-    axis([min(windFieldX), max(windFieldX), min(windFieldY), max(windFieldY)])
-    for j = 1:size(reachableSet,3)
-        axis equal
-        hold on
-        grid on
-        % Visually expand envelope
-        s = streamslice(meshX,meshY,windFieldU,windFieldV);
-        set(s,'Color',[0.6 0.6 0.6])
-        plot(reachableSet(:,1,j),reachableSet(:,2,j),'LineWidth',2,'Color','black')
-        drawnow
-        clf
-    end
-
-
- 
-    % Plot the inputs
-    plot(centers(:,1),centers(:,2),'k.','MarkerSize',30, 'DisplayName','Input: origin')
-    plot(circle_points(:,1),circle_points(:,2),'k--','LineWidth',2,'DisplayName','Input: original radius')
+    % Plot the start points
+    plot(startPoints(:,1),startPoints(:,2),'.-','Color',[0 0 1],'MarkerSize',30,'DisplayName','Input: startPoints');
 
     % Plot the final output
-    plot(reachableSet(:,1,size(reachableSet,3)),reachableSet(:,2,size(reachableSet,3)),'LineWidth',2,'Color','black','DisplayName','Output: wind radius')
+    plot(reachableSet(:,1),reachableSet(:,2),'LineWidth',2,'Color','black','DisplayName','Output: reachableSet')
 
     % Turn on legend
-    legend
+    legend('Interpreter','none','Location','best');
 
     % Shut the hold off?
     if flag_shut_hold_off

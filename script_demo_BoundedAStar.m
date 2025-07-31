@@ -101,8 +101,11 @@
 %   % * added polytopes to fcn inputs to allow plotting
 % - In script_demo_fcn_BoundedAStar_Astar
 %   % * moved plotting capabilities into function debug options
-
-
+%
+% 2025_07_31 - Sean Brennan (in progress)
+% - Working on fcn_BoundedAStar_reachabilityWithInputs (in progress)
+% - fcn_BoundedAStar_plotWindField
+%   % * added h_plot output, so that the handle to plots is available
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan

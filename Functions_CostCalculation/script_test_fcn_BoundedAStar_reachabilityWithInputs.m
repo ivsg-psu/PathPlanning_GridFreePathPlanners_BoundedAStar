@@ -40,15 +40,14 @@ fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 figure(figNum); clf;
 
 % Load starting data
-[normalizedEastWind, normalizedNorthWind] = fcn_INTERNAL_loadExampleData;
+[normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData;
 
 % Call graph generation function
 radius = 5;
 maxWindSpeed = 10;
+
 windFieldU = normalizedEastWind*maxWindSpeed;
 windFieldV = normalizedNorthWind*maxWindSpeed;
-windFieldX = linspace(XY_range(1), XY_range(3), nRows);
-windFieldY = linspace(XY_range(2), XY_range(4), mColumns);
 startPoints = [0 0; 1 2];
 
 % Call function
@@ -283,7 +282,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
 %% fcn_INTERNAL_loadExampleData
-function [normalizedEastWind, normalizedNorthWind] = fcn_INTERNAL_loadExampleData
+function [normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData
 % Fill inputs
 randomSeed = 4822262;
 
@@ -328,5 +327,9 @@ windMagnitude = (eastWind.^2+northWind.^2).^0.5;
 maxWind = max(windMagnitude,[],'all');
 normalizedEastWind = eastWind./maxWind;
 normalizedNorthWind = northWind./maxWind;
+
+XY_range = [-10 -10 10 10];
+windFieldX = linspace(XY_range(1), XY_range(3), nRows);
+windFieldY = linspace(XY_range(2), XY_range(4), mColumns);
 
 end % Ends fcn_INTERNAL_loadExampleData

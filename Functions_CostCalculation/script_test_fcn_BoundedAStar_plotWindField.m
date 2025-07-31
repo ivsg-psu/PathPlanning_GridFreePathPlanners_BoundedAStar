@@ -47,9 +47,22 @@ peaksMode = [];
 plotType = 'default';
 
 % Plot wind field
-fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, x, y, (plotType), (fig_num));
+cellArrayOfPlotHandles = fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, x, y, (plotType), (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+for ith_plot = 1:3
+    for ith_handle = 1:length(cellArrayOfPlotHandles{ith_plot})
+        assert(ishandle(cellArrayOfPlotHandles{ith_plot}(ith_handle)));
+    end
+end
+
+% Check variable sizes
+% Nothing to check
+
+% Check variable values
+% Nothing to check
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -73,9 +86,22 @@ peaksMode = [];
 plotType = 'layer';
 
 % Plot wind field
-fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, x, y, (plotType), (fig_num));
+cellArrayOfPlotHandles = fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, x, y, (plotType), (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+for ith_plot = 1:3
+    for ith_handle = 1:length(cellArrayOfPlotHandles{ith_plot})
+        assert(ishandle(cellArrayOfPlotHandles{ith_plot}(ith_handle)));
+    end
+end
+
+% Check variable sizes
+% Nothing to check
+
+% Check variable values
+% Nothing to check
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
