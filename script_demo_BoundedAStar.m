@@ -79,6 +79,7 @@
 % - Working on fcn_BoundedAStar_reachabilityWithInputs (in progress)
 %
 % 2025_07_31 - K. Hayes
+% - Formatting and input checking changes in remaining visibility functions
 % - DEPRECATED: fcn_visibility_clear_and_blocked_points_global
 %   % * now fcn_Visibility_clearAndBlockedPointsGlobal
 % - DEPRECATED: fcn_BoundedAStar_AstarOLD
@@ -87,6 +88,14 @@
 %   % * now fcn_Visibility_3dGraphAddPoints
 % - DEPRECATED: fcn_visibility_self_blocked_pts
 %   % * now fcn_Visibility_selfBlockedPoints
+% - DEPRECATED: fcn_visibility_graph_3d_add_points
+%   % * now fcn_Visibility_3dGraphAddPoints
+% - DEPRECATED: fcn_visibility_line_polytope_intersections
+%   % * now fcn_Visibility_linePolytopeIntersections
+% - DEPRECATED: fcn_visibility_graph_add_obstacle
+%   % * now fcn_Visibility_addObstacle
+% - DEPRECATED: fcn_visibility_graph_remove_obstacle
+%   % * now fcn_Visibility_removeObstacle
 
 
 

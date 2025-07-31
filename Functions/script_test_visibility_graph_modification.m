@@ -1,5 +1,5 @@
 % script_visibility_graph_modification
-% Tests: fcn_visibility_graph_add_obstacle
+% Tests: fcn_Visibility_addObstacle
 %        fcn_visibility_graph_remove_obstacle
 %
 % REVISION HISTORY:
@@ -16,10 +16,6 @@ clc
 close all
 
 %% add necessary directories
-addpath([pwd '\..\Example_Map_Generation_Code'])
-addpath([pwd '\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
-addpath([pwd '\..\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
-
 flag_do_plot = 1;
 
 %% generate map
@@ -123,7 +119,7 @@ polytope_to_add.xv = polytope_to_add.xv + polytope_shift; % apply translation to
 polytope_to_add.vertices(:,1) = polytope_to_add.vertices(:,1) + polytope_shift;
 add_obs_timer = tic;
 [vgraph_new2, all_pts_new2, start_new2, finish_new2, new_polytopes2] = ...
-    fcn_visibility_graph_add_obstacle(...
+    fcn_Visibility_addObstacle(...
     vgraph_new, all_pts_new, start_new, finish_new, new_polytopes, polytope_to_add);
 toc(add_obs_timer)
 
@@ -164,7 +160,7 @@ polytope_to_add2.obs_id = nan;
 polytope_to_add2.perimeter = sum(polytope_to_add2.distances);
 add_obs_timer = tic;
 [vgraph_new3, all_pts_new3, start_new3, finish_new3, new_polytopes3] = ...
-    fcn_visibility_graph_add_obstacle(...
+    fcn_Visibility_addObstacle(...
     vgraph_new2, all_pts_new2, start_new2, finish_new2, new_polytopes2, polytope_to_add2);
 toc(add_obs_timer)
 

@@ -1,4 +1,4 @@
-function new_vgraph = fcn_Visibility_3dGraphAddPoints(old_verts, start, finish, all_surfels, speed_limit, new_pts, old_vgraph)
+function new_vgraph = fcn_Visibility_3dGraphAddPoints(old_verts, start, finish, all_surfels, speed_limit, new_pts, old_vgraph, varargin)
 % fcn_Visibility_3dGraphAddPoints
 %
 % Forms the 3D visibility graph, the edges of which connect nodes that are connected by straight,
@@ -7,17 +7,14 @@ function new_vgraph = fcn_Visibility_3dGraphAddPoints(old_verts, start, finish, 
 %  limit, which in the case of XYT rather than XYZ is useful for pruning edges that would go backwards
 % in time or traverse too much distance in too short of a time
 %
-%
-%
 % FORMAT:
-% vgraph = fcn_Visibility_3dGraphAddPoints(verts, start, finish, all_surfels, speed_limit)
-%
+% vgraph = fcn_Visibility_3dGraphAddPoints(verts, start, finish, all_surfels, speed_limit, new_pts, old_vgraph, (fig_num))
 %
 % INPUTS:
 %
 %    verts: matrix of all obstacle vertices in the polytope field.  Each row should be a point, and each column is x, y, and z or T
 %
-%    start: the start point vector (x,t,t)
+%    start: the start point vector (x,y,t)
 %
 %    finish: the finish point matrix of all valid finishes where each row is a single finish point vector (x,y,t)
 %
@@ -31,16 +28,29 @@ function new_vgraph = fcn_Visibility_3dGraphAddPoints(old_verts, start, finish, 
 %       running without a speed limit creates an XYZ visibility graph rather than XYT where traversal is possible
 %       backwards in time i.e. decreasing in z
 %
+%    new_pts:
+%
+%    old_vgraph:
+%
+%    (optional inputs)
+%
+%    fig_num: a figure number to plot results. If set to -1, skips any
+%       input checking or debugging, no figures will be generated, and sets
+%       up code to maximize speed. As well, if given, this forces the
+%       variable types to be displayed as output and as well makes the input
+%       check process verbose
+%
 %
 % OUTPUTS:
 %
-%   vgraph: the visibility graph as an nxn matrix where n is the number of points (nodes) in the map.
+%   new_vgraph: the visibility graph as an nxn matrix where n is the number of points (nodes) in the map.
 %       A 1 is in position i,j if point j is visible from point i.  0 otherwise.
-%     is_reachable: binary set to 1 if the finish is reachable from the start in any number of steps.  0 otherwise.
-%
+% 
 % DEPENDENCIES:
 %
-% none but surfels can be created from polytopes using fcn_BoundedAStar_makeTriangularSurfelsFromFacets and
+% fcn_DebugTools_checkInputsToFunctions
+%
+% Also, surfels can be created from polytopes using fcn_BoundedAStar_makeTriangularSurfelsFromFacets and
 % vertices can be interpolated in t using fcn_BoundedAStar_interpolatePolytopesInTime
 %
 % EXAMPLES:
@@ -59,10 +69,101 @@ function new_vgraph = fcn_Visibility_3dGraphAddPoints(old_verts, start, finish, 
 % 2025_07_17 - K. Hayes, kxh1031@psu.edu
 % -- copied to new function from fcn_visibility_graph_add_points to follow
 %    library convention
+% 2025_07_31 - K. Hayes
+% -- updated function formatting and header
+% -- added input and debug capabilities
 %
 % TO DO:
 %
 % -- fill in to-do items here.
+
+%% Debugging and Input checks
+% Check if flag_max_speed set. This occurs if the fig_num variable input
+% argument (varargin) is given a number of -1, which is not a valid figure
+% number.
+MAX_NARGIN = 8; % The largest Number of argument inputs to the function
+flag_max_speed = 0;
+if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
+    flag_check_inputs = 0; % Flag to perform input checking
+    flag_max_speed = 1;
+else
+    % Check to see if we are externally setting debug mode to be "on"
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
+    flag_check_inputs = 1; % Flag to perform input checking
+    MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS");
+    MATLABFLAG_MAPGEN_FLAG_DO_DEBUG = getenv("MATLABFLAG_MAPGEN_FLAG_DO_DEBUG");
+    if ~isempty(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG)
+        flag_do_debug = str2double(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG);
+        flag_check_inputs  = str2double(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS);
+    end
+end
+
+% flag_do_debug = 1;
+
+if flag_do_debug
+    st = dbstack; %#ok<*UNRCH>
+    fprintf(1,'STARTING function: %s, in file: %s\n',st(1).name,st(1).file);
+    debug_fig_num = 999978; %#ok<NASGU>
+else
+    debug_fig_num = []; %#ok<NASGU>
+end
+
+%% check input arguments?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____                   _
+%  |_   _|                 | |
+%    | |  _ __  _ __  _   _| |_ ___
+%    | | | '_ \| '_ \| | | | __/ __|
+%   _| |_| | | | |_) | |_| | |_\__ \
+%  |_____|_| |_| .__/ \__,_|\__|___/
+%              | |
+%              |_|
+% See: http://patorjk.com/software/taag/#p=display&f=Big&t=Inputs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if 0==flag_max_speed
+    if flag_check_inputs
+        % Are there the right number of inputs?
+        narginchk(7,MAX_NARGIN);
+
+        % Check the start input, make sure it has 3 columns
+        fcn_DebugTools_checkInputsToFunctions(...
+            start, '3column_of_numbers');
+
+        % Check the finish input, make sure it has 3 columns
+        fcn_DebugTools_checkInputsToFunctions(...
+            finish, '3column_of_numbers');
+
+        % Check the all_surfels input, make sure it has 9 columns
+        fcn_DebugTools_checkInputsToFunctions(...
+            all_surfels, '9column_of_numbers');
+
+    end
+end
+
+% Does user want to show the plots?
+flag_do_plots = 0; % Default is to NOT show plots
+if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
+    temp = varargin{end};
+    if ~isempty(temp) % Did the user NOT give an empty figure number?
+        fig_num = temp;
+        figure(fig_num);
+        flag_do_plots = 1;
+    end
+end
+
+%% Main code
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   __  __       _
+%  |  \/  |     (_)
+%  | \  / | __ _ _ _ __
+%  | |\/| |/ _` | | '_ \
+%  | |  | | (_| | | | | |
+%  |_|  |_|\__,_|_|_| |_|
+%
+%See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
     all_pts_old = [old_verts; start; finish];
     num_pts_old = size(all_pts_old,1); % number of rows
@@ -145,4 +246,31 @@ function new_vgraph = fcn_Visibility_3dGraphAddPoints(old_verts, start, finish, 
         end_id = all_pts(term,4);
         new_vgraph(start_id,end_id) = 0;
     end
+%% Plot the results (for debugging)?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____       _
+%  |  __ \     | |
+%  | |  | | ___| |__  _   _  __ _
+%  | |  | |/ _ \ '_ \| | | |/ _` |
+%  | |__| |  __/ |_) | |_| | (_| |
+%  |_____/ \___|_.__/ \__,_|\__, |
+%                            __/ |
+%                           |___/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
 end
+
+
+
+%% Functions follow
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   ______                _   _
+%  |  ____|              | | (_)
+%  | |__ _   _ _ __   ___| |_ _  ___  _ __  ___
+%  |  __| | | | '_ \ / __| __| |/ _ \| '_ \/ __|
+%  | |  | |_| | | | | (__| |_| | (_) | | | \__ \
+%  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
+%
+% See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+
