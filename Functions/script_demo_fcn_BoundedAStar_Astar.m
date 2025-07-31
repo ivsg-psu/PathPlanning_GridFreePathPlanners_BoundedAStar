@@ -10,6 +10,9 @@
 %    % bugs in MapGen that should be fixed for consistency
 % 2025_07_28 - S. Brennan
 % -- merged updates of MapGen into this script. 
+% 2025_07_31 - K. Hayes
+% -- moved plotting capabilities into fcn_BoundedAStar_Astar debug plotting
+%    option
 
 clear
 clc
@@ -33,7 +36,7 @@ close all
 
 %% map generation control
 % repetition controls and storage
-repetitions = 10;
+repetitions = 1;
 % final information can be stored in one variable (not suggested to save
 % variables of the structure type, as it will take a lot of memory)
 final_info(repetitions) = struct('polytopes',[],'start',[],'finish',[],'path_x',[],'path_y',[],'appex1_x',[],'appex1_y',[],'appex2_x',[],'appex2_y',[]);
@@ -79,7 +82,7 @@ for rep = 1:repetitions
     
     % shink the polytopes so that they are no longer tiled
     rng(shrink_seed) % set the random number generator with the shrink seed
-    shrunk_polytopes = fcn_MapGen_polytopesShrinkToRadius(trim_polytopes,des_radius,sigma_radius,min_rad, (fig_num));
+    shrunk_polytopes = fcn_MapGen_polytopesShrinkToRadius(trim_polytopes,des_radius,sigma_radius,min_rad, (-1));
 
     des_cost = 0.1;
     shrunk_polytopes = fcn_MapGen_polytopesSetCosts(shrunk_polytopes, des_cost, (-1));
@@ -123,7 +126,7 @@ for rep = 1:repetitions
 
     % Calculate the visibility graph
     % TO-DO - put into a visibility library later?
-    [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPoints(shrunk_polytopes, starts, finishes);
+    [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, starts, finishes, [], -1);
 
     % Generate the cost graph. Flag the cost type (using a string) to
     % calculate cost based on XY spatial distance only (not energy)
@@ -131,129 +134,131 @@ for rep = 1:repetitions
     [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
 
     % Call the A-star algorithm to do the path plan
-    [cost, path] = fcn_BoundedAStar_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
+    [cost, path] = fcn_BoundedAStar_Astar(vgraph, cgraph, hvec, all_pts, start, finish, shrunk_polytopes, (fig_num));
 
+
+    %%%%%%% TO BE DELETED IN FUTURE (after it's figured out how to pass appex data into the AStar debug plotting):
     % path: series of points [x y point_id obs_id beg_end]
     % cost: path length
     % err: marker indicating if there was an error in setup (1) or not (0)
 
-    % plot path
-    if flag_do_plot
-        plot(path(:,1),path(:,2),'k-','linewidth',2,'DisplayName', 'Planned Path')
-        plot(startPoint(1,1), startPoint(1,2), 'gx','linewidth',2,'DisplayName','Start Point')
-        plot(endPoint(1,1), endPoint(1,2), 'rx','linewidth',2,'DisplayName','End Point')
-    end
-
-    Npath = size(path,1);
-
-    % Make vectors that are only going to be the points not including
-    % start/end
-    appex_x = zeros(Npath-2,3);
-    appex_y = zeros(Npath-2,3);
-
-    % Initialize  the previous point to the start point
-    prev_pt = startPoint;
-    for app = 1:Npath-2
-        current_point = path(app+1,:);
-        current_point_ID = current_point(3);
-        current_point_obstacle = current_point(4); 
-
-        % Find the points that are next to the current contact point. These
-        % are the points that are adjacent, on each polytope, to the points
-        % touched by the path contact point to the polytope
-
-        % Get X and Y of current point
-        appex_x(app,1) = current_point(1);
-        appex_y(app,1) = current_point(2);
-
-        % Check if current point has a start/finish flag
-        if current_point(5) == 1
-            % This point is flagged as a start/finish
-            
-            % Get the beginning/end point that is on the obstacle that the
-            % current point belongs to, making sure not to select the
-            % current point. Each obstacle has 2 beginning/end points, so
-            % there will always be at least one OTHER point
-            other_beg_end_pt = all_pts(((all_pts(:,4)==current_point_obstacle).*(all_pts(:,5)==1).*(all_pts(:,3)~=current_point_ID))==1,:);
-            if other_beg_end_pt(3) > current_point_ID
-                % The other point must be at the "end" of the obstacle list
-                % So, make the other point's XY coordinates equal to the
-                % 2nd point on the obstacle list (why???)
-                other_pt = all_pts(current_point_ID+1,1:2);
-            else % pt(3) > other_beg_end_pt(3)
-                % The other point must be at the "start" of the obstacle
-                % list of points. Set it equal to the point equal to the XY
-                % coordinates of the 2nd to last point in the obstacle list
-                % (again, why??)
-                other_pt = all_pts(current_point_ID-1,1:2);
-            end
-
-            % Guess: this finds distance from previous point to BOTH
-            % other_beg_end_point and other_pt
-            %
-            % NOTE: TO_DO: use the vector sum method for better speed and to avoid
-            % function call to fcn_general_calculation_euclidean_point_to_point_distance
-
-            dist = sum((ones(2,1)*prev_pt -[other_beg_end_pt(1:2); other_pt]).^2,2).^0.5;
-            
-            if dist(1) < dist(2) % other_pt farther
-                appex_x(app,2:3) = [other_beg_end_pt(1), other_pt(1)];
-                appex_y(app,2:3) = [other_beg_end_pt(2), other_pt(2)];
-            else % other_pt closer
-                appex_x(app,2:3) = [other_pt(1), other_beg_end_pt(1)];
-                appex_y(app,2:3) = [other_pt(2), other_beg_end_pt(2)];
-            end
-        else
-            % This is the "normal" case, namely that the current_point is
-            % NOT a start or finish point. In this case, the adjacent
-            % points are easy to determine - they are just the ID-1 for the
-            % one before and the ID+1 for the one after. However, the
-            % polytope may be oriented such that the path is hitting the
-            % obstacle in a from/to direction where the the points may be
-            % out of order. So to make sure that the first adjacent point
-            % is the one where the path is coming from, and the second
-            % adjacent point is in the direction the path is going to, we
-            % need to calculate and compare the distance from the previous
-            % path point to both these candiates, and order them
-            % accordingly.
-
-            previousPolytopePoint = all_pts(current_point_ID-1,1:2); % Grabs the previous point on the polytope
-            nextPolytopePoint = all_pts(current_point_ID+1,1:2); % Grabs the next point on the polytope
-            dist = sum((ones(2,1)*prev_pt - [previousPolytopePoint; nextPolytopePoint]).^2,2).^0.5;
-            
-            if dist(1) < dist(2) % pt1 closer
-                appex_x(app,2:3) = [previousPolytopePoint(1), nextPolytopePoint(1)];
-                appex_y(app,2:3) = [previousPolytopePoint(2), nextPolytopePoint(2)];
-            else % pt1 farther
-                appex_x(app,2:3) = [nextPolytopePoint(1), previousPolytopePoint(1)];
-                appex_y(app,2:3) = [nextPolytopePoint(2), previousPolytopePoint(2)];
-            end
-        end
-        prev_pt = current_point(1:2);
-    end
-    % appex_x = [appex_x1 closer_x1 farther_x1; appex_x2 closer_x2 farther_x2; .... appex_xn closer_xn farther_xn]
-    % appex_y = [appex_y1 closer_y1 farther_y1; appex_y2 closer_y2 farther_y2; .... appex_yn closer_yn farther_yn]
-
-    % Make the final plot for this iteration
-    if flag_do_plot
-        plot(appex_x,appex_y,'o','linewidth',2)
-        my_title = sprintf('Path length [m]: %.4f',cost);
-        title(my_title)
-        box on
-        % return
-        pause(2)
-        figure(fig_num); clf;
-    end
+    % % plot path
+    % if flag_do_plot
+    %     plot(path(:,1),path(:,2),'k-','linewidth',2,'DisplayName', 'Planned Path')
+    %     plot(startPoint(1,1), startPoint(1,2), 'gx','linewidth',2,'DisplayName','Start Point')
+    %     plot(endPoint(1,1), endPoint(1,2), 'rx','linewidth',2,'DisplayName','End Point')
+    % end
+    % 
+    % Npath = size(path,1);
+    % 
+    % % Make vectors that are only going to be the points not including
+    % % start/end
+    % appex_x = zeros(Npath-2,3);
+    % appex_y = zeros(Npath-2,3);
+    % 
+    % % Initialize  the previous point to the start point
+    % prev_pt = startPoint;
+    % for app = 1:Npath-2
+    %     current_point = path(app+1,:);
+    %     current_point_ID = current_point(3);
+    %     current_point_obstacle = current_point(4); 
+    % 
+    %     % Find the points that are next to the current contact point. These
+    %     % are the points that are adjacent, on each polytope, to the points
+    %     % touched by the path contact point to the polytope
+    % 
+    %     % Get X and Y of current point
+    %     appex_x(app,1) = current_point(1);
+    %     appex_y(app,1) = current_point(2);
+    % 
+    %     % Check if current point has a start/finish flag
+    %     if current_point(5) == 1
+    %         % This point is flagged as a start/finish
+    % 
+    %         % Get the beginning/end point that is on the obstacle that the
+    %         % current point belongs to, making sure not to select the
+    %         % current point. Each obstacle has 2 beginning/end points, so
+    %         % there will always be at least one OTHER point
+    %         other_beg_end_pt = all_pts(((all_pts(:,4)==current_point_obstacle).*(all_pts(:,5)==1).*(all_pts(:,3)~=current_point_ID))==1,:);
+    %         if other_beg_end_pt(3) > current_point_ID
+    %             % The other point must be at the "end" of the obstacle list
+    %             % So, make the other point's XY coordinates equal to the
+    %             % 2nd point on the obstacle list (why???)
+    %             other_pt = all_pts(current_point_ID+1,1:2);
+    %         else % pt(3) > other_beg_end_pt(3)
+    %             % The other point must be at the "start" of the obstacle
+    %             % list of points. Set it equal to the point equal to the XY
+    %             % coordinates of the 2nd to last point in the obstacle list
+    %             % (again, why??)
+    %             other_pt = all_pts(current_point_ID-1,1:2);
+    %         end
+    % 
+    %         % Guess: this finds distance from previous point to BOTH
+    %         % other_beg_end_point and other_pt
+    %         %
+    %         % NOTE: TO_DO: use the vector sum method for better speed and to avoid
+    %         % function call to fcn_general_calculation_euclidean_point_to_point_distance
+    % 
+    %         dist = sum((ones(2,1)*prev_pt -[other_beg_end_pt(1:2); other_pt]).^2,2).^0.5;
+    % 
+    %         if dist(1) < dist(2) % other_pt farther
+    %             appex_x(app,2:3) = [other_beg_end_pt(1), other_pt(1)];
+    %             appex_y(app,2:3) = [other_beg_end_pt(2), other_pt(2)];
+    %         else % other_pt closer
+    %             appex_x(app,2:3) = [other_pt(1), other_beg_end_pt(1)];
+    %             appex_y(app,2:3) = [other_pt(2), other_beg_end_pt(2)];
+    %         end
+    %     else
+    %         % This is the "normal" case, namely that the current_point is
+    %         % NOT a start or finish point. In this case, the adjacent
+    %         % points are easy to determine - they are just the ID-1 for the
+    %         % one before and the ID+1 for the one after. However, the
+    %         % polytope may be oriented such that the path is hitting the
+    %         % obstacle in a from/to direction where the the points may be
+    %         % out of order. So to make sure that the first adjacent point
+    %         % is the one where the path is coming from, and the second
+    %         % adjacent point is in the direction the path is going to, we
+    %         % need to calculate and compare the distance from the previous
+    %         % path point to both these candiates, and order them
+    %         % accordingly.
+    % 
+    %         previousPolytopePoint = all_pts(current_point_ID-1,1:2); % Grabs the previous point on the polytope
+    %         nextPolytopePoint = all_pts(current_point_ID+1,1:2); % Grabs the next point on the polytope
+    %         dist = sum((ones(2,1)*prev_pt - [previousPolytopePoint; nextPolytopePoint]).^2,2).^0.5;
+    % 
+    %         if dist(1) < dist(2) % pt1 closer
+    %             appex_x(app,2:3) = [previousPolytopePoint(1), nextPolytopePoint(1)];
+    %             appex_y(app,2:3) = [previousPolytopePoint(2), nextPolytopePoint(2)];
+    %         else % pt1 farther
+    %             appex_x(app,2:3) = [nextPolytopePoint(1), previousPolytopePoint(1)];
+    %             appex_y(app,2:3) = [nextPolytopePoint(2), previousPolytopePoint(2)];
+    %         end
+    %     end
+    %     prev_pt = current_point(1:2);
+    % end
+    % % appex_x = [appex_x1 closer_x1 farther_x1; appex_x2 closer_x2 farther_x2; .... appex_xn closer_xn farther_xn]
+    % % appex_y = [appex_y1 closer_y1 farther_y1; appex_y2 closer_y2 farther_y2; .... appex_yn closer_yn farther_yn]
+    % 
+    % % Make the final plot for this iteration
+    % if flag_do_plot
+    %     plot(appex_x,appex_y,'o','linewidth',2)
+    %     my_title = sprintf('Path length [m]: %.4f',cost);
+    %     title(my_title)
+    %     box on
+    %     % return
+    %     pause(2)
+    %     figure(fig_num); clf;
+    % end
 
     %% Final Info
     % A, B, appex_x, appex_y
-    final_info(rep).polytopes = shrunk_polytopes;
-    final_info(rep).start = A;
-    final_info(rep).finish = B;
-    final_info(rep).path_x = appex_x(:,1);
-    final_info(rep).path_y = appex_y(:,1);
-    final_info(rep).appex1_x = appex_x(:,2);
-    final_info(rep).appex1_y = appex_y(:,2);
-    final_info(rep).appex2_x = appex_x(:,3);
-    final_info(rep).appex2_y = appex_y(:,3);
+    % final_info(rep).polytopes = shrunk_polytopes;
+    % final_info(rep).start = A;
+    % final_info(rep).finish = B;
+    % final_info(rep).path_x = appex_x(:,1);
+    % final_info(rep).path_y = appex_y(:,1);
+    % final_info(rep).appex1_x = appex_x(:,2);
+    % final_info(rep).appex1_y = appex_y(:,2);
+    % final_info(rep).appex2_x = appex_x(:,3);
+    % final_info(rep).appex2_y = appex_y(:,3);
 end

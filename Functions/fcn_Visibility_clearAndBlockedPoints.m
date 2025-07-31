@@ -214,29 +214,29 @@ end
 %See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 %% check orientation of start and finish
-[row, col] = size(start);
-if row == 5
-    if col == 1 % oriented sideways
-        start = start';
-    else
-        error('Incorrect number of coordinates in start')
-    end
-elseif row == 1
-    if col ~= 5
-        error('Incorrect number of coordinates in start')
-    end
-else
-    error('Incorrect number of coordinates in start')
-end
-
-[row, col] = size(finish);
-if col ~= 5
-    if row == 5 % oriented sideways
-        finish = finish';
-    else
-        error('Incorrect number of coordinates in finish')
-    end
-end
+% [row, col] = size(start);
+% if row == 5
+%     if col == 1 % oriented sideways
+%         start = start';
+%     else
+%         error('Incorrect number of coordinates in start')
+%     end
+% elseif row == 1
+%     if col ~= 5
+%         error('Incorrect number of coordinates in start')
+%     end
+% else
+%     error('Incorrect number of coordinates in start')
+% end
+% 
+% [row, col] = size(finish);
+% if col ~= 5
+%     if row == 5 % oriented sideways
+%         finish = finish';
+%     else
+%         error('Incorrect number of coordinates in finish')
+%     end
+% end
 
 
 %% convert to vector points

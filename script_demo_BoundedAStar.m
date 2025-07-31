@@ -96,6 +96,11 @@
 %   % * now fcn_Visibility_addObstacle
 % - DEPRECATED: fcn_visibility_graph_remove_obstacle
 %   % * now fcn_Visibility_removeObstacle
+% - In fcn_BoundedAStar_Astar
+%   % * added debug plotting options
+%   % * added polytopes to fcn inputs to allow plotting
+% - In script_demo_fcn_BoundedAStar_Astar
+%   % * moved plotting capabilities into function debug options
 
 
 

@@ -1,4 +1,4 @@
-function [cost, route] = fcn_BoundedAStar_Astar(vgraph, cgraph, hvec, all_pts, start, finish, varargin)
+function [cost, route] = fcn_BoundedAStar_Astar(vgraph, cgraph, hvec, all_pts, start, finish, polytopes, varargin)
 % fcn_BoundedAstar_Astar
 %
 % A minimal version of the A* algorithm for graph searching.  Designed to contain minimal subprocesses e.g. visibility graph
@@ -67,11 +67,13 @@ function [cost, route] = fcn_BoundedAStar_Astar(vgraph, cgraph, hvec, all_pts, s
 %
 % 2023, spring by Steve Harnett
 % -- first write of function
-% 2025_07_25 by K. Hayes, kxh1031@psu.edu
+% 2025_07_25 - K. Hayes, kxh1031@psu.edu
 % -- reformatted function 
 % -- updated function header info
 % -- added input and debug checking
 % -- added fig_num optional input 
+% 2025_07_31 - K. Hayes
+% -- updated inputs to include polytopes for plotting purposes
 %
 % TO DO:
 %
@@ -82,7 +84,7 @@ function [cost, route] = fcn_BoundedAStar_Astar(vgraph, cgraph, hvec, all_pts, s
 % Check if flag_max_speed set. This occurs if the fig_num variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 7; % The largest Number of argument inputs to the function
+MAX_NARGIN = 8; % The largest Number of argument inputs to the function
 flag_max_speed = 0;
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; %     % Flag to plot the results for debugging
@@ -126,7 +128,7 @@ end
 if 0==flag_max_speed
     if flag_check_inputs
         % Are there the right number of inputs?
-        narginchk(6,MAX_NARGIN);
+        narginchk(7,MAX_NARGIN);
 
         % Check the all_points input, make sure it has 5 columns
         fcn_DebugTools_checkInputsToFunctions(...
@@ -196,6 +198,7 @@ end
     % this represents the cheapest way to get to the node and is necessary to
     % reconstruct the cheapest path
     parents = nan(1,num_nodes);
+    route = [];
 
     % while the open list is not empty...
     % the condition implies at least one nan
@@ -237,7 +240,7 @@ end
                 % thus you could then look at parents(3) to find the best way to reach 3 until you have
                 % reached the start and therefore recovered the optimal path)
                 if cur_pt_idx == start(3)
-                    return
+                    break
                 end
 
                 while parents(cur_pt_idx) ~= start(3)
@@ -251,7 +254,7 @@ end
 
                 % return the route
                 route = [start; route];
-                return
+                break
             else
             % if the finish is not a successor of q, find the cost of reaching the successor via q
             % this is the cost to reach q + the cost from q to successor
@@ -276,7 +279,10 @@ end
         closed_set(idx_of_q) = idx_of_q;
 
     end % end while loop through open set
-
+       
+    if ~isempty(route)
+        break
+    end
         end
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -353,12 +359,13 @@ if flag_do_plots
     hold on;
     grid on;
 
-    % Plot the polytopes
-    % line_spec = 'b-'; % edge line plotting
-    % line_width = 2; % linewidth of the edge
-    % axes_limits = [0 1 0 1]; % x and y axes limits
-    % axis_style = 'square'; % plot axes style
-    % fcn_BoundedAStar_plotPolytopes(shrunk_polytopes,fig,line_spec,line_width,axes_limits,axis_style);
+    %Plot the polytopes
+    line_spec = 'b-'; % edge line plotting
+    line_width = 2; % linewidth of the edge
+    axes_limits = [0 1 0 1]; % x and y axes limits
+    axis_style = 'square'; % plot axes style
+    h = fcn_MapGen_plotPolytopes(polytopes,[],[],fig_num);
+    set(h, 'HandleVisibility','off')
 
     % Plot the start and end points
     plot(start(1), start(2), 'rx', 'MarkerSize', 10, 'LineWidth', 2,'DisplayName','Start')
@@ -371,7 +378,7 @@ if flag_do_plots
     xlabel('X-East');
     ylabel('Y-North');
 
-    axis(goodAxis);
+    % axis(goodAxis);
     axis equal;
 
     % Shut the hold off?
