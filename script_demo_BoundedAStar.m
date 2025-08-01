@@ -109,8 +109,14 @@
 %
 % 2025_08_01 - K. Hayes (in progress)
 % - updating test scripts for visibility fcns for new MapGen
-%   compatibility
-% - adding debug plotting for visibility fcns
+%   compatibility. changes made to
+%   % * script_test_fcn_Visibility_clearAndBlockedPointsGlobal
+%   % * script_test_fcn_Visibility_clearAndBlockedPoints
+%   % * script_test_fcn_Visibility_linePolytopesIntersections
+% - adding debug plotting for visibility fcns. changes made to 
+%   % * fcn_Visibility_clearAndBlockedPointsGlobal
+%   % * fcn_Visibility_clearAndBlockedPoints
+%   % * fcn_Visibility_linePolytopeIntersections
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan

@@ -5,7 +5,7 @@ function [xings] = fcn_Visibility_linePolytopeIntersections(xiP,yiP,xiQ,yiQ,xjP,
 % information
 %
 % FORMAT:
-% [xings] = fcn_Visibility_linePolytopeIntersections(xiP,yiP,xiQ,yiQ,xjP,yjP,D,di,num_int,polytopes,(fig_num))
+% [xings] = fcn_Visibility_linePolytopeIntersections(xiP,yiP,xiQ,yiQ,xjP,yjP,D,di,num_int,polytopes,([xjQ; yjQ]),([start;finish]),(fig_num))
 % 
 % INPUTS: 
 %
@@ -51,6 +51,16 @@ function [xings] = fcn_Visibility_linePolytopeIntersections(xiP,yiP,xiQ,yiQ,xjP,
 % 
 %   (optional inputs)
 %
+%   xjQ: 1-by-n vector of the x-coordinates of the finishing point of the
+%   polytope edge for plotting purposes
+%
+%   yjQ: 1-by-n vector of the y-coordinates of the finishing point of the
+%   polytope edge for plotting purposes
+%
+%   start: 1x5 vector containing start point for plotting purposes
+%
+%   finish: 1x5 vector containing finish point for plotting purposes
+%
 %   fig_num: a figure number to plot results. If set to -1, skips any
 %       input checking or debugging, no figures will be generated, and sets
 %       up code to maximize speed. As well, if given, this forces the
@@ -90,7 +100,7 @@ function [xings] = fcn_Visibility_linePolytopeIntersections(xiP,yiP,xiQ,yiQ,xjP,
 % Check if flag_max_speed set. This occurs if the fig_num variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 11; % The largest Number of argument inputs to the function
+MAX_NARGIN = 13; % The largest Number of argument inputs to the function
 flag_max_speed = 0;
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; %     % Flag to plot the results for debugging
@@ -155,6 +165,27 @@ if 0==flag_max_speed
 end
 
 % Does user want to show the plots?
+xjQ = []; % Default is to NOT use plotting
+yjQ = [];
+if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
+    temp = varargin{1};
+    if ~isempty(temp) % Did the user NOT give an empty figure number?
+        xjQ = temp(1,:);
+        yjQ = temp(2,:);
+    end
+end
+
+start = []; % Default is to NOT use plotting
+finish = [];
+if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
+    temp = varargin{2};
+    if ~isempty(temp) % Did the user NOT give an empty figure number?
+        start = temp(1,:);
+        finish = temp(2,:);
+    end
+end
+
+
 flag_do_plots = 0; % Default is to NOT show plots
 if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
     temp = varargin{end};
@@ -179,9 +210,6 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
 % check input arguments
-if nargin ~= 10
-    error('Incorrect number of arguments');
-end
 
 num_vecs = length(num_int);
 xings(num_vecs) = struct('points',[],'index',[],'obstacles',[]);
@@ -222,6 +250,29 @@ end
 %                            __/ |
 %                           |___/
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+if flag_do_plots
+    hold on
+    % Plot polytopes
+    plotFormat.LineWidth = 3;
+    plotFormat.MarkerSize = 10;
+    plotFormat.LineStyle = '-';
+    plotFormat.Color = [0 0 1];
+    
+    fillFormat = [1 0 0 0 0.5];
+    fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(fig_num));
+
+    for ints = 1:length(D)
+        if D(ints)~=0
+            plot([xjP(ints) xjQ(ints)],[yjP(ints) yjQ(ints)],'m-','linewidth',2)
+        end
+    end
+    plot([start(1) finish(1)],[start(2) finish(2)],'k--','linewidth',2)
+    for xing = 1:length(xings(end).index)
+        plot(xings(end).points(xing,1),xings(end).points(xing,2),'kx','linewidth',1)
+    end
+
+end
 
 end
 

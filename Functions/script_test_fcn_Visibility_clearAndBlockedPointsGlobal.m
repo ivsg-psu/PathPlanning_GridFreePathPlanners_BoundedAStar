@@ -15,6 +15,7 @@
 % TO DO:
 % -- check fcn_MapGen_haltonVoronoiTiling function to see what it has been
 %    moved to
+% -- set up fast mode tests
 
 %% Set up the workspace
 close all
