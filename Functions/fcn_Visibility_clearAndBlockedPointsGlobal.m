@@ -105,6 +105,7 @@ function [visibility_matrix, visibility_results] = fcn_Visibility_clearAndBlocke
 %    need the reverse mappping of points to polytopes
 %    then each point is only represented once
 %    visibility graph can then be reduced
+% -- fix isConcave flag input checking
 
 %% Debugging and Input checks
 % Check if flag_max_speed set. This occurs if the fig_num variable input
@@ -323,6 +324,67 @@ end
 %                            __/ |
 %                           |___/
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+if flag_do_plots
+    figure(fig_num)
+    
+    % Set up valid edges subplot
+    subplot(3,1,1)
+    plotFormat.Color = 'Blue'; % edge line plotting
+    plotFormat.LineStyle = '-';
+    plotFormat.LineWidth = 2; % linewidth of the edge
+    fillFormat = [];
+    fcn_MapGen_plotPolytopes(polytopes, (plotFormat), (fillFormat), (fig_num));
+    hold on
+    box on
+    xlabel('x [km]')
+    ylabel('y [km]')
+    title('valid edges')
+
+    % Set up blocked edges subplot
+    subplot(3,1,2)
+    plotFormat.Color = 'Blue'; % edge line plotting
+    plotFormat.LineStyle = '-';
+    plotFormat.LineWidth = 2; % linewidth of the edge
+    fcn_MapGen_plotPolytopes(polytopes, (plotFormat), (fillFormat), (fig_num));
+    hold on
+    box on
+    xlabel('x [km]')
+    ylabel('y [km]')
+    title('blocked edges')
+
+    % Set up all edges subplot
+    subplot(3,1,3)
+    plotFormat.Color = 'Blue'; % edge line plotting
+    plotFormat.LineStyle = '-';
+    plotFormat.LineWidth = 2; % linewidth of the edge
+    fcn_MapGen_plotPolytopes(polytopes, (plotFormat), (fillFormat), (fig_num));
+    hold on
+    box on
+    xlabel('x [km]')
+    ylabel('y [km]')
+    title('all edges')
+
+    % Plot visibility graph edges
+    for i = 1:size(visibility_matrix,1)
+        for j = 1:size(visibility_matrix,1)
+            if visibility_matrix(i,j) == 1
+                subplot(3,1,1)
+                plot([starts(i,1),finishes(j,1)],[starts(i,2),finishes(j,2)],'--g','LineWidth',2)
+                subplot(3,1,3)
+                plot([starts(i,1),finishes(j,1)],[starts(i,2),finishes(j,2)],'--g','LineWidth',2)
+            end
+            if visibility_matrix(i,j) == 0
+                subplot(3,1,2)
+                plot([starts(i,1),finishes(j,1)],[starts(i,2),finishes(j,2)],'--r','LineWidth',2)
+                subplot(3,1,3)
+                plot([starts(i,1),finishes(j,1)],[starts(i,2),finishes(j,2)],'--r','LineWidth',2)
+            end
+        end
+    end
+
+end
+
 
 end
 

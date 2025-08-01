@@ -270,6 +270,20 @@ blocked_pts = finish(num_int~=0,:);
 %                           |___/
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
+if flag_do_plots
+% Plot results
+    plotFormat.LineWidth = 3;
+    plotFormat.MarkerSize = 10;
+    plotFormat.LineStyle = '-';
+    plotFormat.Color = [0 0 1];
+    
+    fillFormat = [1 0 0 0 0.5];
+    h_plot = fcn_MapGen_plotPolytopes(polytopes, (plotFormat),(fillFormat),(fig_num));
+    
+    plot([start(1) finish(1,1)],[start(2) finish(1,2)],'kx','linewidth',1)
+    plot(clear_pts(:,1),clear_pts(:,2),'go','linewidth',1)
+    plot(blocked_pts(:,1),blocked_pts(:,2),'rx','linewidth',1)
+end
 end
 
 

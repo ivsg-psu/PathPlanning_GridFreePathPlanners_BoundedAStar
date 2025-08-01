@@ -116,6 +116,17 @@
 %   % * Assuming 10k sims, this comes out to 750 seconds per optimization,
 %   %   % which is about 10 hours. Need this to be less than 1 hour if
 %   %   % possible, so need 10x speed improvement minimum.
+%
+% 2025_08_01 - K. Hayes (in progress)
+% - updating test scripts for visibility fcns for new MapGen
+%   compatibility. changes made to
+%   % * script_test_fcn_Visibility_clearAndBlockedPointsGlobal
+%   % * script_test_fcn_Visibility_clearAndBlockedPoints
+%   % * script_test_fcn_Visibility_linePolytopesIntersections
+% - adding debug plotting for visibility fcns. changes made to 
+%   % * fcn_Visibility_clearAndBlockedPointsGlobal
+%   % * fcn_Visibility_clearAndBlockedPoints
+%   % * fcn_Visibility_linePolytopeIntersections
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
@@ -124,6 +135,9 @@
 % -- Remove all "addpath" commands nested inside scripts and functions
 % -- DEPRECATE: fcn_polytope_editing_shrink_evenly
 % -- need to de-spaghetti fcn_BoundedAStar_AStarBounded
+% 2025_08_01 - K. Hayes
+% -- add fcn to plot visibility graph
+% -- fast modes for visibility test scripts
 
 
 clear library_name library_folders library_url
