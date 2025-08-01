@@ -106,6 +106,11 @@
 % - Working on fcn_BoundedAStar_reachabilityWithInputs (in progress)
 % - fcn_BoundedAStar_plotWindField
 %   % * added h_plot output, so that the handle to plots is available
+%
+% 2025_08_01 - K. Hayes (in progress)
+% - updating test scripts for visibility fcns for new MapGen
+%   compatibility
+% - adding debug plotting for visibility fcns
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
@@ -114,6 +119,9 @@
 % -- Remove all "addpath" commands nested inside scripts and functions
 % -- DEPRECATE: fcn_polytope_editing_shrink_evenly
 % -- need to de-spaghetti fcn_BoundedAStar_AStarBounded
+% 2025_08_01 - K. Hayes
+% -- add fcn to plot visibility graph
+% -- fast modes for visibility test scripts
 
 
 clear library_name library_folders library_url
