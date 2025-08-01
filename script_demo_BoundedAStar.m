@@ -107,6 +107,16 @@
 % - fcn_BoundedAStar_plotWindField
 %   % * added h_plot output, so that the handle to plots is available
 %
+% 2025_08_01 - Sean Brennan
+% - finished 1st version of reachabilityWithInputs.
+%   % * Saved as fcn_BoundedAStar_reachabilityWithInputs
+%   % * Timing speed is 10 ms per cycle, with vast majority dealing with 
+%   %   % polytope expansion and merging
+%   % * For expected sim length (500 steps), this is 5 seconds per sim
+%   % * Assuming 10k sims, this comes out to 750 seconds per optimization,
+%   %   % which is about 10 hours. Need this to be less than 1 hour if
+%   %   % possible, so need 10x speed improvement minimum.
+%
 % 2025_08_01 - K. Hayes (in progress)
 % - updating test scripts for visibility fcns for new MapGen
 %   compatibility. changes made to
