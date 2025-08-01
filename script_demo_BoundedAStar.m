@@ -113,10 +113,12 @@
 %   % * script_test_fcn_Visibility_clearAndBlockedPointsGlobal
 %   % * script_test_fcn_Visibility_clearAndBlockedPoints
 %   % * script_test_fcn_Visibility_linePolytopesIntersections
+%   % * script_test_fcn_Visibility_addObstacle
 % - adding debug plotting for visibility fcns. changes made to 
 %   % * fcn_Visibility_clearAndBlockedPointsGlobal
 %   % * fcn_Visibility_clearAndBlockedPoints
 %   % * fcn_Visibility_linePolytopeIntersections
+%   % * fcn_Visibility_addObstacle
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan

@@ -85,6 +85,8 @@ visibility_matrix, all_pts, start, finish, polytopes_before, polytope_to_add, va
 % 2025_07_31 - K. Hayes
 % -- fixed formatting and header details
 % -- added input and debugging capabilities
+% 2025_08_01 - K. Hayes
+% -- moved plotting into function debug section
 
 % TO DO:
 % -- make sure input checking is working correctly

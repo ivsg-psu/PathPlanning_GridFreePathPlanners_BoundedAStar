@@ -9,7 +9,9 @@
 % 2025_07_08 - K. Hayes, kxh1031@psu.edu
 % -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
 %    with vector sum method 
-%%%%%%%%%%%%%%§
+
+% TO DO:
+% -- update functions to be compatible with new MapGen
 
 clear
 clc
@@ -62,7 +64,7 @@ beg_end = beg_end(1:point_tot); % remove any extra points
 all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
 
 
-%% calculate original vibility graph
+%% calculate original visibility graph
 create_vgraph_timer = tic;
 [vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts);
 toc(create_vgraph_timer)
