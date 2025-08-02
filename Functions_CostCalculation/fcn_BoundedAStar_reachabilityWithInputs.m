@@ -86,6 +86,17 @@ function reachableSet = fcn_BoundedAStar_reachabilityWithInputs(radius, windFiel
 % - Changed fig_num to figNum to avoid underscores in names
 % - Cleaned up the header comments a bit
 % - Added debug plotting at start of code
+% 2025_08_02 by S. Brennan
+% Significant rewrite of fcn_BoundedAStar_reachabilityWithInputs and as
+% well a "slow" form: fcn_BoundedAStar_reachabilityWithInputs_SLOW
+% - Vectorized for loops for sampling speed 
+% - added script_time_fcn_BoundedAStar_reachabilityWithInputs for timing 
+%   tests
+% - added specialized set bounds to merge search space across input points
+% - modified the set methods to use edge-projection expansions for speeds
+%   % * This is about 40 times faster than using set methods (!)
+% - optimized code where easily changed to get fastest speeds. Single loop
+%   % calls appear to take about 0.2 milliseconds with fastest settings 
 
 % TO-DO
 % -- update header
@@ -232,10 +243,10 @@ end
 
 % Define the number of directions to be considered from each value 
 % of the x0 initial set
-Ndirections = 360; % One for every degree
+Ndirections = 7; % Number of directions for expansion
 angles = linspace(0,2*pi,Ndirections)';
-angles = angles(1:end-1,:);
-controlInputPerturbations = radius*[cos(angles) sin(angles)];
+% angles = angles(1:end-1,:);
+% controlInputPerturbations = radius*[cos(angles) sin(angles)];
 
 % The following commented out code, in vectorized form, calculates all the
 % perturbations at once on the startPoints. It would require another set
@@ -262,45 +273,134 @@ controlInputPerturbations = radius*[cos(angles) sin(angles)];
 % them all into one polytope
 
 %%%%
-% The following merges sets - it's slow but works clearly
-% Fill in first value with the region defined by the startPoints, if there
-% are enough startPoints
-if length(startPoints(:,1))>2
-    boundingPolytope = polyshape(startPoints);
-    firstIndex = 1;
+% The following takes small perturbations away from direction of the point
+% or points
+perturbationVectors = radius*[cos(angles) sin(angles)];
+Npoints = length(startPoints(:,1));
+if Npoints==1
+    polyPoints = startPoints(1,:) + perturbationVectors;
+elseif Npoints==2 || (Npoints==3 && isequal(startPoints(1,:),startPoints(end,:)))
+    directionVector1to2 = startPoints(2,:)-startPoints(1,:);
+    lineAngle = atan2(directionVector1to2(2),directionVector1to2(1));
+    positiveOrNegative = sin(angles);
+    positiveAngles = angles(positiveOrNegative>=0);
+    nPositive = sum(positiveOrNegative>=0);
+    polyPoints = [...
+        ones(nPositive,1)*startPoints(2,:) + radius*[cos(positiveAngles+lineAngle-pi/2) sin(positiveAngles+lineAngle-pi/2)];
+        ones(nPositive,1)*startPoints(1,:) + radius*[cos(positiveAngles+lineAngle+pi/2) sin(positiveAngles+lineAngle+pi/2)];
+        ];
+    polyPoints = [polyPoints; polyPoints(1,:)];
 else
-    polyPoints = repmat(movedPoints(1,:),Ndirections-1,1) + controlInputPerturbations;
-    boundingPolytope = polyshape(polyPoints);
-    firstIndex = 2;
-end
+    %%%%
+    % Need to expand all vertices outward. A method to do this is to
+    % calculate the projection vector at each vertex that bisects the
+    % angle, and thus projects straight "outward". The distance of this
+    % vector can be calculated such that both edges move outward by the
+    % same radius. The code below implements this method.
 
-if flag_do_debug
-    figure(debug_figNum);
-    h_allPoly = plot(boundingPolytope);
-end
-
-% Merge the polytopes created by the expansion of each of the start points
-for ith_start = firstIndex:NstartPoints
-    polyPoints = repmat(movedPoints(ith_start,:),Ndirections-1,1) + controlInputPerturbations;
-    thisPoly = polyshape(polyPoints);
-    boundingPolytope = union(boundingPolytope,thisPoly);
-
-    if flag_do_debug
-        figure(debug_figNum);
-        set(h_allPoly,'Visible','off');
-        plot(boundingPolytope);
+    % Make sure first and last points repeat
+    if ~isequal(startPoints(1,:),startPoints(end,:))
+        startPoints = [startPoints; startPoints(1,:)];
     end
 
+    % Find unit edge vectors, and ortho projections. Note: if there are N
+    % vertices, there will be N-1 edges. So that the angles match with the
+    % end of each point, we repeat the 1st edge vector onto the end so the
+    % number of edge vectors is equal to the number of points.
+    edgeVectors = startPoints(2:end,:)-startPoints(1:end-1,:);
+    edgeLengths = sum(edgeVectors.^2,2).^0.5;
+    unitEdgeVectors = edgeVectors./edgeLengths;
+    allUnitEdgeVectors = [unitEdgeVectors(end,:); unitEdgeVectors; unitEdgeVectors(1,:)];
+
+    % The following method avoids the use of sines, cosines, and tangents
+    % as those are slow to calculate. To find the vector projection from
+    % each point, the average of the projection vector tips at each vertex
+    % angle is calculated. The projection scaling distance, D, is
+    % calculated by using the relationship that the sin(theta) = x/D = a/x,
+    % then solving for D and noting that x=1. Here, theta is the half angle
+    % formed by the "kite" apex, created by the before/after projection of
+    % the orthogonal vectors from each startPoint.
+
+    % Perform a -90 degree rotation
+    orthoEdgeVectors = allUnitEdgeVectors*[0 -1; 1 0];
+    positionsIncomingVector = startPoints+orthoEdgeVectors(1:end-1,:);
+    positionsOutgoingVector = startPoints+orthoEdgeVectors(2:end,:);
+    averagePositions = (positionsIncomingVector + positionsOutgoingVector)/2;
+    averagePositionVectors = averagePositions - startPoints;
+    averagePositionVectorLengths = sum(averagePositionVectors.^2,2).^0.5;
+    unitProjectionVectors = averagePositionVectors./averagePositionVectorLengths;
+    % Use the sin(theta) method to calculate D
+    D = 1./averagePositionVectorLengths;
+    polyPoints = startPoints + radius*D.*unitProjectionVectors;
 end
 
-% Pull the polytope vertices
-boundingPolytopeVerticesRaw = boundingPolytope.Vertices;
-% Repeat last point to close off the boundary
-boundingPolytopeVertices = [boundingPolytopeVerticesRaw; boundingPolytopeVerticesRaw(1,:)];
+
+% For debugging. Should see all the edges move outward by radius amount,
+% equally
+if 1==0
+    figure(3773);
+    clf;
+    plot(startPoints(:,1),startPoints(:,2),'.-','MarkerSize',20);
+    hold on;
+    plot(polyPoints(:,1),polyPoints(:,2),'.-','MarkerSize',20,'LineWidth',2);
+    axis equal
+end
+
+% Resample polyPoints
+stepSize = windFieldX(2)-windFieldX(1);
+
+edgeVectors = polyPoints(2:end,:)-polyPoints(1:end-1,:);
+edgeLengths = sum(edgeVectors.^2,2).^0.5;
+unitEdgeVectors = edgeVectors./edgeLengths;
+
+resampledPolyPoints = [];
+for ith_edge = 1:length(unitEdgeVectors(:,1))
+    thisStartPoint = polyPoints(ith_edge,:);
+    thisLength = edgeLengths(ith_edge);    
+    thisUnitVector = unitEdgeVectors(ith_edge,:);
+
+    Nresamples = floor(thisLength/stepSize);
+    morePoints = (0:Nresamples)'*stepSize*thisUnitVector + thisStartPoint;
+    if mod(thisLength,stepSize)==0
+        morePoints = morePoints(1:end-1,:);
+    end
+    resampledPolyPoints = [resampledPolyPoints; morePoints]; %#ok<AGROW>
+end
+resampledPolyPoints = [resampledPolyPoints; resampledPolyPoints(1,:)];
+boundingPolytopeVertices = resampledPolyPoints;
+
+%%%%
+% OLD METHOD using polyshape operations: (slow)
+% boundingPolytope = polyshape(startPoints);
+% 
+% 
+% if flag_do_debug
+%     figure(debug_figNum);
+%     h_allPoly = plot(boundingPolytope);
+% end
+% 
+% % Merge the polytopes created by the expansion of each of the start points
+% for ith_start = firstIndex:NstartPoints
+%     polyPoints = repmat(movedPoints(ith_start,:),Ndirections-1,1) + controlInputPerturbations;
+%     thisPoly = polyshape(polyPoints);
+%     boundingPolytope = union(boundingPolytope,thisPoly);
+% 
+%     if flag_do_debug
+%         figure(debug_figNum);
+%         set(h_allPoly,'Visible','off');
+%         plot(boundingPolytope);
+%     end
+% 
+% end
+% 
+% % Pull the polytope vertices
+% boundingPolytopeVerticesRaw = boundingPolytope.Vertices;
+% % Repeat last point to close off the boundary
+% boundingPolytopeVertices = [boundingPolytopeVerticesRaw; boundingPolytopeVerticesRaw(1,:)];
 
 if flag_do_debug
     figure(debug_figNum);
-    plot(boundingPolytopeVertices(:,1),boundingPolytopeVertices(:,2),'r-');
+    plot(boundingPolytopeVertices(:,1),boundingPolytopeVertices(:,2),'r.-');
 end
 
 %%%%
@@ -453,37 +553,63 @@ function [filteredResampledBoundingPolytopeVerticesWithWind, resampledBoundingPo
 % Apply disturbance to each vertex. To do this, we first find the indices
 % in the wind disturbance matrices that match the XY location of each
 % vertex
-NboundingVertices = length(boundingPolytopeVertices);
-indices = zeros(NboundingVertices,2);
-for ith_vertex = 1:NboundingVertices
-    % Find index in wind field corresponding to the point on the convex
-    % hull
-    thisVertex = boundingPolytopeVertices(ith_vertex,:);
-    thisX = thisVertex(1,1);
-    thisY = thisVertex(1,2);
 
+if 1==1
+    % The below method is very fast:
+    % (Total time: 0.230 s) for 1000 runs if set flagWindRoundType = 1
+
+    % Assume the discretization in X and Y are the same
+    spatialStep = windFieldX(2)-windFieldX(1);
+    xIndices = floor((boundingPolytopeVertices(:,1)-windFieldX(1,1))/spatialStep)+1;
+    yIndices = floor((boundingPolytopeVertices(:,2)-windFieldY(1,1))/spatialStep)+1;
+
+    highestXindex = length(windFieldX);
+    highestYindex = length(windFieldY);
+
+    % Bound the index values to 1 to length of the vectors
+    xIndices = max(1,min(highestXindex,xIndices));
+    yIndices = max(1,min(highestYindex,yIndices));
     
-    xIndex = find(windFieldX>thisX,1,'first');
-    yIndex = find(windFieldY>thisY,1,'first');    
-    if isempty(xIndex)
-        if thisX>windFieldX(1,end)
-            xIndex = length(windFieldX(1,:));
-        elseif thisX<windFieldX(1,1)
-            xIndex = 1;
-        else
-            error('unknown situation occurred matching x value: %.2f to windFieldX',thisX);
-        end        
+    indices = [xIndices yIndices];
+
+else
+    % This method works well. But it's slow due to the for-loop
+    % (Total time: 0.376 s) for 1000 runs if set flagWindRoundType = 1
+    NboundingVertices = length(boundingPolytopeVertices);
+    indices = zeros(NboundingVertices,2);
+
+    for ith_vertex = 1:NboundingVertices
+        % Find index in wind field corresponding to the point on the convex
+        % hull
+        thisVertex = boundingPolytopeVertices(ith_vertex,:);
+        thisX = thisVertex(1,1);
+        thisY = thisVertex(1,2);
+
+
+        xIndex = find(windFieldX>thisX,1,'first');
+        yIndex = find(windFieldY>thisY,1,'first');
+
+        % Check for out-of-bounds situations
+        if isempty(xIndex)
+            if thisX>windFieldX(1,end)
+                xIndex = length(windFieldX(1,:));
+            elseif thisX<windFieldX(1,1)
+                xIndex = 1;
+            else
+                error('unknown situation occurred matching x value: %.2f to windFieldX',thisX);
+            end
+        end
+        if isempty(yIndex)
+            if thisY>windFieldY(1,end)
+                yIndex = length(windFieldY(1,:));
+            elseif thisY<windFieldY(1,1)
+                yIndex = 1;
+            else
+                error('unknown situation occurred matching y value: %.2f to windFieldY',thisY);
+            end
+        end
+        indices(ith_vertex,:) = [xIndex yIndex];
     end
-    if isempty(yIndex)
-        if thisY>windFieldY(1,end)
-            yIndex = length(windFieldY(1,:));
-        elseif thisY<windFieldY(1,1)
-            yIndex = 1;
-        else
-            error('unknown situation occurred matching y value: %.2f to windFieldY',thisY);
-        end        
-    end
-    indices(ith_vertex,:) = [xIndex yIndex];
 end
 
 %%%%
@@ -522,7 +648,7 @@ W = [windU windV];
 % Apply disturbances and save results
 rawResampledBoundingPolytopeVerticesWithWind = resampledBoundingPolytopeVertices + W;
 
-% Smooth the outputs? (slow)
+% Smooth the outputs? (works, but very slow)
 if 1==0
     filteredResampledBoundingPolytopeVerticesWithWind = fcn_INTERNAL_filterData(rawResampledBoundingPolytopeVerticesWithWind);
 else

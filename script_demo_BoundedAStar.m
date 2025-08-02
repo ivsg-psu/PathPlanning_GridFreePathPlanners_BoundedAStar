@@ -129,6 +129,19 @@
 %   % * fcn_Visibility_clearAndBlockedPoints
 %   % * fcn_Visibility_linePolytopeIntersections
 %   % * fcn_Visibility_addObstacle
+%
+% 2025_08_02 by S. Brennan
+% Significant rewrite of fcn_BoundedAStar_reachabilityWithInputs and as
+% well a "slow" form: fcn_BoundedAStar_reachabilityWithInputs_SLOW
+% - Vectorized for loops for sampling speed 
+% - added script_time_fcn_BoundedAStar_reachabilityWithInputs for timing 
+%   tests
+% - added specialized set bounds to merge search space across input points
+% - modified the set methods to use edge-projection expansions for speeds
+%   % * This is about 40 times faster than using set methods (!)
+% - optimized code where easily changed to get fastest speeds. Single loop
+%   % calls appear to take about 0.2 milliseconds with fastest settings 
+
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan

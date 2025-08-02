@@ -1,3 +1,6 @@
+% script_time_fcn_BoundedAStar_reachabilityWithInputs
+% For use with the profiler, to test how different options speed up code
+
 %% DEMO case: get reachable envelope in wind field (square starting set)
 if 1==0
     figNum = 10003;

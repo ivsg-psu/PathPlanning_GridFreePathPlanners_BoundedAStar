@@ -48,7 +48,7 @@ maxWindSpeed = 4;
 
 windFieldU = normalizedEastWind*maxWindSpeed;
 windFieldV = normalizedNorthWind*maxWindSpeed;
-startPoints = [0 0; 1 2];
+startPoints = [0 0; -1 -2];
 flagWindRoundingType = 0;
 
 % Call function
@@ -117,6 +117,40 @@ maxWindSpeed = 4;
 windFieldU = normalizedEastWind*maxWindSpeed;
 windFieldV = normalizedNorthWind*maxWindSpeed;
 startPoints = [-1 -1; 1 -1; 1 1; -1 1; -1 -1];
+flagWindRoundingType = 1;
+
+% Call function
+reachableSet = fcn_BoundedAStar_reachabilityWithInputs(...
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(reachableSet));
+
+% Check variable sizes
+assert(size(reachableSet,1)>=3); 
+assert(size(reachableSet,2)==2);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+%% DEMO case: get reachable envelope in wind field (weird shape starting set)
+figNum = 10003;
+titleString = sprintf('DEMO case: get reachable envelope in wind field (square starting set)');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+% Load starting data
+[normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData;
+
+% Call graph generation function
+radius = 0.1;
+maxWindSpeed = 4;
+
+windFieldU = normalizedEastWind*maxWindSpeed;
+windFieldV = normalizedNorthWind*maxWindSpeed;
+startPoints = [-1 -1; 1 -1; 1 1; -2 3; -1 1; -1 -1];
 flagWindRoundingType = 0;
 
 % Call function
