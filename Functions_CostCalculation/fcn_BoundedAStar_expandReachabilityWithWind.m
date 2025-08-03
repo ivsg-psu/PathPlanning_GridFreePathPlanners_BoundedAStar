@@ -1,10 +1,14 @@
-function reachableSet = fcn_BoundedAStar_reachabilityWithInputs(radius, windFieldU, windFieldV, windFieldX, windFieldY, varargin)
-% fcn_BoundedAStar_reachabilityWithInputs
-% calculates the reachable set from a given startPoints,accounting
-% for control inputs and the wind field 
+function finalReachableSet = fcn_BoundedAStar_expandReachabilityWithWind(radius, windFieldU, windFieldV, windFieldX, windFieldY, varargin)
+% fcn_BoundedAStar_expandReachabilityWithWind
+% performs iterative reachability expansion from a startPoint until one of
+% the following criteria are met:
+%     1. Entire wind field is covered
+%     2. The expansion stalls where each iteration is giving same result
+%     3. All user-given goal points are hit
+%     4. One user-given goal points is hit
 %
 % FORMAT:
-% reachableSet = fcn_BoundedAStar_reachabilityWithInputs(...
+% finalReachableSet = fcn_BoundedAStar_expandReachabilityWithWind(...
 %     radius, ... 
 %     windFieldU,  ...
 %     windFieldV,  ...
@@ -58,7 +62,7 @@ function reachableSet = fcn_BoundedAStar_reachabilityWithInputs(radius, windFiel
 %
 % OUTPUTS:
 %
-%     reachableSet: a set of points defining the distance conversion of the
+%     finalReachableSet: a set of points defining the distance conversion of the
 %     original travel locations to locations with wind
 %
 % DEPENDENCIES:
@@ -67,44 +71,22 @@ function reachableSet = fcn_BoundedAStar_reachabilityWithInputs(radius, windFiel
 %
 % EXAMPLES:
 %
-% See the script: script_test_fcn_BoundedAStar_reachabilityWithInputs
+% See the script: script_test_fcn_BoundedAStar_expandReachabilityWithWind
 % for a full test suite.
 %
-% This function was written on 2025_07_29 by K. Hayes
-% Questions or comments? contact kxh1031@psu.edu
+% This function was written on 2025_08_02 by S. Brennan
+% Questions or comments? contact S. Brennan sbrennan@psu.edu 
+% or K. Hayes, kxh1031@psu.edu
 
 % REVISION HISTORY:
-% 2025_07_29 by K. Hayes
-% - first write of function 
-%   % * using fcn_BoundedAStar_matrixEnvelopeExpansion as a starter
-% 2025_07_29 by K. Hayes
-% - Renamed inputs x and y to windFieldX, windFieldY to clarify that these
-%   % are used for wind fields, not states
-% - Renamed output to reachableSet for clarity
-% - Allowed startPoint to be startPoints, so we can enter a set as starting
-%   % values
-% - Changed fig_num to figNum to avoid underscores in names
-% - Cleaned up the header comments a bit
-% - Added debug plotting at start of code
-%
 % 2025_08_02 by S. Brennan
-% Significant rewrite of fcn_BoundedAStar_reachabilityWithInputs and as
-% well a "slow" form: fcn_BoundedAStar_reachabilityWithInputs_SLOW
-% - Vectorized for loops for sampling speed 
-% - added script_time_fcn_BoundedAStar_reachabilityWithInputs for timing 
-%   tests
-% - added specialized set bounds to merge search space across input points
-% - modified the set methods to use edge-projection expansions for speeds
-%   % * This is about 40 times faster than using set methods (!)
-% - optimized code where easily changed to get fastest speeds. Single loop
-%   % calls appear to take about 0.2 milliseconds with fastest settings 
-% - added rule in main loop to "clean up points". Namely: the projection is
-%   % only valid if the segment length created by the adjacent unit vectors
-%   % has length greater than 0.5 (typically, this value is greater than
-%   % .90 in real-world data)
-%
-% 2024_08_03 by S. Brennan
-% - 
+% - first write of function using fcn_BoundedAStar_reachabilityWithInputs
+%   % as a starter
+% 2025_08_03 by S. Brennan;
+% - In fcn_BoundedAStar_reachabilityWithInputs
+%   % * Added option to only update "jogs" when threshold is 120 degrees
+%   % * Fixes bug seen in some map expansions
+
 
 % TO-DO
 % -- update header
@@ -206,7 +188,7 @@ end
 %See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
-NstartPoints = length(startPoints(:,1));
+originalStartPoints = startPoints;
 
 % Get meshgrid for streamline plotting
 [meshX,meshY] = meshgrid(windFieldX,windFieldY);
@@ -227,221 +209,107 @@ if flag_do_debug
 
 end
 
-%%%%
-% Calculate the state propogation based on dynamics. 
+% Estimate number of steps
+XYvectors = [windFieldX' windFieldY'];
+maxXYs = max(XYvectors,[],1,'omitmissing');
+minXYs = min(XYvectors,[],1,'omitmissing');
+range = maxXYs - minXYs;
+longestPossibleDistance = sum(range.^2,2).^0.5;
 
-% Create state matrices
-% For now, this is
-% trivial: x_(k+1) = A*x_k for A=identity gives x_(k+1) = x(k)
-% A - the vehicle remains in the same position unless moved
-A = eye(NstartPoints);
+windMagnitude = (windFieldU.^2+windFieldV.^2).^0.5;
+maxWindSpeed = max(windMagnitude,[],'all','omitmissing');
+slowestPossibleSpeeds = radius - maxWindSpeed;
 
-% The following does: x_(k+1) = A*x_k 
-movedPoints = A*startPoints;
-
-if flag_do_debug
-    figure(debug_figNum);
-    plot(movedPoints(:,1),movedPoints(:,2),'.-','Color',[0 1 0],'MarkerSize',20);
+if slowestPossibleSpeeds<0
+    warning(['The wind field is strong enough that some portions ' ...
+        'have wind faster than the fastest vehicle speed. This may ' ...
+        'produce unreachable areas and thus mission goals that are not ' ...
+        'feasible. For estimation, the flight speed will be used.']);
+    slowestPossibleSpeeds = radius;
 end
 
-%%%%
-% Calculate the inputs for each state output. This is going to become the
-% B*u term. For now, assume B*u is an arbitrary direction, essentially
-% pushing all points "outward" from wherever they are.
+minX = windFieldX(1);
+maxX = windFieldX(end);
+minY = windFieldY(1);
+maxY = windFieldY(end);
+deltaX = windFieldX(2) - windFieldX(1);
 
-% Define the number of directions to be considered from each value 
-% of the x0 initial set
-Ndirections = 7; % Number of directions for expansion
-angles = linspace(0,2*pi,Ndirections)';
-% angles = angles(1:end-1,:);
-% controlInputPerturbations = radius*[cos(angles) sin(angles)];
+maxNsteps = longestPossibleDistance/slowestPossibleSpeeds; %#ok<NASGU>
+Nsteps = 100; % maxNsteps;
+allExpansions = cell(Nsteps,1);
 
-% The following commented out code, in vectorized form, calculates all the
-% perturbations at once on the startPoints. It would require another set
-% merge step that also should be vectorized. Since this is not yet coded,
-% it is commented out here. 
-% % For each state, there will be Ndirections "pushes" to add. So we need to
-% % replicate each state Ndirections times. To do this, we change the Nx2
-% % matrix into (2N x 1) column format: [x1; y1; x2; y2; etc] and then repeat
-% % this matrix Ndirection times in the "row" direction
-% controlInputPerturbationsRepeatedNstartPoints = repmat(controlInputPerturbations,NstartPoints,1);
-% movedStatesSingleColumn = repmat(movedPoints',Ndirections,1);
-% movedStatesRepeatedNdirections = reshape(movedStatesSingleColumn,2,[])';
-% 
-% % Perform the addition of control inputs
-% movedStartStates = movedStatesRepeatedNdirections + controlInputPerturbationsRepeatedNstartPoints;
-% 
-% if flag_do_debug
-%     figure(debug_figNum);
-%     plot(movedStartStates(:,1),movedStartStates(:,2),'.-','Color',[1 0 1],'MarkerSize',20);
-% end
+for ith_step = 1:Nsteps
+    allExpansions{ith_step,1} = startPoints;
+    % if ith_step ==35
+    %     disp('Stop here');
+    % end
 
-%%%%
-% For each of the points, convert its expansion into a polytope, and merge
-% them all into one polytope
+    % Call function to find reachable set on this time step
+    reachableSet = fcn_BoundedAStar_reachabilityWithInputs(...
+        radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
 
-%%%%
-% The following takes small perturbations away from direction of the point
-% or points
-perturbationVectors = radius*[cos(angles) sin(angles)];
-Npoints = length(startPoints(:,1));
-if Npoints==1
-    polyPoints = startPoints(1,:) + perturbationVectors;
-elseif Npoints==2 || (Npoints==3 && isequal(startPoints(1,:),startPoints(end,:)))
-    directionVector1to2 = startPoints(2,:)-startPoints(1,:);
-    lineAngle = atan2(directionVector1to2(2),directionVector1to2(1));
-    positiveOrNegative = sin(angles);
-    positiveAngles = angles(positiveOrNegative>=0);
-    nPositive = sum(positiveOrNegative>=0);
-    polyPoints = [...
-        ones(nPositive,1)*startPoints(2,:) + radius*[cos(positiveAngles+lineAngle-pi/2) sin(positiveAngles+lineAngle-pi/2)];
-        ones(nPositive,1)*startPoints(1,:) + radius*[cos(positiveAngles+lineAngle+pi/2) sin(positiveAngles+lineAngle+pi/2)];
-        ];
-    polyPoints = [polyPoints; polyPoints(1,:)];
-else
-    %%%%
-    % Need to expand all vertices outward. A method to do this is to
-    % calculate the projection vector at each vertex that bisects the
-    % angle, and thus projects straight "outward". The distance of this
-    % vector can be calculated such that both edges move outward by the
-    % same radius. The code below implements this method.
+    if flag_do_debug && 1==1
+        figure(debug_figNum);
+        plot(reachableSet(:,1),reachableSet(:,2),'b.-','LineWidth',5, 'MarkerSize',30);
+        title(sprintf('Expansion: %.0f',ith_step));
+        axis([minX maxX minY maxY]);
+        drawnow
 
-    % Make sure first and last points repeat
-    if ~isequal(startPoints(1,:),startPoints(end,:))
-        startPoints = [startPoints; startPoints(1,:)];
     end
 
-    % Find unit edge vectors, and ortho projections. Note: if there are N
-    % vertices, there will be N-1 edges. So that the angles match with the
-    % end of each point, we repeat the 1st edge vector onto the end so the
-    % number of edge vectors is equal to the number of points.
-    edgeVectors = startPoints(2:end,:)-startPoints(1:end-1,:);
-    edgeLengths = sum(edgeVectors.^2,2).^0.5;
-    unitEdgeVectors = edgeVectors./edgeLengths;
-    allUnitEdgeVectors = [unitEdgeVectors(end,:); unitEdgeVectors; unitEdgeVectors(1,:)];
-
-    % The following method avoids the use of sines, cosines, and tangents
-    % as those are slow to calculate. To find the vector projection from
-    % each point, the average of the projection vector tips at each vertex
-    % angle is calculated. The projection scaling distance, D, is
-    % calculated by using the relationship that the sin(theta) = x/D = a/x,
-    % then solving for D and noting that x=1. Here, theta is the half angle
-    % formed by the "kite" apex, created by the before/after projection of
-    % the orthogonal vectors from each startPoint.
-
-    % Perform a -90 degree rotation
-    orthoEdgeVectors = allUnitEdgeVectors*[0 -1; 1 0];
-    positionsIncomingVector = startPoints+orthoEdgeVectors(1:end-1,:);
-    positionsOutgoingVector = startPoints+orthoEdgeVectors(2:end,:);
-    averagePositions = (positionsIncomingVector + positionsOutgoingVector)/2;
-    averagePositionVectors = averagePositions - startPoints;
-    averagePositionVectorLengths = sum(averagePositionVectors.^2,2).^0.5;
-    unitProjectionVectors = averagePositionVectors./averagePositionVectorLengths;
-    % Use the sin(theta) method to calculate D
-    D = 1./averagePositionVectorLengths;
-    polyPointsRaw = startPoints + radius*D.*unitProjectionVectors;
-
-    % Clean up points
-    goodPoints = averagePositionVectorLengths>0.5;
-    polyPoints = polyPointsRaw(goodPoints,:);
-end
-
-
-if flag_do_debug
-    figure(debug_figNum);
-    plot(polyPoints(:,1),polyPoints(:,2),'m.-');
-end
-
-% For debugging. Should see all the edges move outward by radius amount,
-% equally
-if 1==0
-    figure(3773);
-    clf;
-    plot(startPoints(:,1),startPoints(:,2),'.-','MarkerSize',20);
-    hold on;
-    plot(polyPoints(:,1),polyPoints(:,2),'.-','MarkerSize',20,'LineWidth',2);
-    axis equal
-end
-
-% Resample polyPoints
-stepSize = windFieldX(2)-windFieldX(1);
-
-edgeVectors = polyPoints(2:end,:)-polyPoints(1:end-1,:);
-edgeLengths = sum(edgeVectors.^2,2).^0.5;
-unitEdgeVectors = edgeVectors./edgeLengths;
-
-resampledPolyPoints = [];
-for ith_edge = 1:length(unitEdgeVectors(:,1))
-    thisStartPoint = polyPoints(ith_edge,:);
-    thisLength = edgeLengths(ith_edge);    
-    thisUnitVector = unitEdgeVectors(ith_edge,:);
-
-    Nresamples = floor(thisLength/stepSize);
-    morePoints = (0:Nresamples)'*stepSize*thisUnitVector + thisStartPoint;
-    if mod(thisLength,stepSize)==0
-        morePoints = morePoints(1:end-1,:);
+    % Remove "pinch" points?
+    Nreachable = length(reachableSet(:,1));
+    reachableSetNotPinched = fcn_Path_removePinchPointInPath(reachableSet(1:end-1,:),-1);
+    % If more than half the points show up in the "pinch", then the pinch is
+    % inverted. We want to keep the points NOT in the pinch. Use the "setdiff"
+    % command to do this.
+    if length(reachableSetNotPinched(:,1))< (Nreachable/2)
+        reachableSetNotPinched = setdiff(reachableSet,reachableSetNotPinched,'rows','stable');
     end
-    resampledPolyPoints = [resampledPolyPoints; morePoints]; %#ok<AGROW>
-end
-resampledPolyPoints = [resampledPolyPoints; resampledPolyPoints(1,:)];
-boundingPolytopeVertices = resampledPolyPoints;
+    reachableSetNotPinched = [reachableSetNotPinched; reachableSetNotPinched(1,:)]; %#ok<AGROW>
 
-%%%%
-% OLD METHOD using polyshape operations: (slow)
-% boundingPolytope = polyshape(startPoints);
-% 
-% 
-% if flag_do_debug
-%     figure(debug_figNum);
-%     h_allPoly = plot(boundingPolytope);
-% end
-% 
-% % Merge the polytopes created by the expansion of each of the start points
-% for ith_start = firstIndex:NstartPoints
-%     polyPoints = repmat(movedPoints(ith_start,:),Ndirections-1,1) + controlInputPerturbations;
-%     thisPoly = polyshape(polyPoints);
-%     boundingPolytope = union(boundingPolytope,thisPoly);
-% 
-%     if flag_do_debug
-%         figure(debug_figNum);
-%         set(h_allPoly,'Visible','off');
-%         plot(boundingPolytope);
-%     end
-% 
-% end
-% 
-% % Pull the polytope vertices
-% boundingPolytopeVerticesRaw = boundingPolytope.Vertices;
-% % Repeat last point to close off the boundary
-% boundingPolytopeVertices = [boundingPolytopeVerticesRaw; boundingPolytopeVerticesRaw(1,:)];
-
-if flag_do_debug
-    figure(debug_figNum);
-    plot(boundingPolytopeVertices(:,1),boundingPolytopeVertices(:,2),'r.-');
-end
-
-%%%%
-% Apply disturbance to each vertex.
-[reachableSet, resampledBoundingPolytopeVertices] = ...
-    fcn_INTERNAL_sampleWindAtPoints(boundingPolytopeVertices, ...
-    windFieldX, windFieldY, windFieldU, windFieldV, ...
-    flagWindRoundingType);
-
-if flag_do_debug
-    figure(debug_figNum);
-
-    % Do a quiver plot to show how wind moves the boundary?
-    if 1==1
-        Nvertices = length(reachableSet(:,1));
-        plotEvery = 10;
-        vectorLengths = reachableSet-resampledBoundingPolytopeVertices;
-        rowsToPlot = find(mod((1:Nvertices)',plotEvery)==0);
-        quiver(resampledBoundingPolytopeVertices(rowsToPlot,1),resampledBoundingPolytopeVertices(rowsToPlot,2),...
-            vectorLengths(rowsToPlot,1),vectorLengths(rowsToPlot,2),0,'filled');
+    % Clean up set boundary from "jogs"?
+    diff_angles = fcn_Path_calcDiffAnglesBetweenPathSegments(reachableSetNotPinched, -1);
+    jogAngleThreshold = 120*pi/180;
+    if any(abs(diff_angles)>jogAngleThreshold)
+        noJogPoints = fcn_Path_cleanPathFromForwardBackwardJogs(reachableSetNotPinched, (jogAngleThreshold) , (-1));
+    else
+        noJogPoints = reachableSetNotPinched;
     end
-    plot(reachableSet(:,1),reachableSet(:,2),'y-','LineWidth',3);
 
+    if flag_do_debug && 1==1
+        figure(debug_figNum);
+        plot(noJogPoints(:,1),noJogPoints(:,2),'c.-','LineWidth',3, 'MarkerSize',20);
+        drawnow
+    end
+
+    % Downsample the set boundary
+    startPointsSparse = fcn_INTERNAL_sparsifyPoints(noJogPoints,deltaX);
+
+    if flag_do_debug && 1==1
+        figure(debug_figNum);
+        plot(startPointsSparse(:,1),startPointsSparse(:,2),'k.-','LineWidth',1, 'MarkerSize',10);
+        drawnow
+    end
+
+    % Bound the XY values
+    newStartPointsX =  max(min(startPointsSparse(:,1),maxX),minX);
+    newStartPointsY =  max(min(startPointsSparse(:,2),maxY),minY);
+    newStartPoints = [newStartPointsX newStartPointsY];
+
+    if flag_do_debug && 1==1
+        figure(debug_figNum);
+        plot(newStartPoints(:,1),newStartPoints(:,2),'r.-','LineWidth',1, 'MarkerSize',5);
+        drawnow
+        pause(0.1);
+    end
+
+    startPoints = newStartPoints;
 end
+
+allExpansions{Nsteps+1,1} = newStartPoints;
+
+finalReachableSet = newStartPoints;
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -524,13 +392,30 @@ if flag_do_plots
     set(cellArrayOfPlotHandles{3},'Color',[0.6 0.6 0.6]);
 
     % Plot the start points
-    plot(startPoints(:,1),startPoints(:,2),'.-','Color',[0 0 1],'MarkerSize',10,'LineWidth', 2, 'DisplayName','Input: startPoints');
+    plot(originalStartPoints(:,1),originalStartPoints(:,2),'.-','Color',[0 1 0],'MarkerSize',20,'LineWidth', 2, 'DisplayName','Input: startPoints');
 
-    % Plot the expansion points
-    plot(boundingPolytopeVertices(:,1),boundingPolytopeVertices(:,2),'-','Color',[0 1 0],'MarkerSize',30, 'LineWidth', 2, 'DisplayName','After A*x_k + B*u');
+    % Plot the expansion sets
+    % allColors = parula(Nsteps+1);
+    allColors = turbo;
+    Ntotal = 25;
+    for ith_expansion = 1:Nsteps+1
+        thisExpansion = allExpansions{ith_expansion,1};
+        percentageDone = min(ith_expansion/Ntotal,1);
+        if 1==0
+            % Plot in color
+            colorNumber = min(256,max(round(255*percentageDone)+1,1));
+            thisColor = allColors(colorNumber,:);
+        else
+            % Plot in white to black
+            thisColor = (1-percentageDone)*[1 1 1];
+        end
+
+        plot(thisExpansion(:,1),thisExpansion(:,2),'-',...
+            'Color',thisColor,'MarkerSize',30, 'LineWidth', 0.5, 'DisplayName',sprintf('Expansion: %.0f',ith_expansion),'HandleVisibility','off');
+    end
 
     % Plot the final output
-    plot(reachableSet(:,1),reachableSet(:,2),'LineWidth',2,'Color',[0 0 0],'DisplayName','Output: reachableSet')
+    plot(finalReachableSet(:,1),finalReachableSet(:,2),'LineWidth',3,'Color',[1 0 0],'DisplayName','Output: reachableSet')
 
     % Shut the hold off?
     if flag_shut_hold_off
@@ -795,3 +680,49 @@ if 1==flag_do_debug
     plot(indicesToPlot, matlabFilt,'Color',[0 0 0]);
 end
 end % Ends fcn_INTERNAL_hardCodedFilter
+
+%% fcn_INTERNAL_sparsifyPoints
+function sparsePoints = fcn_INTERNAL_sparsifyPoints(densePoints,deltaX)
+
+% Make sure first and last point are repeated, e.g. that the plot is a
+% closed circuit
+if ~isequal(densePoints(1,:),densePoints(end,:))
+    densePoints(end,:) = densePoints(1,:);
+end
+
+segmentVectors = densePoints(2:end,:) - densePoints(1:end-1,:);
+segmentLengths = sum(segmentVectors.^2,2).^0.5;
+
+Npoints = length(densePoints(:,1));
+currentPoint = 1;
+currentDistance = 0;
+sparsePointIndices = false(Npoints,1);
+while currentPoint<Npoints
+    currentPoint = currentPoint+1;
+    currentDistance  = currentDistance + segmentLengths(currentPoint-1);
+
+    % Did we "travel" farther than expected deltaX? If so, mark this point
+    % so that it is kept.
+    if currentDistance>=deltaX
+        sparsePointIndices(currentPoint,1) = true;
+        currentDistance = 0;
+    end
+end
+sparsePoints = densePoints(sparsePointIndices,:);
+
+% Make sure to close off the points
+if ~isequal(sparsePoints(end,:),sparsePoints(1,:))
+    sparsePoints = [sparsePoints; sparsePoints(1,:)];
+end
+
+if 1==0
+    figure(388383);
+    clf;
+    plot(densePoints(:,1),densePoints(:,2),'.-','MarkerSize',30,'LineWidth',3,'DisplayName','Input: densePoints');
+    hold on;
+    axis equal
+    plot(sparsePoints(:,1),sparsePoints(:,2),'.-','MarkerSize',10,'LineWidth',1,'DisplayName','Output: sparsePoints');
+end
+
+
+end % Ends fcn_INTERNAL_sparsifyPoints

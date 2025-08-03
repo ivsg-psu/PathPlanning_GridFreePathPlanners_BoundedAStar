@@ -141,6 +141,24 @@
 %   % * This is about 40 times faster than using set methods (!)
 % - optimized code where easily changed to get fastest speeds. Single loop
 %   % calls appear to take about 0.2 milliseconds with fastest settings 
+% - added rule in main loop to "clean up points". Namely: the projection is
+%   % only valid if the segment length created by the adjacent unit vectors
+%   % has length greater than 0.5 (typically, this value is greater than
+%   % .90 in real-world data)
+% - updated PathClass library to PathClass_v2025_08_02
+%   % * fixes bugs seen in fixing "jogs" in reachabilityWithInputs codes
+% - added internal function, fcn_INTERNAL_sparsifyPoints, 
+%   % * makes sure that points on bounding perimeter do not get too dense
+% - Added: fcn_BoundedAStar_expandReachabilityWithWind
+% - Added: script_test_fcn_BoundedAStar_expandReachabilityWithWind
+%
+% 2025_08_03 by S. Brennan
+% - Added fcn_BoundedAStar_expandReachabilityWithWind and test script
+%   % * This performs repeated calls to the expansion set, so one can 
+%   %   % "see" where the feasible final set is at, trajectory, and
+%   %   % difficulty
+% - updated PathClass library to PathClass_v2025_08_03
+%   % * gives option to set jog threshold
 
 
 % TO-DO:
@@ -168,9 +186,9 @@ library_folders{ith_library} = {'Functions','testFixtures','GridMapGen'};
 library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTools_MapGenClassLibrary/archive/refs/tags/MapGenClass_v2025_07_29.zip';
 
 ith_library = ith_library+1;
-library_name{ith_library}    = 'PathClass_v2025_07_06';
+library_name{ith_library}    = 'PathClass_v2025_08_03';
 library_folders{ith_library} = {'Functions', 'Data'};                                
-library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_PathTools_PathClassLibrary/archive/refs/tags/PathClass_v2025_07_06.zip';
+library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_PathTools_PathClassLibrary/archive/refs/tags/PathClass_v2025_08_03.zip';
 
 % ith_library = ith_library+1;
 % library_name{ith_library}    = 'GPSClass_v2023_04_21';
