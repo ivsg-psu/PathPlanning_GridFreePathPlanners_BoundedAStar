@@ -83,6 +83,8 @@ visibility_matrix, all_pts, start, finish, polytopes_before, idx_of_polytope_for
 % 2025_07_31 - K. Hayes
 % -- updated function formatting and header
 % -- added input and debug checks
+% 2025_08_04 - K. Hayes
+% -- added debug plotting
 
 % TO DO:
 % (none)
@@ -137,13 +139,13 @@ if 0==flag_max_speed
         % Are there the right number of inputs?
         narginchk(6,MAX_NARGIN);
 
-        % Check the start input, make sure it has 5 columns
-        fcn_DebugTools_checkInputsToFunctions(...
-            start, '5column_of_numbers');
-
-        % Check the finish input, make sure it has 5 columns
-        fcn_DebugTools_checkInputsToFunctions(...
-            finish, '5column_of_numbers');
+        % % Check the start input, make sure it has 5 columns
+        % fcn_DebugTools_checkInputsToFunctions(...
+        %     start, '5column_of_numbers');
+        % 
+        % % Check the finish input, make sure it has 5 columns
+        % fcn_DebugTools_checkInputsToFunctions(...
+        %     finish, '5column_of_numbers');
 
         % Check the all_pts input, make sure it has 5 columns
         fcn_DebugTools_checkInputsToFunctions(...
@@ -238,6 +240,44 @@ sprintf('num checks was %i',length(r))
 %                            __/ |
 %                           |___/
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+if flag_do_plots
+    figure(fig_num)
+    hold on
+
+    % Plot old map
+    subplot(1,2,1)
+    title('Previous map')
+    fcn_MapGen_plotPolytopes(polytopes_before,'b',[1 0 0 0 0.5],fig_num);
+    box on
+    xlabel('x [km]')
+    ylabel('y [km]')
+     % Plot new vgraph
+    for i = 1:size(visibility_matrix,1)
+        for j = 1:size(visibility_matrix,1)
+            if visibility_matrix(i,j) == 1
+                plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'-g')
+            end
+        end
+    end
+  
+    % Plot revised map
+    subplot(1,2,2)
+    title('Updated map')
+    fcn_MapGen_plotPolytopes(polytopes_after,'b',[1 0 0 0 0.5],fig_num);
+    box on
+    xlabel('x [km]')
+    ylabel('y [km]')
+       
+    % Plot new vgraph
+    for i = 1:size(visibility_matrix_new,1)
+        for j = 1:size(visibility_matrix_new,1)
+            if visibility_matrix_new(i,j) == 1
+                plot([all_pts_new(i,1),all_pts_new(j,1)],[all_pts_new(i,2),all_pts_new(j,2)],'-g')
+            end
+        end
+    end
+end
 
 end
 

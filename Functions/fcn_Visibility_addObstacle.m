@@ -303,6 +303,46 @@ sprintf('num checks was %i',length(r))
 %                           |___/
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
+if flag_do_plots
+    figure(fig_num)
+    hold on
+
+    % Plot old map
+    subplot(1,2,1)
+    title('Previous map')
+    fcn_MapGen_plotPolytopes(polytopes_before,'b',[1 0 0 0 0.5],fig_num);
+    box on
+    xlabel('x [km]')
+    ylabel('y [km]')
+     % Plot new vgraph
+    for i = 1:size(visibility_matrix,1)
+        for j = 1:size(visibility_matrix,1)
+            if visibility_matrix(i,j) == 1
+                plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'-g')
+            end
+        end
+    end
+  
+    % Plot revised map
+    subplot(1,2,2)
+    title('Updated map')
+    fcn_MapGen_plotPolytopes(polytopes_after,'b',[1 0 0 0 0.5],fig_num);
+    line_spec = 'r--'; % edge line plotting
+    fcn_MapGen_plotPolytopes(polytope_to_add,'y',[1 0 0 0 0.5],fig_num);
+    box on
+    xlabel('x [km]')
+    ylabel('y [km]')
+       
+    % Plot new vgraph
+    for i = 1:size(visibility_matrix_new,1)
+        for j = 1:size(visibility_matrix_new,1)
+            if visibility_matrix_new(i,j) == 1
+                plot([all_pts_new(i,1),all_pts_new(j,1)],[all_pts_new(i,2),all_pts_new(j,2)],'-g')
+            end
+        end
+    end
+end
+
 end
 
 

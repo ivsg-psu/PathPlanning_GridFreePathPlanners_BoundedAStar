@@ -1,13 +1,11 @@
-% script_test_fcn_Visibility_addObstacle
+% script_test_fcn_Visibility_3dGraphGlobal
 
-% a basic test of adding obstacles to existing visibility graphs
+% a basic test of creating 3d visibility graphs
 
 % Revision history
-% 2025_08_01 - K. Hayes, kxh1031@psu.edu
+% 2025_08_04 - K. Hayes, kxh1031@psu.edu
 % -- first write of script, using
-% script_test_fcn_Visibility_clearAndBlockedPoints as a starter
-% 2025_08_04 - K. Hayes
-% -- moved plotting into fcn_Visibility_addObstacle debug
+% script_test_fcn_Visibility_addObstacle as a starter
 
 % TO DO:
 % -- set up fast mode tests
@@ -38,48 +36,6 @@ titleString = sprintf('DEMO case: add a polytope to the map');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
-% Create polytope field
-polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 25],[], ([100 100]), (-1));
-
-% Trim polytopes on edge of boundary
-trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0.1 0.1 99.9 99.9], (-1));
-
-% Shrink polytopes to form obstacle field
-shrunk_polytopes = fcn_MapGen_polytopesShrinkEvenly(trim_polytopes, 2.5, (-1));
-
-% Get x and y coordinates of each polytope
-xvert = [shrunk_polytopes.xv]';
-yvert = [shrunk_polytopes.yv]';
-point_tot = length(xvert);
-
-% Get polytope ids
-beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-curpt = 0;
-for poly = 1:size(shrunk_polytopes,2)
-    polyVerts = unique(shrunk_polytopes(poly).vertices,'stable','rows');
-    num_verts = size(polyVerts,1);
-    shrunk_polytopes(poly).obs_id = ones(1,num_verts)*poly;
-    beg_end([curpt+1,curpt+num_verts]) = 1;
-    curpt = curpt+num_verts;
-end
-totalObsId = [shrunk_polytopes.obs_id]';
-
-% Create all_pts matrix
-all_pts = [xvert, yvert, [1:point_tot]', totalObsId, beg_end'];
-
-% Create visibility graph
-isConcave = [];
-[vgraph,visibility_results]=fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes,all_pts,all_pts,(isConcave),(-1));
-
-% add a polytope
-addPolytope = shrunk_polytopes(1);
-addPolytope.xv = 0.5*addPolytope.xv + 55;
-addPolytope.yv = 0.5*addPolytope.yv - 10;
-addPolytope.vertices = [addPolytope.xv' addPolytope.yv'];
-
-% Update vgraph with new polytope added
-[vgraphNew, all_ptsNew, startNew, finishNew, polytopesNew] = fcn_Visibility_addObstacle(...
-    vgraph, all_pts, [], [], shrunk_polytopes, addPolytope, (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 

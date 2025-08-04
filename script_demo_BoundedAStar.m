@@ -169,7 +169,20 @@
 %   % * added exit condition outputs and tests
 %   % * added cellArrayOfExitInfo output info and tests
 %   % * added cellArrayOfWindExitConditions inputs and tests in TEST section
-
+%
+% 2025_08_04 by K. Hayes
+% - updating remaining visibility fcns. see cleaning spreadsheet for
+%   details
+% - updating test scripts for visibility fcns for new MapGen
+%   compatibility. changes made to
+%   % * script_test_fcn_Visibility_addObstacle
+% - added starter test scripts:
+%   % * script_test_fcn_Visibility_removeObstacle
+%   % * script_test_fcn_Visibility_3dGraphGlobal
+% - adding debug plotting for visibility fcns. changes made to 
+%   % * fcn_Visibility_addObstacle
+%   % * fcn_Visibility_removeObstacle
+%   % * fcn_Visibility_3dGraphGlobal
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
