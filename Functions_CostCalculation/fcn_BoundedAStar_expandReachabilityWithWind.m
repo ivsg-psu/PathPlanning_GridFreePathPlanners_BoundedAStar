@@ -1,14 +1,17 @@
-function finalReachableSet = fcn_BoundedAStar_expandReachabilityWithWind(radius, windFieldU, windFieldV, windFieldX, windFieldY, varargin)
+function [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(radius, windFieldU, windFieldV, windFieldX, windFieldY, varargin)
 % fcn_BoundedAStar_expandReachabilityWithWind
 % performs iterative reachability expansion from a startPoint until one of
 % the following criteria are met:
-%     1. Entire wind field is covered
-%     2. The expansion stalls where each iteration is giving same result
-%     3. All user-given goal points are hit
-%     4. One user-given goal points is hit
+%     1. Maximum number of iterations reached
+%     2. Entire wind field is covered by finalReachableSet
+%     3. The expansion stalls where each iteration is giving "same" result
+%     4. All user-given goal points are hit
+%     5. One user-given goal points is hit
+%     Each of these, or combinations, can be specified by the user. See the
+%     flagWindExitConditions input.
 %
 % FORMAT:
-% finalReachableSet = fcn_BoundedAStar_expandReachabilityWithWind(...
+% [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
 %     radius, ... 
 %     windFieldU,  ...
 %     windFieldV,  ...
@@ -16,11 +19,13 @@ function finalReachableSet = fcn_BoundedAStar_expandReachabilityWithWind(radius,
 %     windFieldY,  ...
 %     (startPoints),  ...
 %     (flagWindRoundingType),...
+%     (cellArrayOfWindExitConditions),...
 %     (figNum));
 %
 % INPUTS:
 %
-%     radius: a 1x1 scalar representing the radius of travel without wind
+%     radius: a 1x1 scalar representing the radius of travel without wind.
+%     This is usually the travel speed multiplied by the time step.
 %
 %     windFieldU:  a matrix containing the u-direction components of the
 %     wind velocity at each grid point
@@ -54,6 +59,29 @@ function finalReachableSet = fcn_BoundedAStar_expandReachabilityWithWind(radius,
 %          behaves with a discrete wind field. However, the set is usually
 %          non-smooth.
 %
+%     cellArrayOfWindExitConditions: allows the user to specify the exit
+%     conditions to monitor. These are specificed by a 5x1 cell array to
+%     allow the user to set: 
+%    
+%         1. Nsteps: the maximum number of iterations (default is 100)
+%    
+%         2. flagStopIfEntireFieldCovered: stops expansion if entire wind field
+%         is covered by finalReachableSet (default is 1) 
+%    
+%         3. toleranceToStopIfSameResult: the expansion is stopped  is giving
+%         "same" result, where same means that the number of points in the
+%         boundary is the same, and all points are within tolerance of prior
+%         points. (default is 4*deltaX, where deltaX is windFieldX(2)-windFieldX(1))
+%    
+%         4. allGoalPointsList: an Nx2 array of user-given goal points that
+%         must be hit before stopping the code. Default is empty.
+%    
+%         5. flagStopIfHitOneGoalPoint: if set to 1, stops if any
+%         user-given goal points is hit. Default is 0.
+%
+%     If any condition is met, the expansion is stopped and the
+%     exitCondition type is set accordingly.
+%
 %     figNum: a figure number to plot results. If set to -1, skips any
 %     input checking or debugging, no figures will be generated, and sets
 %     up code to maximize speed. As well, if given, this forces the
@@ -64,6 +92,15 @@ function finalReachableSet = fcn_BoundedAStar_expandReachabilityWithWind(radius,
 %
 %     finalReachableSet: a set of points defining the distance conversion of the
 %     original travel locations to locations with wind
+%
+%     exitCondition: an integer listing which of the 5 exit conditions
+%     activated.
+%
+%     cellArrayOfExitInfo: details on the exit condition, with following
+%     cell contents:
+%     1: number of iterations completed
+%     2: goal points hit (as flags). Returns empty if allGoalPointsList is
+%     empty.
 %
 % DEPENDENCIES:
 %
@@ -83,19 +120,28 @@ function finalReachableSet = fcn_BoundedAStar_expandReachabilityWithWind(radius,
 % - first write of function using fcn_BoundedAStar_reachabilityWithInputs
 %   % as a starter
 % 2025_08_03 by S. Brennan;
-% - In fcn_BoundedAStar_reachabilityWithInputs
+% - In fcn_BoundedAStar_expandReachabilityWithWind
 %   % * Added option to only update "jogs" when threshold is 120 degrees
 %   % * Fixes bug seen in some map expansions
-
+% 2025_08_04 by S. Brennan
+% - In fcn_BoundedAStar_expandReachabilityWithWind
+%   % * Added cellArrayOfWindExitConditions
+%   % * Added exitCondition output information
+%   % * Added cellArrayOfExitInfo output information
 
 % TO-DO
-% -- update header
+% -- when wind is VERY high, higher than self speed, the set pushes away
+% from the initial value, and thus the predicted set does not include
+% previous sets. This can be fixed by the expansion step includeing the
+% prior expansion. This is a bit tricky with the calculations, but would
+% increase accuracy.
+
 
 %% Debugging and Input checks
 % Check if flag_max_speed set. This occurs if the figNum variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 8; % The largest Number of argument inputs to the function
+MAX_NARGIN = 9; % The largest Number of argument inputs to the function
 flag_max_speed = 0;
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; %     % Flag to plot the results for debugging
@@ -149,7 +195,7 @@ end
 
 % Does user want to specify startPoints input?
 startPoints = [0 0]; % Default is origin
-if 1 <= nargin
+if 6 <= nargin
     temp = varargin{1};
     if ~isempty(temp)
         startPoints = temp;
@@ -158,12 +204,32 @@ end
 
 % Does user want to specify flagWindRoundingType input?
 flagWindRoundingType = 0; % Default is 0
-if 2 <= nargin
+if 7 <= nargin
     temp = varargin{2};
     if ~isempty(temp)
         flagWindRoundingType = temp;
     end
 end
+
+% Does user want to specify flagWindRoundingType input?
+% Defaults
+cellArrayOfWindExitConditions = cell(5,1);
+cellArrayOfWindExitConditions{1} = 100; % Nsteps
+cellArrayOfWindExitConditions{2} = 1;   % flagStopIfEntireFieldCovered
+cellArrayOfWindExitConditions{3} = 4*(windFieldX(2)-windFieldX(1)); % toleranceToStopIfSameResult
+cellArrayOfWindExitConditions{4} = [];  % allGoalPointsList
+cellArrayOfWindExitConditions{5} = 0;   % flagStopIfHitOneGoalPoint
+if 8 <= nargin
+    temp = varargin{3};
+    if ~isempty(temp)
+        cellArrayOfWindExitConditions = temp;
+    end
+end
+Nsteps = cellArrayOfWindExitConditions{1};
+flagStopIfEntireFieldCovered = cellArrayOfWindExitConditions{2};
+toleranceToStopIfSameResult = cellArrayOfWindExitConditions{3};
+allGoalPointsList = cellArrayOfWindExitConditions{4};
+flagStopIfHitOneGoalPoint = cellArrayOfWindExitConditions{5};
 
 % Does user want to show the plots?
 flag_do_plots = 0; % Default is to NOT show plots
@@ -209,24 +275,24 @@ if flag_do_debug
 
 end
 
-% Estimate number of steps
-XYvectors = [windFieldX' windFieldY'];
-maxXYs = max(XYvectors,[],1,'omitmissing');
-minXYs = min(XYvectors,[],1,'omitmissing');
-range = maxXYs - minXYs;
-longestPossibleDistance = sum(range.^2,2).^0.5;
-
-windMagnitude = (windFieldU.^2+windFieldV.^2).^0.5;
-maxWindSpeed = max(windMagnitude,[],'all','omitmissing');
-slowestPossibleSpeeds = radius - maxWindSpeed;
-
-if slowestPossibleSpeeds<0
-    warning(['The wind field is strong enough that some portions ' ...
-        'have wind faster than the fastest vehicle speed. This may ' ...
-        'produce unreachable areas and thus mission goals that are not ' ...
-        'feasible. For estimation, the flight speed will be used.']);
-    slowestPossibleSpeeds = radius;
-end
+%%%%%
+% Estimate number of steps to simulate
+% XYvectors = [windFieldX' windFieldY'];
+% maxXYs = max(XYvectors,[],1,'omitmissing');
+% minXYs = min(XYvectors,[],1,'omitmissing');
+% range = maxXYs - minXYs;
+% longestPossibleDistance = sum(range.^2,2).^0.5;
+% windMagnitude = (windFieldU.^2+windFieldV.^2).^0.5;
+% maxWindSpeed = max(windMagnitude,[],'all','omitmissing');
+% slowestPossibleSpeeds = radius - maxWindSpeed;
+% if slowestPossibleSpeeds<0
+%     warning(['The wind field is strong enough that some portions ' ...
+%         'have wind faster than the fastest vehicle speed. This may ' ...
+%         'produce unreachable areas and thus mission goals that are not ' ...
+%         'feasible. For estimation, the flight speed will be used.']);
+%     slowestPossibleSpeeds = radius; %#ok<NASGU>
+% end
+% maxNsteps = longestPossibleDistance/slowestPossibleSpeeds;
 
 minX = windFieldX(1);
 maxX = windFieldX(end);
@@ -234,11 +300,12 @@ minY = windFieldY(1);
 maxY = windFieldY(end);
 deltaX = windFieldX(2) - windFieldX(1);
 
-maxNsteps = longestPossibleDistance/slowestPossibleSpeeds; %#ok<NASGU>
-Nsteps = 100; % maxNsteps;
 allExpansions = cell(Nsteps,1);
 
-for ith_step = 1:Nsteps
+ith_step = 0;
+flagContinueExpansion = 1;
+while 1==flagContinueExpansion
+    ith_step = ith_step+1;
     allExpansions{ith_step,1} = startPoints;
     % if ith_step ==35
     %     disp('Stop here');
@@ -304,12 +371,69 @@ for ith_step = 1:Nsteps
         pause(0.1);
     end
 
+    % Save results for next loop
     startPoints = newStartPoints;
+
+    % Check exit conditions
+    if ith_step>=Nsteps
+        flagContinueExpansion = 0;
+        exitCondition = 1;
+    end
+    if 1==flagStopIfEntireFieldCovered
+        valuesAtXEdges = startPointsSparse(:,1)>=maxX | startPointsSparse(:,1)<=minX;
+        valuesAtYEdges = startPointsSparse(:,2)>=maxY | startPointsSparse(:,2)<=minY;
+        valuesAtBothEdges = valuesAtXEdges | valuesAtYEdges;
+        if all(valuesAtBothEdges,'all')
+            flagContinueExpansion = 0;            
+            exitCondition = 2;
+        end
+    end
+    if ~isempty(toleranceToStopIfSameResult)
+        if ith_step>2
+            thisBoundary = allExpansions{ith_step,1};
+            lastBoundary = allExpansions{ith_step-1,1};
+            if length(thisBoundary(:,1))==length(lastBoundary(:,1))
+                % Check distances
+                differences = thisBoundary-lastBoundary;
+                absDifferences = sum(differences.^2,2);
+
+                if absDifferences<toleranceToStopIfSameResult^2
+                    flagContinueExpansion = 0;
+                    exitCondition = 3;
+                end
+            end
+        end
+
+    end
+    if ~isempty(allGoalPointsList)
+        goalPointsHit = fcn_INTERNAL_findGoalPointsHit(newStartPoints,allGoalPointsList);
+        if all(goalPointsHit==1,'all')
+            flagContinueExpansion = 0;
+            exitCondition = 4;
+        end  
+        if 1==flagStopIfHitOneGoalPoint && any(goalPointsHit==1,'all')
+            flagContinueExpansion = 0;
+            exitCondition = 5;
+        end           
+    end
+
 end
 
-allExpansions{Nsteps+1,1} = newStartPoints;
+allExpansions{ith_step+1,1} = newStartPoints;
 
 finalReachableSet = newStartPoints;
+
+% Fill in cellArrayOfExitInfo
+cellArrayOfExitInfo = cell(2,1);
+cellArrayOfExitInfo{1,1} = ith_step+1;
+
+if ~isempty(allGoalPointsList)
+    goalPointsHit = fcn_INTERNAL_findGoalPointsHit(newStartPoints,allGoalPointsList);
+else
+    goalPointsHit = [];
+end
+cellArrayOfExitInfo{2,1} = goalPointsHit;
+
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -394,11 +518,16 @@ if flag_do_plots
     % Plot the start points
     plot(originalStartPoints(:,1),originalStartPoints(:,2),'.-','Color',[0 1 0],'MarkerSize',20,'LineWidth', 2, 'DisplayName','Input: startPoints');
 
+    % Plot the goal points
+    if ~isempty(allGoalPointsList)
+        plot(allGoalPointsList(:,1),allGoalPointsList(:,2),'.','Color',[1 0 1],'MarkerSize',40,'LineWidth', 2, 'DisplayName','Input: allGoalPointsList');
+    end
+
     % Plot the expansion sets
     % allColors = parula(Nsteps+1);
     allColors = turbo;
     Ntotal = 25;
-    for ith_expansion = 1:Nsteps+1
+    for ith_expansion = 1:cellArrayOfExitInfo{1}
         thisExpansion = allExpansions{ith_expansion,1};
         percentageDone = min(ith_expansion/Ntotal,1);
         if 1==0
@@ -445,241 +574,7 @@ end % Ends the main function
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
-%% fcn_INTERNAL_sampleWindAtPoints
-function [filteredResampledBoundingPolytopeVerticesWithWind, resampledBoundingPolytopeVertices] = ...
-    fcn_INTERNAL_sampleWindAtPoints(boundingPolytopeVertices, ...
-    windFieldX, windFieldY, windFieldU, windFieldV, ...
-    flagWindRoundingType)
 
-%%%%
-% Apply disturbance to each vertex. To do this, we first find the indices
-% in the wind disturbance matrices that match the XY location of each
-% vertex
-
-if 1==1
-    % The below method is very fast:
-    % (Total time: 0.230 s) for 1000 runs if set flagWindRoundType = 1
-
-    % Assume the discretization in X and Y are the same
-    spatialStep = windFieldX(2)-windFieldX(1);
-    xIndices = floor((boundingPolytopeVertices(:,1)-windFieldX(1,1))/spatialStep)+1;
-    yIndices = floor((boundingPolytopeVertices(:,2)-windFieldY(1,1))/spatialStep)+1;
-
-    highestXindex = length(windFieldX);
-    highestYindex = length(windFieldY);
-
-    % Bound the index values to 1 to length of the vectors
-    xIndices = max(1,min(highestXindex,xIndices));
-    yIndices = max(1,min(highestYindex,yIndices));
-    
-    indices = [xIndices yIndices];
-
-else
-    % This method works well. But it's slow due to the for-loop
-    % (Total time: 0.376 s) for 1000 runs if set flagWindRoundType = 1
-    NboundingVertices = length(boundingPolytopeVertices);
-    indices = zeros(NboundingVertices,2);
-
-    for ith_vertex = 1:NboundingVertices
-        % Find index in wind field corresponding to the point on the convex
-        % hull
-        thisVertex = boundingPolytopeVertices(ith_vertex,:);
-        thisX = thisVertex(1,1);
-        thisY = thisVertex(1,2);
-
-
-        xIndex = find(windFieldX>thisX,1,'first');
-        yIndex = find(windFieldY>thisY,1,'first');
-
-        % Check for out-of-bounds situations
-        if isempty(xIndex)
-            if thisX>windFieldX(1,end)
-                xIndex = length(windFieldX(1,:));
-            elseif thisX<windFieldX(1,1)
-                xIndex = 1;
-            else
-                error('unknown situation occurred matching x value: %.2f to windFieldX',thisX);
-            end
-        end
-        if isempty(yIndex)
-            if thisY>windFieldY(1,end)
-                yIndex = length(windFieldY(1,:));
-            elseif thisY<windFieldY(1,1)
-                yIndex = 1;
-            else
-                error('unknown situation occurred matching y value: %.2f to windFieldY',thisY);
-            end
-        end
-        indices(ith_vertex,:) = [xIndex yIndex];
-    end
-end
-
-%%%%
-% Prune the bounding vertices to match the discretization of the wind
-% field?
-if 0==flagWindRoundingType
-    [uniqueIndicesRaw,vertexRowsThatAreUnique] = unique(indices,'rows','stable');
-    resampledBoundingPolytopeVerticesRaw = boundingPolytopeVertices(vertexRowsThatAreUnique,:);    
-
-    % Repeat the first point to last, to close the boundary. The "unique"
-    % function deletes this repetition
-    uniqueIndices = [uniqueIndicesRaw; uniqueIndicesRaw(1,:)];
-    resampledBoundingPolytopeVertices = [resampledBoundingPolytopeVerticesRaw; resampledBoundingPolytopeVerticesRaw(1,:)];
-
-else
-    uniqueIndices = indices;
-    resampledBoundingPolytopeVertices = boundingPolytopeVertices;    
-end
-
-
-% Convert uniqueIndices into linear indices for indexing wind fields. Note the
-% switch here from rows/columns into X and Y, for the indexing, is swapping
-% the order. This is because the wind fields are transposed because they
-% were created with the image toolbox. A nice to-do item later would be to
-% fix this so that the XY indexing is consistent with typical matrix
-% representations of points as [x y]
-linearInd = sub2ind(size(windFieldU),uniqueIndices(:,2),uniqueIndices(:,1));
-
-% Index wind fields to find wind disturbance for each point
-windU = windFieldU(linearInd);
-windV = windFieldV(linearInd);
-
-% W = [filteredWindU filteredWindV];
-W = [windU windV];
-
-% Apply disturbances and save results
-rawResampledBoundingPolytopeVerticesWithWind = resampledBoundingPolytopeVertices + W;
-
-% Smooth the outputs? (works, but very slow)
-if 1==0
-    filteredResampledBoundingPolytopeVerticesWithWind = fcn_INTERNAL_filterData(rawResampledBoundingPolytopeVerticesWithWind);
-else
-    filteredResampledBoundingPolytopeVerticesWithWind = rawResampledBoundingPolytopeVerticesWithWind;
-end
-
-end % Ends fcn_INTERNAL_sampleWindAtPoints
-
-%% fcn_INTERNAL_filterData
-function filteredOutput = fcn_INTERNAL_filterData(unfilteredData)
-
-% See https://www.mathworks.com/matlabcentral/answers/9900-use-filter-constants-to-hard-code-filter
-% z(n) = 0;       % Creates zeros if input z is omitted
-% Y = zeros(size(X));
-% for m = 1:length(Y)
-%     Y(m) = b(1) * X(m) + z(1);
-%     for i = 2:n-1
-%         z(i - 1) = b(i) * X(m) + z(i) - a(i) * Y(m);
-%     end
-%     z(n - 1) = b(n) * X(m) - a(n) * Y(m);  % Omit z(n), which is 0
-% end
-% ABOVE shows: z(1) = b(2)*X(1) + z_i(2) - a(2)*(b(1)*X(1)+zi(1))
-   
-flag_do_debug = 0;
-fig_for_debug = 38383;
-
-if 1==flag_do_debug
-    figure(fig_for_debug);
-    clf;
-    Ndata = length(unfilteredData(:,1));
-    indicesToPlot = (1:Ndata)';
-end
-
-% HARDCODE RESULT OF: [B,A] = butter(2,0.2);
-B = [0.067455273889072   0.134910547778144   0.067455273889072];
-A = [1.000000000000000  -1.142980502539901   0.412801598096189];
-
-initialConditions = unfilteredData(1:2,:);
-finalConditions = unfilteredData(end-1:end,:);
-filteredOutput = 0*unfilteredData;
-for ith_column = 1:size(unfilteredData,2)
-    thisColumn = unfilteredData(:,ith_column);
-    initialCondition = initialConditions(:,ith_column);
-    finalCondition = finalConditions(:,ith_column);
-
-
-    filteredForward = fcn_INTERNAL_hardCodedFilter(B,A,thisColumn, initialCondition);
-
-    % % For debugging
-    % if 1==flag_do_debug
-    %     figure(fig_for_debug);
-    %     h_plot = plot(indicesToPlot, thisColumn,'-');
-    %     hold on;
-    %     plot(indicesToPlot, filteredForward,'Color',h_plot.Color);
-    % end
-
-    filteredBackward = fcn_INTERNAL_hardCodedFilter(B,A,flipud(filteredForward),flipud(finalCondition));
-    filteredOutput(:,ith_column) = flipud(filteredBackward);
-    filteredOutput(1:2,ith_column) = thisColumn(1:2,:); % Force initial conditions to match
-
-    % For debugging
-    if 1==flag_do_debug
-        figure(fig_for_debug);
-        h_plot = plot(indicesToPlot, thisColumn,'-');
-        hold on;
-        plot(indicesToPlot, filteredOutput(:,ith_column),'Color',h_plot.Color);
-    end
-end
-
-
-end % Ends fcn_INTERNAL_filterData
-
-%% fcn_INTERNAL_hardCodedFilter
-function yfilt_hardcoded = fcn_INTERNAL_hardCodedFilter( B, A, rawdata, yInit)
-% Implements:
-% a(1)*y(n) = b(1)*x(n) + b(2)*x(n-1) + ... + b(nb+1)*x(n-nb)
-%                           - a(2)*y(n-1) - ... - a(na+1)*y(n-na)
-% with explicit initial conditions on y
-
-flag_do_debug = 0;
-
-Aflipped = fliplr(A);
-
-
-% Implements:
-% a(1)*y(n) = b(1)*x(n) + b(2)*x(n-1) + ... + b(nb+1)*x(n-nb)
-%                           - a(2)*y(n-1) - ... - a(na+1)*y(n-na)
-% with explicit initial conditions on y
-
-Ndata = length(rawdata(:,1));
-
-% Amatrix = zeros(Ndata,Ndata);
-% for ith_a = 2:length(A)
-%     avector = A(ith_a)*ones(Ndata-(ith_a-1),1);
-%     diagonalAddition = diag(avector,(1-ith_a));
-%     Amatrix = Amatrix+diagonalAddition;
-% end
-
-
-Bmatrix = zeros(Ndata,Ndata);
-for ith_b = 1:length(B)
-    bvector = B(ith_b)*ones(Ndata-(ith_b-1),1);
-    diagonalAddition = diag(bvector,(1-ith_b));
-    Bmatrix = Bmatrix+diagonalAddition;
-end
-
-
-yfilt_hardcoded = Bmatrix*rawdata;
-
-% Fill in initial conditions:
-order = length(A)-1;
-yfilt_hardcoded(1:order,:) = yInit;
-
-for ith_sample = (order+1):Ndata
-    yfilt_hardcoded(ith_sample,1) = yfilt_hardcoded(ith_sample,1) - Aflipped(1:order)*yfilt_hardcoded((ith_sample-order):(ith_sample-1),:);
-end
-
-% For debugging
-if 1==flag_do_debug
-    figure(234343);
-    indicesToPlot = (1:Ndata)';
-    clf;
-    h_plot = plot(indicesToPlot, rawdata,'-');
-    hold on;
-    plot(indicesToPlot, yfilt_hardcoded,'Color',h_plot.Color);
-    matlabFilt = filter(B,A,rawdata);
-    plot(indicesToPlot, matlabFilt,'Color',[0 0 0]);
-end
-end % Ends fcn_INTERNAL_hardCodedFilter
 
 %% fcn_INTERNAL_sparsifyPoints
 function sparsePoints = fcn_INTERNAL_sparsifyPoints(densePoints,deltaX)
@@ -726,3 +621,12 @@ end
 
 
 end % Ends fcn_INTERNAL_sparsifyPoints
+
+%% fcn_INTERNAL_findGoalPointsHit
+function goalPointsHit = fcn_INTERNAL_findGoalPointsHit(newStartPoints,allGoalPointsList)
+if ~isempty(allGoalPointsList)
+    uniquePoints = flipud(newStartPoints); % for some silly reason, polyshape takes points "backwards" (?!)
+    region = polyshape(uniquePoints(1:end-1,:),'KeepCollinearPoints', true);
+    goalPointsHit = isinterior(region,allGoalPointsList);
+end
+end % Ends fcn_INTERNAL_findGoalPointsHit

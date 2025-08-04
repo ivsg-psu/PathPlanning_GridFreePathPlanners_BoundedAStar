@@ -159,6 +159,16 @@
 %   %   % difficulty
 % - updated PathClass library to PathClass_v2025_08_03
 %   % * gives option to set jog threshold
+% 
+% 2025_08_04 by s. Brennan, sbrennan@psu.edu
+% - In fcn_BoundedAStar_expandReachabilityWithWind
+%   % * Added cellArrayOfWindExitConditions
+%   % * Added exitCondition output information
+%   % * Added cellArrayOfExitInfo output information
+% - in script_test_fcn_BoundedAStar_expandReachabilityWithWind
+%   % * added exit condition outputs and tests
+%   % * added cellArrayOfExitInfo output info and tests
+%   % * added cellArrayOfWindExitConditions inputs and tests in TEST section
 
 
 % TO-DO:
