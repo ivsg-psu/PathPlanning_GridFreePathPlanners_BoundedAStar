@@ -63,7 +63,8 @@ function vgraph = fcn_Visibility_3dGraphGlobal(verts, start, finish, all_surfels
 %
 % EXAMPLES:
 %
-% See the script: script_test_3d_polytope_multiple
+% See the script: script_test_3d_polytope_multiple,
+% script_test_fcn_Visibility_3dGraphGlobal
 % for a full test suite.
 %
 % This function was written on summer 2023 by Steve Harnett
@@ -80,6 +81,8 @@ function vgraph = fcn_Visibility_3dGraphGlobal(verts, start, finish, all_surfels
 % 2025_07_31 - K. Hayes
 % -- updated format and function header
 % -- added input and debug capabilities
+% 2025_08_04 - K. Hayes
+% -- moving debug plotting into function
 %
 % TO DO:
 %

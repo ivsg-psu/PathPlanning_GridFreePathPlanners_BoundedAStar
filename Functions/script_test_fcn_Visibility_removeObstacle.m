@@ -1,13 +1,11 @@
-% script_test_fcn_Visibility_addObstacle
+% script_test_fcn_Visibility_removeObstacle
 
 % a basic test of adding obstacles to existing visibility graphs
 
 % Revision history
-% 2025_08_01 - K. Hayes, kxh1031@psu.edu
+% 2025_08_04 - K. Hayes, kxh1031@psu.edu
 % -- first write of script, using
-% script_test_fcn_Visibility_clearAndBlockedPoints as a starter
-% 2025_08_04 - K. Hayes
-% -- moved plotting into fcn_Visibility_addObstacle debug
+% script_test_fcn_Visibility_addObstacle as a starter
 
 % TO DO:
 % -- set up fast mode tests
@@ -32,9 +30,9 @@ close all
 
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
-%% DEMO case: add a polytope to the map
+%% DEMO case: remove a polytope from the map
 fig_num = 10001;
-titleString = sprintf('DEMO case: add a polytope to the map');
+titleString = sprintf('DEMO case: remove a polytope from the map');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
@@ -72,14 +70,11 @@ isConcave = [];
 [vgraph,visibility_results]=fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes,all_pts,all_pts,(isConcave),(-1));
 
 % add a polytope
-addPolytope = shrunk_polytopes(1);
-addPolytope.xv = 0.5*addPolytope.xv + 55;
-addPolytope.yv = 0.5*addPolytope.yv - 10;
-addPolytope.vertices = [addPolytope.xv' addPolytope.yv'];
+removePolytopeidx = 1;
 
 % Update vgraph with new polytope added
-[vgraphNew, all_ptsNew, startNew, finishNew, polytopesNew] = fcn_Visibility_addObstacle(...
-    vgraph, all_pts, [], [], shrunk_polytopes, addPolytope, (fig_num));
+[vgraphNew, all_ptsNew, startNew, finishNew, polytopesNew] = fcn_Visibility_removeObstacle(...
+    vgraph, all_pts, [], [], shrunk_polytopes, removePolytopeidx, (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -91,7 +86,7 @@ assert(isnumeric(finishNew));
 assert(isstruct(polytopesNew));
 
 % Check variable sizes
-Npolys = length(shrunk_polytopes)+1;
+Npolys = length(shrunk_polytopes)-1;
 assert(isequal(Npolys,length(polytopesNew))); 
 
 % Make sure plot opened up

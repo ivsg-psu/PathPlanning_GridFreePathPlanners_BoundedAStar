@@ -1,13 +1,11 @@
-% script_test_fcn_Visibility_addObstacle
+% script_test_fcn_Visibility_3dGraphAddPoints
 
-% a basic test of adding obstacles to existing visibility graphs
+% a basic test of adding points to 3d visibility graphs
 
 % Revision history
-% 2025_08_01 - K. Hayes, kxh1031@psu.edu
+% 2025_08_04 - K. Hayes, kxh1031@psu.edu
 % -- first write of script, using
-% script_test_fcn_Visibility_clearAndBlockedPoints as a starter
-% 2025_08_04 - K. Hayes
-% -- moved plotting into fcn_Visibility_addObstacle debug
+% script_test_fcn_Visibility_addObstacle as a starter
 
 % TO DO:
 % -- set up fast mode tests
