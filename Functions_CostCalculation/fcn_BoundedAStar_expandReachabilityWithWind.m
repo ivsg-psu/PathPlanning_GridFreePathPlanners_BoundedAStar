@@ -541,6 +541,7 @@ if flag_do_plots
 
         plot(thisExpansion(:,1),thisExpansion(:,2),'-',...
             'Color',thisColor,'MarkerSize',30, 'LineWidth', 0.5, 'DisplayName',sprintf('Expansion: %.0f',ith_expansion),'HandleVisibility','off');
+        pause(0.1);
     end
 
     % Plot the final output
@@ -626,7 +627,8 @@ end % Ends fcn_INTERNAL_sparsifyPoints
 function goalPointsHit = fcn_INTERNAL_findGoalPointsHit(newStartPoints,allGoalPointsList)
 if ~isempty(allGoalPointsList)
     uniquePoints = flipud(newStartPoints); % for some silly reason, polyshape takes points "backwards" (?!)
-    region = polyshape(uniquePoints(1:end-1,:),'KeepCollinearPoints', true);
+    uniquePoints = unique(uniquePoints,'rows','stable');
+    region = polyshape(uniquePoints(1:end-1,:),'KeepCollinearPoints', true,'Simplify', false);
     goalPointsHit = isinterior(region,allGoalPointsList);
 end
 end % Ends fcn_INTERNAL_findGoalPointsHit

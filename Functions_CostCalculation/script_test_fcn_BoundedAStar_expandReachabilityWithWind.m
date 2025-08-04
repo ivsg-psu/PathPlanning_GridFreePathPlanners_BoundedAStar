@@ -91,14 +91,20 @@ figure(figNum); clf;
 [normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData;
 
 % Call graph generation function
-radius = 0.5;
+radius = 0.3;
 maxWindSpeed = 1;
 
 windFieldU = normalizedEastWind*maxWindSpeed;
 windFieldV = normalizedNorthWind*maxWindSpeed;
 startPoints = [0 0];
 flagWindRoundingType = 1;
-cellArrayOfWindExitConditions = [];
+
+cellArrayOfWindExitConditions = cell(5,1);
+cellArrayOfWindExitConditions{1} = 250; % Nsteps
+cellArrayOfWindExitConditions{2} = 1;   % flagStopIfEntireFieldCovered
+cellArrayOfWindExitConditions{3} = 0.2; % toleranceToStopIfSameResult
+cellArrayOfWindExitConditions{4} = [];  % allGoalPointsList
+cellArrayOfWindExitConditions{5} = 0;   % flagStopIfHitOneGoalPoint
 
 % Call function
 [reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
