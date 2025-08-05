@@ -180,11 +180,25 @@
 %   % * script_test_fcn_Visibility_removeObstacle
 %   % * script_test_fcn_Visibility_3dGraphGlobal
 %   % * script_test_fcn_Visibility_3dGraphAddPoints
+%   % * script_test_fcn_Visibility_selfBlockedPoints
 % - adding debug plotting for visibility fcns. changes made to 
 %   % * fcn_Visibility_addObstacle
 %   % * fcn_Visibility_removeObstacle
 %   % * fcn_Visibility_3dGraphGlobal
 %   % * fcn_Visibility_3dGraphAddPoints
+%   % * fcn_Visibility_selfBlockedPoints
+% - continued cleaning of other BoundedAStar fcns
+%   % * fcn_BoundedAStar_polytopesGenerateAllPtsTable
+% - created test scripts for other BoundedAStar fcns
+%   % * script_test_fcn_BoundedAStar_polytopesGenerateAllPtsTable
+%   % * script_test_fcn_BoundedAStar_straightPlanner
+%   % * script_test_fcn_BoundedAStar_polytopesNearLine
+% - DEPRECATED: fcn_polytopes_generate_all_pts_table
+%   % * now fcn_BoundedAStar_polytopesGenerateAllPtsTable
+% - DEPRECATED: fcn_algorithm_straight_planner
+%   % * now fcn_BoundedAStar_straightPlanner
+% - DEPRECATED: fcn_polytope_calculation_polytopes_near_the_line
+%   % * now fcn_BoundedAStar_polytopesNearLine
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
@@ -197,7 +211,7 @@
 % -- add fcn to plot visibility graph
 % -- fast modes for visibility test scripts
 % 2025_08_05 - K. Hayes
-% -- move all_pts matrix generation into designated function
+% -- replace manual all_pts generation with fcn in visibility fcns
 
 
 clear library_name library_folders library_url

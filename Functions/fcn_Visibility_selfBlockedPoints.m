@@ -65,6 +65,8 @@ function [cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...
 % 2025_07_31 - K. Hayes
 % -- reformatted function and updated header
 % -- added input and debug capabilities
+% 2025_08_05 - K. Hayes
+% -- added plotting capabilities to fcn debug section
 
 % TO DO
 % -- implement contingency for concave polytopes
@@ -211,6 +213,26 @@ self_blocked_cost = cur_poly.cost;
 %                            __/ |
 %                           |___/
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+if flag_do_plots
+    figure(fig_num)
+    hold on
+    
+    % Plot current polytope
+    plotFormat.Color = 'blue';
+    plotFormat.LineWidth = 2;
+    plotFormat.DisplayName = 'Current Polytope';
+    f = fcn_MapGen_plotPolytopes(polytopes(cur_obs_id),plotFormat,[1 0 0 0 0.5],(fig_num));
+    
+    % Plot current point
+    plot(cur_pt(1),cur_pt(2),'gx','MarkerSize',15,'LineWidth',2,'DisplayName','Current point')
+
+    % Plot blocked points
+    plot(pts_blocked_by_self(:,1),pts_blocked_by_self(:,2),'rx','MarkerSize',15,'LineWidth',2,'DisplayName','Self-blocked points');
+
+    legend
+end
+
 
 end
 
