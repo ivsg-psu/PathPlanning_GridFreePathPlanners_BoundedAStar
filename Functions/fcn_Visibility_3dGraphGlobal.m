@@ -140,12 +140,12 @@ if 0==flag_max_speed
         narginchk(7,MAX_NARGIN);
 
         % Check the start input, make sure it has 3 columns
-        fcn_DebugTools_checkInputsToFunctions(...
-            start, '3column_of_numbers');
+        % fcn_DebugTools_checkInputsToFunctions(...
+        %     start, '3column_of_numbers');
 
         % Check the finish input, make sure it has 3 columns
-        fcn_DebugTools_checkInputsToFunctions(...
-            finish, '3column_of_numbers');
+        % fcn_DebugTools_checkInputsToFunctions(...
+        %     finish, '3column_of_numbers');
 
         % Check the all_surfels input, make sure it has 9 columns
         fcn_DebugTools_checkInputsToFunctions(...
@@ -315,6 +315,26 @@ end
 %                           |___/
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
+if flag_do_plots
+    figure(fig_num)
+    hold on
+    % Plot timespace polytopes
+    for i = 1:size(all_surfels,1)
+        fill3([all_surfels(i,1) all_surfels(i,4) all_surfels(i,7)], [all_surfels(i,2) all_surfels(i,5) all_surfels(i,8)], [all_surfels(i,3) all_surfels(i,6) all_surfels(i,9)],rand(1,3),'FaceAlpha',0.3);
+    end
+    
+    % Plot 3d vgraph
+    for i = 1:size(vgraph,1)
+        for j = 1:size(vgraph,1)
+            if vgraph(i,j) == 1
+                plot3([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],[all_pts(i,3),all_pts(j,3)],'-g')
+            end
+        end
+    end
+    INTERNAL_fcn_format_timespace_plot();
+    view(3)
+end
+
 end
 
 
@@ -331,3 +351,27 @@ end
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
+function INTERNAL_fcn_format_timespace_plot()
+% define figure properties
+% opts.width      = 8.8;
+% opts.height     = 6;
+% opts.fontType   = 'Times New Roman';
+% opts.fontSize   = 14;
+% fig = gcf;
+% % scaling
+% fig.Units               = 'centimeters';
+% fig.Position(3)         = opts.width;
+% fig.Position(4)         = opts.height;
+
+% % set text properties
+% set(fig.Children, ...
+%     'FontName',     'Times New Roman', ...
+%     'FontSize',     14);
+
+% remove unnecessary white space
+set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+xlabel('x [km]')
+ylabel('y [km]')
+zlabel('t [min]')
+view([36 30])
+end

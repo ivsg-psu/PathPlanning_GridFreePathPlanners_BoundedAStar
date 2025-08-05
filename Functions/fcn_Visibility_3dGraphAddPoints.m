@@ -8,7 +8,7 @@ function new_vgraph = fcn_Visibility_3dGraphAddPoints(old_verts, start, finish, 
 % in time or traverse too much distance in too short of a time
 %
 % FORMAT:
-% vgraph = fcn_Visibility_3dGraphAddPoints(verts, start, finish, all_surfels, speed_limit, new_pts, old_vgraph, (fig_num))
+% new_vgraph = fcn_Visibility_3dGraphAddPoints(verts, start, finish, all_surfels, speed_limit, new_pts, old_vgraph, (fig_num))
 %
 % INPUTS:
 %
@@ -72,10 +72,13 @@ function new_vgraph = fcn_Visibility_3dGraphAddPoints(old_verts, start, finish, 
 % 2025_07_31 - K. Hayes
 % -- updated function formatting and header
 % -- added input and debug capabilities
+% 2025_08_05 - K. Hayes
+% -- moved plotting into function debug section
 %
 % TO DO:
 %
-% -- fill in to-do items here.
+% -- figure out what's going on with adding points vs adding polytopes
+% -- update header
 
 %% Debugging and Input checks
 % Check if flag_max_speed set. This occurs if the fig_num variable input
@@ -223,7 +226,7 @@ end
         end
     end
 
-    vgraph_path_points_only = fcn_Visibility_3dGraphGlobal(new_pts(:,1:3), [], [], all_surfels, speed_limit); % need to check new path points against themselves
+    vgraph_path_points_only = fcn_Visibility_3dGraphGlobal(new_pts(:,1:3), [], [], all_surfels, speed_limit, [], 5); % need to check new path points against themselves
 
     % need something like D = [[A; B], [B'; C]]
     new_vgraph = [[old_vgraph; new_rows], [new_rows'; vgraph_path_points_only]];
@@ -258,7 +261,54 @@ end
 %                           |___/
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
+if flag_do_plots
+    figure(fig_num)
+
+    % Plot previous version of visibility graph
+    subplot(1,2,1)
+    hold on
+    % Plot timespace polytopes
+    for i = 1:size(all_surfels,1)
+        fill3([all_surfels(i,1) all_surfels(i,4) all_surfels(i,7)], [all_surfels(i,2) all_surfels(i,5) all_surfels(i,8)], [all_surfels(i,3) all_surfels(i,6) all_surfels(i,9)],rand(1,3),'FaceAlpha',0.3);
+    end
+    
+    % Plot original 3d vgraph
+    for i = 1:size(old_vgraph,1)
+        for j = 1:size(old_vgraph,1)
+            if old_vgraph(i,j) == 1
+                plot3([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],[all_pts(i,3),all_pts(j,3)],'-g')
+            end
+        end
+    end
+    view(3)
+    INTERNAL_fcn_format_timespace_plot();
+    title('Original vgraph')
+
+    % Plot new version with new points
+    subplot(1,2,2)
+    % Plot timespace polytopes
+    hold on
+    for i = 1:size(all_surfels,1)
+        fill3([all_surfels(i,1) all_surfels(i,4) all_surfels(i,7)], [all_surfels(i,2) all_surfels(i,5) all_surfels(i,8)], [all_surfels(i,3) all_surfels(i,6) all_surfels(i,9)],rand(1,3),'FaceAlpha',0.3);
+    end
+    
+    % Plot new 3d vgraph
+    all_pts_new = [all_pts; new_pts];
+    for i = 1:size(new_vgraph,1)
+        for j = 1:size(new_vgraph,1)
+            if new_vgraph(i,j) == 1
+                plot3([all_pts_new(i,1),all_pts_new(j,1)],[all_pts_new(i,2),all_pts_new(j,2)],[all_pts_new(i,3),all_pts_new(j,3)],'-g')
+            end
+        end
+    end
+    view(3)
+    INTERNAL_fcn_format_timespace_plot();
+    title('New vgraph')
 end
+
+end
+
+
 
 
 
@@ -274,3 +324,27 @@ end
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
+function INTERNAL_fcn_format_timespace_plot()
+% define figure properties
+% opts.width      = 8.8;
+% opts.height     = 6;
+% opts.fontType   = 'Times New Roman';
+% opts.fontSize   = 14;
+% fig = gcf;
+% % scaling
+% fig.Units               = 'centimeters';
+% fig.Position(3)         = opts.width;
+% fig.Position(4)         = opts.height;
+
+% % set text properties
+% set(fig.Children, ...
+%     'FontName',     'Times New Roman', ...
+%     'FontSize',     14);
+
+% remove unnecessary white space
+set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+xlabel('x [km]')
+ylabel('y [km]')
+zlabel('t [min]')
+view([36 30])
+end

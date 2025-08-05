@@ -6,6 +6,8 @@
 % 2025_08_04 - K. Hayes, kxh1031@psu.edu
 % -- first write of script, using
 % script_test_fcn_Visibility_addObstacle as a starter
+% 2025_08_05 - K. Hayes 
+% -- moved plotting into fcn_Visibility_3dGraphAddPoints
 
 % TO DO:
 % -- set up fast mode tests
@@ -30,11 +32,14 @@ close all
 
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
-%% DEMO case: add a polytope to the map
+%% DEMO case: add new points to the map
 fig_num = 10001;
-titleString = sprintf('DEMO case: add a polytope to the map');
+titleString = sprintf('DEMO case: add a new points to the map');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
+
+% NOTE: basic structure of this demo lifted from
+% script_test_3d_polytope_multiple
 
 % Create polytope field
 polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 25],[], ([100 100]), (-1));
@@ -45,39 +50,33 @@ trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0.1 0.1 99.9 99.9
 % Shrink polytopes to form obstacle field
 shrunk_polytopes = fcn_MapGen_polytopesShrinkEvenly(trim_polytopes, 2.5, (-1));
 
-% Get x and y coordinates of each polytope
-xvert = [shrunk_polytopes.xv]';
-yvert = [shrunk_polytopes.yv]';
-point_tot = length(xvert);
+% Make obstacles in timespace from 2d polytopes
+max_translation_distance = 5;
+final_time = 20;
+time_space_polytopes = fcn_BoundedAStar_makeTimespacePolyhedrafromPolygons(shrunk_polytopes, max_translation_distance, final_time);
+time_space_polytopes = fcn_BoundedAStar_makeFacetsFromVerts(time_space_polytopes);
 
-% Get polytope ids
-beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-curpt = 0;
-for poly = 1:size(shrunk_polytopes,2)
-    polyVerts = unique(shrunk_polytopes(poly).vertices,'stable','rows');
-    num_verts = size(polyVerts,1);
-    shrunk_polytopes(poly).obs_id = ones(1,num_verts)*poly;
-    beg_end([curpt+1,curpt+num_verts]) = 1;
-    curpt = curpt+num_verts;
-end
-totalObsId = [shrunk_polytopes.obs_id]';
+% Make surfels from timespace polytopes
+all_surfels = fcn_BoundedAStar_makeTriangularSurfelsFromFacets(time_space_polytopes);
 
-% Create all_pts matrix
-all_pts = [xvert, yvert, [1:point_tot]', totalObsId, beg_end'];
+% Interpolate vertices in time to form 3d obstacles
+start = [0 0.5 0];
+finish = [0.7 0.2 20]; % moving finish
+dt = 5;
 
-% Create visibility graph
-isConcave = [];
-[vgraph,visibility_results]=fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes,all_pts,all_pts,(isConcave),(-1));
+[verts, time_space_polytopes] = fcn_BoundedAStar_interpolatePolytopesInTime(time_space_polytopes,dt);
 
-% add a polytope
-addPolytope = shrunk_polytopes(1);
-addPolytope.xv = 0.5*addPolytope.xv + 55;
-addPolytope.yv = 0.5*addPolytope.yv - 10;
-addPolytope.vertices = [addPolytope.xv' addPolytope.yv'];
+% Recover vertices of polytopes in x,y,t + store all_pts 
+verts = verts(:,1:3);
+all_pts = [verts; start; finish];
 
-% Update vgraph with new polytope added
-[vgraphNew, all_ptsNew, startNew, finishNew, polytopesNew] = fcn_Visibility_addObstacle(...
-    vgraph, all_pts, [], [], shrunk_polytopes, addPolytope, (fig_num));
+% Form vgraph
+speed_limit = 1;
+vgraph = fcn_Visibility_3dGraphGlobal(verts, start, finish, all_surfels, speed_limit, time_space_polytopes, dt,(-1));
+
+% Add new points to map
+new_pts = [80 40 10; 50 15 0];
+new_vgraph = fcn_Visibility_3dGraphAddPoints(verts, start, finish, all_surfels, speed_limit, new_pts, vgraph, (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 

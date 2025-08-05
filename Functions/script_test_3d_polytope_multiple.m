@@ -66,7 +66,7 @@ for time_sample_iter = 1:number_of_time_samples
     starts = [start(1)*ones(num_finish_pts,1) start(2)*ones(num_finish_pts,1) start(3)*ones(num_finish_pts,1)];
 
     %% interpolate vertices in time and form all_pts matrix
-    [verts, time_space_polytopes] = fcn_interpolate_polytopes_in_time(time_space_polytopes,dt);
+    [verts, time_space_polytopes] = fcn_BoundedAStar_interpolatePolytopesInTime(time_space_polytopes,dt);
 
     verts = verts(:,1:3);
     all_pts = [verts; start; finish];

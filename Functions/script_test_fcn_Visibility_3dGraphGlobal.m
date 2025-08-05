@@ -30,21 +30,52 @@ close all
 
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
-%% DEMO case: add a polytope to the map
+%% DEMO case: generate a 3d visibility graph
 fig_num = 10001;
-titleString = sprintf('DEMO case: add a polytope to the map');
+titleString = sprintf('DEMO case: generate a 3d visibility graph');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
+% NOTE: basic structure of this demo lifted from
+% script_test_3d_polytope_multiple
+
+% Create polytope field
+polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 25],[], ([100 100]), (-1));
+
+% Trim polytopes on edge of boundary
+trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0.1 0.1 99.9 99.9], (-1));
+
+% Shrink polytopes to form obstacle field
+shrunk_polytopes = fcn_MapGen_polytopesShrinkEvenly(trim_polytopes, 2.5, (-1));
+
+% Make obstacles in timespace from 2d polytopes
+max_translation_distance = 5;
+final_time = 20;
+time_space_polytopes = fcn_BoundedAStar_makeTimespacePolyhedrafromPolygons(shrunk_polytopes, max_translation_distance, final_time);
+time_space_polytopes = fcn_BoundedAStar_makeFacetsFromVerts(time_space_polytopes);
+
+% Make surfels from timespace polytopes
+all_surfels = fcn_BoundedAStar_makeTriangularSurfelsFromFacets(time_space_polytopes);
+
+% Interpolate vertices in time to form 3d obstacles
+start = [0 0.5 0];
+finish = [0.7 0.2 20]; % moving finish
+dt = 5;
+
+[verts, time_space_polytopes] = fcn_BoundedAStar_interpolatePolytopesInTime(time_space_polytopes,dt);
+
+% Recover vertices of polytopes in x,y,t + store all_pts 
+verts = verts(:,1:3);
+all_pts = [verts; start; finish];
+
+% Form vgraph
+speed_limit = 1;
+vgraph = fcn_Visibility_3dGraphGlobal(verts, start, finish, all_surfels, speed_limit, time_space_polytopes, dt,(fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(isnumeric(vgraphNew));
-assert(isnumeric(all_ptsNew));
-assert(isnumeric(startNew));
-assert(isnumeric(finishNew));
-assert(isstruct(polytopesNew));
+assert(isnumeric(vgraph));
 
 % Check variable sizes
 Npolys = length(shrunk_polytopes)+1;
