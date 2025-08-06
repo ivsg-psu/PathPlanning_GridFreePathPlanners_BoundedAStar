@@ -136,7 +136,7 @@ end
 if flag_do_debug
     st = dbstack; %#ok<*UNRCH>
     fprintf(1,'STARTING function: %s, in file: %s\n',st(1).name,st(1).file);
-    debug_figNum = 999978; 
+    debug_figNum = 3445467; 
 else
     debug_figNum = []; 
 end
@@ -342,7 +342,7 @@ else
     polyPointsRaw = startPoints + radius*D.*unitProjectionVectors;
 
     % Clean up points
-    goodPoints = averagePositionVectorLengths>0.5;
+    goodPoints = averagePositionVectorLengths>0.1;
     polyPoints = polyPointsRaw(goodPoints,:);
 end
 

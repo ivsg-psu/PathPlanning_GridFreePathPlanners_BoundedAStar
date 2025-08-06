@@ -271,6 +271,62 @@ assert(isequal(size(cellArrayOfExitInfo),[2 1]));
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
 
+%% DEMO case: TSP test case
+figNum = 10006;
+titleString = sprintf('DEMO case:  TSP test case');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+% Load starting data
+[normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData(4);
+
+% Call graph generation function
+radius = 0.4;
+maxWindSpeed = 1;
+
+windFieldU = normalizedEastWind*maxWindSpeed;
+windFieldV = normalizedNorthWind*maxWindSpeed;
+startPoints = [-6 6];
+flagWindRoundingType = 1;
+
+xRange = windFieldX(end)-windFieldX(1);
+yRange = windFieldY(end)-windFieldY(1);
+
+% Ngoals = 30;
+% rng(1);
+% allGoalPointsList = rand(Ngoals,2).*[xRange yRange] + ones(Ngoals,1)*[windFieldX(1) windFieldY(1)];
+allGoalPointsList = [0 0; 6 6; 8 -4; -6 -6];
+
+cellArrayOfWindExitConditions = cell(5,1);
+cellArrayOfWindExitConditions{1} = 100; % Nsteps
+cellArrayOfWindExitConditions{2} = 1;   % flagStopIfEntireFieldCovered
+cellArrayOfWindExitConditions{3} = []; % toleranceToStopIfSameResult
+cellArrayOfWindExitConditions{4} = allGoalPointsList;  % allGoalPointsList
+cellArrayOfWindExitConditions{5} = 0;   % flagStopIfHitOneGoalPoint
+
+% Call function
+[reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), (figNum));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(reachableSet));
+assert(isnumeric(exitCondition));
+assert(iscell(cellArrayOfExitInfo));
+
+% Check variable sizes
+assert(size(reachableSet,1)>=3); 
+assert(size(reachableSet,2)==2);
+assert(size(exitCondition,1)==1); 
+assert(size(exitCondition,2)==1);
+assert(isequal(size(cellArrayOfExitInfo),[2 1]));
+
+% Check variable values
+% (too difficult - randomly generated)
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
 %% Test cases start here. These are very simple, usually trivial
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

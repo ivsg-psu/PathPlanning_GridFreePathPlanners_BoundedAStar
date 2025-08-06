@@ -99,8 +99,8 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAS
 %     cellArrayOfExitInfo: details on the exit condition, with following
 %     cell contents:
 %     1: number of iterations completed
-%     2: goal points hit (as flags). Returns empty if allGoalPointsList is
-%     empty.
+%     2: goal points hit (as counts of sim steps to hit that point).
+%     Returns empty if allGoalPointsList is empty.
 %
 % DEPENDENCIES:
 %
@@ -128,6 +128,9 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAS
 %   % * Added cellArrayOfWindExitConditions
 %   % * Added exitCondition output information
 %   % * Added cellArrayOfExitInfo output information
+% 2025_08_05 by S. Brennan
+%   % * Changed flag outputs to count sim steps to hit goal, not just
+%   %   % binary
 
 % TO-DO
 % -- when wind is VERY high, higher than self speed, the set pushes away
@@ -273,6 +276,14 @@ if flag_do_debug
     % Plot the start points
     plot(startPoints(:,1),startPoints(:,2),'.-','Color',[0 0 1],'MarkerSize',30,'DisplayName','Input: startPoints');
 
+    if ~isempty(allGoalPointsList)
+        plot(allGoalPointsList(:,1),allGoalPointsList(:,2),'.','Color',[1 0 1],'MarkerSize',40,'LineWidth', 2, 'DisplayName','Input: allGoalPointsList');
+        
+        % Label the points
+        for ith_point = 1:length(allGoalPointsList(:,1))
+            text(allGoalPointsList(ith_point,1),allGoalPointsList(ith_point,2),sprintf('%.0f',ith_point));
+        end
+    end
 end
 
 %%%%%
@@ -302,14 +313,15 @@ deltaX = windFieldX(2) - windFieldX(1);
 
 allExpansions = cell(Nsteps,1);
 
+if ~isempty(allGoalPointsList)
+    stepsWhenGoalPointsHit = nan(length(allGoalPointsList(:,1)),1);
+end
+
 ith_step = 0;
 flagContinueExpansion = 1;
 while 1==flagContinueExpansion
     ith_step = ith_step+1;
     allExpansions{ith_step,1} = startPoints;
-    % if ith_step ==35
-    %     disp('Stop here');
-    % end
 
     % Call function to find reachable set on this time step
     reachableSet = fcn_BoundedAStar_reachabilityWithInputs(...
@@ -351,7 +363,7 @@ while 1==flagContinueExpansion
     end
 
     % Downsample the set boundary
-    startPointsSparse = fcn_INTERNAL_sparsifyPoints(noJogPoints,deltaX);
+    startPointsSparse = fcn_INTERNAL_sparsifyPoints(noJogPoints,deltaX*0.5);
 
     if flag_do_debug && 1==1
         figure(debug_figNum);
@@ -407,14 +419,18 @@ while 1==flagContinueExpansion
     end
     if ~isempty(allGoalPointsList)
         goalPointsHit = fcn_INTERNAL_findGoalPointsHit(newStartPoints,allGoalPointsList);
-        if all(goalPointsHit==1,'all')
-            flagContinueExpansion = 0;
-            exitCondition = 4;
-        end  
-        if 1==flagStopIfHitOneGoalPoint && any(goalPointsHit==1,'all')
-            flagContinueExpansion = 0;
-            exitCondition = 5;
-        end           
+        pointsFoundThisSimStep = find(isnan(stepsWhenGoalPointsHit) & goalPointsHit);
+        if ~isempty(pointsFoundThisSimStep)
+            stepsWhenGoalPointsHit(pointsFoundThisSimStep) = ith_step;
+            if all(goalPointsHit==1,'all')
+                flagContinueExpansion = 0;
+                exitCondition = 4;
+            end
+            if 1==flagStopIfHitOneGoalPoint && any(goalPointsHit==1,'all')
+                flagContinueExpansion = 0;
+                exitCondition = 5;
+            end
+        end
     end
 
 end
@@ -428,7 +444,7 @@ cellArrayOfExitInfo = cell(2,1);
 cellArrayOfExitInfo{1,1} = ith_step+1;
 
 if ~isempty(allGoalPointsList)
-    goalPointsHit = fcn_INTERNAL_findGoalPointsHit(newStartPoints,allGoalPointsList);
+    goalPointsHit = stepsWhenGoalPointsHit;
 else
     goalPointsHit = [];
 end
