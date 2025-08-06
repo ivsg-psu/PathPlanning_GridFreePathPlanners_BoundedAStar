@@ -1,9 +1,9 @@
-% script_test_fcn_BoundedAStar_straightPlanner
+% script_test_fcn_BoundedAStar_generateCostGraph
 
-% a basic test of straight-line planner algorithm
+% a basic test of cost graph and heuristic vector generation
 
 % Revision history
-% 2025_08_05 - K. Hayes, kxh1031@psu.edu
+% 2025_08_06 - K. Hayes, kxh1031@psu.edu
 % -- first write of script
 
 % TO DO:
@@ -29,7 +29,7 @@ close all
 
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
-%% DEMO case: plan a straight line path through a map
+%% DEMO case: generate a cost graph and heuristic vector 
 fig_num = 10001;
 titleString = sprintf('DEMO case: plan a straight line path through a map');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
@@ -52,12 +52,12 @@ point_tot = length(xvert);
 % Create start and finish points
 start_xy = [0 50];
 finish_xy = [100 50];
+mode = 'xy spatial only';
 
-[all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_xy, finish_xy, (fig_num));
+[all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_xy, finish_xy, -1);
 
-% Call function to plan a straight line path
-[cost,distance_in_polys,distance_outside_polys,num_polys_traversed] = ...
-    fcn_BoundedAStar_straightPlanner(start,finish,all_pts,shrunk_polytopes,(fig_num));
+% Find cost graph
+[cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
 
 sgtitle(titleString, 'Interpreter','none');
 

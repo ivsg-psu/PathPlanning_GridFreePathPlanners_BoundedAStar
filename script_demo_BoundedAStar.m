@@ -199,6 +199,13 @@
 %   % * now fcn_BoundedAStar_straightPlanner
 % - DEPRECATED: fcn_polytope_calculation_polytopes_near_the_line
 %   % * now fcn_BoundedAStar_polytopesNearLine
+%
+% 2025_08_06 by K. Hayes
+% - continued cleaning BoundedAStar fcns
+% - DEPRECATED: fcn_algorithm_generate_cost_graph
+%   % * now fcn_BoundedAStar_generateCostGraph 
+% - added test scripts:
+%   % * script_test_fcn_BoundedAStar_generateCostGraph
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
