@@ -150,17 +150,17 @@ end
 % Defaults
 cellArrayOfSearchOptions = cell(5,1);
 cellArrayOfSearchOptions{1} = 100; % Nsteps
-cellArrayOfSearchOptions{2} = 1;   % flagStopIfEntireFieldCovered
-cellArrayOfSearchOptions{3} = 4*(windFieldX(2)-windFieldX(1)); % toleranceToStopIfSameResult
-cellArrayOfSearchOptions{4} = [];  % allGoalPointsList
-cellArrayOfSearchOptions{5} = 0;   % flagStopIfHitOneGoalPoint
+%cellArrayOfSearchOptions{2} = 1;   % flagStopIfEntireFieldCovered
+%cellArrayOfSearchOptions{3} = 4*(windFieldX(2)-windFieldX(1)); % toleranceToStopIfSameResult
+%cellArrayOfSearchOptions{4} = [];  % allGoalPointsList
+%cellArrayOfSearchOptions{5} = 0;   % flagStopIfHitOneGoalPoint
 if 8 <= nargin
     temp = varargin{1};
     if ~isempty(temp)
         cellArrayOfSearchOptions = temp;
     end
 end
-% Nsteps = cellArrayOfSearchOptions{1};
+Nsteps = cellArrayOfSearchOptions{1};
 % flagStopIfEntireFieldCovered = cellArrayOfSearchOptions{2};
 % toleranceToStopIfSameResult = cellArrayOfSearchOptions{3};
 % temp = cellArrayOfSearchOptions{4};
@@ -285,7 +285,7 @@ for ith_point = 1:Npoints
     % Check to see if the goal points are feasible
     flagWindRoundingType = 1;
     cellArrayOfWindExitConditions = cell(5,1);
-    cellArrayOfWindExitConditions{1} = 150; % Nsteps
+    cellArrayOfWindExitConditions{1} = Nsteps; % Nsteps
     cellArrayOfWindExitConditions{2} = 1;   % flagStopIfEntireFieldCovered
     cellArrayOfWindExitConditions{3} = [];   % toleranceToStopIfSameResult
     cellArrayOfWindExitConditions{4} = tempGoalPoints;  % allGoalPointsList
@@ -367,13 +367,17 @@ NgoodGoals = length(feasiblePointNumbers(:,1));
 accumulatedCosts = nan(NgoodGoals+1,1);
 flagsCityWasVisited = zeros(NgoodGoals,1);
 visitSequence = nan(NgoodGoals+1,1);
+
+% Initialize values
 visitSequence(1,1) = 1;
 flagsCityWasVisited(1,1) = 1;
 accumulatedCosts(1,1) = 0;
+
+
 for ith_visit = 2:NgoodGoals
     previousCity = visitSequence(ith_visit-1,1);
-    previousCosts = feasibleCostsFromTo(previousCity,:);
     unvisitedCities = find(flagsCityWasVisited==0);
+    previousCosts = feasibleCostsFromTo(previousCity,:);
     unvisitedCosts = previousCosts(:,unvisitedCities);
     [minCost,indexMin] = min(unvisitedCosts);
     accumulatedCosts(ith_visit,1) = accumulatedCosts(ith_visit-1,1)+minCost;
@@ -386,10 +390,11 @@ end
 visitSequence(end,:) = 1;
 accumulatedCosts(end,1) = accumulatedCosts(end-1,1) + feasibleCostsFromTo(thisCity,1);
 
+URHERE - why is accumulated cost here lower than best TSP solution later?
+
 maximumSimLength = accumulatedCosts(end,1);
 
-% Plot result at end
-
+% Plot the greedy result
 if flag_do_debug
     figure(debug_figNum);
 
@@ -402,13 +407,121 @@ if flag_do_debug
     end
 end
 
-% traversalStack is an array used to keep track of which cities have been
-% visited and the accumulated cost. It is arranged as follows:
-% 
-%  ID_city1 COST_city1      flags_visited_1_to_Ncities
-%  ID_city2 COST_city12     flags_visited_1_to_Ncities
+%%%%
+% Run the TSP solver
+% The maximum problem size is the max number of sim steps times the number
+% of cities, e.g. a sim starting for every city, at every time step
+maxSolutions = maximumSimLength*NgoodGoals;
 
-traversalStack = nan(NgoodGoals+1,NgoodGoals+1);
+% Solutions have the form:
+% 1x1 (accumulated cost) Ngx1 (flags city was visited)  Ngx1 (visit sequence) 1x1 (flagHeadingHome) 
+solutions = nan(maxSolutions,2+NgoodGoals*2);
+
+% Initialize values
+currentBestExpansionSolution = 1;
+currentBestCity = 1;
+solutions(currentBestExpansionSolution,1) = 0;
+solutions(currentBestExpansionSolution,1+NgoodGoals+1) = currentBestCity;
+
+flagKeepGoing = 1;
+% Set an upper bound on allowable searches. Once a viable solution is
+% found, it sets an upper cost limit. There's no reason to keep branches in
+% the search that are higher than this limit. This costCropLimit gets
+% updated as new solutions found.
+costCropLimit = inf; 
+
+while 1==flagKeepGoing
+
+    % Pull out all the details from this solutions row
+    previousCost                = solutions(currentBestExpansionSolution,1);
+    previousFlagsCityWasVisited = solutions(currentBestExpansionSolution,2:1+NgoodGoals);
+    previousVisitSequence       = solutions(currentBestExpansionSolution,2+NgoodGoals:(1+2*NgoodGoals));
+    flagHeadingHome             = solutions(currentBestExpansionSolution,end);
+
+    visitSequence = previousVisitSequence(~isnan(previousVisitSequence));
+    currentBestCity = visitSequence(end);
+    
+    % Update the previous city's flag to indicate that city was visited
+    previousFlagsCityWasVisited(currentBestCity) = 1; % Flag update
+
+    % Find which cities were not visited
+    unvisitedCities = find(isnan(previousFlagsCityWasVisited));
+    Nunvisited = length(unvisitedCities);
+    Nvisited   = NgoodGoals-Nunvisited;
+
+    % Find the visit list. This is the list of cities that have been
+    % visited thus far
+    if length(visitSequence)~=Nvisited
+        error('Discrepancy found in TSP solver');
+    end
+
+    if Nunvisited==0 && 1==flagHeadingHome
+        flagKeepGoing = 0;
+        % This solution is the best one as it has minimum time, and
+        % completes all the circuit
+    else
+        if Nunvisited==0
+            flagHeadingHome = 1;
+            % Force the costs to be calculated to go back to "home"
+            unvisitedCities = 1;
+            Nunvisited = 1; % Need to update this so that the repmat operation that follows works.
+
+        end
+        % Pull costs to go from previous city to all the next ones
+        costsPreviousCityToTheseCities = feasibleCostsFromTo(currentBestCity,:);
+        unvisitedCosts = previousCost + costsPreviousCityToTheseCities(:,unvisitedCities);
+
+        if flagHeadingHome==1
+            % Update the cost crop limit
+            costCropLimit = min(costCropLimit,unvisitedCosts);
+        end
+
+        % Convert the cost search options into rows to add to solutionRows
+        % queue. Start by creating a "copy" of all the current city
+        solutionRows = repmat([nan previousFlagsCityWasVisited previousVisitSequence flagHeadingHome], Nunvisited,1);
+
+        % Fill in the costs for the cities that can be visited
+        solutionRows(:,1) = unvisitedCosts';
+        
+        % Set the visit sequence to indicate which cities were added. NOTE:
+        % for the last "home" city, this will put 1 into the last column
+        solutionRows(:,1+NgoodGoals+Nvisited+1) = unvisitedCities';
+
+        % Push results into solutions for searching
+        rowStartToFill = find(isnan(solutions(:,1)),1);
+        rowEndToFill   = rowStartToFill+Nunvisited-1;
+        solutions(rowStartToFill:rowEndToFill,:) = solutionRows;
+
+        % Remove the row that was just searched
+        solutions(currentBestExpansionSolution,:) = [];
+
+        % Remove any queued solutions higher than the current completed
+        % cost
+        if ~isinf(costCropLimit)
+            solutionRowsToRemove = solutions(:,1)>costCropLimit;
+            solutions(solutionRowsToRemove,:) = [];
+        end
+
+        
+        % Find next best city
+        [~,currentBestExpansionSolution] = min(solutions(:,1));
+    end
+end
+
+orderedVisitSequence = [visitSequence'; 1];
+
+% Plot the TSP result
+if flag_do_debug
+    figure(debug_figNum);
+
+    pointSequence = feasibleAllPoints(orderedVisitSequence,:);
+    % Plot the ordered visit sequence
+    for ith_point = 1:NgoodGoals
+        arrowMagnitude = pointSequence(ith_point+1,:)-pointSequence(ith_point,:);
+        quiver(pointSequence(ith_point,1),pointSequence(ith_point,2),arrowMagnitude(1,1),arrowMagnitude(1,2),0,...
+            'LineWidth',5,'Color',[0 1 0]);
+    end
+end
 
 
 %% Plot the results (for debugging)?
@@ -424,6 +537,8 @@ traversalStack = nan(NgoodGoals+1,NgoodGoals+1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_do_plots
+
+    URHERE
     % Prep the figure for plotting
     temp_h = figure(figNum);
     flag_rescale_axis = 0;
