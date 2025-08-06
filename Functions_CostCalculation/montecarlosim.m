@@ -47,10 +47,10 @@ fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 figure(figNum); clf;
 
 % Load starting data
-[normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData(3);
+[normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData();
 
 % Call graph generation function
-radius = 0.5;
+radius = 0.3;
 maxWindSpeed = 1;
 
 windFieldU = normalizedEastWind*maxWindSpeed;
@@ -60,7 +60,7 @@ flagWindRoundingType = 1;
 cellArrayOfWindExitConditions = [];
 
 % Monte carlo simulation setup
-nIter = 1000;
+nIter = 500;
 
 trajectories = cell(nIter,1);
 randNum = randi(100000, nIter,1);

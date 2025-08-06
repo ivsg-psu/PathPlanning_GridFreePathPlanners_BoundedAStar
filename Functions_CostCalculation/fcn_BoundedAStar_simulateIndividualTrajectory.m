@@ -150,7 +150,7 @@ rng(randNum)
 
 % timeLength = 50;
 deltat = radius;
-numSteps = 33;
+numSteps = 150;
 
 % Generate inputs
 inputInfo = rand(numSteps,2);
@@ -171,10 +171,17 @@ for k = 1:numSteps
 
     % Add disturbance to postion
     trajectory(k+1,:) = currentPoint + genInput(k,:) + disturbance;
-   
+
     % Update position
     currentPoint = trajectory(k+1,:);
-    
+
+    if trajectory(k+1,1) > 10 
+        trajectory(k+1,1) = 10;
+    end
+
+    if trajectory(k+1,2) > 10
+        trajectory(k+1,2) = 10;
+    end
 
     % plot([currentPoint(1), trajectory(k,1)], [currentPoint(2), trajectory(k,2)], '--k','LineWidth',2);
     % drawnow

@@ -100,7 +100,7 @@ startPoints = [0 0];
 flagWindRoundingType = 1;
 
 cellArrayOfWindExitConditions = cell(5,1);
-cellArrayOfWindExitConditions{1} = 250; % Nsteps
+cellArrayOfWindExitConditions{1} = 150; % Nsteps
 cellArrayOfWindExitConditions{2} = 1;   % flagStopIfEntireFieldCovered
 cellArrayOfWindExitConditions{3} = 0.2; % toleranceToStopIfSameResult
 cellArrayOfWindExitConditions{4} = [];  % allGoalPointsList
