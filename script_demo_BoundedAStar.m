@@ -206,6 +206,16 @@
 %   % * now fcn_BoundedAStar_generateCostGraph 
 % - added test scripts:
 %   % * script_test_fcn_BoundedAStar_generateCostGraph
+%
+% 2025_08_07 by K. Hayes
+% - DEPRECATED: script_test_fcn_algorithm_greedy_planner
+%   % * now script_test_fcn_BoundedAStar_greedyPlanner
+% - DEPRECATED: fcn_algorithm_greedy_planner
+%   % * now fcn_BoundedAStar_greedyPlanner
+% - DEPRECATED: script_test_fcn_find_edge_weights
+%   % * now script_test_fcn_BoundedAStar_findEdgeWeights
+% - DEPRECATED: fcn_find_edge_weights
+%   % * now fcn_BoundedAStar_findEdgeWeights
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
