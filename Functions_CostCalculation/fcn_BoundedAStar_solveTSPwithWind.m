@@ -80,11 +80,20 @@ function [orderedVisitSequence] = ...
 
 % REVISION HISTORY:
 % 2025_08_05 by S. Brennan
-% - first write of function using fcn_BoundedAStar_solveTSPwithWind
-%   % as a starter
-% - got TSP solution intialization working with greedy method, which
-%   % produces a quick upper bound estimate on sim time
-% - still need to get TSP working with Djkstra's method
+% - in fcn_BoundedAStar_solveTSPwithWind
+%   % * first write of function using fcn_BoundedAStar_solveTSPwithWind
+%   %   % as a starter
+%   % * got TSP solution intialization working with greedy method, which
+%   %   % produces a quick upper bound estimate on sim time
+%
+% 2025_08_06 by S. Brennan
+% - in fcn_BoundedAStar_solveTSPwithWind
+%   % * TSP working with Djkstra's method. Minor bug found
+%
+% 2025_08_07 by S. Brennan
+% - in fcn_BoundedAStar_solveTSPwithWind
+%   % * TSP working with Djkstra's method. No bugs so far. 
+%   % * Added plotting of results
 
 % TO-DO
 % (none)
@@ -188,10 +197,6 @@ end
 %
 %See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
-Ngoals = length(goalPoints(:,1));
-
-% Initialize output
-orderedVisitSequence = nan(Ngoals+2,2);
 
 % Save the original goal points, in case some are infeasible
 originalGoalPoints = goalPoints;
@@ -211,13 +216,15 @@ if flag_do_debug
     set(s,'Color',[0.6 0.6 0.6])
 
     colorOrder = get(gca, 'ColorOrder');
+    Ncolors = length(colorOrder(:,1));
 
     % Plot the start point
     plot(startPoint(:,1),startPoint(:,2),'.','Color',colorOrder(1,:),'MarkerSize',30,'DisplayName','Input: startPoint');
 
     % Plot the goal points
     for ith_point = 1:length(originalGoalPoints(:,1))
-        plot(originalGoalPoints(ith_point,1),originalGoalPoints(ith_point,2),'.','Color',colorOrder(ith_point+1,:),'MarkerSize',20,'LineWidth', 2, 'DisplayName','Input: goalPoints');
+        thisColorRow = mod(ith_point,Ncolors)+1;
+        plot(originalGoalPoints(ith_point,1),originalGoalPoints(ith_point,2),'.','Color',colorOrder(thisColorRow,:),'MarkerSize',20,'LineWidth', 2, 'DisplayName','Input: goalPoints');
     end
 end
 
@@ -254,6 +261,7 @@ Npoints = length(allPoints(:,1));
 pointNumbers = (1:Npoints)';
 if flag_do_debug
     figure(debug_figNum);
+    % Number the unique points
     for ith_point = 1:Npoints
         text(allPoints(ith_point,1),allPoints(ith_point,2),sprintf('%.0f',pointNumbers(ith_point)));
     end
@@ -306,11 +314,13 @@ for ith_point = 1:Npoints
     if flag_do_debug
         figure(debug_figNum);
 
-        thisColor = colorOrder(ith_point,:);
+        thisColorRow = mod(ith_point-1,Ncolors)+1;
+        thisColor = colorOrder(thisColorRow,:);
+
         reachableIndices = tempGoalPointIDs(reachableFlags>0);
         feasibleGoalPoints = allPoints(reachableIndices,:); 
 
-        % Plot the reachableSet output
+        % Plot the reachableSet output for this source point
         plot(reachableSet(:,1),reachableSet(:,2),'LineWidth',3,'Color',thisColor,'DisplayName','Output: reachableSet')
 
         % Plot the feasible goal points
@@ -356,7 +366,10 @@ if any(isnan(costsFromTo),'all')
             fprintf(1,'\tPoint %.0d, with [X Y] of: %.2f %.2f\n',thisPointIndex,allPoints(thisPointIndex,1), allPoints(thisPointIndex,2));
         end
     end
-
+else
+    % All points are feasible
+    feasibleAllPoints = allPoints;
+    feasiblePointNumbers = pointNumbers;
 end
 
 NgoodGoals = length(feasiblePointNumbers(:,1));
@@ -390,9 +403,8 @@ end
 visitSequence(end,:) = 1;
 accumulatedCosts(end,1) = accumulatedCosts(end-1,1) + feasibleCostsFromTo(thisCity,1);
 
-URHERE - why is accumulated cost here lower than best TSP solution later?
-
-maximumSimLength = accumulatedCosts(end,1);
+% TO DO: use this to crop solutions
+greedySearchSimLength = accumulatedCosts(end,1);
 
 % Plot the greedy result
 if flag_do_debug
@@ -411,7 +423,7 @@ end
 % Run the TSP solver
 % The maximum problem size is the max number of sim steps times the number
 % of cities, e.g. a sim starting for every city, at every time step
-maxSolutions = maximumSimLength*NgoodGoals;
+maxSolutions = greedySearchSimLength*NgoodGoals;
 
 % Solutions have the form:
 % 1x1 (accumulated cost) Ngx1 (flags city was visited)  Ngx1 (visit sequence) 1x1 (flagHeadingHome) 
@@ -427,8 +439,9 @@ flagKeepGoing = 1;
 % Set an upper bound on allowable searches. Once a viable solution is
 % found, it sets an upper cost limit. There's no reason to keep branches in
 % the search that are higher than this limit. This costCropLimit gets
-% updated as new solutions found.
-costCropLimit = inf; 
+% updated as new solutions found. The first limit is the one found by the
+% greedy search.
+costCropLimit = greedySearchSimLength; 
 
 while 1==flagKeepGoing
 
@@ -487,9 +500,14 @@ while 1==flagKeepGoing
         % for the last "home" city, this will put 1 into the last column
         solutionRows(:,1+NgoodGoals+Nvisited+1) = unvisitedCities';
 
+        % Remove any solution rows that are not feasible for later
+        % exploration. These will have NaN costs
+        solutionRows(isnan(solutionRows(:,1)),:) = [];
+
         % Push results into solutions for searching
-        rowStartToFill = find(isnan(solutions(:,1)),1);
-        rowEndToFill   = rowStartToFill+Nunvisited-1;
+        NsolutionRows = length(solutionRows(:,1));
+        rowStartToFill = find(~isnan(solutions(:,1)),1,'last')+1;
+        rowEndToFill   = rowStartToFill+NsolutionRows-1;
         solutions(rowStartToFill:rowEndToFill,:) = solutionRows;
 
         % Remove the row that was just searched
@@ -515,7 +533,7 @@ if flag_do_debug
     figure(debug_figNum);
 
     pointSequence = feasibleAllPoints(orderedVisitSequence,:);
-    % Plot the ordered visit sequence
+    % Plot the TSP result, the ordered visit sequence
     for ith_point = 1:NgoodGoals
         arrowMagnitude = pointSequence(ith_point+1,:)-pointSequence(ith_point,:);
         quiver(pointSequence(ith_point,1),pointSequence(ith_point,2),arrowMagnitude(1,1),arrowMagnitude(1,2),0,...
@@ -537,8 +555,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_do_plots
-
-    URHERE
+    
     % Prep the figure for plotting
     temp_h = figure(figNum);
     flag_rescale_axis = 0;
@@ -555,7 +572,7 @@ if flag_do_plots
     max_plotValues = max(allPointsBeingPlotted);
     min_plotValues = min(allPointsBeingPlotted);
     sizePlot = max(max_plotValues) - min(min_plotValues);
-    nudge = sizePlot*0.006; %#ok<NASGU>
+    nudge = sizePlot*0.006; 
 
     % Find size of plotting domain
     if flag_rescale_axis
@@ -603,43 +620,52 @@ if flag_do_plots
     legend('Interpreter','none','Location','best');
 
     % Plot the windfield as an image
-    cellArrayOfPlotHandles = fcn_BoundedAStar_plotWindField(windFieldU,windFieldV,windFieldX,windFieldY,'default',figNum);
-    set(cellArrayOfPlotHandles{3},'Color',[0.6 0.6 0.6]);
+    fcn_BoundedAStar_plotWindField(windFieldU,windFieldV,windFieldX,windFieldY,'default',figNum);
+    s = streamslice(meshX,meshY,windFieldU,windFieldV);
+    set(s,'Color',[0.6 0.6 0.6],'HandleVisibility','off')
+
+    colorOrder = get(gca, 'ColorOrder');
+    Ncolors = length(colorOrder(:,1));
 
     % Plot the start point
-    plot(startPoint(:,1),startPoint(:,2),'.-','Color',[0 0 1],'MarkerSize',30,'DisplayName','Input: startPoint');
+    plot(startPoint(:,1),startPoint(:,2),'.','Color',colorOrder(1,:),'MarkerSize',30,'DisplayName','Input: startPoint');
 
-    % Plot the goal points
-    plot(originalGoalPoints(:,1),originalGoalPoints(:,2),'.-','Color',[0 1 0],'MarkerSize',20,'LineWidth', 2, 'DisplayName','Input: goalPoints');
-
-    % Plot the feasible goal points
-    if ~isempty(goalPoints)
-        plot(goalPoints(:,1),goalPoints(:,2),'.','Color',[1 0 1],'MarkerSize',40,'LineWidth', 2, 'DisplayName','Input: allGoalPointsList');
-    end
-
-    % Plot the expansion sets
-    % allColors = parula(Nsteps+1);
-    allColors = turbo;
-    Ntotal = 25;
-    for ith_expansion = 1:cellArrayOfExitInfo{1}
-        thisExpansion = allExpansions{ith_expansion,1};
-        percentageDone = min(ith_expansion/Ntotal,1);
-        if 1==0
-            % Plot in color
-            colorNumber = min(256,max(round(255*percentageDone)+1,1));
-            thisColor = allColors(colorNumber,:);
+    % Plot the goal points in different colors
+    for ith_point = 1:length(originalGoalPoints(:,1))
+        thisColorRow = mod(ith_point,Ncolors)+1;
+        h_plot = plot(originalGoalPoints(ith_point,1),originalGoalPoints(ith_point,2),'*',...
+            'Color',colorOrder(thisColorRow,:),'MarkerSize',30,'LineWidth', 2);
+        if ith_point ==1
+            set(h_plot, 'DisplayName','Input: goalPoints');
         else
-            % Plot in white to black
-            thisColor = (1-percentageDone)*[1 1 1];
+            set(h_plot,'HandleVisibility','off');
         end
-
-        plot(thisExpansion(:,1),thisExpansion(:,2),'-',...
-            'Color',thisColor,'MarkerSize',30, 'LineWidth', 0.5, 'DisplayName',sprintf('Expansion: %.0f',ith_expansion),'HandleVisibility','off');
-        pause(0.1);
     end
 
-    % Plot the final output
-    plot(finalReachableSet(:,1),finalReachableSet(:,2),'LineWidth',3,'Color',[1 0 0],'DisplayName','Output: reachableSet')
+    % Circle the feasible points
+    plot(feasibleAllPoints(:,1),feasibleAllPoints(:,2),'o','Color',[0 1 0],'LineWidth',3,'MarkerSize',15,'DisplayName','feasibleAllPoints');
+
+    % Plot the TSP result, the ordered visit sequence
+    pointSequence = feasibleAllPoints(orderedVisitSequence,:);
+
+    for ith_point = 1:NgoodGoals
+        thisPoint = orderedVisitSequence(ith_point);
+        thisColorRow = mod(thisPoint-1,Ncolors)+1;
+        thisColor = colorOrder(thisColorRow,:);
+        arrowMagnitude = pointSequence(ith_point+1,:)-pointSequence(ith_point,:);
+        h_quiver = quiver(pointSequence(ith_point,1),pointSequence(ith_point,2),arrowMagnitude(1,1),arrowMagnitude(1,2),0,...
+            'LineWidth',5,'Color',thisColor);
+        if ith_point==1
+            set(h_quiver,'DisplayName','Output: TSP solution');
+        else
+            set(h_quiver,'HandleVisibility','off');
+        end
+    end
+
+    % Number the unique points
+    for ith_point = 1:Npoints
+        text(allPoints(ith_point,1)+nudge,allPoints(ith_point,2),sprintf('%.0f',pointNumbers(ith_point)));
+    end
 
     % Shut the hold off?
     if flag_shut_hold_off
@@ -671,58 +697,3 @@ end % Ends the main function
 
 
 
-%% fcn_INTERNAL_sparsifyPoints
-function sparsePoints = fcn_INTERNAL_sparsifyPoints(densePoints,deltaX)
-
-% Make sure first and last point are repeated, e.g. that the plot is a
-% closed circuit
-if ~isequal(densePoints(1,:),densePoints(end,:))
-    densePoints(end,:) = densePoints(1,:);
-end
-
-segmentVectors = densePoints(2:end,:) - densePoints(1:end-1,:);
-segmentLengths = sum(segmentVectors.^2,2).^0.5;
-
-Npoints = length(densePoints(:,1));
-currentPoint = 1;
-currentDistance = 0;
-sparsePointIndices = false(Npoints,1);
-while currentPoint<Npoints
-    currentPoint = currentPoint+1;
-    currentDistance  = currentDistance + segmentLengths(currentPoint-1);
-
-    % Did we "travel" farther than expected deltaX? If so, mark this point
-    % so that it is kept.
-    if currentDistance>=deltaX
-        sparsePointIndices(currentPoint,1) = true;
-        currentDistance = 0;
-    end
-end
-sparsePoints = densePoints(sparsePointIndices,:);
-
-% Make sure to close off the points
-if ~isequal(sparsePoints(end,:),sparsePoints(1,:))
-    sparsePoints = [sparsePoints; sparsePoints(1,:)];
-end
-
-if 1==0
-    figure(388383);
-    clf;
-    plot(densePoints(:,1),densePoints(:,2),'.-','MarkerSize',30,'LineWidth',3,'DisplayName','Input: densePoints');
-    hold on;
-    axis equal
-    plot(sparsePoints(:,1),sparsePoints(:,2),'.-','MarkerSize',10,'LineWidth',1,'DisplayName','Output: sparsePoints');
-end
-
-
-end % Ends fcn_INTERNAL_sparsifyPoints
-
-%% fcn_INTERNAL_findGoalPointsHit
-function goalPointsHit = fcn_INTERNAL_findGoalPointsHit(newStartPoints,allGoalPointsList)
-if ~isempty(allGoalPointsList)
-    uniquePoints = flipud(newStartPoints); % for some silly reason, polyshape takes points "backwards" (?!)
-    uniquePoints = unique(uniquePoints,'rows','stable');
-    region = polyshape(uniquePoints(1:end-1,:),'KeepCollinearPoints', true,'Simplify', false);
-    goalPointsHit = isinterior(region,allGoalPointsList);
-end
-end % Ends fcn_INTERNAL_findGoalPointsHit
