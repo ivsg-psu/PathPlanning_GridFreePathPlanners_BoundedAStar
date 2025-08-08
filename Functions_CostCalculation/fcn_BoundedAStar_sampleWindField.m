@@ -1,10 +1,10 @@
-function [resampledPoints, windFieldUc, windFieldVc] = fcn_BoundedAStar_sampleWindField(samplePoints, windFieldX, windFieldY, windFieldU, windFieldV, varargin)
+function [sampledPointsWind, resampledPoints, windFieldUc, windFieldVc] = fcn_BoundedAStar_sampleWindField(samplePoints, windFieldX, windFieldY, windFieldU, windFieldV, varargin)
 % fcn_BoundedAStar_sampleWindField
 % samples a wind field near a given point and outputs the resulting wind
 % vector
 %
 % FORMAT:
-% [windVector] = fcn_BoundedAStar_sampleWindField(samplePoint, windFieldX, windFieldY, windFieldU, windFieldV, (slowMode), (fig_num))
+% [windVector] = fcn_BoundedAStar_sampleWindField(samplePoint, windFieldX, windFieldY, windFieldU, windFieldV, (slowMode), (flagWindRoundingType), (fig_num))
 %
 % INPUTS:
 %
@@ -29,6 +29,9 @@ function [resampledPoints, windFieldUc, windFieldVc] = fcn_BoundedAStar_sampleWi
 %     method of sampling multiple points. slowMode = 1 will enable slow
 %     mode. any other input will use the default.
 %
+%     flagWindRoundingType: determines if the bounding vertices are pruned
+%     to match the discretization of the wind field. 
+%
 %     fig_num: a figure number to plot results. If set to -1, skips any
 %     input checking or debugging, no figures will be generated, and sets
 %     up code to maximize speed. As well, if given, this forces the
@@ -37,8 +40,10 @@ function [resampledPoints, windFieldUc, windFieldVc] = fcn_BoundedAStar_sampleWi
 %
 % OUTPUTS:
 %
-%     resampledPoints: an nx2 vector containing the [U, V] velocities at the
-%     selected point
+%     sampledPointsWind: an nx2 vector containing the points with disturbance applied   
+% 
+%     resampledPoints: an nx2 vector containing the points resampled to
+%     match the discretization of the wind field
 %
 %     windFieldUc: an nxn matrix that is a transposed version of the wind
 %     field. This allows the wind field to be sampled correctly with linear
@@ -75,16 +80,17 @@ function [resampledPoints, windFieldUc, windFieldVc] = fcn_BoundedAStar_sampleWi
 %    re-formatted versions of the wind fields that follow the [x, y]
 %    conventions. Sampling the wind field also no longer requires the
 %    'flip' fix
+% -- added wind rounding flag from internal fcn
 
 % TO-DO
-% -- coordinate definition fixes
-% -- time steps
+% -- smoothing?
+% -- fix debug plotting
 
 %% Debugging and Input checks
 % Check if flag_max_speed set. This occurs if the fig_num variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 7; % The largest Number of argument inputs to the function
+MAX_NARGIN = 8; % The largest Number of argument inputs to the function
 flag_max_speed = 0;
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; %     % Flag to plot the results for debugging
@@ -142,12 +148,21 @@ if 0==flag_max_speed
     end
 end
 
-% Does user want to specify the sampling mode
+% Does user want to specify the sampling mode?
 slowMode = 0; % Default is not to use slow mode
 if 6 <= nargin
     temp = varargin{1};
     if ~isempty(temp)
         slowMode = temp;
+    end
+end
+
+% Does user want to prune the vertices?
+flagWindRoundingType = 0; % Default on
+if 7 <= nargin
+    temp = varargin{2};
+    if ~isempty(temp)
+        flagWindRoundingType = temp;
     end
 end
 
@@ -231,13 +246,28 @@ else % default faster mode taken from fcn_INTERNAL_sampleWindAtPoints
 
 end
 
+% If flag indicates, check wind field discretization
+if 0==flagWindRoundingType
+    [uniqueIndicesRaw,vertexRowsThatAreUnique] = unique(indices,'rows','stable');
+    resampledPointsRaw = samplePoints(vertexRowsThatAreUnique,:);    
+
+    % Repeat the first point to last, to close the boundary. The "unique"
+    % function deletes this repetition
+    uniqueIndices = [uniqueIndicesRaw; uniqueIndicesRaw(1,:)];
+    resampledPoints = [resampledPointsRaw; resampledPointsRaw(1,:)];
+
+else
+    uniqueIndices = indices;
+    resampledPoints = samplePoints;    
+end
+
 % Use indices to sample wind field
-linearInd = sub2ind(size(windFieldU),indices(:,1),indices(:,2));
+linearInd = sub2ind(size(windFieldU),uniqueIndices(:,1),uniqueIndices(:,2));
 
 windFieldUc = transpose(windFieldU);
 windFieldVc = transpose(windFieldV);
 
-resampledPoints = [windFieldUc(linearInd) windFieldVc(linearInd)];
+sampledPointsWind = resampledPoints + [windFieldUc(linearInd) windFieldVc(linearInd)];
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -267,7 +297,7 @@ if flag_do_plots
     plot(samplePoints(1), samplePoints(2), 'rx', 'MarkerSize', 20, 'LineWidth', 3, 'DisplayName', 'Sample Point')
 
     % Plot wind at sample point
-    quiver(samplePoints(1),samplePoints(2),resampledPoints(1),resampledPoints(2),'DisplayName','Wind at Point','Color','blue','LineWidth',3,'AutoScaleFactor',1.25)
+    quiver(samplePoints(1),samplePoints(2),sampledPointsWind(1),sampledPointsWind(2),'DisplayName','Wind at Point','Color','blue','LineWidth',3,'AutoScaleFactor',1.25)
     
     % Display legend
     legend

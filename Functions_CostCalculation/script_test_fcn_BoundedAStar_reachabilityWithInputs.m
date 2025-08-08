@@ -165,7 +165,7 @@ flagWindRoundingType = 0;
 
 % Call function
 reachableSet = fcn_BoundedAStar_reachabilityWithInputs(...
-    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints),(flagWindRoundingType), (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 

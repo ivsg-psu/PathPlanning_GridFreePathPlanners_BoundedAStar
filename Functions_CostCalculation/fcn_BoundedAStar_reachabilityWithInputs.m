@@ -105,6 +105,9 @@ function reachableSet = fcn_BoundedAStar_reachabilityWithInputs(radius, windFiel
 %
 % 2024_08_03 by S. Brennan
 % - 
+% 2025_08_08 by K. Hayes
+% -- added call to fcn_BoundedAStar_sampleWindField in place of call to
+%    internal function
 
 % TO-DO
 % -- update header
@@ -422,10 +425,11 @@ end
 
 %%%%
 % Apply disturbance to each vertex.
-[reachableSet, resampledBoundingPolytopeVertices] = ...
-    fcn_INTERNAL_sampleWindAtPoints(boundingPolytopeVertices, ...
-    windFieldX, windFieldY, windFieldU, windFieldV, ...
-    flagWindRoundingType);
+% [reachableSet, resampledBoundingPolytopeVertices] = ...
+%     fcn_INTERNAL_sampleWindAtPoints(boundingPolytopeVertices, ...
+%     windFieldX, windFieldY, windFieldU, windFieldV, ...
+%     flagWindRoundingType);
+[reachableSet, resampledBoundingPolytopeVertices] = fcn_BoundedAStar_sampleWindField(boundingPolytopeVertices, windFieldX, windFieldY, windFieldU, windFieldV,0,0,-1);
 
 if flag_do_debug
     figure(debug_figNum);
