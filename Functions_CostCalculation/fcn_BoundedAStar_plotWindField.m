@@ -181,8 +181,7 @@ magField = nan*ones(size(windFieldU));
 % Get magnitude for plot
 for i = 1:size(windFieldU,1)
     for j = 1:size(windFieldU, 2)
-        % Flip indices to match MATLAB convention (r,c) == (y,x)
-        magField(j,i) = ((windFieldU(i,j)).^2 + (windFieldV(i,j)).^2).^0.5;
+        magField(i,j) = ((windFieldU(i,j)).^2 + (windFieldV(i,j)).^2).^0.5;
     end
 end
 

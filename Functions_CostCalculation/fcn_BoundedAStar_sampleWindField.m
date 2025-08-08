@@ -268,6 +268,7 @@ windFieldUc = transpose(windFieldU);
 windFieldVc = transpose(windFieldV);
 
 sampledPointsWind = resampledPoints + [windFieldUc(linearInd) windFieldVc(linearInd)];
+dist = sampledPointsWind - resampledPoints;
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -293,11 +294,12 @@ if flag_do_plots
     s = streamslice(windFieldX,windFieldY,windFieldU,windFieldV);
     set(s, 'Color', [0.6 0.6 0.6], 'HandleVisibility','off')
     
+
     % Plot sample point
-    plot(samplePoints(1), samplePoints(2), 'rx', 'MarkerSize', 20, 'LineWidth', 3, 'DisplayName', 'Sample Point')
+    plot(samplePoints(:,1), samplePoints(:,2), 'rx', 'MarkerSize', 20, 'LineWidth', 3, 'DisplayName', 'Sample Point')
 
     % Plot wind at sample point
-    quiver(samplePoints(1),samplePoints(2),sampledPointsWind(1),sampledPointsWind(2),'DisplayName','Wind at Point','Color','blue','LineWidth',3,'AutoScaleFactor',1.25)
+    quiver(resampledPoints(:,1),resampledPoints(:,2),dist(:,1),dist(:,2),'DisplayName','Wind at Point','Color','blue','LineWidth',3,'AutoScaleFactor',1.25)
     
     % Display legend
     legend
