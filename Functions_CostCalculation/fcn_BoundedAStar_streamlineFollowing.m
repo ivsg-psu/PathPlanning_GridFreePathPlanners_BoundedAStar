@@ -142,7 +142,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
 % Create state matrices
-deltat = 0.01;
+deltat = 0.1;
 numSteps = timeLength/deltat;
 trajectory = nan*ones(numSteps,2);
 trajectory(1,:) = startPoint;

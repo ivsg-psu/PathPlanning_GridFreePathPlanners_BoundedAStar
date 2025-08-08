@@ -46,7 +46,7 @@ rngSeed = [];
 
 % Call random occupancy map function - code taken from
 % script_demo_generateRandomOccupancyAnimated
-rng(2020)
+rng(4)
 nRows = 50;
 mColumns = 50;
 mapSize = [nRows mColumns];
@@ -95,6 +95,8 @@ normalizedNorthWind = 10*northWind./maxWind;
 
 %%%%
 
+x = linspace(XY_range(1),XY_range(3),length(normalizedEastWind));
+y = linspace(XY_range(2),XY_range(4),length(normalizedNorthWind));
 % Call wind field sampling function
 samplePoint = [0 0];
 windVector = fcn_BoundedAStar_sampleWindField(samplePoint,x,y,normalizedEastWind,normalizedNorthWind,(fig_num));

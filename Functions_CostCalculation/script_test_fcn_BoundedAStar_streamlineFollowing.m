@@ -96,12 +96,13 @@ maxWind = max(windMagnitude,[],'all');
 normalizedWindMagnitude = windMagnitude./maxWind;
 normalizedEastWind = 10*eastWind./maxWind;
 normalizedNorthWind = 10*northWind./maxWind;
+% normalizedNorthWind = zeros(size(normalizedNorthWind));
 
 %%%%
 
 % Put a point into the wind field and show the trajectory along a
 % streamline
-startPoint = [4 -6];
+startPoint = [0 8];
 timeLength = 5;
 trajectory = fcn_BoundedAStar_streamlineFollowing(startPoint, timeLength, x, y, normalizedEastWind, normalizedNorthWind, (fig_num));
 
@@ -111,7 +112,7 @@ sgtitle(titleString, 'Interpreter','none');
 assert(isnumeric(trajectory));
 
 % Check variable sizes
-assert(size(trajectory,1)==2001); 
+assert(size(trajectory,1)==51); 
 assert(size(trajectory,2)==2);
 
 % Make sure plot opened up
