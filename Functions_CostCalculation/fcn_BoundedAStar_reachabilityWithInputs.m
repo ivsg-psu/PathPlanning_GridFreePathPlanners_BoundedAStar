@@ -1,10 +1,10 @@
-function reachableSet = fcn_BoundedAStar_reachabilityWithInputs(radius, windFieldU, windFieldV, windFieldX, windFieldY, varargin)
+function [reachableSet, boundingPolytopeVertices] = fcn_BoundedAStar_reachabilityWithInputs(radius, windFieldU, windFieldV, windFieldX, windFieldY, varargin)
 % fcn_BoundedAStar_reachabilityWithInputs
 % calculates the reachable set from a given startPoints,accounting
 % for control inputs and the wind field 
 %
 % FORMAT:
-% reachableSet = fcn_BoundedAStar_reachabilityWithInputs(...
+% [reachableSet, boundingPolytopeVertices] = fcn_BoundedAStar_reachabilityWithInputs(...
 %     radius, ... 
 %     windFieldU,  ...
 %     windFieldV,  ...
@@ -61,6 +61,10 @@ function reachableSet = fcn_BoundedAStar_reachabilityWithInputs(radius, windFiel
 %     reachableSet: a set of points defining the distance conversion of the
 %     original travel locations to locations with wind
 %
+%     boundingPolytopeVertices: a set of points defining the intermediate
+%     motion of the boundary points, prior to the wind disturbance.
+%     Useful to determine control inputs and trajectory.
+%
 % DEPENDENCIES:
 %
 %     fcn_DebugTools_checkInputsToFunctions
@@ -103,8 +107,9 @@ function reachableSet = fcn_BoundedAStar_reachabilityWithInputs(radius, windFiel
 %   % has length greater than 0.5 (typically, this value is greater than
 %   % .90 in real-world data)
 %
-% 2024_08_03 by S. Brennan
-% - 
+% 2024_08_08 by S. Brennan
+% - In fcn_BoundedAStar_reachabilityWithInputs
+%   % * added boundingPolytopeVertices to outputs
 
 % TO-DO
 % -- update header

@@ -200,12 +200,26 @@
 % - DEPRECATED: fcn_polytope_calculation_polytopes_near_the_line
 %   % * now fcn_BoundedAStar_polytopesNearLine
 %
+% 2025_08_05 by S. Brennan
+% - in fcn_BoundedAStar_solveTSPwithWind
+%   % * first write of function using fcn_BoundedAStar_solveTSPwithWind
+%   %   % as a starter
+%   % * got TSP solution intialization working with greedy method, which
+%   %   % produces a quick upper bound estimate on sim time
+% - In script_test_fcn_BoundedAStar_solveTSPwithWind:
+%   % * first write of script 
+%   % * using script_test_fcn_BoundedAStar_solveTSPwithWind as starter
+%
 % 2025_08_06 by K. Hayes
 % - continued cleaning BoundedAStar fcns
 % - DEPRECATED: fcn_algorithm_generate_cost_graph
 %   % * now fcn_BoundedAStar_generateCostGraph 
 % - added test scripts:
 %   % * script_test_fcn_BoundedAStar_generateCostGraph
+%
+% 2025_08_06 by S. Brennan
+% - in fcn_BoundedAStar_solveTSPwithWind
+%   % * TSP working with Djkstra's method. Minor bug found
 %
 % 2025_08_07 by K. Hayes
 % - DEPRECATED: script_test_fcn_algorithm_greedy_planner
@@ -216,6 +230,17 @@
 %   % * now script_test_fcn_BoundedAStar_findEdgeWeights
 % - DEPRECATED: fcn_find_edge_weights
 %   % * now fcn_BoundedAStar_findEdgeWeights
+%
+% 2025_08_07 by S. Brennan
+% - in fcn_BoundedAStar_solveTSPwithWind
+%   % * TSP working with Djkstra's method. Prior bug fixed. 
+%   % * Added plotting of results
+%
+% 2025_08_08 by S. Brennan, sbrennan@psu.edu
+% - In script_test_fcn_BoundedAStar_reachabilityWithInputs
+%   % * Added test scripts to check new output: boundingPolytopeVertices
+% - In fcn_BoundedAStar_reachabilityWithInputs
+%   % * added boundingPolytopeVertices to outputs
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
@@ -265,7 +290,7 @@ library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_PathToo
 
 
 %% Clear paths and folders, if needed
-if 1==1
+if 1==0
     clear flag_BoundAStar_Folders_Initialized
     fcn_INTERNAL_clearUtilitiesFromPathAndFolders;
 
