@@ -3,9 +3,9 @@
 
 % Revision history
 % 2025_08_05 by S. Brennan, sbrennan@psu.edu
-% - first write of script 
-%   % * using script_test_fcn_BoundedAStar_solveTSPwithWind as 
-%   %   % starter
+% - In script_test_fcn_BoundedAStar_solveTSPwithWind:
+%   % * first write of script 
+%   % * using script_test_fcn_BoundedAStar_solveTSPwithWind as starter
 
 % TO DO:
 % (none)
