@@ -1,4 +1,4 @@
-function [windOutput] = fcn_BoundedAStar_sampleWindField(samplePoints, windFieldX, windFieldY, windFieldU, windFieldV, varargin)
+function [resampledPoints, windFieldUc, windFieldVc] = fcn_BoundedAStar_sampleWindField(samplePoints, windFieldX, windFieldY, windFieldU, windFieldV, varargin)
 % fcn_BoundedAStar_sampleWindField
 % samples a wind field near a given point and outputs the resulting wind
 % vector
@@ -37,8 +37,16 @@ function [windOutput] = fcn_BoundedAStar_sampleWindField(samplePoints, windField
 %
 % OUTPUTS:
 %
-%     windVector: a 1x2 vector containing the [U, V] velocities at the
+%     resampledPoints: an nx2 vector containing the [U, V] velocities at the
 %     selected point
+%
+%     windFieldUc: an nxn matrix that is a transposed version of the wind
+%     field. This allows the wind field to be sampled correctly with linear
+%     indices in the format [x,y].
+%
+%     windFieldVc: an nxn matrix that is a transposed version of the wind
+%     field. This allows the wind field to be sampled correctly with linear
+%     indices in the format [x,y].
 %
 % DEPENDENCIES:
 %
@@ -63,6 +71,10 @@ function [windOutput] = fcn_BoundedAStar_sampleWindField(samplePoints, windField
 % -- moved previous method to 'slow' mode for potential comparisons
 % -- updated default sampling method to match
 %    fcn_INTERNAL_sampleWindAtPoints's fast method
+% -- fixed coordinate definition within this fcn: the function now outputs
+%    re-formatted versions of the wind fields that follow the [x, y]
+%    conventions. Sampling the wind field also no longer requires the
+%    'flip' fix
 
 % TO-DO
 % -- coordinate definition fixes
@@ -165,16 +177,32 @@ end
 if slowMode == 1
     indices = nan*size(samplePoints);
     for i = 1:size(samplePoints,1)
+        thisPoint = samplePoints(i);
+        thisX = thisPoint(1);
+        thisY = thisPoint(2);
+
         % Find x and y indices in wind field near selected point
         xIndex = find(windFieldX>samplePoints(1),1,'first');
         yIndex = find(windFieldY>samplePoints(2),1,'first');
     
-        % If approaching edge of map, sample the other way
+        % Handle out of bounds situations
         if isempty(xIndex)
-            xIndex = find(windFieldX<samplePoints(1),1,'first');
+            if thisX>windFieldX(1,end)
+                xIndex = length(windFieldX(1,:));
+            elseif thisX<windFieldX(1,1)
+                xIndex = 1;
+            else
+                error('unknown situation occurred matching x value: %.2f to windFieldX',thisX);
+            end
         end
         if isempty(yIndex)
-            yIndex = find(windFieldY<samplePoints(2),1,'first');
+         if thisY>windFieldY(1,end)
+                yIndex = length(windFieldY(1,:));
+            elseif thisY<windFieldY(1,1)
+                yIndex = 1;
+            else
+                error('unknown situation occurred matching y value: %.2f to windFieldY',thisY);
+            end
         end
         
         % Write indices
@@ -206,7 +234,10 @@ end
 % Use indices to sample wind field
 linearInd = sub2ind(size(windFieldU),indices(:,1),indices(:,2));
 
-windOutput = [windFieldU(linearInd) windFieldV(linearInd)];
+windFieldUc = transpose(windFieldU);
+windFieldVc = transpose(windFieldV);
+
+resampledPoints = [windFieldUc(linearInd) windFieldVc(linearInd)];
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -236,7 +267,7 @@ if flag_do_plots
     plot(samplePoints(1), samplePoints(2), 'rx', 'MarkerSize', 20, 'LineWidth', 3, 'DisplayName', 'Sample Point')
 
     % Plot wind at sample point
-    quiver(samplePoints(1),samplePoints(2),windOutput(1),windOutput(2),'DisplayName','Wind at Point','Color','blue','LineWidth',3,'AutoScaleFactor',1.25)
+    quiver(samplePoints(1),samplePoints(2),resampledPoints(1),resampledPoints(2),'DisplayName','Wind at Point','Color','blue','LineWidth',3,'AutoScaleFactor',1.25)
     
     % Display legend
     legend
