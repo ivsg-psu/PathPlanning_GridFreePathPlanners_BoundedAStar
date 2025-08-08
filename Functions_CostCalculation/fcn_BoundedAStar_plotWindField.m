@@ -181,7 +181,8 @@ magField = nan*ones(size(windFieldU));
 % Get magnitude for plot
 for i = 1:size(windFieldU,1)
     for j = 1:size(windFieldU, 2)
-        magField(i,j) = ((windFieldU(i,j)).^2 + (windFieldV(i,j)).^2).^0.5;
+        % Flip indices to match MATLAB convention (r,c) == (y,x)
+        magField(j,i) = ((windFieldU(i,j)).^2 + (windFieldV(i,j)).^2).^0.5;
     end
 end
 
@@ -222,7 +223,7 @@ if flag_do_plots
             cellArrayOfPlotHandles{2}.Label.String = 'Wind Speed (knots)';
 
             % Plot streamlines
-            h_streamslice = streamslice(windFieldX,windFieldY,windFieldU,windFieldV);
+            h_streamslice = streamslice(windFieldY,windFieldX,windFieldU,windFieldV);
             set(h_streamslice,'Color','white', 'LineWidth', 0.5,'HandleVisibility','off')
             cellArrayOfPlotHandles{3} = h_streamslice;
             
@@ -241,7 +242,7 @@ if flag_do_plots
             cellArrayOfPlotHandles{2}.Label.String = 'Wind Speed (knots)';
 
             % Call streamcolor
-            cellArrayOfPlotHandles{3} = Streamcolor(X, Y, windFieldU, windFieldV, SX, SY, magField);
+            cellArrayOfPlotHandles{3} = Streamcolor(X, Y, windFieldU', windFieldV', SX, SY, magField);
 
     end
 
