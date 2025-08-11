@@ -241,6 +241,16 @@
 %   % * Added test scripts to check new output: boundingPolytopeVertices
 % - In fcn_BoundedAStar_reachabilityWithInputs
 %   % * added boundingPolytopeVertices to outputs
+%
+% 2025_08_11 by K. Hayes
+% - DEPRECATED: script_test_fcn_interpolate_route_spatially
+%   % * now script_test_fcn_BoundedAStar_interpolateRouteSpatially
+% - DEPRECATED: fcn_interpolate_route_spatially
+%   % * now fcn_BoundedAStar_interpolateRouteSpatially
+% - DEPRECATED: script_test_fcn_convert_polytope_struct_to_deduped_points
+%   % * now script_test_fcn_BoundedAStar_convertPolytopetoDedupedPoints
+% - DEPRECATED: fcn_convert_polytope_struct_to_deduped_points
+%   % * now fcn_BoundedAStar_convertPolytopetoDedupedPoints
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
