@@ -102,9 +102,11 @@ normalizedNorthWind = 10*northWind./maxWind;
 
 % Put a point into the wind field and show the trajectory along a
 % streamline
+windFieldX = linspace(XY_range(1),XY_range(3),length(normalizedEastWind));
+windFieldY = linspace(XY_range(1),XY_range(3),length(normalizedEastWind));
 startPoint = [0 8];
 timeLength = 5;
-trajectory = fcn_BoundedAStar_streamlineFollowing(startPoint, timeLength, x, y, normalizedEastWind, normalizedNorthWind, (fig_num));
+trajectory = fcn_BoundedAStar_streamlineFollowing(startPoint, timeLength, windFieldX, windFieldY, normalizedEastWind, normalizedNorthWind, (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 
