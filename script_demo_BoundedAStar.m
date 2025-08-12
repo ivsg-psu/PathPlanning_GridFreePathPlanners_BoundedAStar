@@ -251,6 +251,11 @@
 %   % * now script_test_fcn_BoundedAStar_convertPolytopetoDedupedPoints
 % - DEPRECATED: fcn_convert_polytope_struct_to_deduped_points
 %   % * now fcn_BoundedAStar_convertPolytopetoDedupedPoints
+%
+% 2025_08_12 by K. Hayes
+% - DEPRECATED: fcn_algorithm_create_phantom_goal
+%   % * now fcn_BoundedAStar_createPhantomGoal
+% - Added script_test_fcn_createPhantomGoal
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
