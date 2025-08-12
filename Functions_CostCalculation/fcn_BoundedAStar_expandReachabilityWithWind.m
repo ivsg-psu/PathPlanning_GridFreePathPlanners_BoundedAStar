@@ -20,6 +20,7 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAS
 %     (startPoints),  ...
 %     (flagWindRoundingType),...
 %     (cellArrayOfWindExitConditions),...
+%     (flagTimeVarying)...
 %     (figNum));
 %
 % INPUTS:
@@ -82,6 +83,10 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAS
 %     If any condition is met, the expansion is stopped and the
 %     exitCondition type is set accordingly.
 %
+%     flagTimeVarying: if == 1, indicates that the wind field will be time
+%     varying. In this case, the windFieldU and windFieldV should be cell
+%     arrays containing the wind field at each time step.
+%
 %     figNum: a figure number to plot results. If set to -1, skips any
 %     input checking or debugging, no figures will be generated, and sets
 %     up code to maximize speed. As well, if given, this forces the
@@ -131,6 +136,9 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAS
 % 2025_08_05 by S. Brennan
 %   % * Changed flag outputs to count sim steps to hit goal, not just
 %   %   % binary
+% 2025_08_12 by K. Hayes
+% - in fcn_BoundedAStar_expandReachabilityWithWind
+%   % * added handling for time varying wind fields
 
 % TO-DO
 % -- when wind is VERY high, higher than self speed, the set pushes away
@@ -144,7 +152,7 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAS
 % Check if flag_max_speed set. This occurs if the figNum variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 9; % The largest Number of argument inputs to the function
+MAX_NARGIN = 10; % The largest Number of argument inputs to the function
 flag_max_speed = 0;
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; %     % Flag to plot the results for debugging
@@ -234,6 +242,15 @@ toleranceToStopIfSameResult = cellArrayOfWindExitConditions{3};
 allGoalPointsList = cellArrayOfWindExitConditions{4};
 flagStopIfHitOneGoalPoint = cellArrayOfWindExitConditions{5};
 
+% Does user want to specify flagTimeVarying input?
+flagTimeVarying = 0; % Default is 0
+if 9 <= nargin
+    temp = varargin{4};
+    if ~isempty(temp)
+        flagTimeVarying = temp;
+    end
+end
+
 % Does user want to show the plots?
 flag_do_plots = 0; % Default is to NOT show plots
 if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
@@ -322,10 +339,17 @@ flagContinueExpansion = 1;
 while 1==flagContinueExpansion
     ith_step = ith_step+1;
     allExpansions{ith_step,1} = startPoints;
-
-    % Call function to find reachable set on this time step
-    reachableSet = fcn_BoundedAStar_reachabilityWithInputs(...
-        radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
+    
+    if 1 == flagTimeVarying
+        windFieldUk = windFieldU{ith_step};
+        windFieldVk = windFieldV{ith_step};
+        reachableSet = fcn_BoundedAStar_reachabilityWithInputs(...
+            radius, windFieldUk, windFieldVk, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
+    else
+        % Call function to find reachable set on this time step
+        reachableSet = fcn_BoundedAStar_reachabilityWithInputs(...
+            radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
+    end
 
     if flag_do_debug && 1==1
         figure(debug_figNum);
@@ -528,8 +552,10 @@ if flag_do_plots
     legend('Interpreter','none','Location','best');
 
     % Plot the windfield as an image
-    cellArrayOfPlotHandles = fcn_BoundedAStar_plotWindField(windFieldU,windFieldV,windFieldX,windFieldY,'default',figNum);
-    set(cellArrayOfPlotHandles{3},'Color',[0.6 0.6 0.6]);
+    if 0==flagTimeVarying
+        cellArrayOfPlotHandles = fcn_BoundedAStar_plotWindField(windFieldU,windFieldV,windFieldX,windFieldY,'default',figNum);
+        set(cellArrayOfPlotHandles{3},'Color',[0.6 0.6 0.6]);
+    end
 
     % Plot the start points
     plot(originalStartPoints(:,1),originalStartPoints(:,2),'.-','Color',[0 1 0],'MarkerSize',20,'LineWidth', 2, 'DisplayName','Input: startPoints');
@@ -544,6 +570,10 @@ if flag_do_plots
     allColors = turbo;
     Ntotal = 25;
     for ith_expansion = 1:cellArrayOfExitInfo{1}
+        if 1==flagTimeVarying
+            cellArrayOfPlotHandles = fcn_BoundedAStar_plotWindField(windFieldU{ith_expansion},windFieldV{ith_expansion},windFieldX,windFieldY,'default',figNum);
+            set(cellArrayOfPlotHandles{3},'Color',[0.6 0.6 0.6]);
+        end
         thisExpansion = allExpansions{ith_expansion,1};
         percentageDone = min(ith_expansion/Ntotal,1);
         if 1==0
