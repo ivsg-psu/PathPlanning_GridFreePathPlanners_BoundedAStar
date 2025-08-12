@@ -256,6 +256,9 @@
 % - DEPRECATED: fcn_algorithm_create_phantom_goal
 %   % * now fcn_BoundedAStar_createPhantomGoal
 % - Added script_test_fcn_createPhantomGoal
+% - DEPRECATED: fcn_check_reachability
+%   % * now fcn_BoundedAStar_checkReachability
+% - Added script_test_fcn_checkReachability
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
