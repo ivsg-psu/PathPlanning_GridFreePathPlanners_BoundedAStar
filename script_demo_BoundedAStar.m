@@ -259,6 +259,14 @@
 % - DEPRECATED: fcn_check_reachability
 %   % * now fcn_BoundedAStar_checkReachability
 % - Added script_test_fcn_checkReachability
+%
+% 2025_08_13 by K. Hayes
+% - DEPRECATED: fcn_interpolate_polytopes_in_time
+%   % * now fcn_BoundedAStar_interpolatePolytopesInTime
+% - Added script_test_fcn_interpolatePolytopesInTime
+% - DEPRECATED: fcn_interpolate_route_in_time
+%   % * now fcn_BoundedAStar_interpolateRouteInTime
+% - Added script_test_fcn_interpolateRouteInTime
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
