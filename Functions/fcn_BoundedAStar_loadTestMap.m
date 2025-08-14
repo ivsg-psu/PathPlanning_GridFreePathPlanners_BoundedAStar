@@ -11,7 +11,8 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
 %
 %
 % FORMAT:
-% [polytopes, starts, finishes] = fcn_BoundedAStar_loadTestMap(map_idx)
+% [polytopes, starts, finishes] = fcn_BoundedAStar_loadTestMap(map_idx,
+% (add_boundary), (fig_num))
 %
 %
 % INPUTS:
@@ -26,6 +27,12 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
 %        blank or set to anyting other than 1, the function defaults to the behavior
 %        of not including a boundary, which is more conservative as the boundary polytope
 %        overlaps all other polytopes so will be confusing if its inclusion is not expected.
+%
+%     fig_num: a figure number to plot results. If set to -1, skips any
+%       input checking or debugging, no figures will be generated, and sets
+%       up code to maximize speed. As well, if given, this forces the
+%       variable types to be displayed as output and as well makes the input
+%       check process verbose
 %
 %
 % OUTPUTS:
@@ -64,32 +71,102 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
 % 2025_07_17 - K. Hayes, kxh1031@psu.edu
 % -- copied to new function from fcn_util_load_test_map to follow library
 %    convention
+% 2025_08_14 - K. Hayes 
+% -- updated fcn header and formatting
+% -- moved plotting into fcn
 %
 % TO DO:
 %
 % -- fill in to-do items here.
-    %% check input arguments
-    if nargin < 1 || nargin > 2
-        error('Incorrect number of arguments, this function requires a map ID and optionally a flag for Voronoi planning');
+
+%% Debugging and Input checks
+% Check if flag_max_speed set. This occurs if the fig_num variable input
+% argument (varargin) is given a number of -1, which is not a valid figure
+% number.
+MAX_NARGIN = 3; % The largest Number of argument inputs to the function
+flag_max_speed = 0;
+if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
+    flag_check_inputs = 0; % Flag to perform input checking
+    flag_max_speed = 1;
+else
+    % Check to see if we are externally setting debug mode to be "on"
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
+    flag_check_inputs = 1; % Flag to perform input checking
+    MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS");
+    MATLABFLAG_MAPGEN_FLAG_DO_DEBUG = getenv("MATLABFLAG_MAPGEN_FLAG_DO_DEBUG");
+    if ~isempty(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG)
+        flag_do_debug = str2double(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG);
+        flag_check_inputs  = str2double(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS);
     end
-    % if there is no value in varargin...
-    if nargin == 1
-        % default is to assume no boundary should be provided
-        add_boundary = 0;
+end
+
+% flag_do_debug = 1;
+
+if flag_do_debug
+    st = dbstack; %#ok<*UNRCH>
+    fprintf(1,'STARTING function: %s, in file: %s\n',st(1).name,st(1).file);
+    debug_fig_num = 999978; %#ok<NASGU>
+else
+    debug_fig_num = []; %#ok<NASGU>
+end
+
+%% check input arguments?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____                   _
+%  |_   _|                 | |
+%    | |  _ __  _ __  _   _| |_ ___
+%    | | | '_ \| '_ \| | | | __/ __|
+%   _| |_| | | | |_) | |_| | |_\__ \
+%  |_____|_| |_| .__/ \__,_|\__|___/
+%              | |
+%              |_|
+% See: http://patorjk.com/software/taag/#p=display&f=Big&t=Inputs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if 0==flag_max_speed
+    if flag_check_inputs
+        % Are there the right number of inputs?
+        narginchk(1,MAX_NARGIN);
+
+        % Check the time_space_polytopes input, make sure it is struct
+        assert(isnumeric(map_idx));
+        
     end
-    % if there is a value in varargin...
-    if nargin == 2
-        % check what it is
-        if varargin{1} == 1
-            % set concave flag if it was passed in
-            add_boundary = 1;
-        elseif varargin{1} == 0
-            add_boundary = 0;
-        else
-            % throw error if it was passed in with an incorrect value
-            error('optional argument is the add_boundary flag and can either be 1 or 0')
-        end
+end
+
+% Does user want to specify add_boundary?
+add_boundary = 0; % Default is to NOT add boundary
+if 2 <= nargin
+    temp = varargin{1};
+    if ~isempty(temp) % Did the user NOT give an empty figure number?
+       all_pts = temp;
     end
+end
+
+% Does user want to show the plots?
+flag_do_plots = 0; % Default is to NOT show plots
+if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
+    temp = varargin{end};
+    if ~isempty(temp) % Did the user NOT give an empty figure number?
+        fig_num = temp;
+        figure(fig_num);
+        flag_do_plots = 1;
+    end
+end
+
+
+%% Main code
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   __  __       _
+%  |  \/  |     (_)
+%  | \  / | __ _ _ _ __
+%  | |\/| |/ _` | | '_ \
+%  | |  | | (_| | | | | |
+%  |_|  |_|\__,_|_|_| |_|
+%
+%See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
     resolution_scale = 1; % default to 1 unless over written somewhere
     length_cost_weight = 1/6; % default to 1/6 unless over written somewhere
@@ -220,7 +297,7 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
         for poly = 1:length(tiled_polytopes) % pull each cell from the voronoi diagram
             stretched_polytopes(poly).vertices  = tiled_polytopes(poly).vertices.*new_stretch;
         end % Ends for loop for stretch
-        stretched_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(stretched_polytopes);
+        stretched_polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(stretched_polytopes);
 
         % shrink polytopes to desired radius
         des_rad = 2; sigma_radius = 0.4; min_rad = 0.1;
@@ -345,7 +422,7 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
             end
             new_polytopes(i).vertices = wgs_verts;
         end
-        polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(new_polytopes);
+        polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(new_polytopes);
     end
 
     %% define multiple start goal pairs for some maps
@@ -403,8 +480,44 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
         length_cost_weights = length_cost_weight*ones(1, size(starts,1));
         navigated_portions = navigated_portion*ones(1, size(starts,1));
     end
-end
+%% Plot the results (for debugging)?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____       _
+%  |  __ \     | |
+%  | |  | | ___| |__  _   _  __ _
+%  | |  | |/ _ \ '_ \| | | |/ _` |
+%  | |__| |  __/ |_) | |_| | (_| |
+%  |_____/ \___|_.__/ \__,_|\__, |
+%                            __/ |
+%                           |___/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
+if flag_do_plots
+    % set up plot
+    figure(fig_num);
+    hold on;
+    box on;
+    
+    % Plot polytopes
+    
+    plotFormat.Color = 'blue';
+    plotFormat.LineWidth = 2;
+    fcn_MapGen_plotPolytopes(polytopes, plotFormat, [1 0 0 0 0.5], fig_num); 
+
+end
+end % end function
+
+%% Functions follow
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   ______                _   _
+%  |  ____|              | | (_)
+%  | |__ _   _ _ __   ___| |_ _  ___  _ __  ___
+%  |  __| | | | '_ \ / __| __| |/ _ \| '_ \/ __|
+%  | |  | |_| | | | | (__| |_| | (_) | | | \__ \
+%  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
+%
+% See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 function xyz = INTERNAL_WGSLLA2xyz(wlat, wlon, walt)
     %Function xyz = wgslla2xyz(lat, lon, alt) returns the
     %equivalent WGS84 XYZ coordinates (in meters) for a

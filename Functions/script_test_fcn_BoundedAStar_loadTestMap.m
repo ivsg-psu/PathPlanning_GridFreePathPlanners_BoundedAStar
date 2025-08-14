@@ -1,9 +1,12 @@
-% script_test_fcn_BoundedAStar_interpolatePolytopesInTime
-% tests fcn_BoundedAStar_interpolatePolytopesInTime
+% script_test_fcn_BoundedAStar_loadTestMap
+% tests fcn_BoundedAStar_loadTestMap
 
 % Revision history
-% 2025_08_13 - K. Hayes, kxh1031@psu.edu
+% 2025_08_14 - K. Hayes, kxh1031@psu.edu
 % -- initial write of script
+
+% TO DO: 
+% -- write test cases that check all the maps
 
 %% Set up the workspace
 close all
@@ -26,51 +29,31 @@ close all
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
 
-%% DEMO case: interpolate along timespace polytope edges
+%% DEMO case: load a pre-generated polytope map
 fig_num = 10001;
-titleString = sprintf('DEMO case: interpolate along timespace polytope edges');
+titleString = sprintf('DEMO case: load a pre-generated polytope map (map_idx = 7)');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
-% Create polytope field
-polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 25],[], ([100 100]), (-1));
+map_idx = 7;
+add_boundary = 0;
 
-% Trim polytopes on edge of boundary
-trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0.1 0.1 99.9 99.9], (-1));
-
-% Shrink polytopes to form obstacle field
-shrunk_polytopes = fcn_MapGen_polytopesShrinkEvenly(trim_polytopes, 2.5, (-1));
-
-max_translation_distance = 0.15;
-final_time = 20;
-time_space_polytopes = fcn_BoundedAStar_makeTimespacePolyhedrafromPolygons(shrunk_polytopes, max_translation_distance, final_time);
-
-time_space_polytopes = fcn_BoundedAStar_makeFacetsFromVerts(time_space_polytopes);
-
-all_surfels = fcn_BoundedAStar_makeTriangularSurfelsFromFacets(time_space_polytopes);
-
-
-% define start and finish
-start = [0 0.5 0];
-finish = [1 0.5 0; 0.7 0.2 20]; % moving finish
-dt = 5;
-finish = fcn_interpolate_route_in_time(finish,dt);
-num_finish_pts = size(finish,1);
-starts = [start(1)*ones(num_finish_pts,1) start(2)*ones(num_finish_pts,1) start(3)*ones(num_finish_pts,1)];
-
-% interpolate vertices in time and form all_pts matrix
-[verts, time_space_polytopes] = fcn_BoundedAStar_interpolatePolytopesInTime(time_space_polytopes,dt, fig_num);
+[polytopes, starts, finishes, resolution_scale, length_cost_weights, navigated_portions] = fcn_BoundedAStar_loadTestMap(map_idx, (add_boundary), (fig_num));
 
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(isnumeric(verts));
-assert(isstruct(time_space_polytopes));
+assert(isnumeric(starts));
+assert(isstruct(polytopes));
+assert(isnumeric(finishes));
+assert(isnumeric(resolution_scale));
+assert(isnumeric(length_cost_weights));
+assert(isnumeric(navigated_portions));
 
 % Check variable sizes
-Npoly = 10;
-assert(isequal(Npoly,length(time_space_polytopes))); 
+Npoly = 51;
+assert(isequal(Npoly,length(polytopes))); 
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));

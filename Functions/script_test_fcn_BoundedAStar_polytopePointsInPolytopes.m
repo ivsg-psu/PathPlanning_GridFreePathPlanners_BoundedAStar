@@ -26,51 +26,47 @@ close all
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
 
-%% DEMO case: interpolate along timespace polytope edges
+%% DEMO case: check if points are inside a polytope
 fig_num = 10001;
-titleString = sprintf('DEMO case: interpolate along timespace polytope edges');
+titleString = sprintf('DEMO case: check if points are inside a polytope');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
-% Create polytope field
-polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 25],[], ([100 100]), (-1));
+% Set up polytope with specified vertices
+xv = [-2 -1 1 2 2 1 -1 -2];
+yv = [-1 -2 -2 -1 1 2 2 1];
+polytopes.vertices = [[xv xv(1)]' [yv yv(1)]'];
+polytopes.xv = xv;
+polytopes.yv = yv;
 
-% Trim polytopes on edge of boundary
-trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0.1 0.1 99.9 99.9], (-1));
+polytopes.distances = sum((polytopes.vertices(1:end-1,:) - polytopes.vertices(2:end,:)).^2,2).^0.5;
+[C,polytope.area] = fcn_MapGen_polytopeCentroidAndArea ([[xv xv(1)]',[yv yv(1)]']);
 
-% Shrink polytopes to form obstacle field
-shrunk_polytopes = fcn_MapGen_polytopesShrinkEvenly(trim_polytopes, 2.5, (-1));
+polytopes.mean = C;
+polytopes.max_radius = max(sum((polytopes.vertices(1:end-1,:) - ones(length(xv),1)*polytopes.mean).^2,2).^0.5);
+polytopes.cost = 0.5;
 
-max_translation_distance = 0.15;
-final_time = 20;
-time_space_polytopes = fcn_BoundedAStar_makeTimespacePolyhedrafromPolygons(shrunk_polytopes, max_translation_distance, final_time);
+% Set up two sample points
+A.x = 0;
+A.y = 0;
+B.x = 5;
+B.y = 5;
 
-time_space_polytopes = fcn_BoundedAStar_makeFacetsFromVerts(time_space_polytopes);
+throw_error = 0;
+edge_check = 0;
 
-all_surfels = fcn_BoundedAStar_makeTriangularSurfelsFromFacets(time_space_polytopes);
-
-
-% define start and finish
-start = [0 0.5 0];
-finish = [1 0.5 0; 0.7 0.2 20]; % moving finish
-dt = 5;
-finish = fcn_interpolate_route_in_time(finish,dt);
-num_finish_pts = size(finish,1);
-starts = [start(1)*ones(num_finish_pts,1) start(2)*ones(num_finish_pts,1) start(3)*ones(num_finish_pts,1)];
-
-% interpolate vertices in time and form all_pts matrix
-[verts, time_space_polytopes] = fcn_BoundedAStar_interpolatePolytopesInTime(time_space_polytopes,dt, fig_num);
-
+[err, Apoly, Bpoly] = fcn_BoundedAStar_polytopePointsInPolytopes(A,B,polytopes, (throw_error), (edge_check), (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(isnumeric(verts));
-assert(isstruct(time_space_polytopes));
+assert(isnumeric(err));
+assert(isnumeric(Apoly));
+assert(isnumeric(Bpoly));
 
 % Check variable sizes
-Npoly = 10;
-assert(isequal(Npoly,length(time_space_polytopes))); 
+Npoly = 1;
+assert(isequal(Npoly,length(polytopes))); 
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -327,3 +323,63 @@ end
 %
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+
+% Examples:
+%      
+%    
+%
+%      % Example 2
+%      cur_path = pwd;
+%      main_folder = '!Voronoi Tiling Obstacles - Organized';
+%      parent_dir = cur_path(1:strfind(cur_path,main_folder)-2);
+%      addpath([parent_dir '\' main_folder '\General_Calculation'])
+%      addpath([parent_dir '\' main_folder '\Plotting'])
+%      addpath([parent_dir '\' main_folder '\Map_Generation\polytope_calculation'])
+%      xv = [-2 -1 1 2 2 1 -1 -2];
+%      yv = [-1 -2 -2 -1 1 2 2 1];
+%      polytopes.vertices = [[xv xv(1)]' [yv yv(1)]'];
+%      polytopes.xv = xv;
+%      polytopes.yv = yv;
+%      polytopes.distances = sum((polytopes.vertices(1:end-1) - polytopes.vertices(2:end,:)).^2,2).^0.5;
+%      [Cx,Cy,polytope.area] = fcn_MapGen_polytopeCentroidAndArea ([[xv xv(1)]',[yv yv(1)]']);
+%      polytopes.mean = [Cx, Cy];
+%      polytopes.max_radius = max(sum((polytopes.vertices(1:end-1,:) - ones(length(xv),1)*polytopes.mean).^2,2).^0.5);
+%      A.x = -5;
+%      A.y = -5;
+%      B.x = 0;
+%      B.y = 0;
+%      fcn_BoundedAStar_plotPolytopes(polytopes,102,'b-',2,[-6 6 -6 6],'square')
+%      plot([A.x B.x],[A.y B.y],'kx','linewidth',2)
+%      try
+%          fcn_BoundedAStar_polytopePointsInPolytopes(A,B,polytopes)
+%      catch
+%          plot([A.x B.x],[A.y B.y],'rx','linewidth',2)
+%      end
+%
+%      % Example 3
+%      cur_path = pwd;
+%      main_folder = '!Voronoi Tiling Obstacles - Organized';
+%      parent_dir = cur_path(1:strfind(cur_path,main_folder)-2);
+%      addpath([parent_dir '\' main_folder '\General_Calculation'])
+%      addpath([parent_dir '\' main_folder '\Plotting'])
+%      addpath([parent_dir '\' main_folder '\Map_Generation\polytope_calculation'])
+%      xv = [-2 -1 1 2 2 1 -1 -2];
+%      yv = [-1 -2 -2 -1 1 2 2 1];
+%      polytopes.vertices = [[xv xv(1)]' [yv yv(1)]'];
+%      polytopes.xv = xv;
+%      polytopes.yv = yv;
+%      polytopes.distances = sum((polytopes.vertices(1:end-1,:) - polytopes.vertices(2:end,:)).^2,2).^0.5;
+%      [Cx,Cy,polytope.area] = fcn_MapGen_polytopeCentroidAndArea ([[xv xv(1)]',[yv yv(1)]']);
+%      polytopes.mean = [Cx, Cy];
+%      polytopes.max_radius = max(sum((polytopes.vertices(1:end-1,:) - ones(length(xv),1)*polytopes.mean).^2,2).^0.5);
+%      A.x = -5;
+%      A.y = -5;
+%      B.x = 5;
+%      B.y = 5;
+%      fcn_BoundedAStar_plotPolytopes(polytopes,103,'b-',2,[-6 6 -6 6],'square')
+%      plot([A.x B.x],[A.y B.y],'kx','linewidth',2)
+%      try
+%          fcn_BoundedAStar_polytopePointsInPolytopes(A,B,polytopes)
+%      catch
+%          plot([A.x B.x],[A.y B.y],'rx','linewidth',2)
+%      end

@@ -267,6 +267,17 @@
 % - DEPRECATED: fcn_interpolate_route_in_time
 %   % * now fcn_BoundedAStar_interpolateRouteInTime
 % - Added script_test_fcn_interpolateRouteInTime
+%
+% 2025_08_14 by K. Hayes
+% - DEPRECATED: fcn_make_facets_from_verts
+%	% * now fcn_BoundedAStar_makeFacetsFromVerts
+% - added script_test_fcn_BoundedAStar_makeFacetsFromVerts
+% - DEPRECATED: fcn_util_load_test_map
+% 	% * now fcn_BoundedAStar_loadTestMap
+% - added script_test_fcn_BoundedAStar_loadTestMap
+% - DEPRECATED: fcn_calculation_points_in_polytopes
+%	% * now fcn_BoundedAStar_polytopesPointsInPolytopes
+% - added script_test_fcn_BoundedAStar_polytopesPointsInPolytopes
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan

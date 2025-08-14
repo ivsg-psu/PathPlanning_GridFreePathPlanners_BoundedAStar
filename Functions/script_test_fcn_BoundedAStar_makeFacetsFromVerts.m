@@ -1,8 +1,8 @@
-% script_test_fcn_BoundedAStar_interpolatePolytopesInTime
-% tests fcn_BoundedAStar_interpolatePolytopesInTime
+% script_test_fcn_BoundedAStar_makeFacetsFromVerts
+% tests fcn_BoundedAStar_makeFacetsFromVerts
 
 % Revision history
-% 2025_08_13 - K. Hayes, kxh1031@psu.edu
+% 2025_08_14 - K. Hayes, kxh1031@psu.edu
 % -- initial write of script
 
 %% Set up the workspace
@@ -26,9 +26,9 @@ close all
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
 
-%% DEMO case: interpolate along timespace polytope edges
+%% DEMO case: check that converting vertices to facets is working
 fig_num = 10001;
-titleString = sprintf('DEMO case: interpolate along timespace polytope edges');
+titleString = sprintf('DEMO case: check that converting vertices to facets is working');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
@@ -45,27 +45,11 @@ max_translation_distance = 0.15;
 final_time = 20;
 time_space_polytopes = fcn_BoundedAStar_makeTimespacePolyhedrafromPolygons(shrunk_polytopes, max_translation_distance, final_time);
 
-time_space_polytopes = fcn_BoundedAStar_makeFacetsFromVerts(time_space_polytopes);
-
-all_surfels = fcn_BoundedAStar_makeTriangularSurfelsFromFacets(time_space_polytopes);
-
-
-% define start and finish
-start = [0 0.5 0];
-finish = [1 0.5 0; 0.7 0.2 20]; % moving finish
-dt = 5;
-finish = fcn_interpolate_route_in_time(finish,dt);
-num_finish_pts = size(finish,1);
-starts = [start(1)*ones(num_finish_pts,1) start(2)*ones(num_finish_pts,1) start(3)*ones(num_finish_pts,1)];
-
-% interpolate vertices in time and form all_pts matrix
-[verts, time_space_polytopes] = fcn_BoundedAStar_interpolatePolytopesInTime(time_space_polytopes,dt, fig_num);
-
+time_space_polytopes = fcn_BoundedAStar_makeFacetsFromVerts(time_space_polytopes, (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(isnumeric(verts));
 assert(isstruct(time_space_polytopes));
 
 % Check variable sizes
