@@ -278,6 +278,17 @@
 % - DEPRECATED: fcn_calculation_points_in_polytopes
 %	% * now fcn_BoundedAStar_polytopesPointsInPolytopes
 % - added script_test_fcn_BoundedAStar_polytopesPointsInPolytopes
+%
+% 2025_08_15 by K. Hayes
+% - DEPRECATED: fcn_make_timespace_polyhedra_from_polygons
+% 	% * now fcn_BoundedAStar_makeTimespacePolyhedrafromPolygons
+% - added script_test_fcn_BoundedAStar_makeTimespacePolyhedrafromPolygons
+% - DEPRECATED: fcn_make_triangular_surfels_from_facets
+% 	% * now fcn_BoundedAStar_makeTriangularSurfelsFromFacets
+% - added script_test_fcn_BoundedAStar_makeTriangularSurfelsFromFacets
+% - DEPRECATED: fcn_general_calculation_point_to_line_distances_squared
+% 	% * now fcn_BoundedAStar_calculatePointToLineDistSquared
+% - added script_test_fcn_BoundedAStar_calculatePointToLineDistSquared
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
