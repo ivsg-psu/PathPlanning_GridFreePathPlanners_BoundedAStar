@@ -1,10 +1,10 @@
-function [reachableSet, boundingPolytopeVertices] = fcn_BoundedAStar_reachabilityWithInputs(radius, windFieldU, windFieldV, windFieldX, windFieldY, varargin)
+function [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_reachabilityWithInputs(radius, windFieldU, windFieldV, windFieldX, windFieldY, varargin)
 % fcn_BoundedAStar_reachabilityWithInputs
-% calculates the reachable set from a given startPoints,accounting
-% for control inputs and the wind field 
+% calculates the 1-step reachable set from a given set of points,
+% startPoints, accounting for control inputs and the wind field
 %
 % FORMAT:
-% [reachableSet, boundingPolytopeVertices] = fcn_BoundedAStar_reachabilityWithInputs(...
+% [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_reachabilityWithInputs(...
 %     radius, ... 
 %     windFieldU,  ...
 %     windFieldV,  ...
@@ -61,9 +61,14 @@ function [reachableSet, boundingPolytopeVertices] = fcn_BoundedAStar_reachabilit
 %     reachableSet: a set of points defining the distance conversion of the
 %     original travel locations to locations with wind
 %
-%     boundingPolytopeVertices: a set of points defining the intermediate
-%     motion of the boundary points, prior to the wind disturbance.
-%     Useful to determine control inputs and trajectory.
+%     cellArrayOfIntermediateCalculations: intermediate outputs that are
+%     used to construct the reachable set, saved in a cell array. These
+%     include:
+%
+%             preExpansionPoints: the xK points, after simplification
+%             xKPlusOne_AMatrixPoints: the A matrix calculation result
+%             xKPlusOne_BMatrixPoints: the B matrix calculation result
+%             xKPlusOne_WindDisturbance: the wind disturbances
 %
 % DEPENDENCIES:
 %
@@ -107,14 +112,24 @@ function [reachableSet, boundingPolytopeVertices] = fcn_BoundedAStar_reachabilit
 %   % has length greater than 0.5 (typically, this value is greater than
 %   % .90 in real-world data)
 %
-% 2024_08_03 by S. Brennan
-% - 
 % 2025_08_08 by K. Hayes
 % -- added call to fcn_BoundedAStar_sampleWindField in place of call to
 %    internal function
+%
 % 2024_08_08 by S. Brennan
 % - In fcn_BoundedAStar_reachabilityWithInputs
-%   % * added boundingPolytopeVertices to outputs
+%   % * added cellArrayOfIntermediateCalculations to outputs
+%
+% 2024_08_15 to 2024_08_16 by S. Brennan
+% - In fcn_BoundedAStar_reachabilityWithInputs
+%   % * moved meshgrid cacluation into debugging, as it is not used for
+%   %   % main outputs - only for debugging
+%   % * improved the header description for clarity
+%   % * fixed bug where the expansion due to wind disturbance was
+%   %   % after the state expansion, instead of prior
+%   % * updated function to output intermediate calculations
+%   % * moved set simplification steps to PRIOR to states
+
 
 % TO-DO
 % -- update header
@@ -185,11 +200,11 @@ if 1 <= nargin
 end
 
 % Does user want to specify flagWindRoundingType input?
-flagWindRoundingType = 0; % Default is 0
+flagWindRoundingType = 0; %#ok<NASGU> % Default is 0
 if 2 <= nargin
     temp = varargin{2};
     if ~isempty(temp)
-        flagWindRoundingType = temp;
+        flagWindRoundingType = temp; %#ok<NASGU>
     end
 end
 
@@ -216,173 +231,58 @@ end
 %See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
-NstartPoints = length(startPoints(:,1));
-
-% Get meshgrid for streamline plotting
-[meshX,meshY] = meshgrid(windFieldX,windFieldY);
-
-% Plot the wind field?
+% For debugging, plot the wind field. The remaining debug plots will be
+% overlaid on top of this
 if flag_do_debug
     figure(debug_figNum);
     clf;
     hold on;
     
     % Plot the windfield as an image
-    fcn_BoundedAStar_plotWindField(windFieldU,windFieldV,windFieldX,windFieldY,'default',debug_figNum)
+    fcn_BoundedAStar_plotWindField(windFieldU,windFieldV,windFieldX,windFieldY,'default',debug_figNum);
+
+    % Get meshgrid for streamline plotting
+    [meshX,meshY] = meshgrid(windFieldX,windFieldY);
     s = streamslice(meshX,meshY,windFieldU,windFieldV);
     set(s,'Color',[0.6 0.6 0.6])
 
     % Plot the start points
-    plot(startPoints(:,1),startPoints(:,2),'.-','Color',[0 0 1],'MarkerSize',30,'DisplayName','Input: startPoints');
+    plot(startPoints(:,1),startPoints(:,2),'.-',...
+        'Color',[0 0 1],'MarkerSize',30,...
+        'DisplayName','Input: startPoints');
 
 end
 
-%%%%
-% Calculate the state propogation based on dynamics. 
-
-% Create state matrices
-% For now, this is
-% trivial: x_(k+1) = A*x_k for A=identity gives x_(k+1) = x(k)
-% A - the vehicle remains in the same position unless moved
-A = eye(NstartPoints);
-
-% The following does: x_(k+1) = A*x_k 
-movedPoints = A*startPoints;
-
-if flag_do_debug
-    figure(debug_figNum);
-    plot(movedPoints(:,1),movedPoints(:,2),'.-','Color',[0 1 0],'MarkerSize',20);
-end
-
-%%%%
-% Calculate the inputs for each state output. This is going to become the
-% B*u term. For now, assume B*u is an arbitrary direction, essentially
-% pushing all points "outward" from wherever they are.
-
-% Define the number of directions to be considered from each value 
-% of the x0 initial set
-Ndirections = 7; % Number of directions for expansion
-angles = linspace(0,2*pi,Ndirections)';
-% angles = angles(1:end-1,:);
-% controlInputPerturbations = radius*[cos(angles) sin(angles)];
-
-% The following commented out code, in vectorized form, calculates all the
-% perturbations at once on the startPoints. It would require another set
-% merge step that also should be vectorized. Since this is not yet coded,
-% it is commented out here. 
-% % For each state, there will be Ndirections "pushes" to add. So we need to
-% % replicate each state Ndirections times. To do this, we change the Nx2
-% % matrix into (2N x 1) column format: [x1; y1; x2; y2; etc] and then repeat
-% % this matrix Ndirection times in the "row" direction
-% controlInputPerturbationsRepeatedNstartPoints = repmat(controlInputPerturbations,NstartPoints,1);
-% movedStatesSingleColumn = repmat(movedPoints',Ndirections,1);
-% movedStatesRepeatedNdirections = reshape(movedStatesSingleColumn,2,[])';
-% 
-% % Perform the addition of control inputs
-% movedStartStates = movedStatesRepeatedNdirections + controlInputPerturbationsRepeatedNstartPoints;
-% 
-% if flag_do_debug
-%     figure(debug_figNum);
-%     plot(movedStartStates(:,1),movedStartStates(:,2),'.-','Color',[1 0 1],'MarkerSize',20);
-% end
-
-%%%%
-% For each of the points, convert its expansion into a polytope, and merge
-% them all into one polytope
-
-%%%%
-% The following takes small perturbations away from direction of the point
-% or points
-perturbationVectors = radius*[cos(angles) sin(angles)];
-Npoints = length(startPoints(:,1));
-if Npoints==1
-    polyPoints = startPoints(1,:) + perturbationVectors;
-elseif Npoints==2 || (Npoints==3 && isequal(startPoints(1,:),startPoints(end,:)))
-    directionVector1to2 = startPoints(2,:)-startPoints(1,:);
-    lineAngle = atan2(directionVector1to2(2),directionVector1to2(1));
-    positiveOrNegative = sin(angles);
-    positiveAngles = angles(positiveOrNegative>=0);
-    nPositive = sum(positiveOrNegative>=0);
-    polyPoints = [...
-        ones(nPositive,1)*startPoints(2,:) + radius*[cos(positiveAngles+lineAngle-pi/2) sin(positiveAngles+lineAngle-pi/2)];
-        ones(nPositive,1)*startPoints(1,:) + radius*[cos(positiveAngles+lineAngle+pi/2) sin(positiveAngles+lineAngle+pi/2)];
-        ];
-    polyPoints = [polyPoints; polyPoints(1,:)];
-else
-    %%%%
-    % Need to expand all vertices outward. A method to do this is to
-    % calculate the projection vector at each vertex that bisects the
-    % angle, and thus projects straight "outward". The distance of this
-    % vector can be calculated such that both edges move outward by the
-    % same radius. The code below implements this method.
-
-    % Make sure first and last points repeat
-    if ~isequal(startPoints(1,:),startPoints(end,:))
-        startPoints = [startPoints; startPoints(1,:)];
-    end
-
-    % Find unit edge vectors, and ortho projections. Note: if there are N
-    % vertices, there will be N-1 edges. So that the angles match with the
-    % end of each point, we repeat the 1st edge vector onto the end so the
-    % number of edge vectors is equal to the number of points.
-    edgeVectors = startPoints(2:end,:)-startPoints(1:end-1,:);
-    edgeLengths = sum(edgeVectors.^2,2).^0.5;
-    unitEdgeVectors = edgeVectors./edgeLengths;
-    allUnitEdgeVectors = [unitEdgeVectors(end,:); unitEdgeVectors; unitEdgeVectors(1,:)];
-
-    % The following method avoids the use of sines, cosines, and tangents
-    % as those are slow to calculate. To find the vector projection from
-    % each point, the average of the projection vector tips at each vertex
-    % angle is calculated. The projection scaling distance, D, is
-    % calculated by using the relationship that the sin(theta) = x/D = a/x,
-    % then solving for D and noting that x=1. Here, theta is the half angle
-    % formed by the "kite" apex, created by the before/after projection of
-    % the orthogonal vectors from each startPoint.
-
-    % Perform a -90 degree rotation
-    orthoEdgeVectors = allUnitEdgeVectors*[0 -1; 1 0];
-    positionsIncomingVector = startPoints+orthoEdgeVectors(1:end-1,:);
-    positionsOutgoingVector = startPoints+orthoEdgeVectors(2:end,:);
-    averagePositions = (positionsIncomingVector + positionsOutgoingVector)/2;
-    averagePositionVectors = averagePositions - startPoints;
-    averagePositionVectorLengths = sum(averagePositionVectors.^2,2).^0.5;
-    unitProjectionVectors = averagePositionVectors./averagePositionVectorLengths;
-    % Use the sin(theta) method to calculate D
-    D = 1./averagePositionVectorLengths;
-    polyPointsRaw = startPoints + radius*D.*unitProjectionVectors;
-
-    % Clean up points
-    goodPoints = averagePositionVectorLengths>0.1;
-    polyPoints = polyPointsRaw(goodPoints,:);
-end
+%% Find pre-expansion points
+% For the operations that follow, these are simplified greatly if all the
+% points are in the same format, namely: no repeated points other than
+% first and last, and the points enclose a region. The following function
+% prepares the points for this format. In particular, it fixes the special
+% case where there are only 1 or 2 non-repeated points in the startPoints
+densePreExpansionPoints = fcn_INTERNAL_prepareStartPoints(startPoints, radius);
 
 
 if flag_do_debug
     figure(debug_figNum);
-    plot(polyPoints(:,1),polyPoints(:,2),'m.-');
+    plot(densePreExpansionPoints(:,1),densePreExpansionPoints(:,2),'.-',...
+        'Color',[0 1 0],'MarkerSize',20,'DisplayName','densePreExpansionPoints');
 end
 
-% For debugging. Should see all the edges move outward by radius amount,
-% equally
-if 1==0
-    figure(3773);
-    clf;
-    plot(startPoints(:,1),startPoints(:,2),'.-','MarkerSize',20);
-    hold on;
-    plot(polyPoints(:,1),polyPoints(:,2),'.-','MarkerSize',20,'LineWidth',2);
-    axis equal
-end
-
-% Resample polyPoints
+%% Resample points to match the wind field discretization
+% The points along the bounding edge may be "dense", more dense than the
+% wind field discretization. This is unnecessary, since the wind can only
+% act differently at spacings larger than the discretization used to define
+% the wind field. So here, the boundary is re-sampled to be at least as
+% large as the wind field discretization distance.
 stepSize = windFieldX(2)-windFieldX(1);
 
-edgeVectors = polyPoints(2:end,:)-polyPoints(1:end-1,:);
+edgeVectors = densePreExpansionPoints(2:end,:)-densePreExpansionPoints(1:end-1,:);
 edgeLengths = sum(edgeVectors.^2,2).^0.5;
 unitEdgeVectors = edgeVectors./edgeLengths;
 
 resampledPolyPoints = [];
 for ith_edge = 1:length(unitEdgeVectors(:,1))
-    thisStartPoint = polyPoints(ith_edge,:);
+    thisStartPoint = densePreExpansionPoints(ith_edge,:);
     thisLength = edgeLengths(ith_edge);    
     thisUnitVector = unitEdgeVectors(ith_edge,:);
 
@@ -394,7 +294,57 @@ for ith_edge = 1:length(unitEdgeVectors(:,1))
     resampledPolyPoints = [resampledPolyPoints; morePoints]; %#ok<AGROW>
 end
 resampledPolyPoints = [resampledPolyPoints; resampledPolyPoints(1,:)];
-boundingPolytopeVertices = resampledPolyPoints;
+preExpansionPoints = resampledPolyPoints;
+
+if flag_do_debug
+    figure(debug_figNum);
+    plot(preExpansionPoints(:,1),preExpansionPoints(:,2),'.-',...
+        'Color',[1 0 0],'MarkerSize',20,'DisplayName','preExpansionPoints');
+end
+
+%% Calculate the state propogation based on dynamics. 
+
+% Create state matrices
+% For now, this is
+% trivial: x_(k+1) = A*x_k for A=identity gives x_(k+1) = x(k)
+% A - the vehicle remains in the same position unless moved
+NPreExpansionPoints = length(preExpansionPoints(:,1));
+A = eye(NPreExpansionPoints);
+
+% The following does: x_(k+1) = A*x_k 
+xKPlusOne_AMatrixPoints = A*preExpansionPoints;
+
+if flag_do_debug
+    figure(debug_figNum);
+    plot(xKPlusOne_AMatrixPoints(:,1),xKPlusOne_AMatrixPoints(:,2),'.-',...
+        'Color',[0 1 0],'MarkerSize',20,'DisplayName','xKPlusOne_AMatrixPoints');
+end
+
+%% Calculate the effects of inputs. 
+
+% This represents the B*u term. For now, assume B*u is an arbitrary
+% direction, essentially pushing all preExpansionPoints "outward" from
+% wherever they are.
+xKPlusOne_BMatrixPoints = fcn_INTERNAL_expandVerticesOutward(preExpansionPoints, radius);
+
+if flag_do_debug
+    figure(debug_figNum);
+    summedPoints = xKPlusOne_AMatrixPoints+xKPlusOne_BMatrixPoints;
+    plot(summedPoints(:,1),summedPoints(:,2),'.-',...
+        'Color',[1 0 1],'MarkerSize',20,'DisplayName','xKPlusOne_BMatrixPoints');
+end
+
+% For debugging. Should see all the edges move outward by radius amount,
+% equally
+if 1==0
+    figure(3773);
+    clf;
+    plot(startPoints(:,1),startPoints(:,2),'.-','MarkerSize',20);
+    hold on;
+    plot(xKPlusOne_BMatrixPoints(:,1),xKPlusOne_BMatrixPoints(:,2),'.-','MarkerSize',20,'LineWidth',2);
+    axis equal
+end
+
 
 %%%%
 % OLD METHOD using polyshape operations: (slow)
@@ -425,18 +375,27 @@ boundingPolytopeVertices = resampledPolyPoints;
 % % Repeat last point to close off the boundary
 % boundingPolytopeVertices = [boundingPolytopeVerticesRaw; boundingPolytopeVerticesRaw(1,:)];
 
-if flag_do_debug
-    figure(debug_figNum);
-    plot(boundingPolytopeVertices(:,1),boundingPolytopeVertices(:,2),'r.-');
-end
 
-%%%%
-% Apply disturbance to each vertex.
-% [reachableSet, resampledBoundingPolytopeVertices] = ...
-%     fcn_INTERNAL_sampleWindAtPoints(boundingPolytopeVertices, ...
+%% Calculate wind disturbance
+
+% This calculates the effect of the wind input
+
+% FORMAT:
+% function [filteredWindDisturbances, resampledWindSamplingVertices] = ...
+%     fcn_INTERNAL_sampleWindAtPoints(windSamplingVertices, ...
 %     windFieldX, windFieldY, windFieldU, windFieldV, ...
-%     flagWindRoundingType);
-[reachableSet, resampledBoundingPolytopeVertices] = fcn_BoundedAStar_sampleWindField(boundingPolytopeVertices, windFieldX, windFieldY, windFieldU, windFieldV,0,0,-1);
+%     flagWindRoundingType) %#ok<INUSD>
+xKPlusOne_WindDisturbance = ...
+    fcn_INTERNAL_sampleWindAtPoints(preExpansionPoints, ...
+    windFieldX, windFieldY, windFieldU, windFieldV,0);
+
+
+%% Add up effects to calculate new reachable set
+
+reachableSet = ...
+    xKPlusOne_AMatrixPoints + ...
+    xKPlusOne_BMatrixPoints + ...
+    xKPlusOne_WindDisturbance;
 
 if flag_do_debug
     figure(debug_figNum);
@@ -444,15 +403,27 @@ if flag_do_debug
     % Do a quiver plot to show how wind moves the boundary?
     if 1==1
         Nvertices = length(reachableSet(:,1));
-        plotEvery = 10;
-        vectorLengths = reachableSet-resampledBoundingPolytopeVertices;
+        plotEvery = 1;
+        vectorLengths = reachableSet-preExpansionPoints;
         rowsToPlot = find(mod((1:Nvertices)',plotEvery)==0);
-        quiver(resampledBoundingPolytopeVertices(rowsToPlot,1),resampledBoundingPolytopeVertices(rowsToPlot,2),...
+        quiver(preExpansionPoints(rowsToPlot,1),preExpansionPoints(rowsToPlot,2),...
             vectorLengths(rowsToPlot,1),vectorLengths(rowsToPlot,2),0,'filled');
     end
     plot(reachableSet(:,1),reachableSet(:,2),'y-','LineWidth',3);
 
 end
+
+% Save intermediate calculations
+%             preExpansionPoints: the xK points, after simplification
+%             xKPlusOne_AMatrixPoints: the A matrix calculation result
+%             xKPlusOne_BMatrixPoints: the B matrix calculation result
+%             xKPlusOne_WindDisturbance: the wind disturbances
+cellArrayOfIntermediateCalculations = cell(4,1);
+cellArrayOfIntermediateCalculations{1,1} = preExpansionPoints;
+cellArrayOfIntermediateCalculations{2,1} = xKPlusOne_AMatrixPoints;
+cellArrayOfIntermediateCalculations{3,1} = xKPlusOne_BMatrixPoints;
+cellArrayOfIntermediateCalculations{4,1} = xKPlusOne_WindDisturbance;
+
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -537,9 +508,6 @@ if flag_do_plots
     % Plot the start points
     plot(startPoints(:,1),startPoints(:,2),'.-','Color',[0 0 1],'MarkerSize',10,'LineWidth', 2, 'DisplayName','Input: startPoints');
 
-    % Plot the expansion points
-    plot(boundingPolytopeVertices(:,1),boundingPolytopeVertices(:,2),'-','Color',[0 1 0],'MarkerSize',30, 'LineWidth', 2, 'DisplayName','After A*x_k + B*u');
-
     % Plot the final output
     plot(reachableSet(:,1),reachableSet(:,2),'LineWidth',2,'Color',[0 0 0],'DisplayName','Output: reachableSet')
 
@@ -572,10 +540,10 @@ end % Ends the main function
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
 %% fcn_INTERNAL_sampleWindAtPoints
-function [filteredResampledBoundingPolytopeVerticesWithWind, resampledBoundingPolytopeVertices] = ...
-    fcn_INTERNAL_sampleWindAtPoints(boundingPolytopeVertices, ...
+function [filteredWindDisturbances, resampledWindSamplingVertices] = ...
+    fcn_INTERNAL_sampleWindAtPoints(windSamplingVertices, ...
     windFieldX, windFieldY, windFieldU, windFieldV, ...
-    flagWindRoundingType)
+    flagWindRoundingType) %#ok<INUSD>
 
 %%%%
 % Apply disturbance to each vertex. To do this, we first find the indices
@@ -588,8 +556,8 @@ if 1==1
 
     % Assume the discretization in X and Y are the same
     spatialStep = windFieldX(2)-windFieldX(1);
-    xIndices = floor((boundingPolytopeVertices(:,1)-windFieldX(1,1))/spatialStep)+1;
-    yIndices = floor((boundingPolytopeVertices(:,2)-windFieldY(1,1))/spatialStep)+1;
+    xIndices = floor((windSamplingVertices(:,1)-windFieldX(1,1))/spatialStep)+1;
+    yIndices = floor((windSamplingVertices(:,2)-windFieldY(1,1))/spatialStep)+1;
 
     highestXindex = length(windFieldX);
     highestYindex = length(windFieldY);
@@ -603,13 +571,13 @@ if 1==1
 else
     % This method works well. But it's slow due to the for-loop
     % (Total time: 0.376 s) for 1000 runs if set flagWindRoundType = 1
-    NboundingVertices = length(boundingPolytopeVertices);
+    NboundingVertices = length(windSamplingVertices);
     indices = zeros(NboundingVertices,2);
 
     for ith_vertex = 1:NboundingVertices
         % Find index in wind field corresponding to the point on the convex
         % hull
-        thisVertex = boundingPolytopeVertices(ith_vertex,:);
+        thisVertex = windSamplingVertices(ith_vertex,:);
         thisX = thisVertex(1,1);
         thisY = thisVertex(1,2);
 
@@ -643,18 +611,18 @@ end
 %%%%
 % Prune the bounding vertices to match the discretization of the wind
 % field?
-if 0==flagWindRoundingType
+if 1==0 % 0==flagWindRoundingType
     [uniqueIndicesRaw,vertexRowsThatAreUnique] = unique(indices,'rows','stable');
-    resampledBoundingPolytopeVerticesRaw = boundingPolytopeVertices(vertexRowsThatAreUnique,:);    
+    resampledWindSamplingVerticesRaw = windSamplingVertices(vertexRowsThatAreUnique,:);    
 
     % Repeat the first point to last, to close the boundary. The "unique"
     % function deletes this repetition
     uniqueIndices = [uniqueIndicesRaw; uniqueIndicesRaw(1,:)];
-    resampledBoundingPolytopeVertices = [resampledBoundingPolytopeVerticesRaw; resampledBoundingPolytopeVerticesRaw(1,:)];
+    resampledWindSamplingVertices = [resampledWindSamplingVerticesRaw; resampledWindSamplingVerticesRaw(1,:)];
 
 else
     uniqueIndices = indices;
-    resampledBoundingPolytopeVertices = boundingPolytopeVertices;    
+    resampledWindSamplingVertices = windSamplingVertices;    
 end
 
 
@@ -670,17 +638,18 @@ linearInd = sub2ind(size(windFieldU),uniqueIndices(:,2),uniqueIndices(:,1));
 windU = windFieldU(linearInd);
 windV = windFieldV(linearInd);
 
-% W = [filteredWindU filteredWindV];
-W = [windU windV];
+% windDisturbances = [filteredWindU filteredWindV];
+windDisturbances = [windU windV];
 
 % Apply disturbances and save results
-rawResampledBoundingPolytopeVerticesWithWind = resampledBoundingPolytopeVertices + W;
+% rawWindDisturbances = resampledWindSamplingVertices + windDisturbances;
+rawWindDisturbances = windDisturbances;
 
 % Smooth the outputs? (works, but very slow)
 if 1==0
-    filteredResampledBoundingPolytopeVerticesWithWind = fcn_INTERNAL_filterData(rawResampledBoundingPolytopeVerticesWithWind);
+    filteredWindDisturbances = fcn_INTERNAL_filterData(rawWindDisturbances);
 else
-    filteredResampledBoundingPolytopeVerticesWithWind = rawResampledBoundingPolytopeVerticesWithWind;
+    filteredWindDisturbances = rawWindDisturbances;
 end
 
 end % Ends fcn_INTERNAL_sampleWindAtPoints
@@ -806,3 +775,110 @@ if 1==flag_do_debug
     plot(indicesToPlot, matlabFilt,'Color',[0 0 0]);
 end
 end % Ends fcn_INTERNAL_hardCodedFilter
+
+%% fcn_INTERNAL_expandVerticesOutward
+function pointsMovedOutward = fcn_INTERNAL_expandVerticesOutward(startingPoints, radius)
+%%%%
+% Need to expand all vertices outward. A method to do this is to
+% calculate the projection vector at each vertex that bisects the
+% angle, and thus projects straight "outward". The distance of this
+% vector can be calculated such that both edges move outward by the
+% same radius. The code below implements this method.
+
+% Make sure first and last points repeat
+if ~isequal(startingPoints(1,:),startingPoints(end,:))
+    startingPoints = [startingPoints; startingPoints(1,:)];
+end
+
+% Find unit edge vectors, and ortho projections. Note: if there are N
+% vertices, there will be N-1 edges. So that the angles match with the
+% end of each point, we repeat the 1st edge vector onto the end so the
+% number of edge vectors is equal to the number of points.
+edgeVectors = startingPoints(2:end,:)-startingPoints(1:end-1,:);
+edgeLengths = sum(edgeVectors.^2,2).^0.5;
+unitEdgeVectors = edgeVectors./edgeLengths;
+allUnitEdgeVectors = [unitEdgeVectors(end,:); unitEdgeVectors; unitEdgeVectors(1,:)];
+
+% The following method avoids the use of sines, cosines, and tangents
+% as those are slow to calculate. To find the vector projection from
+% each point, the average of the projection vector tips at each vertex
+% angle is calculated. The projection scaling distance, D, is
+% calculated by using the relationship that the sin(theta) = x/D = a/x,
+% then solving for D and noting that x=1. Here, theta is the half angle
+% formed by the "kite" apex, created by the before/after projection of
+% the orthogonal vectors from each startPoint.
+
+% Perform a -90 degree rotation
+orthoEdgeVectors = allUnitEdgeVectors*[0 -1; 1 0];
+positionsIncomingVector = startingPoints+orthoEdgeVectors(1:end-1,:);
+positionsOutgoingVector = startingPoints+orthoEdgeVectors(2:end,:);
+averagePositions = (positionsIncomingVector + positionsOutgoingVector)/2;
+averagePositionVectors = averagePositions - startingPoints;
+averagePositionVectorLengths = sum(averagePositionVectors.^2,2).^0.5;
+unitProjectionVectors = averagePositionVectors./averagePositionVectorLengths;
+% Use the sin(theta) method to calculate D
+D = 1./averagePositionVectorLengths;
+RawPointsMovedOutward = startingPoints + radius*D.*unitProjectionVectors;
+
+% Clean up points. In some cases, for example if there are non-convex
+% enclosures, the expansion process can "squeeze" points close to each other,
+% resulting in points that bunch up. We don't want to keep these points.
+if 1==0
+    goodPoints = averagePositionVectorLengths>(0.1*radius);
+    pointsMovedOutward = RawPointsMovedOutward(goodPoints,:);
+else
+    pointsMovedOutward = RawPointsMovedOutward;
+end
+end % Ends fcn_INTERNAL_expandVerticesOutward
+
+%% fcn_INTERNAL_prepareStartPoints
+function preExpansionPoints = fcn_INTERNAL_prepareStartPoints(startPoints, radius)
+
+% Keep only the unique (non-repeating) points. Do not resort them.
+uniqueStartPoints = unique(startPoints,'rows','stable');
+
+% Fill in some variables that are used for calculations that follow, for
+% cases with 1 or 2 points
+Npoints = length(uniqueStartPoints(:,1));
+if Npoints==1 || Npoints==2
+    % Define the number of directions to be considered from each value
+    % of the x0 initial set, if the initial set contains only 1 or 2 points
+    % Number of directions for initial expansion. Note that the first and last
+    % points are the same, so effectively this divides 360 degrees by
+    % (Ndirections-1)
+    Ndirections = 7;
+    angles = linspace(0,2*pi,Ndirections)';
+    preExpansionRadius  = (0.0001*radius);
+end
+
+%%%%
+% Make sure that the points form an enclosed area.
+% The following takes small perturbations away from the uniqueStartPoints.
+% There are three cases:
+% 1) There is 1 point - in this case, a very small expansion is made in all
+%    directions to create an enclosed space
+% 2) There are 2 points - in this case, the expansion is away from both
+%    ends, creating an enclosed space that goes around both ends
+% 3) There are 3+ points - in this case, the uniqueStartPoints are assumed
+%    to make an enclosed space and these are used.
+if Npoints==1
+    preExpansionPoints  = uniqueStartPoints(1,:) + preExpansionRadius*[cos(angles) sin(angles)];
+elseif Npoints==2 
+    directionVector1to2 = uniqueStartPoints(2,:)-uniqueStartPoints(1,:);
+    lineAngle = atan2(directionVector1to2(2),directionVector1to2(1));
+    positiveOrNegative = sin(angles);
+    positiveAngles = angles(positiveOrNegative>=0);
+    nPositive = sum(positiveOrNegative>=0);
+
+    preExpansionPoints = [...
+        ones(nPositive,1)*uniqueStartPoints(2,:) + preExpansionRadius*[cos(positiveAngles+lineAngle-pi/2) sin(positiveAngles+lineAngle-pi/2)];
+        ones(nPositive,1)*uniqueStartPoints(1,:) + preExpansionRadius*[cos(positiveAngles+lineAngle+pi/2) sin(positiveAngles+lineAngle+pi/2)];
+        ];
+    preExpansionPoints = [preExpansionPoints; preExpansionPoints(1,:)];
+
+else
+    %%%%
+    % Points are already an enclosed space
+    preExpansionPoints  = uniqueStartPoints;
+end
+end % Ends fcn_INTERNAL_prepareStartPoints

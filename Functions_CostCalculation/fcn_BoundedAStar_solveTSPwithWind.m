@@ -94,6 +94,11 @@ function [orderedVisitSequence] = ...
 % - in fcn_BoundedAStar_solveTSPwithWind
 %   % * TSP working with Djkstra's method. Prior bug fixed. 
 %   % * Added plotting of results
+%
+% 2025_08_11 by S. Brennan
+% - in fcn_BoundedAStar_solveTSPwithWind
+%   % * TSP working with Djkstra's method. Prior bug fixed. 
+%   % * Added plotting of results
 
 % TO-DO
 % (none)

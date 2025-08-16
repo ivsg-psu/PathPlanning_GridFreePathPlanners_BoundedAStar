@@ -252,6 +252,12 @@
 % - DEPRECATED: fcn_convert_polytope_struct_to_deduped_points
 %   % * now fcn_BoundedAStar_convertPolytopetoDedupedPoints
 %
+% 2025_08_11 by S. Brennan, sbrennan@psu.edu
+% - In script_test_fcn_BoundedAStar_reachabilityWithInputs
+%   % * Added test scripts to check new output: boundingPolytopeVertices
+% - In fcn_BoundedAStar_reachabilityWithInputs
+%   % * added boundingPolytopeVertices to outputs
+%
 % 2025_08_12 by K. Hayes
 % - DEPRECATED: fcn_algorithm_create_phantom_goal
 %   % * now fcn_BoundedAStar_createPhantomGoal
@@ -289,6 +295,21 @@
 % - DEPRECATED: fcn_general_calculation_point_to_line_distances_squared
 % 	% * now fcn_BoundedAStar_calculatePointToLineDistSquared
 % - added script_test_fcn_BoundedAStar_calculatePointToLineDistSquared
+%
+% 2024_08_15 to 2024_08_16 by S. Brennan
+% - In fcn_BoundedAStar_reachabilityWithInputs
+%   % * moved meshgrid cacluation into debugging, as it is not used for
+%   %   % main outputs - only for debugging
+%   % * improved the header description for clarity
+%   % * fixed bug where the expansion due to wind disturbance was
+%   %   % after the state expansion, instead of prior
+%   % * updated function to output intermediate calculations
+%   % * moved set simplification steps to PRIOR to states
+%
+% 2025_08_16 by S. Brennan, sbrennan@psu.edu
+% - In script_test_fcn_BoundedAStar_reachabilityWithInputs
+%   % * Added test scripts to check new output: cellArrayOfIntermediateCalculations
+
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan

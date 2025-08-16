@@ -1,4 +1,6 @@
-function [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(radius, windFieldU, windFieldV, windFieldX, windFieldY, varargin)
+function [finalReachableSet, exitCondition, cellArrayOfExitInfo, varargout] = ...
+    fcn_BoundedAStar_expandReachabilityWithWind(radius, ...
+    windFieldU, windFieldV, windFieldX, windFieldY, varargin)
 % fcn_BoundedAStar_expandReachabilityWithWind
 % performs iterative reachability expansion from a startPoint until one of
 % the following criteria are met:
@@ -11,7 +13,9 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAS
 %     flagWindExitConditions input.
 %
 % FORMAT:
-% [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
+% [finalReachableSet, exitCondition, cellArrayOfExitInfo,...
+%  (reachableSetExactCosts), (cellArrayOfReachableSetPaths)] = ...
+%   fcn_BoundedAStar_expandReachabilityWithWind(...
 %     radius, ... 
 %     windFieldU,  ...
 %     windFieldV,  ...
@@ -102,6 +106,22 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAS
 %     2: goal points hit (as counts of sim steps to hit that point).
 %     Returns empty if allGoalPointsList is empty.
 %
+%     (OPTIONAL OUTPUTS)
+%     NOTE: to allow fast execution, the optional outputs are NOT calculated unless the user has
+%     requested them.
+%
+%     reachableSetExactCosts: an Mx1 matrix, where M is the number of
+%     achievable goals in finalReachableSet, containing a more exact
+%     estimate of costs. These are calculated by interpolation of the
+%     distance between the inner and outer set boundaries for each goal.
+% 
+%     cellArrayOfReachableSetPaths: an Mx1 cell array that contains, for each M
+%     achievable goals, an estimate of the path that leads to the point.
+%     The array is of format: [X Y U V] where X,Y represent the XY position
+%     coordinates, and UV represent for each position the control vector in
+%     XY directions, respectively, that would give the solution within the
+%     given wind field.
+%
 % DEPENDENCIES:
 %
 %     fcn_DebugTools_checkInputsToFunctions
@@ -128,9 +148,16 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAS
 %   % * Added cellArrayOfWindExitConditions
 %   % * Added exitCondition output information
 %   % * Added cellArrayOfExitInfo output information
+%
 % 2025_08_05 by S. Brennan
 %   % * Changed flag outputs to count sim steps to hit goal, not just
 %   %   % binary
+%
+% 2025_08_11 by S. Brennan
+% - In fcn_BoundedAStar_expandReachabilityWithWind
+%   % * Added varargout option to allow optional calculations including:
+%   %   % ** reachableSetExactCosts: Exact costs per each feasible goal
+%   %   % ** cellArrayOfReachableSetPaths: Exact paths per each feasible goal
 
 % TO-DO
 % -- when wind is VERY high, higher than self speed, the set pushes away
@@ -162,7 +189,7 @@ else
     end
 end
 
-% flag_do_debug = 1;
+flag_do_debug = 1;
 
 if flag_do_debug
     st = dbstack; %#ok<*UNRCH>
@@ -245,6 +272,21 @@ if (0==flag_max_speed) && (MAX_NARGIN == nargin)
     end
 end
 
+nout = max(nargout,1)-3;
+if nout>=1
+    varargout = cell(nout,1);
+    flagCaclulateReachableSetExactCosts = 1;
+else
+    flagCaclulateReachableSetExactCosts = 0;
+end
+
+if nout>=2
+    flagCaclulateReachableSetPaths = 1;
+else
+    flagCaclulateReachableSetPaths = 0;
+end
+
+
 %% Main code
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   __  __       _
@@ -315,6 +357,9 @@ allExpansions = cell(Nsteps,1);
 
 if ~isempty(allGoalPointsList)
     stepsWhenGoalPointsHit = nan(length(allGoalPointsList(:,1)),1);
+    if 1==flagCaclulateReachableSetExactCosts
+        exactStepsWhenGoalPointsHit = nan(length(allGoalPointsList(:,1)),1);
+    end
 end
 
 ith_step = 0;
@@ -324,6 +369,7 @@ while 1==flagContinueExpansion
     allExpansions{ith_step,1} = startPoints;
 
     % Call function to find reachable set on this time step
+    URHERE - need to update calculations in step below
     reachableSet = fcn_BoundedAStar_reachabilityWithInputs(...
         radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
 
@@ -402,8 +448,8 @@ while 1==flagContinueExpansion
     end
     if ~isempty(toleranceToStopIfSameResult)
         if ith_step>2
-            thisBoundary = allExpansions{ith_step,1};
-            lastBoundary = allExpansions{ith_step-1,1};
+            thisBoundary = newStartPoints; % allExpansions{ith_step,1};
+            lastBoundary = allExpansions{ith_step,1}; % allExpansions{ith_step-1,1};
             if length(thisBoundary(:,1))==length(lastBoundary(:,1))
                 % Check distances
                 differences = thisBoundary-lastBoundary;
@@ -422,10 +468,39 @@ while 1==flagContinueExpansion
         pointsFoundThisSimStep = find(isnan(stepsWhenGoalPointsHit) & goalPointsHit);
         if ~isempty(pointsFoundThisSimStep)
             stepsWhenGoalPointsHit(pointsFoundThisSimStep) = ith_step;
+            % Do we calculate reachableSetExactCosts?
+            if 1==flagCaclulateReachableSetExactCosts
+                thisBoundary = newStartPoints; % allExpansions{ith_step,1};
+                lastBoundary = allExpansions{ith_step,1}; % allExpansions{ith_step-1,1};
+                thesePoints = allGoalPointsList(pointsFoundThisSimStep,:);
+                % FORMAT:
+                % St_points = fcn_Path_convertXY2St(referencePath,XY_points,...
+                %    (flag_rounding_type), (fig_num));
+
+                St_points_before = fcn_Path_convertXY2St(lastBoundary,thesePoints,...
+                    ([]), (-1));
+                St_points_after = fcn_Path_convertXY2St(thisBoundary,thesePoints,...
+                    ([]), (-1));
+
+                % Make sure all points are as expected: negative t values
+                % for the before, and positive after
+                assert(all(St_points_before(:,2)<=0,'all'))
+                assert(all(St_points_after(:,2)>=0,'all'))
+
+                % Calculate fraction of step
+                totalTransverseDistance = sum([St_points_after(:,2) -St_points_before(:,2)],2);
+                fractionalStep = -St_points_before(:,2)./totalTransverseDistance;
+                exactStepsWhenGoalPointsHit(pointsFoundThisSimStep) = ith_step-1+fractionalStep;
+
+
+            end
+
+            % Do we stop with all points hit?
             if all(goalPointsHit==1,'all')
                 flagContinueExpansion = 0;
                 exitCondition = 4;
             end
+            % Do we stop with one point hit?
             if 1==flagStopIfHitOneGoalPoint && any(goalPointsHit==1,'all')
                 flagContinueExpansion = 0;
                 exitCondition = 5;
@@ -450,6 +525,16 @@ else
 end
 cellArrayOfExitInfo{2,1} = goalPointsHit;
 
+
+% Set variable argument outputs
+if 1==flagCaclulateReachableSetExactCosts
+   varargout{1} = exactStepsWhenGoalPointsHit;
+end
+
+if 1==flagCaclulateReachableSetPaths
+    cellArrayOfReachableSetPaths = cell(length(exactStepsWhenGoalPointsHit(:,1)),1);
+    varargout{2} = cellArrayOfReachableSetPaths;
+end
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

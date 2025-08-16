@@ -211,7 +211,7 @@ if slowMode == 1
             end
         end
         if isempty(yIndex)
-         if thisY>windFieldY(1,end)
+            if thisY>windFieldY(1,end)
                 yIndex = length(windFieldY(1,:));
             elseif thisY<windFieldY(1,1)
                 yIndex = 1;

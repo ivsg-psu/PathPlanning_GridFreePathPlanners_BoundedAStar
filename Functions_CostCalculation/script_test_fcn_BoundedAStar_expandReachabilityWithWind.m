@@ -6,11 +6,16 @@
 % - first write of script 
 %   % * using script_test_fcn_BoundedAStar_matrixEnvelopeExpansion as 
 %   %   % starter
-% 2025_08_04 by s. Brennan, sbrennan@psu.edu
+%
+% 2025_08_04 by S. Brennan, sbrennan@psu.edu
 % - in script_test_fcn_BoundedAStar_expandReachabilityWithWind
 %   % * added exit condition outputs and tests
 %   % * added cellArrayOfExitInfo output info and tests
 %   % * added cellArrayOfWindExitConditions inputs and tests in TEST section
+%
+% 2025_08_11 by S. Brennan, sbrennan@psu.edu
+% - in script_test_fcn_BoundedAStar_expandReachabilityWithWind
+%   % * added demo cases for outputting exact paths. See demo 10007
 
 % TO DO:
 % (none)
@@ -289,8 +294,8 @@ windFieldV = normalizedNorthWind*maxWindSpeed;
 startPoints = [-6 6];
 flagWindRoundingType = 1;
 
-xRange = windFieldX(end)-windFieldX(1);
-yRange = windFieldY(end)-windFieldY(1);
+% xRange = windFieldX(end)-windFieldX(1);
+% yRange = windFieldY(end)-windFieldY(1);
 
 % Ngoals = 30;
 % rng(1);
@@ -321,6 +326,67 @@ assert(size(reachableSet,2)==2);
 assert(size(exitCondition,1)==1); 
 assert(size(exitCondition,2)==1);
 assert(isequal(size(cellArrayOfExitInfo),[2 1]));
+
+% Check variable values
+% (too difficult - randomly generated)
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+%% DEMO case: matched wind field, goal points specified
+figNum = 10007;
+titleString = sprintf('DEMO case: output of exact paths');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+% Load starting data
+[normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData(3);
+
+% Call graph generation function
+radius = 0.7;
+maxWindSpeed = 1;
+
+windFieldU = normalizedEastWind*maxWindSpeed;
+windFieldV = normalizedNorthWind*maxWindSpeed;
+startPoints = [0 0];
+flagWindRoundingType = 1;
+
+xRange = windFieldX(end)-windFieldX(1);
+yRange = windFieldY(end)-windFieldY(1);
+
+Ngoals = 30;
+rng(1);
+allGoalPointsList = rand(Ngoals,2).*[xRange yRange] + ones(Ngoals,1)*[windFieldX(1) windFieldY(1)];
+
+cellArrayOfWindExitConditions = cell(5,1);
+cellArrayOfWindExitConditions{1} = 50; % Nsteps
+cellArrayOfWindExitConditions{2} = 1;   % flagStopIfEntireFieldCovered
+cellArrayOfWindExitConditions{3} = 0.2; % toleranceToStopIfSameResult
+cellArrayOfWindExitConditions{4} = allGoalPointsList;  % allGoalPointsList
+cellArrayOfWindExitConditions{5} = 0;   % flagStopIfHitOneGoalPoint
+
+% Call function
+[reachableSet, exitCondition, cellArrayOfExitInfo, ...
+    reachableSetExactCosts, cellArrayOfReachableSetPaths] = fcn_BoundedAStar_expandReachabilityWithWind(...
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), (figNum));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(reachableSet));
+assert(isnumeric(exitCondition));
+assert(iscell(cellArrayOfExitInfo));
+assert(isnumeric(reachableSetExactCosts));
+assert(iscell(cellArrayOfReachableSetPaths))
+
+% Check variable sizes
+assert(size(reachableSet,1)>=3); 
+assert(size(reachableSet,2)==2);
+assert(size(exitCondition,1)==1); 
+assert(size(exitCondition,2)==1);
+assert(isequal(size(cellArrayOfExitInfo),[2 1]));
+assert(size(reachableSetExactCosts,1)==size(cellArrayOfExitInfo{2,1},1))
+assert(size(reachableSetExactCosts,2)==size(cellArrayOfExitInfo{2,1},2))
+assert(length(cellArrayOfReachableSetPaths)==size(cellArrayOfExitInfo{2,1},1))
 
 % Check variable values
 % (too difficult - randomly generated)
