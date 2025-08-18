@@ -309,7 +309,20 @@
 % 2025_08_16 by S. Brennan, sbrennan@psu.edu
 % - In script_test_fcn_BoundedAStar_reachabilityWithInputs
 %   % * Added test scripts to check new output: cellArrayOfIntermediateCalculations
-
+%
+% 2025_08_17 to 2025_08_18 by S. Brennan, sbrennan@psu.edu
+% - Added fcn_BoundedAStar_pathCalculationBackToStart
+%   % * Given a destination, finds the path and control
+%   %   % inputs back to startPoint, such that, if one
+%   %   % starts at the startPoint, applies the control inputs, one arrives
+%   %   % at the destination.
+% - In fcn_BoundedAStar_pathCalculation
+%   % * first write of function
+%   % * using fcn_BoundedAStar_matrixEnvelopeExpansion as a starter
+% - In script_test_fcn_BoundedAStar_pathCalculation
+%   % * first write of script 
+%   % * using script_test_fcn_BoundedAStar_reachabilityWithInputs as 
+%   %   % starter
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan

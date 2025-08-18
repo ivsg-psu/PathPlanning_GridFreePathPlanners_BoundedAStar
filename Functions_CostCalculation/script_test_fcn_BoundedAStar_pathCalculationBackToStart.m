@@ -1,29 +1,14 @@
-% script_test_fcn_BoundedAStar_reachabilityWithInputs
-% Tests: fcn_BoundedAStar_reachabilityWithInputs
+% script_test_fcn_BoundedAStar_pathCalculationBackToStart
+% Tests: fcn_BoundedAStar_pathCalculationBackToStart
 
 % Revision history
-% 2025_07_29 by S. Brennan, sbrennan@psu.edu
+% 2025_08_17 by S. Brennan, sbrennan@psu.edu
 % - first write of script 
-%   % * using script_test_fcn_BoundedAStar_matrixEnvelopeExpansion as 
+%   % * using script_test_fcn_BoundedAStar_reachabilityWithInputs as 
 %   %   % starter
 %
-% 2025_08_02 by S. Brennan, sbrennan@psu.edu
-% - In script_test_fcn_BoundedAStar_reachabilityWithInputs
-%   % Added BUG case 90001
-%   % * illustrates: expansion glitching observed due to bug in Path library 
-%   % * Now fixed with Path library updates
-%   % Added BUG case 90002
-%   % * expansion produces NaN values
-%   % Added BUG case 90003
-%   % * input startPoints have self cross over
-%
-% 2025_08_08 by S. Brennan, sbrennan@psu.edu
-% - In script_test_fcn_BoundedAStar_reachabilityWithInputs
-%   % * Added test scripts to check new output: cellArrayOfIntermediateCalculations
-%
-% 2025_08_16 by S. Brennan, sbrennan@psu.edu
-% - In script_test_fcn_BoundedAStar_reachabilityWithInputs
-%   % * Added test scripts to check new output: cellArrayOfIntermediateCalculations
+% 2025_08_17 by S. Brennan, sbrennan@psu.edu
+% - In script_test_fcn_BoundedAStar_pathCalculationBackToStart
 
 % TO DO:
 % -- take wind post-processing out of this script and put it into another
@@ -66,13 +51,38 @@ maxWindSpeed = 4;
 
 windFieldU = normalizedEastWind*maxWindSpeed;
 windFieldV = normalizedNorthWind*maxWindSpeed;
-% startPoints = [0 0; -1 -2];
-startPoints = [0 0; 0 2];
+
+startPoints = [0 0];
 flagWindRoundingType = 0;
 
+Nsteps = 4;
+allExpansions = cell(Nsteps,1);
+allIntermediateCalculations = cell(Nsteps,5);
+allExpansions{1,1} = startPoints;
+% figure(234); clf;
+
+for ith_step = 2:Nsteps
+    % Call function to find reachable set on this time step
+    % FORMAT:
+    % [reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
+    %     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
+    [reachableSet, cellArrayOfIntermediateCalculations] = ...
+        fcn_BoundedAStar_reachabilityWithInputs(...
+        radius, windFieldU, windFieldV, windFieldX, windFieldY, ...
+        (allExpansions{ith_step-1,1}), (flagWindRoundingType), (-1));
+    allExpansions{ith_step,1} = reachableSet;
+    for ith_cell = 1:5
+        allIntermediateCalculations{ith_step,ith_cell} = cellArrayOfIntermediateCalculations{ith_cell,1};
+    end
+
+end
+
+endPoint = [-3 6];
+
 % Call function
-[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
-    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
+pathXYAndControlUV =  ...
+    fcn_BoundedAStar_pathCalculationBackToStart(...
+    endPoint, allExpansions, allIntermediateCalculations, (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -108,7 +118,7 @@ startPoints = [0 0];
 flagWindRoundingType = 0;
 
 % Call function
-[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_pathCalculationBackToStart(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
@@ -145,7 +155,7 @@ startPoints = [-1 -1; 1 -1; 1 1; -1 1; -1 -1];
 flagWindRoundingType = 1;
 
 % Call function
-[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_pathCalculationBackToStart(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
@@ -182,7 +192,7 @@ startPoints = [-1 -1; 1 -1; 1 1; -2 3; -1 1; -1 -1];
 flagWindRoundingType = 0;
 
 % Call function
-[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_pathCalculationBackToStart(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
@@ -262,7 +272,7 @@ startPoints = [0 0; 1 2];
 flagWindRoundingType = 0;
 
 % Call function
-[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_pathCalculationBackToStart(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), ([]));
 
 % Check variable types
@@ -298,7 +308,7 @@ startPoints = [0 0; 1 2];
 flagWindRoundingType = 0;
 
 % Call function
-[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_pathCalculationBackToStart(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
 
 % Check variable types
@@ -340,7 +350,7 @@ Niterations = 10;
 tic;
 for ith_test = 1:Niterations
     % Call function
-    [reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
+    [reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_pathCalculationBackToStart(...
         radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), ([]));
 end
 slow_method = toc;
@@ -359,7 +369,7 @@ assert(size(cellArrayOfIntermediateCalculations,2)==1);
 tic;
 for ith_test = 1:Niterations
     % Call function
-    [reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
+    [reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_pathCalculationBackToStart(...
         radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
 end
 fast_method = toc;
@@ -727,7 +737,7 @@ deltaX = windFieldX(2) - windFieldX(1);
 startPoints = fcn_INTERNAL_sparsifyPoints(startPoints,deltaX);
 
 % Call function
-[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_pathCalculationBackToStart(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
 
 % Check variable types
@@ -866,7 +876,7 @@ startPoints = [...
   -6.256652947871200   3.008257015566111];
 
 % Call function
-[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_pathCalculationBackToStart(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
 
 % Check variable types
@@ -898,7 +908,7 @@ windFieldU = normalizedEastWind*maxWindSpeed;
 windFieldV = normalizedNorthWind*maxWindSpeed;
 flagWindRoundingType = 1;
 
-load('BUG_90003_fcn_BoundedAStar_reachabilityWithInputs.mat','startPoints');
+load('BUG_90003_fcn_BoundedAStar_pathCalculationBackToStart.mat','startPoints');
 
 startPointsPinched = fcn_Path_removePinchPointInPath(startPoints(1:end-1,:),2347);
 % If more than half the points show up in the "pinch", then the pinch is
@@ -909,7 +919,7 @@ if length(startPointsPinched(:,1))<length(startPoints(:,1)/2)
 end
 
 % Call function
-[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_pathCalculationBackToStart(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
 
 % Check variable types

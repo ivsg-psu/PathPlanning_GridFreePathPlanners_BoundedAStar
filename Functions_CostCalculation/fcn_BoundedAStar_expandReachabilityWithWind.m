@@ -158,6 +158,12 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo, varargout] = ..
 %   % * Added varargout option to allow optional calculations including:
 %   %   % ** reachableSetExactCosts: Exact costs per each feasible goal
 %   %   % ** cellArrayOfReachableSetPaths: Exact paths per each feasible goal
+%
+% 2025_08_17 by S. Brennan
+% - In fcn_BoundedAStar_expandReachabilityWithWind
+%   % * fixed bug where interpolation fails with highly non-convex set
+%   %   % boundaries
+
 
 % TO-DO
 % -- when wind is VERY high, higher than self speed, the set pushes away
@@ -354,6 +360,7 @@ maxY = windFieldY(end);
 deltaX = windFieldX(2) - windFieldX(1);
 
 allExpansions = cell(Nsteps,1);
+allIntermediateCalculations = cell(Nsteps,5);
 
 if ~isempty(allGoalPointsList)
     stepsWhenGoalPointsHit = nan(length(allGoalPointsList(:,1)),1);
@@ -369,9 +376,14 @@ while 1==flagContinueExpansion
     allExpansions{ith_step,1} = startPoints;
 
     % Call function to find reachable set on this time step
-    URHERE - need to update calculations in step below
-    reachableSet = fcn_BoundedAStar_reachabilityWithInputs(...
+    % FORMAT:
+    % [reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
+    %     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
+    [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_reachabilityWithInputs(...
         radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
+    for ith_cell = 1:5
+        allIntermediateCalculations{ith_step, ith_cell} = cellArrayOfIntermediateCalculations{ith_cell,1};
+    end
 
     if flag_do_debug && 1==1
         figure(debug_figNum);
@@ -391,6 +403,8 @@ while 1==flagContinueExpansion
     if length(reachableSetNotPinched(:,1))< (Nreachable/2)
         reachableSetNotPinched = setdiff(reachableSet,reachableSetNotPinched,'rows','stable');
     end
+    % The removePinchPointInPath removes repeated points, so need to add
+    % start/end back in
     reachableSetNotPinched = [reachableSetNotPinched; reachableSetNotPinched(1,:)]; %#ok<AGROW>
 
     % Clean up set boundary from "jogs"?
@@ -477,19 +491,21 @@ while 1==flagContinueExpansion
                 % St_points = fcn_Path_convertXY2St(referencePath,XY_points,...
                 %    (flag_rounding_type), (fig_num));
 
-                St_points_before = fcn_Path_convertXY2St(lastBoundary,thesePoints,...
-                    ([]), (-1));
-                St_points_after = fcn_Path_convertXY2St(thisBoundary,thesePoints,...
-                    ([]), (-1));
+                St_points_before_method1 = real(fcn_Path_convertXY2St(lastBoundary, thesePoints, (1), (-1)));
+                St_points_before_method2 = real(fcn_Path_convertXY2St(lastBoundary, thesePoints, (2), (-1)));
+                t_points_before = min(St_points_before_method1(:,2),St_points_before_method2(:,2));
+                St_points_after_method1 =  real(fcn_Path_convertXY2St(thisBoundary, thesePoints, (1), (-1)));
+                St_points_after_method2 =  real(fcn_Path_convertXY2St(thisBoundary, thesePoints, (2), (-1)));
+                t_points_after = min(St_points_after_method1(:,2),St_points_after_method2(:,2));
 
                 % Make sure all points are as expected: negative t values
                 % for the before, and positive after
-                assert(all(St_points_before(:,2)<=0,'all'))
-                assert(all(St_points_after(:,2)>=0,'all'))
+                assert(all(t_points_before<=0,'all'))
+                assert(all(t_points_after>=0,'all'))
 
                 % Calculate fraction of step
-                totalTransverseDistance = sum([St_points_after(:,2) -St_points_before(:,2)],2);
-                fractionalStep = -St_points_before(:,2)./totalTransverseDistance;
+                totalTransverseDistance = sum([t_points_after -t_points_before],2);
+                fractionalStep = -t_points_before./totalTransverseDistance;
                 exactStepsWhenGoalPointsHit(pointsFoundThisSimStep) = ith_step-1+fractionalStep;
 
 
@@ -532,7 +548,16 @@ if 1==flagCaclulateReachableSetExactCosts
 end
 
 if 1==flagCaclulateReachableSetPaths
-    cellArrayOfReachableSetPaths = cell(length(exactStepsWhenGoalPointsHit(:,1)),1);
+    URHERE
+    cellArrayOfReachableSetPaths = cell(length(exactStepsWhenGoalPointsHit(:,1)),1);    
+    for ith_goal = 1:length(exactStepsWhenGoalPointsHit)
+        thisGoal = allGoalPointsList(ith_goal,:);
+        stepWhenGoalReached = stepsWhenGoalPointsHit(ith_goal,:);
+        pathToGoal = fcn_BoundedAStar_pathCalculationBackToStart(...
+            start, thisGoal, stepWhenGoalReached, ...
+            allIntermediateCalculations, 2343);
+        cellArrayOfReachableSetPaths{ith_goal} = pathToGoal;
+    end
     varargout{2} = cellArrayOfReachableSetPaths;
 end
 

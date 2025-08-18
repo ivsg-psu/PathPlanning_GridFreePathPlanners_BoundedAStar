@@ -16,6 +16,10 @@
 % 2025_08_11 by S. Brennan, sbrennan@psu.edu
 % - in script_test_fcn_BoundedAStar_expandReachabilityWithWind
 %   % * added demo cases for outputting exact paths. See demo 10007
+%
+% 2025_08_17 by S. Brennan, sbrennan@psu.edu
+% - in script_test_fcn_BoundedAStar_expandReachabilityWithWind
+%   % * added demo/test cases for outputting exact paths. See demo 10007
 
 % TO DO:
 % (none)

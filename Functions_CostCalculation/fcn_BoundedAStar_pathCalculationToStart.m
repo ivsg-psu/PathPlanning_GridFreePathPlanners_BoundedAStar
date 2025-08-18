@@ -1,10 +1,10 @@
-function [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_reachabilityWithInputs(radius, windFieldU, windFieldV, windFieldX, windFieldY, varargin)
-% fcn_BoundedAStar_reachabilityWithInputs
-% calculates the 1-step reachable set from a given set of points,
+function [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_pathCalculationToStart(radius, windFieldU, windFieldV, windFieldX, windFieldY, varargin)
+% fcn_BoundedAStar_pathCalculationToStart
+% calculates the 1-step reachable set from a given set of point
 % startPoints, accounting for control inputs and the wind field
 %
 % FORMAT:
-% [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_reachabilityWithInputs(...
+% [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_pathCalculationToStart(...
 %     radius, ... 
 %     windFieldU,  ...
 %     windFieldV,  ...
@@ -78,7 +78,7 @@ function [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_
 %
 % EXAMPLES:
 %
-% See the script: script_test_fcn_BoundedAStar_reachabilityWithInputs
+% See the script: script_test_fcn_BoundedAStar_pathCalculationToStart
 % for a full test suite.
 %
 % This function was written on 2025_07_29 by K. Hayes
@@ -99,10 +99,10 @@ function [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_
 % - Added debug plotting at start of code
 %
 % 2025_08_02 by S. Brennan
-% Significant rewrite of fcn_BoundedAStar_reachabilityWithInputs and as
-% well a "slow" form: fcn_BoundedAStar_reachabilityWithInputs_SLOW
+% Significant rewrite of fcn_BoundedAStar_pathCalculationToStart and as
+% well a "slow" form: fcn_BoundedAStar_pathCalculationToStart_SLOW
 % - Vectorized for loops for sampling speed 
-% - added script_time_fcn_BoundedAStar_reachabilityWithInputs for timing 
+% - added script_time_fcn_BoundedAStar_pathCalculationToStart for timing 
 %   tests
 % - added specialized set bounds to merge search space across input points
 % - modified the set methods to use edge-projection expansions for speeds
@@ -119,11 +119,11 @@ function [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_
 %    internal function
 %
 % 2024_08_08 by S. Brennan
-% - In fcn_BoundedAStar_reachabilityWithInputs
+% - In fcn_BoundedAStar_pathCalculationToStart
 %   % * added cellArrayOfIntermediateCalculations to outputs
 %
 % 2024_08_15 to 2024_08_16 by S. Brennan
-% - In fcn_BoundedAStar_reachabilityWithInputs
+% - In fcn_BoundedAStar_pathCalculationToStart
 %   % * moved meshgrid cacluation into debugging, as it is not used for
 %   %   % main outputs - only for debugging
 %   % * improved the header description for clarity
@@ -133,7 +133,7 @@ function [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_
 %   % * moved set simplification steps to PRIOR to states
 %
 % 2024_08_17 by S. Brennan
-% - In fcn_BoundedAStar_reachabilityWithInputs
+% - In fcn_BoundedAStar_pathCalculationToStart
 %   % * Functionalized the code a bit more
 
 % TO-DO
