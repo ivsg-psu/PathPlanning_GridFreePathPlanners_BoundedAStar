@@ -323,6 +323,14 @@
 %   % * first write of script 
 %   % * using script_test_fcn_BoundedAStar_reachabilityWithInputs as 
 %   %   % starter
+%
+% 2025_08_18 by K. Hayes
+% - added script_test_fcn_BoundedAStar_Astar
+% - in fcn_BoundedAStar_greedyPlanner
+%   % * fixed debug plotting
+% - in script_test_fcn_BoundedAStar_AStarBounded
+%   % * fixed formatting and debug plotting calls
+
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
@@ -336,6 +344,9 @@
 % -- fast modes for visibility test scripts
 % 2025_08_05 - K. Hayes
 % -- replace manual all_pts generation with fcn in visibility fcns
+% 2025_08_18 - K. Hayes
+% -- add 3d formatted all_pts capabilities to
+%    fcn_BoundedAStar_polytopesGenerateAllPtsTable
 
 
 clear library_name library_folders library_url

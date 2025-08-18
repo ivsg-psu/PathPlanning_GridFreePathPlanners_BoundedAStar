@@ -41,7 +41,7 @@ function [cost, route] = fcn_BoundedAStar_Astar(vgraph, cgraph, hvec, all_pts, s
 %
 % OUTPUTS:
 %
-%     cost: the total cost of the selected route
+%    cost: the total cost of the selected route
 %
 %    route: the matrix as produced by fcn_BoundedAstar_Astar consisting of waypoints.  Each row is a
 %    waypoint, and each column is x, y, point ID, polytope/object ID, and a

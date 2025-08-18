@@ -72,6 +72,8 @@ function [cost, route] = fcn_BoundedAStar_Astar3d(vgraph, cgraph, hvec, all_pts,
 %    fcn_algorithm_Astar3d
 % 2025_07_25 by K. Hayes, kxh1031@psu.edu
 % -- fixed formatting and function header details
+% 2025_08_18 by K. Hayes
+% -- added debug plotting 
 
 % TO DO:
 % -- fill in to-do items here.
@@ -163,6 +165,7 @@ end
 %
 %See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+    route = [];
     % set the diagonal to 0 because while points are technically visible from
     % themselves, A* should not consider them as such else the lowest cost
     % neighbor of any point is itself
@@ -265,7 +268,7 @@ end
                 route = [start; route];
                 sprintf('total nodes expanded: \n %0f',nodes_expanded)
                 sprintf('total nodes explored: \n %0f',nodes_explored)
-                return
+                break
             else
                 % if the finish is not a successor of q, find the cost of reaching the successor via q
                 % this is the cost to reach q + the cost from q to successor
@@ -297,6 +300,19 @@ end
 %                            __/ |
 %                           |___/
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+if flag_do_plots
+    figure(fig_num)
+    hold on;
+    box on;
+    view(3);
+    INTERNAL_fcn_format_timespace_plot();
+
+    plot3(route(:,1),route(:,2),route(:,3),'-b','LineWidth',2);
+    
+
+end
+
 end % end function
 %% Functions follow
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -309,3 +325,29 @@ end % end function
 %
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+
+
+function INTERNAL_fcn_format_timespace_plot()
+% define figure properties
+opts.width      = 12;
+opts.height     = 9;
+opts.fontType   = 'Times New Roman';
+opts.fontSize   = 12;
+fig = gcf;
+% scaling
+fig.Units               = 'centimeters';
+fig.Position(3)         = opts.width;
+fig.Position(4)         = opts.height;
+set(gcf,'color','white')
+% set text properties
+set(fig.Children, ...
+    'FontName',     'Times New Roman', ...
+    'FontSize',     12);
+
+% remove unnecessary white space
+set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+xlabel('x [km]')
+ylabel('y [km]')
+zlabel('t [min]')
+view([36 30])
+end

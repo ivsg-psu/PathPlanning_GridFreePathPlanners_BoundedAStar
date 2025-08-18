@@ -79,6 +79,7 @@ function [cost, route] = fcn_BoundedAStar_greedyPlanner(vgraph, all_pts, start, 
 %    conventions
 % 2025_08_06 - K. Hayes
 % -- updated fcn header and formatting
+% 2025_08_18 - K. Hayes
 % -- added debug plotting capabilities
 %
 % TO DO:
@@ -256,7 +257,8 @@ while (sum(isnan(open_set)) > 0)
                 % parent_position_in_history = find(parent == q_history(:,3));
                 possible_parents = intersect(q_parents{parent_position_in_history}, q_history(:,3));
             end
-            return
+            route = [start; route];
+            break
 
         else
         % ii) else, compute both g and h for successor
@@ -316,15 +318,17 @@ if flag_do_plots
     % Plot polytopes
     plotFormat.Color = 'blue';
     plotFormat.LineWidth = 2;
-    fcn_MapGen_plotPolytopes(polytopes,plotFormat,[1 0 0 0 0.5],fig_num);
+    h = fcn_MapGen_plotPolytopes(polytopes,plotFormat,[1 0 0 0 0.5],fig_num);
+    set(h, 'HandleVisibility', 'off');
 
     % Plot path through field
-    plot(route(:,1),route(:,2),'k-','linewidth',2)
-    plot(start(1), start(2), 'gx','linewidth',2)
-    plot(finish(1), finish(2), 'rx','linewidth',2)
+    plot(route(:,1),route(:,2),'k-','linewidth',2, 'DisplayName', 'Route')
+    plot(start(1), start(2), 'gx','linewidth',2, 'DisplayName', 'Start')
+    plot(finish(1), finish(2), 'rx','linewidth',2, 'DisplayName', 'Finish')
 
     % Plot neighboring points
-    plot(appex_x,appex_y,'o','linewidth',2)
+    % plot(appex_x,appex_y,'o','linewidth',2)
+
 end
 
         
