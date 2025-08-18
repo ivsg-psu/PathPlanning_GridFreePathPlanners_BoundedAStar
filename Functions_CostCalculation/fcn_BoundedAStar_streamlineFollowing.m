@@ -142,7 +142,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
 % Create state matrices
-deltat = 0.1;
+deltat = 1;
 numSteps = timeLength/deltat;
 trajectory = nan*ones(numSteps,2);
 trajectory(1,:) = startPoint;
@@ -151,7 +151,7 @@ currentPoint = startPoint;
 for k = 1:numSteps
     % Find wind vector at point and calculate disturbance
     windVector = fcn_BoundedAStar_sampleWindField(currentPoint, x, y, windFieldU, windFieldV, 0, 1, -1);
-    disturbance = (windVector-currentPoint)/numSteps;
+    disturbance = (windVector-currentPoint);
     
     % Add disturbance to postion
     trajectory(k+1,:) = currentPoint + disturbance;

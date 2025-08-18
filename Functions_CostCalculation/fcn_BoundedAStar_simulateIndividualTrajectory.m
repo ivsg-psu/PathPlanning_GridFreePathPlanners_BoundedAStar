@@ -159,7 +159,7 @@ currentPoint = startPoint;
 for k = 1:numSteps
     % Find wind vector at point and calculate disturbance
     windVector = fcn_BoundedAStar_sampleWindField(currentPoint, windFieldX, windFieldY, windFieldU, windFieldV, 0, 1, -1);
-    disturbance = (windVector-currentPoint)/numSteps;
+    disturbance = (windVector-currentPoint);
     % disturbance = [0 0];
 
     % Add disturbance to postion
