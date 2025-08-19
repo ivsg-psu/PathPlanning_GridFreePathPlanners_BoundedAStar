@@ -1,11 +1,10 @@
-% script_test_fcn_Visibility_selfBlockedPoints
+% script_test_fcn_BoundedAStar_calculatePointsOnLines
 
-% a basic test of calculation of points blocked by a 
+% Tests: script_test_fcn_BoundedAStar_calculatePointsOnLines
 
 % Revision history
-% 2025_08_05 - K. Hayes, kxh1031@psu.edu
-% -- first write of script using
-%    script_test_fcn_Visibility_clearAndBlockedPoints
+% 2025_08_19 - K. Hayes, kxh1031@psu.edu
+% -- first write of script
 
 % TO DO:
 % -- set up fast mode tests
@@ -30,41 +29,104 @@ close all
 
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
-%% DEMO case: find clear and blocked edges of polytopes in a map
+%% DEMO case: check if points are on a line
 fig_num = 10001;
-titleString = sprintf('DEMO case: find clear and blocked edges of polytopes in a map');
+titleString = sprintf('DEMO case: check if points are on a line');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
-% Create polytope field
-polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 25],[], ([100 100]), (-1));
+x1 = [-2 -1 1 2 2 1 -1 -2];
+y1 = [-1 -2 -2 -1 1 2 2 1];
+x2 = [-1 1 2 2 1 -1 -2 -2];
+y2 = [-2 -2 -1 1 2 2 1 -1];
+acc = 1e-8;
 
-% Trim polytopes on edge of boundary
-trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0.1 0.1 99.9 99.9], (-1));
+xi = 2;
+yi = 0;
 
-% Shrink polytopes to form obstacle field
-shrunk_polytopes = fcn_MapGen_polytopesShrinkEvenly(trim_polytopes, 2.5, (-1));
-
-% Create all_pts matrix
-all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start, finish,-1);
-
-cur_pt = all_pts(6,:);
-[cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...
-    fcn_Visibility_selfBlockedPoints(shrunk_polytopes,cur_pt,all_pts,(fig_num));
+TF1 = fcn_BoundedAStar_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc, (fig_num))
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(isnumeric(cur_obs_id));
-assert(isnumeric(self_blocked_cost));
-assert(isnumeric(pts_blocked_by_self));
+assert(isnumeric(is_reachable));
+assert(isnumeric(num_steps));
+assert(islogical(rgraph));
 
 % Check variable sizes
-Npolys = 10;
-assert(isequal(Npolys,length(shrunk_polytopes))); 
+% Npolys = 100;
+% assert(isequal(Npolys,length(polytopes))); 
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
+
+%% DEMO case: check if points are on a line within a tolerance
+fig_num = 10002;
+titleString = sprintf('DEMO case: check if points are on a line');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
+
+x1 = [-2 -1 1 2 2 1 -1 -2];
+y1 = [-1 -2 -2 -1 1 2 2 1];
+x2 = [-1 1 2 2 1 -1 -2 -2];
+y2 = [-2 -2 -1 1 2 2 1 -1];
+acc = 1e-8;
+
+xi = 2+1e-8;
+yi = 0;
+
+TF2 = fcn_BoundedAStar_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc,(fig_num))
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(is_reachable));
+assert(isnumeric(num_steps));
+assert(islogical(rgraph));
+
+% Check variable sizes
+% Npolys = 100;
+% assert(isequal(Npolys,length(polytopes))); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% DEMO case: check if points are on a line within a tolerance
+fig_num = 10003;
+titleString = sprintf('DEMO case: check if points are on a line');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
+
+x1 = [-2 -1 1 2 2 1 -1 -2];
+y1 = [-1 -2 -2 -1 1 2 2 1];
+x2 = [-1 1 2 2 1 -1 -2 -2];
+y2 = [-2 -2 -1 1 2 2 1 -1];
+acc = 1e-8;
+
+xi = 2+2e-8;
+yi = 0;
+TF3 = fcn_BoundedAStar_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc,(fig_num))
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(is_reachable));
+assert(isnumeric(num_steps));
+assert(islogical(rgraph));
+
+% Check variable sizes
+% Npolys = 100;
+% assert(isequal(Npolys,length(polytopes))); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% DEMO case: check if points are on a line within a tolerance
+fig_num = 10004;
+titleString = sprintf('DEMO case: check if points are on a line');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
+
 
 
 %% Test cases start here. These are very simple, usually trivial
@@ -86,12 +148,36 @@ assert(isequal(get(gcf,'Number'),fig_num));
 close all;
 fprintf(1,'Figure: 2XXXXXX: TEST mode cases\n');
 
-%% TEST case: zero gap between polytopes
+%% TEST case: no intersection due to tolerance too small
 fig_num = 20001;
-titleString = sprintf('TEST case: zero gap between polytopes');
+titleString = sprintf('TEST case: no intersection due to tolerance too small');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
+x1 = [-2 -1 1 2 2 1 -1 -2];
+y1 = [-1 -2 -2 -1 1 2 2 1];
+x2 = [-1 1 2 2 1 -1 -2 -2];
+y2 = [-2 -2 -1 1 2 2 1 -1];
+acc = 1e-8;
+
+xi = -2;
+yi = -1;
+
+TF4 = fcn_BoundedAStar_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc,(fig_num))
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(is_reachable));
+assert(isnumeric(num_steps));
+assert(islogical(rgraph));
+
+% Check variable sizes
+% Npolys = 100;
+% assert(isequal(Npolys,length(polytopes))); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

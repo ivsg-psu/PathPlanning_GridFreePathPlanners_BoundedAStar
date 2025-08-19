@@ -330,6 +330,13 @@
 %   % * fixed debug plotting
 % - in script_test_fcn_BoundedAStar_AStarBounded
 %   % * fixed formatting and debug plotting calls
+%
+% 2025_08_19 by K. Hayes
+% - updated all_pts generation to use
+%   fcn_BoundedAStar_polytopesGenerateAllPtsTable
+% - DEPRECATED: fcn_general_calculation_points_on_lines
+%   % * now fcn_BoundedAStar_calculatePointsOnLines
+% - added script_test_fcn_BoundedAStar_calculatePointsOnLines
 
 
 % TO-DO:
@@ -342,8 +349,6 @@
 % 2025_08_01 - K. Hayes
 % -- add fcn to plot visibility graph
 % -- fast modes for visibility test scripts
-% 2025_08_05 - K. Hayes
-% -- replace manual all_pts generation with fcn in visibility fcns
 % 2025_08_18 - K. Hayes
 % -- add 3d formatted all_pts capabilities to
 %    fcn_BoundedAStar_polytopesGenerateAllPtsTable

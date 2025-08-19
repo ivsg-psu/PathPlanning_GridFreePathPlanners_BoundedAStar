@@ -70,17 +70,7 @@ finish = [2 1.25];
 
 
 %% all_pts array creation
-point_tot = length([shrunk_polytopes.xv]); % total number of vertices in the polytopes
-beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-curpt = 0;
-for poly = 1:size(shrunk_polytopes,2) % check each polytope
-    verts = length(shrunk_polytopes(poly).xv);
-    shrunk_polytopes(poly).obs_id = ones(1,verts)*poly; % obs_id is the same for every vertex on a single polytope
-    beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-    curpt = curpt+verts;
-end
-obs_id = [shrunk_polytopes.obs_id];
-all_pts = [[shrunk_polytopes.xv];[shrunk_polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
+all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start, finish,-1);
 
 %% plan path
 start = [start size(all_pts,1)+1 -1 1]
