@@ -152,7 +152,8 @@ end
 numSteps = length(inputTrajectory);
 
 % Initialize simulated trajectory
-trajectory = nan*ones(numSteps,2);
+%trajectory = nan*ones(numSteps,2);
+trajectory = [];
 trajectory(1,:) = startPoint;
 currentPoint = startPoint;
 
@@ -165,10 +166,18 @@ for k = 1:numSteps
     % Add disturbance to postion
     trajectory(k+1,:) = currentPoint + inputTrajectory(k,:) + disturbance;
     %trajectory(k+1,:) = currentPoint + disturbance;
+    
+    if trajectory(k+1,1) > 10 || trajectory(k+1,2) > 10
+        trajectory(k+1, (find(trajectory(k+1,:)>10))) = 10;
+        break
+    elseif trajectory(k+1,1) < -10 || trajectory(k+1,2) < -10
+          trajectory(k+1, (find(trajectory(k+1,:)<-10))) = -10;
+        break
+    end
 
     % Update position
     currentPoint = trajectory(k+1,:);
-
+    % hold on;
     % plot([currentPoint(1), trajectory(k,1)], [currentPoint(2), trajectory(k,2)], '--k','LineWidth',2);
     % drawnow
 end

@@ -3,10 +3,10 @@
 figNum = 10001;
 fig_num = figNum;
 % Load starting data
-[normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData();
+[normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData(3);
 
 % Call graph generation function
-radius = 0.3;
+radius = 1;
 maxWindSpeed = 1;
 
 windFieldU = normalizedEastWind*maxWindSpeed;
@@ -18,7 +18,7 @@ cellArrayOfWindExitConditions = [];
 % [reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
 %     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), (-1));
 
-NTrials =200;
+NTrials =100;
 % startPoints = (-1) + (2).*rand(100,2);
 trajectory = cell(NTrials,1);
 
@@ -40,13 +40,14 @@ for i = 1:NTrials
 end
 
 
-%% with input trajectories
-
+%% with randomly chosen input trajectories
+close all
+radius = 0.5;
 randDir = (2*pi)*rand(NTrials,1);
-trajInput = radius*[cos(randDir) sin(randDir)];
+% trajInput = radius*[cos(randDir) sin(randDir)];
 finishPoint = [5, -5];
 
-NTrials = 200;
+NTrials = 1000;
 % startPointsx = (-1) + (2).*rand(100,1);
 % startPointsy = (-1) + (2).*rand(100,1);
 % startPoints = [startPointsx startPointsy];
@@ -57,8 +58,9 @@ trajectory2 = cell(NTrials, 1);
 
 for i = 1:NTrials
     startPoint = startPoints(i,:);
-    timeLength = 100;
-    trajInputr = trajInput(i,:).*ones(timeLength,2);
+    timeLength = 13;
+    dir = (2*pi)*rand(timeLength,1);
+    trajInputr = radius*[cos(dir) sin(dir)];
     trajectory2{i} = fcn_BoundedAStar_simulateIndividualTrajectory(startPoint,finishPoint, trajInputr, windFieldX, windFieldY, windFieldU, windFieldV, -1);
 end
 
@@ -77,16 +79,16 @@ end
 endPt = nan*ones(NTrials,2);
 for n = 1:NTrials 
     endPt(n,:) = trajectory2{n}(end,:);
-    if endPt(n,1) > 10
-        endPt(n,1) = 10;
-    elseif endPt(n,1) < -10
-        endPt(n,1) = -10;
-    end
-    if endPt(n,2) > 10
-        endPt(n,2) = 10;
-    elseif endPt(n,2) < -10
-        endPt(n,2) = -10;
-    end
+    % if endPt(n,1) > 10
+    %     endPt(n,1) = 10;
+    % elseif endPt(n,1) < -10
+    %     endPt(n,1) = -10;
+    % end
+    % if endPt(n,2) > 10
+    %     endPt(n,2) = 10;
+    % elseif endPt(n,2) < -10
+    %     endPt(n,2) = -10;
+    % end
 end
 
 plot(endPt(:,1), endPt(:,2),'.r','MarkerSize',25)

@@ -40,7 +40,11 @@ function [sampledPointsWind, resampledPoints, windFieldUc, windFieldVc] = fcn_Bo
 %
 % OUTPUTS:
 %
-%     sampledPointsWind: an nx2 vector containing the points with disturbance applied   
+%     sampledPointsWind: an nx2 vector containing the points with disturbance applied. 
+%     NOTE: if you are using this function for numerical simulation
+%     purposes (such as applying a disturbance to an object), be aware that
+%     this output includes both the disturbance and the current point (x_k
+%     + d_k)
 % 
 %     resampledPoints: an nx2 vector containing the points resampled to
 %     match the discretization of the wind field
