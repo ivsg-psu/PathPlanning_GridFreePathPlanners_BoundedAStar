@@ -1,8 +1,9 @@
 %% particles drifting in wind without control input
 
 figNum = 10001;
+fig_num = figNum;
 % Load starting data
-[normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData;
+[normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData();
 
 % Call graph generation function
 radius = 0.3;
@@ -17,9 +18,9 @@ cellArrayOfWindExitConditions = [];
 % [reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
 %     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), (-1));
 
-NTrials = 100;
-startPoints = (-1) + (2).*rand(100,2);
-trajectory = cell(100,1);
+NTrials =200;
+% startPoints = (-1) + (2).*rand(100,2);
+trajectory = cell(NTrials,1);
 
 for i = 1:NTrials
     startPoint = startPoints(i,:);
@@ -32,29 +33,31 @@ figure(fig_num)
 fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, windFieldX, windFieldY, 'default', fig_num)
 hold on
 box on
+axis([-10 10 -10 10])
 
 for i = 1:NTrials
-    plot(trajectory{i}(:,1), trajectory{i}(:,2), 'b.', 'MarkerSize', 5)
+    plot(trajectory{i}(:,1), trajectory{i}(:,2), 'b', 'LineWidth', 2)
 end
 
 
 %% with input trajectories
 
-randDir = (2*pi)*rand(100,1);
+randDir = (2*pi)*rand(NTrials,1);
 trajInput = radius*[cos(randDir) sin(randDir)];
 finishPoint = [5, -5];
 
-NTrials = 100;
-startPointsx = (-1) + (2).*rand(100,1);
-startPointsy = (-1) + (2).*rand(100,1);
-startPoints = [startPointsx startPointsy]
-trajectory = cell(100,1);
+NTrials = 200;
+% startPointsx = (-1) + (2).*rand(100,1);
+% startPointsy = (-1) + (2).*rand(100,1);
+% startPoints = [startPointsx startPointsy];
+startPoints = zeros(NTrials,2);
+trajectory = cell(NTrials,1);
 
-trajectory2 = cell(100, 1);
+trajectory2 = cell(NTrials, 1);
 
 for i = 1:NTrials
     startPoint = startPoints(i,:);
-    timeLength = 20;
+    timeLength = 100;
     trajInputr = trajInput(i,:).*ones(timeLength,2);
     trajectory2{i} = fcn_BoundedAStar_simulateIndividualTrajectory(startPoint,finishPoint, trajInputr, windFieldX, windFieldY, windFieldU, windFieldV, -1);
 end
@@ -63,12 +66,30 @@ figure(fig_num)
 fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, windFieldX, windFieldY, 'default', fig_num)
 hold on
 box on
+axis([-10 10 -10 10])
 
 for i = 1:NTrials
-    plot(trajectory2{i}(:,1), trajectory2{i}(:,2), 'b', 'LineWidth', 2)
+    plot(trajectory2{i}(:,1), trajectory2{i}(:,2), 'b', 'LineWidth', 1)
 end
 
 
+% find final point of each trajectory
+endPt = nan*ones(NTrials,2);
+for n = 1:NTrials 
+    endPt(n,:) = trajectory2{n}(end,:);
+    if endPt(n,1) > 10
+        endPt(n,1) = 10;
+    elseif endPt(n,1) < -10
+        endPt(n,1) = -10;
+    end
+    if endPt(n,2) > 10
+        endPt(n,2) = 10;
+    elseif endPt(n,2) < -10
+        endPt(n,2) = -10;
+    end
+end
+
+plot(endPt(:,1), endPt(:,2),'.r','MarkerSize',25)
 
 %% Functions follow
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
