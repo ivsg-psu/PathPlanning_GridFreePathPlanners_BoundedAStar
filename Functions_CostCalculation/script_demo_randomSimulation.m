@@ -43,11 +43,11 @@ end
 %% with randomly chosen input trajectories
 close all
 radius = 0.5;
+NTrials = 1000;
 randDir = (2*pi)*rand(NTrials,1);
 % trajInput = radius*[cos(randDir) sin(randDir)];
 finishPoint = [5, -5];
 
-NTrials = 1000;
 % startPointsx = (-1) + (2).*rand(100,1);
 % startPointsy = (-1) + (2).*rand(100,1);
 % startPoints = [startPointsx startPointsy];
@@ -92,6 +92,43 @@ for n = 1:NTrials
 end
 
 plot(endPt(:,1), endPt(:,2),'.r','MarkerSize',25)
+
+
+%% gifmaking
+
+load('setExpansion.mat');
+
+ntSteps = length(reachableSetData);
+
+figure(fig_num)
+hold on;
+box on;
+axis([-10 10 -10 10]);
+    
+
+for n = 2:ntSteps
+    for i = 1:NTrials
+        startPoint = startPoints(i,:);
+        timeLength = n;
+        dir = (2*pi)*rand(timeLength,1);
+        trajInputr = radius*[cos(dir) sin(dir)];
+        trajectory2{i,n} = fcn_BoundedAStar_simulateIndividualTrajectory(startPoint,finishPoint, trajInputr, windFieldX, windFieldY, windFieldU, windFieldV, -1);
+        endPt(i,:) = trajectory2{i,n}(end,:);
+    end
+    figure(fig_num)
+    hold on;
+    box on;
+    axis([-10 10 -10 10]);
+    fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, windFieldX, windFieldY, 'default',fig_num);
+    plot(reachableSetData{n}(:,1), reachableSetData{n}(:,2),'-w','Linewidth',2,'DisplayName','Estimate of reachable set');
+    plot(endPt(:,1), endPt(:,2), 'xg', 'MarkerSize', 5, 'DisplayName', 'Simulated trajectory location at time step');
+    legend('Location','southeast')
+    exportgraphics(gcf,'randomsim.gif','Append',true);
+    drawnow
+    if n ~= ntSteps
+        clf
+    end
+end
 
 %% Functions follow
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
