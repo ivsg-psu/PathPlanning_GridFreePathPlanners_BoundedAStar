@@ -337,6 +337,13 @@
 % - DEPRECATED: fcn_general_calculation_points_on_lines
 %   % * now fcn_BoundedAStar_calculatePointsOnLines
 % - added script_test_fcn_BoundedAStar_calculatePointsOnLines
+%
+% 2025_08_21 by K. Hayes
+% - In fcn_BoundedAStar_Astar
+%   % * fixed unrecognized variables bug
+% - In fcn_BoundedAStar_loadTestMap
+%   % * fixed bug where non-convex maps would not load
+%   % * updated MapGen references
 
 
 % TO-DO:

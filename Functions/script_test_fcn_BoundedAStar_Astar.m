@@ -35,6 +35,9 @@ titleString = sprintf('DEMO case: plan a path through a polytope field using A*'
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
+repetitions = 1;
+rep = 1;
+
 % map generation control
 % generate Voronoi tiling from Halton points
 pt_density = 100; % point density used for generation
@@ -71,7 +74,7 @@ des_cost = 0.1;
 shrunk_polytopes = fcn_MapGen_polytopesSetCosts(shrunk_polytopes, des_cost, (-1));
 
 % create all_pts matrix
-all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start, finish, -1);
+all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, startPoint, endPoint, -1);
 Npts = size(all_pts,1);
 
 % plan path

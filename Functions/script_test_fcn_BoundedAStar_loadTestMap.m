@@ -31,11 +31,11 @@ fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
 
 %% DEMO case: load a pre-generated polytope map
 fig_num = 10001;
-titleString = sprintf('DEMO case: load a pre-generated polytope map (map_idx = 7)');
+titleString = sprintf('DEMO case: load a pre-generated polytope map (map_idx = 9)');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
-map_idx = 7;
+map_idx = 9;
 add_boundary = 0;
 
 [polytopes, starts, finishes, resolution_scale, length_cost_weights, navigated_portions] = fcn_BoundedAStar_loadTestMap(map_idx, (add_boundary), (fig_num));

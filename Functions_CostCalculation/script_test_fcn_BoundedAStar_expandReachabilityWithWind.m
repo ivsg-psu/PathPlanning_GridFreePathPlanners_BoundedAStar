@@ -879,6 +879,14 @@ if 1==0
 end
 
 
+%% Saving maps
+
+[normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData(4822262);
+
+figure(1)
+fcn_BoundedAStar_plotWindField(normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY, 'default', 1);
+title('Wind Field 4822262')
+
 %% Functions follow
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   ______                _   _

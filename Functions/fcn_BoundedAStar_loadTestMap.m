@@ -22,7 +22,7 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
 %
 %    add_boundary: set a 1 to append a polytope to the front of the polytope struct array
 %        (i.e. in position 1) representing a boundary rectangle around all other polytopes.
-%        This is useful for forming hte medial axis/Voronoi boundary graph so the free space
+%        This is useful for forming the medial axis/Voronoi boundary graph so the free space
 %        surrounding the obstacles does not extend to inifinity.  If this is left
 %        blank or set to anyting other than 1, the function defaults to the behavior
 %        of not including a boundary, which is more conservative as the boundary polytope
@@ -172,7 +172,7 @@ end
     length_cost_weight = 1/6; % default to 1/6 unless over written somewhere
     navigated_portion = 0.4; % default to 40% unless over written somewhere
 
-    %% load test fixtures for polytope map rather than creating it here
+    % load test fixtures for polytope map rather than creating it here
     if map_idx == 1 % generic canyon map
         % load distribution north of canyon
         load(strcat(pwd,'\..\Test_Fixtures\shrunk_polytopes1.mat'));
@@ -196,7 +196,7 @@ end
         % % remove the edge polytope that extend past the high and low points
         % % shink the polytopes so that they are no longer tiled
         % [shrunk_polytopes2,~,~] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes2,des_radius,sigma_radius,min_rad);
-        %% move second polytope field north of canyon
+        % move second polytope field north of canyon
         second_field_vertical_translation = 1.5;
         for i = 1:length(shrunk_polytopes2)
             num_verts_this_poly = length(shrunk_polytopes2(i).yv);
@@ -204,15 +204,16 @@ end
             shrunk_polytopes2(i).vertices = shrunk_polytopes2(i).vertices + [zeros(num_verts_this_poly+1,1) second_field_vertical_translation*ones(num_verts_this_poly+1,1)];
         end
 
-        %% combine two polytope fields and canyon choke point into one field
+        % combine two polytope fields and canyon choke point into one field
         polytopes = [shrunk_polytopes1, shrunk_polytopes2, polytopes_manual_canyon];
-        %% define start and finish
+        % define start and finish
         start = [0 1.25];
         finish = [2 1.25];
         if add_boundary
             my_warn = sprintf('boundary is not defined for map_idx %i.\n Either define a boundary in fcn_BoundedAStar_loadTestMap or set the add_boundary flag to 0.', map_idx);
             warning(my_warn)
         end
+
     elseif map_idx == 2 % the lower triangular flood plain
         load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_1.mat'));
         polytopes = flood_plain_1;
@@ -223,6 +224,7 @@ end
             my_warn = sprintf('boundary is not defined for map_idx %i.\n Either define a boundary in fcn_BoundedAStar_loadTestMap or set the add_boundary flag to 0.', map_idx);
             warning(my_warn)
         end
+
     elseif map_idx == 3 % the mustafar mining rig map (the comb)
         load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_2.mat'));
         polytopes = flood_plain_2;
@@ -233,6 +235,7 @@ end
             my_warn = sprintf('boundary is not defined for map_idx %i.\n Either define a boundary in fcn_BoundedAStar_loadTestMap or set the add_boundary flag to 0.', map_idx);
             warning(my_warn)
         end
+
     elseif map_idx == 4 % also good for edge deletion case (the long river valleys)
         load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_3.mat'));
         polytopes = flood_plain_3;
@@ -243,19 +246,21 @@ end
             my_warn = sprintf('boundary is not defined for map_idx %i.\n Either define a boundary in fcn_BoundedAStar_loadTestMap or set the add_boundary flag to 0.', map_idx);
             warning(my_warn)
         end
+
     elseif map_idx == 5 % bridge map, good for random edge deletion case
         load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_4.mat'));
         polytopes = flood_plain_4;
         start = [-77.68 40.9];
         finish = [-77.5 40.8];
         if add_boundary
-            %% make a boundary around the polytope field
+            % make a boundary around the polytope field
             boundary.vertices = [-77.7 40.78; -77.7 40.92; -77.45 40.92; -77.45 40.78];
             boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
-            boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
+            boundary = fcn_MapGen_polytopesFillFieldsFromVertices(boundary,1); % fill polytope fields
             boundary.parent_poly_id = nan; % ignore parend ID
             polytopes = [boundary, polytopes]; % put the boundary polytope as the first polytope
         end
+
     elseif map_idx == 6 % large map, good for dilation case, nearly fully tiled
         load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_5.mat'));
         polytopes = flood_plain_5;
@@ -267,13 +272,14 @@ end
             Y = max([polytopes.yv]) + 0.02;
             x = min([polytopes.xv]) - 0.02;
             y = min([polytopes.yv]) - 0.02;
-            %% make a boundary around the polytope field
+            % make a boundary around the polytope field
             boundary.vertices = [x y; x Y; X Y; X y];
             boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
-            boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
+            boundary = fcn_MapGen_polytopesFillFieldsFromVertices(boundary,1); % fill polytope fields
             polytopes = [boundary, polytopes]; % put the boundary polytope as the first polytope
         end
         resolution_scale = 0.8;
+
     elseif map_idx == 7 % generic polytope map
         % pull halton set
         rng(1);
@@ -310,22 +316,23 @@ end
         start = [-2 20];
         finish = [32 20];
         if add_boundary
-            %% make a boundary around the polytope field
+            % make a boundary around the polytope field
             boundary.vertices = [-3 -5; -3 45; 33 45; 33 -5];
             boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
-            boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
+            boundary = fcn_MapGen_polytopesFillFieldsFromVertices(boundary); % fill polytope fields
             polytopes = [boundary, polytopes]; % put the boundary polytope as the first polytope
         end
         resolution_scale = 20; % this map has many fine features and resolution can be 10x the nominal
+
     elseif map_idx == 8 % Josh's polytope map from 24 April 2024
         load(strcat(pwd,'\..\Test_Fixtures\april_24_example_josh.mat'));
         start = [1 30];
         finish = [100 50];
         if add_boundary
-            %% make a boundary around the polytope field
+            % make a boundary around the polytope field
             boundary.vertices = [-5 -5; -5 105; 105 105; 105 -5];
             boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
-            boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
+            boundary = fcn_MapGen_polytopesFillFieldsFromVertices(boundary); % fill polytope fields
             % boundary.parent_poly_id = nan; % ignore parend ID
             boundary.cost_uncertainty = nan;
             boundary.indv = nan;
@@ -333,6 +340,7 @@ end
             boundary = rmfield(boundary,'radii');
             polytopes = [boundary, polytopes]; % put the boundary polytope as the first polytope
         end
+
     elseif map_idx == 9
         % pull halton set
         rng(50);
@@ -356,7 +364,7 @@ end
         for poly = 1:length(tiled_polytopes) % pull each cell from the voronoi diagram
             stretched_polytopes(poly).vertices  = tiled_polytopes(poly).vertices.*new_stretch;
         end % Ends for loop for stretch
-        stretched_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(stretched_polytopes);
+        stretched_polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(stretched_polytopes);
 
         % shrink polytopes to desired radius
         des_rad = 2; sigma_radius = 1.5; min_rad = 0.1;
@@ -369,20 +377,21 @@ end
         start = [-2 20];
         finish = [32 20];
         if add_boundary
-            %% make a boundary around the polytope field
+            % make a boundary around the polytope field
             boundary.vertices = [-3 -5; -3 45; 33 45; 33 -5];
             boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
-            boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
+            boundary = fcn_MapGen_polytopesFillFieldsFromVertices(boundary); % fill polytope fields
             polytopes = [boundary, polytopes]; % put the boundary polytope as the first polytope
         end
         resolution_scale = 20; % this map has many fine features and resolution can be 10x the nominal
+
     elseif map_idx == 10
         error("map 10 not yet defined in fcn_BoundedAStar_loadTestMap.  You're welcome to add one following the convention of other maps.")
     end % if conditions for different map test fixtures
 
-    %% some maps need to be converted from LLA to ENU
+    % some maps need to be converted from LLA to ENU
     if map_idx <=6 && map_idx >= 2 % for the floodplain maps we have to convert from LLA to km
-        %% convert from LLA to QGS84
+        % convert from LLA to QGS84
         datum = 'nad83';
         centre_co_avg_alt = 351.7392; % use average elevation
         lla0 = [40.765144 -77.87615 centre_co_avg_alt]; % approx cato base station location
@@ -422,10 +431,10 @@ end
             end
             new_polytopes(i).vertices = wgs_verts;
         end
-        polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(new_polytopes);
+        polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(new_polytopes, 1);
     end
 
-    %% define multiple start goal pairs for some maps
+    % define multiple start goal pairs for some maps
     if map_idx == 6 % for map 6 we can loop over many start goal pairs
         % missions defined in the old enu
         starts = [1015,-4704; 1000,-4722; 1017 -4721; 995, -4714; 1025, -4704; 1030, -4708];
@@ -451,6 +460,7 @@ end
         navigated_portions(1) = 0.2;
         navigated_portions(5) = 0.7;
         navigated_portions(7) = 0.3;
+
     elseif map_idx == 3
         % starts = [1002, -4715.9];
         % finishes = [1017, -4719];
@@ -460,6 +470,7 @@ end
         % finishes = [3 16; 6 20; 4 26; -8 26; -4 25];
         length_cost_weights = length_cost_weight*ones(1, size(starts,1));
         navigated_portions = navigated_portion*ones(1, size(starts,1));
+
     elseif (map_idx == 7 || map_idx == 9)
         starts = [start; -2 25; -2 25; -2 15; -2 10; -2 30; -2 10];
         finishes = [finish; 32 25; 32 15; 32 15; 32 10; 32 30; 32 30];
@@ -469,11 +480,13 @@ end
             length_cost_weights(3) = 1/4;
         end
         navigated_portions = navigated_portion*ones(1, size(starts,1));
+
     elseif map_idx == 5
         starts = [start; 1037 -4712];
         finishes = [finish; 1037 -4725];
         length_cost_weights = length_cost_weight*ones(1, size(starts,1));
         navigated_portions = navigated_portion*ones(1, size(starts,1));
+
     else % if we only have one start goal pair
         starts = start;
         finishes = finish;
