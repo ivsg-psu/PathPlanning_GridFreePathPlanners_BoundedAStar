@@ -1,6 +1,4 @@
-function [finalReachableSet, exitCondition, cellArrayOfExitInfo, varargout] = ...
-    fcn_BoundedAStar_expandReachabilityWithWind(radius, ...
-    windFieldU, windFieldV, windFieldX, windFieldY, varargin)
+function [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(radius, windFieldU, windFieldV, windFieldX, windFieldY, varargin)
 % fcn_BoundedAStar_expandReachabilityWithWind
 % performs iterative reachability expansion from a startPoint until one of
 % the following criteria are met:
@@ -13,9 +11,7 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo, varargout] = ..
 %     flagWindExitConditions input.
 %
 % FORMAT:
-% [finalReachableSet, exitCondition, cellArrayOfExitInfo,...
-%  (reachableSetExactCosts), (cellArrayOfReachableSetPaths)] = ...
-%   fcn_BoundedAStar_expandReachabilityWithWind(...
+% [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
 %     radius, ... 
 %     windFieldU,  ...
 %     windFieldV,  ...
@@ -24,6 +20,7 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo, varargout] = ..
 %     (startPoints),  ...
 %     (flagWindRoundingType),...
 %     (cellArrayOfWindExitConditions),...
+%     (flagTimeVarying)...
 %     (figNum));
 %
 % INPUTS:
@@ -86,6 +83,10 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo, varargout] = ..
 %     If any condition is met, the expansion is stopped and the
 %     exitCondition type is set accordingly.
 %
+%     flagTimeVarying: if == 1, indicates that the wind field will be time
+%     varying. In this case, the windFieldU and windFieldV should be cell
+%     arrays containing the wind field at each time step.
+%
 %     figNum: a figure number to plot results. If set to -1, skips any
 %     input checking or debugging, no figures will be generated, and sets
 %     up code to maximize speed. As well, if given, this forces the
@@ -105,22 +106,6 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo, varargout] = ..
 %     1: number of iterations completed
 %     2: goal points hit (as counts of sim steps to hit that point).
 %     Returns empty if allGoalPointsList is empty.
-%
-%     (OPTIONAL OUTPUTS)
-%     NOTE: to allow fast execution, the optional outputs are NOT calculated unless the user has
-%     requested them.
-%
-%     reachableSetExactCosts: an Mx1 matrix, where M is the number of
-%     achievable goals in finalReachableSet, containing a more exact
-%     estimate of costs. These are calculated by interpolation of the
-%     distance between the inner and outer set boundaries for each goal.
-% 
-%     cellArrayOfReachableSetPaths: an Mx1 cell array that contains, for each M
-%     achievable goals, an estimate of the path that leads to the point.
-%     The array is of format: [X Y U V] where X,Y represent the XY position
-%     coordinates, and UV represent for each position the control vector in
-%     XY directions, respectively, that would give the solution within the
-%     given wind field.
 %
 % DEPENDENCIES:
 %
@@ -148,22 +133,12 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo, varargout] = ..
 %   % * Added cellArrayOfWindExitConditions
 %   % * Added exitCondition output information
 %   % * Added cellArrayOfExitInfo output information
-%
 % 2025_08_05 by S. Brennan
 %   % * Changed flag outputs to count sim steps to hit goal, not just
 %   %   % binary
-%
-% 2025_08_11 by S. Brennan
-% - In fcn_BoundedAStar_expandReachabilityWithWind
-%   % * Added varargout option to allow optional calculations including:
-%   %   % ** reachableSetExactCosts: Exact costs per each feasible goal
-%   %   % ** cellArrayOfReachableSetPaths: Exact paths per each feasible goal
-%
-% 2025_08_17 by S. Brennan
-% - In fcn_BoundedAStar_expandReachabilityWithWind
-%   % * fixed bug where interpolation fails with highly non-convex set
-%   %   % boundaries
-
+% 2025_08_12 by K. Hayes
+% - in fcn_BoundedAStar_expandReachabilityWithWind
+%   % * added handling for time varying wind fields
 
 % TO-DO
 % -- when wind is VERY high, higher than self speed, the set pushes away
@@ -177,7 +152,7 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo, varargout] = ..
 % Check if flag_max_speed set. This occurs if the figNum variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 9; % The largest Number of argument inputs to the function
+MAX_NARGIN = 10; % The largest Number of argument inputs to the function
 flag_max_speed = 0;
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; %     % Flag to plot the results for debugging
@@ -195,7 +170,7 @@ else
     end
 end
 
-flag_do_debug = 0;
+% flag_do_debug = 1;
 
 if flag_do_debug
     st = dbstack; %#ok<*UNRCH>
@@ -267,6 +242,15 @@ toleranceToStopIfSameResult = cellArrayOfWindExitConditions{3};
 allGoalPointsList = cellArrayOfWindExitConditions{4};
 flagStopIfHitOneGoalPoint = cellArrayOfWindExitConditions{5};
 
+% Does user want to specify flagTimeVarying input?
+flagTimeVarying = 0; % Default is 0
+if 9 <= nargin
+    temp = varargin{4};
+    if ~isempty(temp)
+        flagTimeVarying = temp;
+    end
+end
+
 % Does user want to show the plots?
 flag_do_plots = 0; % Default is to NOT show plots
 if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
@@ -277,21 +261,6 @@ if (0==flag_max_speed) && (MAX_NARGIN == nargin)
         flag_do_plots = 1;
     end
 end
-
-nout = max(nargout,1)-3;
-if nout>=1
-    varargout = cell(nout,1);
-    flagCaclulateReachableSetExactCosts = 1;
-else
-    flagCaclulateReachableSetExactCosts = 0;
-end
-
-if nout>=2
-    flagCaclulateReachableSetPaths = 1;
-else
-    flagCaclulateReachableSetPaths = 0;
-end
-
 
 %% Main code
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -360,29 +329,27 @@ maxY = windFieldY(end);
 deltaX = windFieldX(2) - windFieldX(1);
 
 allExpansions = cell(Nsteps,1);
-allIntermediateCalculations = cell(Nsteps,5);
 
 if ~isempty(allGoalPointsList)
     stepsWhenGoalPointsHit = nan(length(allGoalPointsList(:,1)),1);
-    if 1==flagCaclulateReachableSetExactCosts
-        exactStepsWhenGoalPointsHit = nan(length(allGoalPointsList(:,1)),1);
-    end
 end
 
+reachableSetData = {};
 ith_step = 0;
 flagContinueExpansion = 1;
 while 1==flagContinueExpansion
     ith_step = ith_step+1;
     allExpansions{ith_step,1} = startPoints;
-
-    % Call function to find reachable set on this time step
-    % FORMAT:
-    % [reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
-    %     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
-    [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_reachabilityWithInputs(...
-        radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
-    for ith_cell = 1:5
-        allIntermediateCalculations{ith_step, ith_cell} = cellArrayOfIntermediateCalculations{ith_cell,1};
+    
+    if 1 == flagTimeVarying
+        windFieldUk = windFieldU{ith_step};
+        windFieldVk = windFieldV{ith_step};
+        reachableSet = fcn_BoundedAStar_reachabilityWithInputs(...
+            radius, windFieldUk, windFieldVk, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
+    else
+        % Call function to find reachable set on this time step
+        reachableSet = fcn_BoundedAStar_reachabilityWithInputs(...
+            radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
     end
 
     if flag_do_debug && 1==1
@@ -403,8 +370,6 @@ while 1==flagContinueExpansion
     if length(reachableSetNotPinched(:,1))< (Nreachable/2)
         reachableSetNotPinched = setdiff(reachableSet,reachableSetNotPinched,'rows','stable');
     end
-    % The removePinchPointInPath removes repeated points, so need to add
-    % start/end back in
     reachableSetNotPinched = [reachableSetNotPinched; reachableSetNotPinched(1,:)]; %#ok<AGROW>
 
     % Clean up set boundary from "jogs"?
@@ -462,8 +427,8 @@ while 1==flagContinueExpansion
     end
     if ~isempty(toleranceToStopIfSameResult)
         if ith_step>2
-            thisBoundary = newStartPoints; % allExpansions{ith_step,1};
-            lastBoundary = allExpansions{ith_step,1}; % allExpansions{ith_step-1,1};
+            thisBoundary = allExpansions{ith_step,1};
+            lastBoundary = allExpansions{ith_step-1,1};
             if length(thisBoundary(:,1))==length(lastBoundary(:,1))
                 % Check distances
                 differences = thisBoundary-lastBoundary;
@@ -482,49 +447,19 @@ while 1==flagContinueExpansion
         pointsFoundThisSimStep = find(isnan(stepsWhenGoalPointsHit) & goalPointsHit);
         if ~isempty(pointsFoundThisSimStep)
             stepsWhenGoalPointsHit(pointsFoundThisSimStep) = ith_step;
-            % Do we calculate reachableSetExactCosts?
-            if 1==flagCaclulateReachableSetExactCosts
-                thisBoundary = newStartPoints; % allExpansions{ith_step,1};
-                lastBoundary = allExpansions{ith_step,1}; % allExpansions{ith_step-1,1};
-                thesePoints = allGoalPointsList(pointsFoundThisSimStep,:);
-                % FORMAT:
-                % St_points = fcn_Path_convertXY2St(referencePath,XY_points,...
-                %    (flag_rounding_type), (fig_num));
-
-                St_points_before_method1 = real(fcn_Path_convertXY2St(lastBoundary, thesePoints, (1), (-1)));
-                St_points_before_method2 = real(fcn_Path_convertXY2St(lastBoundary, thesePoints, (2), (-1)));
-                t_points_before = min(St_points_before_method1(:,2),St_points_before_method2(:,2));
-                St_points_after_method1 =  real(fcn_Path_convertXY2St(thisBoundary, thesePoints, (1), (-1)));
-                St_points_after_method2 =  real(fcn_Path_convertXY2St(thisBoundary, thesePoints, (2), (-1)));
-                t_points_after = min(St_points_after_method1(:,2),St_points_after_method2(:,2));
-
-                % Make sure all points are as expected: negative t values
-                % for the before, and positive after
-                assert(all(t_points_before<=0,'all'))
-                assert(all(t_points_after>=0,'all'))
-
-                % Calculate fraction of step
-                totalTransverseDistance = sum([t_points_after -t_points_before],2);
-                fractionalStep = -t_points_before./totalTransverseDistance;
-                exactStepsWhenGoalPointsHit(pointsFoundThisSimStep) = ith_step-1+fractionalStep;
-
-
-            end
-
-            % Do we stop with all points hit?
             if all(goalPointsHit==1,'all')
                 flagContinueExpansion = 0;
                 exitCondition = 4;
             end
-            % Do we stop with one point hit?
             if 1==flagStopIfHitOneGoalPoint && any(goalPointsHit==1,'all')
                 flagContinueExpansion = 0;
                 exitCondition = 5;
             end
         end
     end
-
+    reachableSetData{ith_step} = reachableSet;
 end
+save('setExpansion.mat', 'reachableSetData');
 
 allExpansions{ith_step+1,1} = newStartPoints;
 
@@ -541,25 +476,6 @@ else
 end
 cellArrayOfExitInfo{2,1} = goalPointsHit;
 
-
-% Set variable argument outputs
-if 1==flagCaclulateReachableSetExactCosts
-   varargout{1} = exactStepsWhenGoalPointsHit;
-end
-
-if 1==flagCaclulateReachableSetPaths
-    URHERE
-    cellArrayOfReachableSetPaths = cell(length(exactStepsWhenGoalPointsHit(:,1)),1);    
-    for ith_goal = 1:length(exactStepsWhenGoalPointsHit)
-        thisGoal = allGoalPointsList(ith_goal,:);
-        stepWhenGoalReached = stepsWhenGoalPointsHit(ith_goal,:);
-        pathToGoal = fcn_BoundedAStar_pathCalculationBackToStart(...
-            start, thisGoal, stepWhenGoalReached, ...
-            allIntermediateCalculations, 2343);
-        cellArrayOfReachableSetPaths{ith_goal} = pathToGoal;
-    end
-    varargout{2} = cellArrayOfReachableSetPaths;
-end
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -638,8 +554,10 @@ if flag_do_plots
     legend('Interpreter','none','Location','best');
 
     % Plot the windfield as an image
-    cellArrayOfPlotHandles = fcn_BoundedAStar_plotWindField(windFieldU,windFieldV,windFieldX,windFieldY,'default',figNum);
-    set(cellArrayOfPlotHandles{3},'Color',[0.6 0.6 0.6]);
+    if 0==flagTimeVarying
+        cellArrayOfPlotHandles = fcn_BoundedAStar_plotWindField(windFieldU,windFieldV,windFieldX,windFieldY,'default',figNum);
+        set(cellArrayOfPlotHandles{3},'Color',[0.6 0.6 0.6]);
+    end
 
     % Plot the start points
     plot(originalStartPoints(:,1),originalStartPoints(:,2),'.-','Color',[0 1 0],'MarkerSize',20,'LineWidth', 2, 'DisplayName','Input: startPoints');
@@ -654,6 +572,10 @@ if flag_do_plots
     allColors = turbo;
     Ntotal = 25;
     for ith_expansion = 1:cellArrayOfExitInfo{1}
+        if 1==flagTimeVarying
+            cellArrayOfPlotHandles = fcn_BoundedAStar_plotWindField(windFieldU{ith_expansion},windFieldV{ith_expansion},windFieldX,windFieldY,'default',figNum);
+            set(cellArrayOfPlotHandles{3},'Color',[0.6 0.6 0.6]);
+        end
         thisExpansion = allExpansions{ith_expansion,1};
         percentageDone = min(ith_expansion/Ntotal,1);
         if 1==0

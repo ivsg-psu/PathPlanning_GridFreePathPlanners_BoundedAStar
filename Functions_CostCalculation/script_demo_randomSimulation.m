@@ -6,7 +6,7 @@ fig_num = figNum;
 [normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData(3);
 
 % Call graph generation function
-radius = 1;
+radius = 0.5;
 maxWindSpeed = 1;
 
 windFieldU = normalizedEastWind*maxWindSpeed;
@@ -14,13 +14,15 @@ windFieldV = normalizedNorthWind*maxWindSpeed;
 flagWindRoundingType = 1;
 cellArrayOfWindExitConditions = [];
 
-% Call function
-% [reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
-%     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), (-1));
-
-NTrials =100;
-% startPoints = (-1) + (2).*rand(100,2);
+NTrials =1000;
+startPoints = -6*ones(NTrials,2);
 trajectory = cell(NTrials,1);
+
+setExpStartPoint = [-6 -6];
+
+% Call function
+[reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (setExpStartPoint), (flagWindRoundingType), (cellArrayOfWindExitConditions), (-1));
 
 for i = 1:NTrials
     startPoint = startPoints(i,:);
@@ -43,22 +45,27 @@ end
 %% with randomly chosen input trajectories
 close all
 radius = 0.5;
-NTrials = 1000;
+NTrials = 10000;
 randDir = (2*pi)*rand(NTrials,1);
 % trajInput = radius*[cos(randDir) sin(randDir)];
 finishPoint = [5, -5];
 
+
+load('setExpansion.mat');
+
+ntSteps = length(reachableSetData);
+
 % startPointsx = (-1) + (2).*rand(100,1);
 % startPointsy = (-1) + (2).*rand(100,1);
 % startPoints = [startPointsx startPointsy];
-startPoints = zeros(NTrials,2);
+startPoints = -6*ones(NTrials,2);
 trajectory = cell(NTrials,1);
 
 trajectory2 = cell(NTrials, 1);
 
 for i = 1:NTrials
     startPoint = startPoints(i,:);
-    timeLength = 13;
+    timeLength = ntSteps;
     dir = (2*pi)*rand(timeLength,1);
     trajInputr = radius*[cos(dir) sin(dir)];
     trajectory2{i} = fcn_BoundedAStar_simulateIndividualTrajectory(startPoint,finishPoint, trajInputr, windFieldX, windFieldY, windFieldU, windFieldV, -1);
@@ -95,11 +102,7 @@ plot(endPt(:,1), endPt(:,2),'.r','MarkerSize',25)
 
 
 %% gifmaking
-
-load('setExpansion.mat');
-
-ntSteps = length(reachableSetData);
-
+close all
 figure(fig_num)
 hold on;
 box on;
@@ -120,9 +123,11 @@ for n = 2:ntSteps
     box on;
     axis([-10 10 -10 10]);
     fcn_BoundedAStar_plotWindField(windFieldU, windFieldV, windFieldX, windFieldY, 'default',fig_num);
-    plot(reachableSetData{n}(:,1), reachableSetData{n}(:,2),'-w','Linewidth',2,'DisplayName','Estimate of reachable set');
-    plot(endPt(:,1), endPt(:,2), 'xg', 'MarkerSize', 5, 'DisplayName', 'Simulated trajectory location at time step');
-    legend('Location','southeast')
+    s = streamslice(windFieldX, windFieldY, windFieldU, windFieldV);
+    set(s, 'Color', [0.6 0.6 0.6], 'HandleVisibility', 'off');
+    plot(reachableSetData{n}(:,1), reachableSetData{n}(:,2),'-k','Linewidth',2,'DisplayName','Estimate of reachable set');
+    plot(endPt(:,1), endPt(:,2), 'xw', 'MarkerSize', 5, 'LineWidth', 2, 'DisplayName', 'Simulated trajectory location at time step');
+    legend('Location','northeast')
     exportgraphics(gcf,'randomsim.gif','Append',true);
     drawnow
     if n ~= ntSteps
