@@ -4,9 +4,11 @@
 % Revision history
 % 2025_08_14 - K. Hayes, kxh1031@psu.edu
 % -- initial write of script
+% 2025_08_22 - K. Hayes
+% -- added test cases to check all maps
+%
+% TO DO:
 
-% TO DO: 
-% -- write test cases that check all the maps
 
 %% Set up the workspace
 close all
@@ -35,7 +37,7 @@ titleString = sprintf('DEMO case: load a pre-generated polytope map (map_idx = 9
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
-map_idx = 9;
+map_idx = 7;
 add_boundary = 0;
 
 [polytopes, starts, finishes, resolution_scale, length_cost_weights, navigated_portions] = fcn_BoundedAStar_loadTestMap(map_idx, (add_boundary), (fig_num));
@@ -78,12 +80,237 @@ assert(isequal(get(gcf,'Number'),fig_num));
 close all;
 fprintf(1,'Figure: 2XXXXXX: TEST mode cases\n');
 
-%% TEST case: This one returns nothing since there is no portion of the path in criteria
+%% TEST case: Load map_idx = 1
 fig_num = 20001;
-titleString = sprintf('TEST case: This one returns nothing since there is no portion of the path in criteria');
+titleString = sprintf('TEST case:  Load map_idx = 1');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
+map_idx = 1;
+add_boundary = 0;
+
+[polytopes, starts, finishes, resolution_scale, length_cost_weights, navigated_portions] = fcn_BoundedAStar_loadTestMap(map_idx, (add_boundary), (fig_num));
+
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(starts));
+assert(isstruct(polytopes));
+assert(isnumeric(finishes));
+assert(isnumeric(resolution_scale));
+assert(isnumeric(length_cost_weights));
+assert(isnumeric(navigated_portions));
+
+% Check variable sizes
+Npoly = 43;
+assert(isequal(Npoly,length(polytopes))); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% TEST case: Load map_idx = 2
+fig_num = 20002;
+titleString = sprintf('TEST case:  Load map_idx = 2');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
+
+map_idx = 2;
+add_boundary = 0;
+
+[polytopes, starts, finishes, resolution_scale, length_cost_weights, navigated_portions] = fcn_BoundedAStar_loadTestMap(map_idx, (add_boundary), (fig_num));
+
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(starts));
+assert(isstruct(polytopes));
+assert(isnumeric(finishes));
+assert(isnumeric(resolution_scale));
+assert(isnumeric(length_cost_weights));
+assert(isnumeric(navigated_portions));
+
+% Check variable sizes
+Npoly = 3;
+assert(isequal(Npoly,length(polytopes))); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% TEST case: Load map_idx = 3
+fig_num = 20003;
+titleString = sprintf('TEST case:  Load map_idx = 3');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
+
+map_idx = 3;
+add_boundary = 0;
+
+[polytopes, starts, finishes, resolution_scale, length_cost_weights, navigated_portions] = fcn_BoundedAStar_loadTestMap(map_idx, (add_boundary), (fig_num));
+
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(starts));
+assert(isstruct(polytopes));
+assert(isnumeric(finishes));
+assert(isnumeric(resolution_scale));
+assert(isnumeric(length_cost_weights));
+assert(isnumeric(navigated_portions));
+
+% Check variable sizes
+Npoly = 8;
+assert(isequal(Npoly,length(polytopes))); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% TEST case: Load map_idx = 4
+fig_num = 20004;
+titleString = sprintf('TEST case:  Load map_idx = 4');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
+
+map_idx = 4;
+add_boundary = 0;
+
+[polytopes, starts, finishes, resolution_scale, length_cost_weights, navigated_portions] = fcn_BoundedAStar_loadTestMap(map_idx, (add_boundary), (fig_num));
+
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(starts));
+assert(isstruct(polytopes));
+assert(isnumeric(finishes));
+assert(isnumeric(resolution_scale));
+assert(isnumeric(length_cost_weights));
+assert(isnumeric(navigated_portions));
+
+% Check variable sizes
+Npoly = 4;
+assert(isequal(Npoly,length(polytopes))); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% TEST case: Load map_idx = 5
+fig_num = 20005;
+titleString = sprintf('TEST case:  Load map_idx = 5');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
+
+map_idx = 5;
+add_boundary = 0;
+
+[polytopes, starts, finishes, resolution_scale, length_cost_weights, navigated_portions] = fcn_BoundedAStar_loadTestMap(map_idx, (add_boundary), (fig_num));
+
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(starts));
+assert(isstruct(polytopes));
+assert(isnumeric(finishes));
+assert(isnumeric(resolution_scale));
+assert(isnumeric(length_cost_weights));
+assert(isnumeric(navigated_portions));
+
+% Check variable sizes
+Npoly = 13;
+assert(isequal(Npoly,length(polytopes))); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% TEST case: Load map_idx = 6
+fig_num = 20006;
+titleString = sprintf('TEST case:  Load map_idx = 6');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
+
+map_idx = 6;
+add_boundary = 0;
+
+[polytopes, starts, finishes, resolution_scale, length_cost_weights, navigated_portions] = fcn_BoundedAStar_loadTestMap(map_idx, (add_boundary), (fig_num));
+
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(starts));
+assert(isstruct(polytopes));
+assert(isnumeric(finishes));
+assert(isnumeric(resolution_scale));
+assert(isnumeric(length_cost_weights));
+assert(isnumeric(navigated_portions));
+
+% Check variable sizes
+Npoly = 30;
+assert(isequal(Npoly,length(polytopes))); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% TEST case: Load map_idx = 8
+fig_num = 20007;
+titleString = sprintf('TEST case:  Load map_idx = 8');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
+
+map_idx = 8;
+add_boundary = 0;
+
+[polytopes, starts, finishes, resolution_scale, length_cost_weights, navigated_portions] = fcn_BoundedAStar_loadTestMap(map_idx, (add_boundary), (fig_num));
+
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(starts));
+assert(isstruct(polytopes));
+assert(isnumeric(finishes));
+assert(isnumeric(resolution_scale));
+assert(isnumeric(length_cost_weights));
+assert(isnumeric(navigated_portions));
+
+% Check variable sizes
+Npoly = 25;
+assert(isequal(Npoly,length(polytopes))); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% TEST case: Load map_idx = 9
+fig_num = 20008;
+titleString = sprintf('TEST case:  Load map_idx = 9');
+fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
+figure(fig_num); clf;
+
+map_idx = 9;
+add_boundary = 0;
+
+[polytopes, starts, finishes, resolution_scale, length_cost_weights, navigated_portions] = fcn_BoundedAStar_loadTestMap(map_idx, (add_boundary), (fig_num));
+
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(starts));
+assert(isstruct(polytopes));
+assert(isnumeric(finishes));
+assert(isnumeric(resolution_scale));
+assert(isnumeric(length_cost_weights));
+assert(isnumeric(navigated_portions));
+
+% Check variable sizes
+Npoly = 51;
+assert(isequal(Npoly,length(polytopes))); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 
 %% Fast Mode Tests

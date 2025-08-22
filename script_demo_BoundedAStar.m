@@ -344,6 +344,10 @@
 % - In fcn_BoundedAStar_loadTestMap
 %   % * fixed bug where non-convex maps would not load
 %   % * updated MapGen references
+%
+% 2025_08_22 by K. Hayes
+% - In script_test_fcn_BoundedAStar_loadTestMap
+%   % * added test cases to check all maps in fcn_BoundedAStar_loadTestMap
 
 
 % TO-DO:
