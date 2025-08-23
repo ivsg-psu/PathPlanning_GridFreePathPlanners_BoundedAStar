@@ -278,6 +278,7 @@ end
 % Costs are saved as "from" as rows, and "to" as columns. Note: self costs
 % are -1. Costs that are not possible (infeasible) are NaN.
 costsFromTo = nan(Npoints,Npoints);
+pathsFromTo = cell(Npoints,Npoints);
 
 % Make a matrix that is all true values. We use this to trigger the points
 % that are NOT the source point as temporary goalPoints.
@@ -304,16 +305,36 @@ for ith_point = 1:Npoints
     cellArrayOfWindExitConditions{4} = tempGoalPoints;  % allGoalPointsList
     cellArrayOfWindExitConditions{5} = 0;   % flagStopIfHitOneGoalPoint
 
-    % Call function
-    [reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
+    if 1==0
+        save('BUG_90002_fcn_BoundedAStar_expandReachabilityWithWind.mat',...
+            'radius', 'windFieldU', 'windFieldV', 'windFieldX', 'windFieldY', ...
+            'startPoint', 'flagWindRoundingType','cellArrayOfWindExitConditions');
+    end
+
+    % Call function to expand outward into wind field
+    figure(222222);
+    clf;
+    [reachableSet, exitCondition, cellArrayOfExitInfo, ...
+    reachableSetExactCosts, cellArrayOfReachableSetPaths] = fcn_BoundedAStar_expandReachabilityWithWind(...
         radius, windFieldU, windFieldV, windFieldX, windFieldY,...
-        (startPoint), (flagWindRoundingType), (cellArrayOfWindExitConditions), (-1));
+        (startPoint), (flagWindRoundingType), (cellArrayOfWindExitConditions), (222222));
 
     if 4~=exitCondition
         warning('Not all goal points are reachable from other goal points');
     end
     reachableFlags = cellArrayOfExitInfo{2};
-    costsFromTo(ith_point,tempGoalPointIDs) = reachableFlags';
+
+    % Save the costs and paths
+    if 1==1
+        costsFromTo(ith_point,tempGoalPointIDs) = reachableSetExactCosts';
+        for ith_goal = 1:length(tempGoalPointIDs)
+            pathsFromTo{ith_point,ith_goal} = cellArrayOfReachableSetPaths{ith_goal};
+        end
+    else
+        % Use approximate costs
+        costsFromTo(ith_point,tempGoalPointIDs) = reachableFlags';
+    end
+
     costsFromTo(ith_point,ith_point) = -1; % Self costs are -1
 
     if flag_do_debug
@@ -326,10 +347,21 @@ for ith_point = 1:Npoints
         feasibleGoalPoints = allPoints(reachableIndices,:); 
 
         % Plot the reachableSet output for this source point
-        plot(reachableSet(:,1),reachableSet(:,2),'LineWidth',3,'Color',thisColor,'DisplayName','Output: reachableSet')
+        if 1==0
+            plot( reachableSet(:,1), reachableSet(:,2), 'LineWidth', 3, 'Color', thisColor, 'HandleVisibility', 'off'); % ,'DisplayName','Output: finalReachableSet')
+        end
 
         % Plot the feasible goal points
-        plot(feasibleGoalPoints(:,1),feasibleGoalPoints(:,2),'o','Color',thisColor,'MarkerSize',5+5*ith_point,'LineWidth', 2, 'DisplayName','feasibleGoalPoints');
+        plot(feasibleGoalPoints(:,1),feasibleGoalPoints(:,2), 'o', 'Color', thisColor,...
+            'MarkerSize', 5+5*ith_point, 'LineWidth', 2, 'HandleVisibility', 'off'); %'DisplayName','feasibleGoalPoints');
+
+        % Plot the paths to feasible goal points
+        for ith_goal = 1:length(tempGoalPointIDs)
+           thisPath =  pathsFromTo{ith_point,ith_goal};
+           if ~isempty(thisPath)
+               plot(thisPath(:,1),thisPath(:,2),'-','Color',thisColor,'LineWidth', 2,'HandleVisibility','off');
+           end
+        end
 
     end
 

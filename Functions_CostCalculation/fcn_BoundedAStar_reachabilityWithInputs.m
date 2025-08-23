@@ -135,6 +135,11 @@ function [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_
 % 2024_08_17 by S. Brennan
 % - In fcn_BoundedAStar_reachabilityWithInputs
 %   % * Functionalized the code a bit more
+%
+% 2024_08_22 by S. Brennan
+% - In fcn_BoundedAStar_reachabilityWithInputs
+%   % * Fixed bug with NaN values produced due to typo on isequal 
+%   %   % (line 926)
 
 % TO-DO
 % -- update header
@@ -258,6 +263,11 @@ if flag_do_debug
 
 end
 
+if any(isnan(startPoints),'all')
+    error('Nan values found in startPoints. This will crash the code');
+end
+
+
 %% Find pre-expansion points
 % For the operations that follow, these are simplified greatly if all the
 % points are in the same format, namely: no repeated points other than
@@ -266,6 +276,16 @@ end
 % case where there are only 1 or 2 non-repeated points in the startPoints
 [densePreExpansionPoints, flagPointsFilledArtificially] = ...
     fcn_INTERNAL_prepareStartPoints(startPoints, radius);
+
+uniqueDensePreExpansionPoints = unique(densePreExpansionPoints(1:end-1,:),'rows','stable');
+if numel(uniqueDensePreExpansionPoints) ~= numel(densePreExpansionPoints(1:end-1,:))
+    error('densePreExpansionPoints have repeating values');
+end
+
+if any(isnan(densePreExpansionPoints),'all')
+    error('Nan values found in densePreExpansionPoints. This will crash the code');
+end
+
 
 if flag_do_debug
     figure(debug_figNum);
@@ -282,6 +302,15 @@ end
 stepSize = windFieldX(2)-windFieldX(1);
 preExpansionPoints = fcn_INTERNAL_resamplePointsToMatchWindDiscretization(...
     densePreExpansionPoints,stepSize);
+
+uniquePreExpansionPoints = unique(preExpansionPoints(1:end-1,:),'rows','stable');
+if numel(uniquePreExpansionPoints) ~= numel(preExpansionPoints(1:end-1,:))
+    error('preExpansionPoints have repeating values');
+end
+
+if any(isnan(preExpansionPoints),'all')
+    error('Nan values found in preExpansionPoints. This will crash the code');
+end
 
 if flag_do_debug
     figure(debug_figNum);
@@ -301,6 +330,10 @@ A = eye(NPreExpansionPoints);
 % The following does: x_(k+1) = A*x_k 
 xKPlusOne_AMatrixPoints = A*preExpansionPoints;
 
+if any(isnan(xKPlusOne_AMatrixPoints),'all')
+    error('Nan values found in xKPlusOne_AMatrixPoints. This will crash the code');
+end
+
 if flag_do_debug
     figure(debug_figNum);
     plot(xKPlusOne_AMatrixPoints(:,1),xKPlusOne_AMatrixPoints(:,2),'.-',...
@@ -311,8 +344,20 @@ end
 
 % This represents the B*u term. For now, assume B*u is an arbitrary
 % direction, essentially pushing all preExpansionPoints "outward" from
-% wherever they are.
-[~, xKPlusOne_BMatrixPoints] = fcn_INTERNAL_expandVerticesOutward(preExpansionPoints, radius);
+% wherever they are. Note: this operation sometimes requires conditioning
+% of the points, changing which startPoints are used. Thus, it passes out
+% indicesKept so this can be fixed.
+[~, xKPlusOne_BMatrixPoints, indicesKept] = fcn_INTERNAL_expandVerticesOutward(preExpansionPoints, radius);
+preExpansionPoints = preExpansionPoints(indicesKept,:);
+if ~isequal(preExpansionPoints(1,:),preExpansionPoints(end,:))
+    error('First and last preExpansionPoints points must be same');
+end
+
+xKPlusOne_AMatrixPoints = xKPlusOne_AMatrixPoints(indicesKept,:);
+
+if any(isnan(xKPlusOne_BMatrixPoints),'all')
+    error('Nan values found in xKPlusOne_BMatrixPoints. This will crash the code');
+end
 
 if flag_do_debug
     figure(debug_figNum);
@@ -384,7 +429,7 @@ if flag_do_debug
         quiver(preExpansionPoints(rowsToPlot,1),preExpansionPoints(rowsToPlot,2),...
             vectorLengths(rowsToPlot,1),vectorLengths(rowsToPlot,2),0,'filled');
     end
-    plot(reachableSet(:,1),reachableSet(:,2),'y-','LineWidth',3);
+    plot(reachableSet(:,1),reachableSet(:,2),'y.-','LineWidth',3,'MarkerSize',30);
 
 end
 
@@ -393,12 +438,33 @@ end
 %             xKPlusOne_AMatrixPoints: the A matrix calculation result
 %             xKPlusOne_BMatrixPoints: the B matrix calculation result
 %             xKPlusOne_WindDisturbance: the wind disturbances
-cellArrayOfIntermediateCalculations = cell(4,1);
+cellArrayOfIntermediateCalculations = cell(5,1);
 cellArrayOfIntermediateCalculations{1,1} = preExpansionPoints;
 cellArrayOfIntermediateCalculations{2,1} = xKPlusOne_AMatrixPoints;
 cellArrayOfIntermediateCalculations{3,1} = xKPlusOne_BMatrixPoints;
 cellArrayOfIntermediateCalculations{4,1} = xKPlusOne_WindDisturbance;
 cellArrayOfIntermediateCalculations{5,1} = flagPointsFilledArtificially;
+
+if flag_do_debug
+    figure(debug_figNum);
+    shiftedPoints = xKPlusOne_AMatrixPoints;
+    quiver(shiftedPoints(:,1), shiftedPoints(:,2),...
+        xKPlusOne_BMatrixPoints(:,1),xKPlusOne_BMatrixPoints(:,2),0,...
+        'LineWidth',3,...
+        'ShowArrowHead','on','MaxHeadSize',1,...
+        'Color',0.6*[1 0 0],'MarkerSize',20);
+    shiftedPoints = xKPlusOne_AMatrixPoints+xKPlusOne_BMatrixPoints;
+    quiver(shiftedPoints(:,1), shiftedPoints(:,2),...
+        xKPlusOne_WindDisturbance(:,1),xKPlusOne_WindDisturbance(:,2),0,...
+        'LineWidth',3,...
+        'ShowArrowHead','on','MaxHeadSize',1,...
+        'Color',0.4*[1 0 0],'MarkerSize',20);
+    plot(preExpansionPoints(:,1),preExpansionPoints(:,2),'.-',...
+        'Color',[1 0 0],'MarkerSize',20);
+    plot(reachableSet(:,1),reachableSet(:,2),'r.','LineWidth',3, 'MarkerSize',20);
+
+
+end
 
 
 %% Plot the results (for debugging)?
@@ -474,18 +540,28 @@ if flag_do_plots
         hold on
     end   
 
-    % Turn on legend
-    legend('Interpreter','none','Location','best');
+    % Turn on legend?
+    legends = findobj(figNum, 'Type', 'legend');
+    if isempty(legends)
+        legend('Interpreter','none','Location','northwest');
+        flag_legendAlredyOn = 0;
+    else
+        flag_legendAlredyOn = 1;
+    end
 
     % Plot the windfield as an image
     cellArrayOfPlotHandles = fcn_BoundedAStar_plotWindField(windFieldU,windFieldV,windFieldX,windFieldY,'default',figNum);
     set(cellArrayOfPlotHandles{3},'Color',[0.6 0.6 0.6]);
 
-    % Plot the start points
-    plot(startPoints(:,1),startPoints(:,2),'.-','Color',[0 0 1],'MarkerSize',10,'LineWidth', 2, 'DisplayName','Input: startPoints');
+    % Plot the start points and final output
+    if 0 == flag_legendAlredyOn
+        plot(startPoints(:,1),startPoints(:,2),'.-','Color',[0 0 1],'MarkerSize',10,'LineWidth', 2, 'DisplayName','Input: startPoints');
+        plot(reachableSet(:,1),reachableSet(:,2),'LineWidth',2,'Color',[0 0 0],'DisplayName','Output: reachableSet')
+    else
+        plot(startPoints(:,1),startPoints(:,2),'.-','Color',[0 0 1],'MarkerSize',10,'LineWidth', 2, 'HandleVisibility','off');
+        plot(reachableSet(:,1),reachableSet(:,2),'LineWidth',2,'Color',[0 0 0],'HandleVisibility','off');
+    end
 
-    % Plot the final output
-    plot(reachableSet(:,1),reachableSet(:,2),'LineWidth',2,'Color',[0 0 0],'DisplayName','Output: reachableSet')
 
     % Shut the hold off?
     if flag_shut_hold_off
@@ -753,7 +829,10 @@ end
 end % Ends fcn_INTERNAL_hardCodedFilter
 
 %% fcn_INTERNAL_expandVerticesOutward
-function [pointsMovedOutward, movementsOutward] = fcn_INTERNAL_expandVerticesOutward(startingPoints, radius)
+function [pointsMovedOutward, movementsOutward, indicesKept] = fcn_INTERNAL_expandVerticesOutward(startingPoints, radius)
+
+% URHERE - need to externally functionalize this, and test it repeatedly
+
 %%%%
 % Need to expand all vertices outward. A method to do this is to
 % calculate the projection vector at each vertex that bisects the
@@ -766,6 +845,11 @@ if ~isequal(startingPoints(1,:),startingPoints(end,:))
     startingPoints = [startingPoints; startingPoints(1,:)];
 end
 
+% for debugging
+if 1==0
+    startingPoints = [0 0; 1 0; 2 0; 3 0; 4 0; 3 0; 2 0; 2 1];
+end
+
 % Find unit edge vectors, and ortho projections. Note: if there are N
 % vertices, there will be N-1 edges. So that the angles match with the
 % end of each point, we repeat the 1st edge vector onto the end so the
@@ -774,6 +858,61 @@ edgeVectors = startingPoints(2:end,:)-startingPoints(1:end-1,:);
 edgeLengths = sum(edgeVectors.^2,2).^0.5;
 unitEdgeVectors = edgeVectors./edgeLengths;
 allUnitEdgeVectors = [unitEdgeVectors(end,:); unitEdgeVectors; unitEdgeVectors(1,:)];
+
+if any(isnan(allUnitEdgeVectors),'all')
+    error('Unexpected error in calculating allUnitEdgeVectors: NaN value encountered - this should not happen.');
+end
+
+%%%
+% Remove "jogs"
+
+% Sometimes vectors are created that point exactly opposite each other.
+% Remove these
+flagKeepGoing = 1;
+count = 0;
+NStartingPoints = length(startingPoints(:,1));
+fixedVectors = [allUnitEdgeVectors, [NStartingPoints; (1:NStartingPoints)']];
+
+indicesRemoved = [];
+while 1==flagKeepGoing
+    temp = fixedVectors(1:end-1,1:2)+fixedVectors(2:end,1:2);
+    tempMag = sum(temp.^2,2);
+    tol = 1E-8;
+    badElement = find(tempMag<tol,1);
+    if ~isempty(badElement)
+        indicesRemoved = [indicesRemoved; fixedVectors(badElement:(badElement+1),3)]; %#ok<AGROW>
+        fixedVectors(badElement:(badElement+1),:) = [];
+    else
+        flagKeepGoing = 0;
+    end
+    count = count+1;
+    if count>=NStartingPoints
+        error('Unable to clean vectors - seem to be trapped while removing forward/backward pairs.');
+    end
+end
+indicesKept = fixedVectors(2:end,3);
+fixedStartingPoints = startingPoints(indicesKept,:);
+if ~isequal(fixedStartingPoints(1,:),fixedStartingPoints(end,:))
+    indicesKept = [indicesKept; indicesKept(1)];
+    fixedStartingPoints = startingPoints(indicesKept,:);
+    fixedVectors = [fixedVectors; fixedVectors(1,:)];
+end
+indicesRemoved = sort(indicesRemoved);
+
+% For debugging. Should see any forward/backward jogs removed. NOTE:
+% because the analysis is done on UNIT edge vectors, it may seem like some
+% of the points prior to the "jog" in/out are removed. This is normal.
+if 1==0
+    figure(44444);
+    clf;
+    plot(startingPoints(:,1),startingPoints(:,2),'b.-','MarkerSize',40, 'LineWidth',5);
+    hold on;
+    plot(startingPoints(indicesRemoved,1),startingPoints(indicesRemoved,2),'r.','MarkerSize',30, 'LineWidth',5);
+    plot(fixedStartingPoints(:,1),fixedStartingPoints(:,2),'g.-','MarkerSize',20, 'LineWidth',2);
+end
+
+%%%
+% Find offsets
 
 % The following method avoids the use of sines, cosines, and tangents
 % as those are slow to calculate. To find the vector projection from
@@ -785,27 +924,51 @@ allUnitEdgeVectors = [unitEdgeVectors(end,:); unitEdgeVectors; unitEdgeVectors(1
 % the orthogonal vectors from each startPoint.
 
 % Perform a -90 degree rotation
-orthoEdgeVectors = allUnitEdgeVectors*[0 -1; 1 0];
-positionsIncomingVector = startingPoints+orthoEdgeVectors(1:end-1,:);
-positionsOutgoingVector = startingPoints+orthoEdgeVectors(2:end,:);
+orthoEdgeVectors = fixedVectors(:,1:2)*[0 -1; 1 0];
+positionsIncomingVector = fixedStartingPoints+orthoEdgeVectors(1:end-1,:);
+positionsOutgoingVector = fixedStartingPoints+orthoEdgeVectors(2:end,:);
 averagePositions = (positionsIncomingVector + positionsOutgoingVector)/2;
-averagePositionVectors = averagePositions - startingPoints;
+
+% Remove values where average positions are zero
+averagePositionsMagnitude = sum(averagePositions.^2,2);
+badPoints = find(averagePositionsMagnitude<1E-6);
+if ~isempty(badPoints)
+    averagePositions(badPoints,:) = [];
+    fixedStartingPoints(badPoints,:) = [];
+    indicesKept(badPoints,:) = [];
+end
+
+averagePositionVectors = averagePositions - fixedStartingPoints;
 averagePositionVectorLengths = sum(averagePositionVectors.^2,2).^0.5;
+
+% Remove values where vector lengths are zero
+badPoints2 = find(averagePositionVectorLengths<1E-6);
+if ~isempty(badPoints2)
+    averagePositionVectors(badPoints2,:) = [];
+    averagePositionVectorLengths(badPoints2,:) = [];
+    fixedStartingPoints(badPoints2,:) = [];
+    indicesKept(badPoints2,:) = [];
+end
 unitProjectionVectors = averagePositionVectors./averagePositionVectorLengths;
+
+if any(isnan(unitProjectionVectors),'all')
+    error('Unexpected error in calculating unitProjectionVectors: NaN value encountered - this should not happen.');
+end
+
+
 % Use the sin(theta) method to calculate D
 D = 1./averagePositionVectorLengths;
 movementsOutward = radius*D.*unitProjectionVectors;
-RawPointsMovedOutward = startingPoints + movementsOutward;
+RawPointsMovedOutward = fixedStartingPoints + movementsOutward;
 
-% Clean up points. In some cases, for example if there are non-convex
-% enclosures, the expansion process can "squeeze" points close to each other,
-% resulting in points that bunch up. We don't want to keep these points.
-if 1==0
-    goodPoints = averagePositionVectorLengths>(0.1*radius);
-    pointsMovedOutward = RawPointsMovedOutward(goodPoints,:);
-else
-    pointsMovedOutward = RawPointsMovedOutward;
+% Make sure first and last points repeat
+if ~isequal(RawPointsMovedOutward(1,:),RawPointsMovedOutward(end,:))
+    RawPointsMovedOutward(end,:) = RawPointsMovedOutward(1,:);
+    indicesKept(end) = indicesKept(1);
 end
+
+% Save output
+pointsMovedOutward = RawPointsMovedOutward;
 
 % For debugging. Should see all the edges move outward by radius amount,
 % equally
@@ -820,6 +983,9 @@ if 1==0
 
 end
 
+if any(isnan(pointsMovedOutward),'all')
+    error('Unexpected error in calculating pointsMovedOutward: NaN value encountered - this should not happen.');
+end
 
 end % Ends fcn_INTERNAL_expandVerticesOutward
 
@@ -880,23 +1046,43 @@ end
 end % Ends fcn_INTERNAL_prepareStartPoints
 
 %% fcn_INTERNAL_resamplePointsToMatchWindDiscretization
-function resampledPolyPoints = fcn_INTERNAL_resamplePointsToMatchWindDiscretization(densePreExpansionPoints,stepSize)
+function resampledPolyPoints = fcn_INTERNAL_resamplePointsToMatchWindDiscretization(inputPoints,stepSize)
+
+% Make sure points circle back on each other. Otherwise, final edge never
+% gets filled
+if ~isequal(inputPoints(1,:),inputPoints(end,:))
+    densePreExpansionPoints = [inputPoints; inputPoints(1,:)];
+else
+    densePreExpansionPoints = inputPoints;
+end
+
 edgeVectors = densePreExpansionPoints(2:end,:)-densePreExpansionPoints(1:end-1,:);
 edgeLengths = sum(edgeVectors.^2,2).^0.5;
 unitEdgeVectors = edgeVectors./edgeLengths;
 
 resampledPolyPoints = [];
+% For each vector, break vector up into stepSize chunks. If last part is
+% "small", delete last point to keep stepSize chunk, or larger, in the
+% segment.
 for ith_edge = 1:length(unitEdgeVectors(:,1))
     thisStartPoint = densePreExpansionPoints(ith_edge,:);
     thisLength = edgeLengths(ith_edge);
     thisUnitVector = unitEdgeVectors(ith_edge,:);
 
+    % Count how many stepSizes fit inside thisLength
     Nresamples = floor(thisLength/stepSize);
-    morePoints = (0:Nresamples)'*stepSize*thisUnitVector + thisStartPoint;
-    if mod(thisLength,stepSize)==0
-        morePoints = morePoints(1:end-1,:);
+
+    % Make sure remainder is not "small". If it is, just reduce the cuts by
+    % one so last cut is longer than others.
+    remainingDistance = thisLength - Nresamples*stepSize;
+    if remainingDistance < 0.5*stepSize && thisLength>stepSize
+        Nresamples = Nresamples-1;
     end
+    morePoints = (0:Nresamples)'*stepSize*thisUnitVector + thisStartPoint;
     resampledPolyPoints = [resampledPolyPoints; morePoints]; %#ok<AGROW>
 end
-resampledPolyPoints = [resampledPolyPoints; resampledPolyPoints(1,:)];
+
+% Circle back to first point
+uniqueResampledPolyPoints = unique(resampledPolyPoints(1:end-1,:),'rows','stable');
+resampledPolyPoints = [uniqueResampledPolyPoints; resampledPolyPoints(1,:)];
 end % Ends fcn_INTERNAL_resamplePointsToMatchWindDiscretization

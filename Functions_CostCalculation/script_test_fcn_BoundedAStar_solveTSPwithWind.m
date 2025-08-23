@@ -60,7 +60,7 @@ Ngoals = 3;
 goalPoints = [4 6; -6 4; 8 -4; -6 -2];
 
 cellArrayOfSearchOptions = cell(5,1);
-cellArrayOfSearchOptions{1} = 50; % Nsteps
+cellArrayOfSearchOptions{1} = 100; % Nsteps
 cellArrayOfSearchOptions{2} = 1;   % flagStopIfEntireFieldCovered
 cellArrayOfSearchOptions{3} = 0.2; % toleranceToStopIfSameResult
 cellArrayOfSearchOptions{4} = goalPoints;  % allGoalPointsList

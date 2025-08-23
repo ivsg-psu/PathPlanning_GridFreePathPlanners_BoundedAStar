@@ -922,6 +922,33 @@ assert(size(reachableSet,2)==2);
 assert(size(cellArrayOfIntermediateCalculations,1)==5); 
 assert(size(cellArrayOfIntermediateCalculations,2)==1);
 
+%% BUG case: NaN values generated in expandReachabilityWithWind
+
+figNum = 90004;
+titleString = sprintf('BUG case: NaN values generated in expandReachabilityWithWind');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+% Load starting data
+load('BUG_90004_fcn_BoundedAStar_reachabilityWithInputs.mat',...
+    'radius', 'windFieldU', 'windFieldV', 'windFieldX', 'windFieldY', ...
+    'startPoints', 'flagWindRoundingType');
+
+% Call function
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
+
+% Check variable types
+assert(isnumeric(reachableSet));
+assert(iscell(cellArrayOfIntermediateCalculations));
+
+% Check variable sizes
+assert(size(reachableSet,1)>=3); 
+assert(size(reachableSet,2)==2);
+assert(size(cellArrayOfIntermediateCalculations,1)==5); 
+assert(size(cellArrayOfIntermediateCalculations,2)==1);
+
+
 %% Fail conditions
 if 1==0
     %
