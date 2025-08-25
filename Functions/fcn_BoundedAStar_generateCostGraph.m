@@ -17,7 +17,7 @@ function [cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts, start, fin
 %
 % INPUTS:
 %
-%   start: the start point vector as (x,y,id) or (x,t,t,id)
+%   start: the start point vector as (x,y,id) or (x,y,t,id)
 %
 %   finish: the finish point matrix of all valid finishes where each row is a single finish point
 %     vector as (x,y,id) or (x,y,t,id)

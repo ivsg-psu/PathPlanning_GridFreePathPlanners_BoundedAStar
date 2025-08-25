@@ -1,72 +1,51 @@
-function [perimeter1,perimeter2] = fcn_BoundedAStar_polytopeCalculateDualPerimeters(polytope,xing1,xing2) %,path1,path2]
+function [perimeter1,perimeter2] = fcn_BoundedAStar_polytopeCalculateDualPerimeters(polytope,xing1,xing2,varargin) %,path1,path2]
 % fcn_BoundedAStar_polytopeCalculateDualPerimeters calculate perimeters in both 
-% directions around the polytope
+% directions around the polytope when extering at xing1 and exiting at
+% xing2. When xing1 and xing2 are not directly across from e/o on a
+% polytope, the numbers perimeter1 and perimeter2 will differ. This fcn
+% helps determine if it is more efficient to go in or around the polytope
 %
-% [PERIMETER1,PERIMETER2]=fcn_BoundedAStar_polytopeCalculateDualPerimeters(POLYTOPE,XING1,XING2)
-% returns:
-% PERIMETER1: the distance around the obstacle in direction 1
-% PERIMETER2: the distance around the obstacle in direction 2
+% FORMAT:
 %
-% with inputs:
-% POLYTOPE: a seven field structure of a polytope, where n = number of 
+% [perimeter1, perimeter2]=fcn_BoundedAStar_polytopeCalculateDualPerimeters(polytope, xing1, xing2)
+% OUTPUTS:
+%
+% perimeter1: the distance around the obstacle in direction 1
+%
+% perimeter2: the distance around the obstacle in direction 2
+%
+% INPUTS:
+%
+% polytope: a seven field structure of a polytope, where n = number of 
 %   polytopes, with fields:
-% vertices: a m+1-by-2 matrix of xy points with row1 = rowm+1, where m is
-%   the number of the individual polytope vertices
-% xv: a 1-by-m vector of vertice x-coordinates
-% yv: a 1-by-m vector of vertice y-coordinates
-% distances: a 1-by-m vector of perimeter distances from one point to the
-%   next point, distances(i) = distance from vertices(i) to vertices(i+1)
-% mean: average xy coordinate of the polytope
-% area: area of the polytope
-% max_radius: distance from mean to the furthest vertex
-% XING1: first crossing location on the obstacle [x y]
-% XING2: second crossing location on the obstacle [x y]
+%       vertices: a m+1-by-2 matrix of xy points with row1 = rowm+1, where m is
+%       the number of the individual polytope vertices
+%       xv: a 1-by-m vector of vertice x-coordinates
+%       yv: a 1-by-m vector of vertice y-coordinates
+%       distances: a 1-by-m vector of perimeter distances from one point to the
+%       next point, distances(i) = distance from vertices(i) to vertices(i+1)
+%       mean: average xy coordinate of the polytope
+%       area: area of the polytope
+%       max_radius: distance from mean to the furthest vertex
 %
-% Examples:
-%      
-%      % Example
-%      cur_path = pwd;
-%      main_folder = '!Voronoi Tiling Obstacles - Organized';
-%      parent_dir = cur_path(1:strfind(cur_path,main_folder)-2);
-%      addpath([parent_dir '\' main_folder '\General_Calculation'])
-%      addpath([parent_dir '\' main_folder '\Plotting'])
-%      addpath([parent_dir '\' main_folder '\Map_Generation\polytope_calculation'])
-%      polytope.xv=[2 1 -1 -2 -2 -1 1 2];
-%      polytope.yv=[1 2 2 1 -1 -2 -2 -1];
-%      polytope.vertices=[[polytope.xv polytope.xv(1)]' [polytope.yv polytope.yv(1)]'];
-%      polytope.distances = sum((polytope.vertices(1:end-1,:) - polytope.vertices(2:end,:)).^2,2).^0.5;
-%      [centroid,polytope.area] = fcn_MapGen_polytopeCentroidAndArea ([[xv xv(1)]',[yv yv(1)]']);     
-%      Cx = centroid(1,1);
-%      Cy = centroid(1,2);
-%      polytope.mean = [Cx, Cy];
-%      polytope.max_radius = max(sum((polytope.vertices(1:end-1) - ones(length(xv),1)*polytope.mean).^2,2).^0.5);
-%      xing1 = [-2 0];
-%      xing2 = [2 0];
-%      [perimeter1,perimeter2]=fcn_BoundedAStar_polytopeCalculateDualPerimeters(polytope,xing1,xing2)
-%      fcn_BoundedAStar_plotPolytopes(polytope,[],'k-',4,[-3 3 -3 3],'square')
-%      plot(path1(:,1),path1(:,2),'g--','linewidth',2)
-%      plot(path2(:,1),path2(:,2),'r--','linewidth',2)
-%      plot(xing1(1),xing1(2),'yx','linewidth',2)
-%      plot(xing2(1),xing2(2),'cx','linewidth',2)
-%      xing1 = [-2 0.75];
-%      xing2 = [-2 -0.75];
-%      [perimeter1,perimeter2]=fcn_BoundedAStar_polytopeCalculateDualPerimeters(polytope,xing1,xing2)
-%      fcn_BoundedAStar_plotPolytopes(polytope,[],'k-',4,[-3 3 -3 3],'square')
-%      plot(path1(:,1),path1(:,2),'g--','linewidth',2)
-%      plot(path2(:,1),path2(:,2),'r--','linewidth',2)
-%      plot(xing1(1),xing1(2),'yx','linewidth',2)
-%      plot(xing2(1),xing2(2),'cx','linewidth',2)
-%      xing1 = [-2 0];
-%      xing2 = [2 1];
-%      [perimeter1,perimeter2]=fcn_BoundedAStar_polytopeCalculateDualPerimeters(polytope,xing1,xing2)
-%      fcn_BoundedAStar_plotPolytopes(polytope,[],'k-',4,[-3 3 -3 3],'square')
-%      plot(path1(:,1),path1(:,2),'g--','linewidth',2)
-%      plot(path2(:,1),path2(:,2),'r--','linewidth',2)
-%      plot(xing1(1),xing1(2),'yx','linewidth',2)
-%      plot(xing2(1),xing2(2),'cx','linewidth',2)
+% xing1: first crossing location on the obstacle [x y]
+%
+% xing2: second crossing location on the obstacle [x y]
+% 
+% (optional inputs)
+%
+% fig_num: a figure number to plot results. If set to -1, skips any
+% input checking or debugging, no figures will be generated, and sets
+% up code to maximize speed. As well, if given, this forces the
+% variable types to be displayed as output and as well makes the input
+% check process verbose
 %
 % This function was written on 2018_11_28 by Seth Tau
 % Questions or comments? sat5340@psu.edu 
+%
+% DEPENDENCIES:
+%
+% fcn_MapGen_plotPolytopes
 %
 % REVISION HISTORY: 
 % 2025_07_09 - K. Hayes, kxh1031@psu.edu
@@ -75,12 +54,91 @@ function [perimeter1,perimeter2] = fcn_BoundedAStar_polytopeCalculateDualPerimet
 % 2025_07_17 - K. Hayes
 % -- copied to new function from fcn_polytope_calculation_dual_perimeters to
 %    follow library convention
+% 2025_08_25 - K. Hayes
+% -- updated fcn header and formatting
+%
+% TO DO:
+% -- fix 'perimeter path' calculation
 
-
-%% check input arguments
-if nargin ~= 3
-    error('Incorrect number of arguments');
+%% Debugging and Input checks
+% Check if flag_max_speed set. This occurs if the fig_num variable input
+% argument (varargin) is given a number of -1, which is not a valid figure
+% number.
+MAX_NARGIN = 4; % The largest Number of argument inputs to the function
+flag_max_speed = 0;
+if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
+    flag_check_inputs = 0; % Flag to perform input checking
+    flag_max_speed = 1;
+else
+    % Check to see if we are externally setting debug mode to be "on"
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
+    flag_check_inputs = 1; % Flag to perform input checking
+    MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS");
+    MATLABFLAG_MAPGEN_FLAG_DO_DEBUG = getenv("MATLABFLAG_MAPGEN_FLAG_DO_DEBUG");
+    if ~isempty(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG)
+        flag_do_debug = str2double(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG);
+        flag_check_inputs  = str2double(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS);
+    end
 end
+
+% flag_do_debug = 1;
+
+if flag_do_debug
+    st = dbstack; %#ok<*UNRCH>
+    fprintf(1,'STARTING function: %s, in file: %s\n',st(1).name,st(1).file);
+    debug_fig_num = 999978; %#ok<NASGU>
+else
+    debug_fig_num = []; %#ok<NASGU>
+end
+
+%% check input arguments?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____                   _
+%  |_   _|                 | |
+%    | |  _ __  _ __  _   _| |_ ___
+%    | | | '_ \| '_ \| | | | __/ __|
+%   _| |_| | | | |_) | |_| | |_\__ \
+%  |_____|_| |_| .__/ \__,_|\__|___/
+%              | |
+%              |_|
+% See: http://patorjk.com/software/taag/#p=display&f=Big&t=Inputs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if 0==flag_max_speed
+    if flag_check_inputs
+        % Are there the right number of inputs?
+        narginchk(3,MAX_NARGIN);
+
+        % Check the polytope input, make sure it is a struct
+        assert(isstruct(polytope));
+
+    end
+end
+
+% Does user want to show the plots?
+flag_do_plots = 0; % Default is to NOT show plots
+if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
+    temp = varargin{end};
+    if ~isempty(temp) % Did the user NOT give an empty figure number?
+        fig_num = temp;
+        figure(fig_num);
+        flag_do_plots = 1;
+    end
+end
+
+%% Main code
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   __  __       _
+%  |  \/  |     (_)
+%  | \  / | __ _ _ _ __
+%  | |\/| |/ _` | | '_ \
+%  | |  | | (_| | | | | |
+%  |_|  |_|\__,_|_|_| |_|
+%
+%See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+
 
 %% repeat the first values of vertices and distances if it does not close itself
 if sum(polytope.vertices(1,:)==polytope.vertices(end,:)) ~= 2
@@ -101,78 +159,54 @@ gap2 = fcn_BoundedAStar_polytopePointGapLocation(xing2,check.v);
 %% create perimeters & paths
 [perimeter1,perimeter2] = fcn_create_perimeter_paths(check,xing1,xing2,gap1,gap2);
 %,path1,path2]
-end
 
         
-%% supporting functions
+%% Plot the results (for debugging)?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____       _
+%  |  __ \     | |
+%  | |  | | ___| |__  _   _  __ _
+%  | |  | |/ _ \ '_ \| | | |/ _` |
+%  | |__| |  __/ |_) | |_| | (_| |
+%  |_____/ \___|_.__/ \__,_|\__, |
+%                            __/ |
+%                           |___/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
 
-% function [gap] = fcn_find_gap_location(xing,vertices)
-% % FCN_FIND_GAP_LOCATION find which gap the point is between
-% %
-% % [GAP]=FCN_FIND_GAP_LOCATION(CROSS,VERTICES)
-% % returns:
-% % GAP: the gap the point of interest is between, 
-% %   ex: gap = 1 means vert1 <= point < vert2
-% %       gap = 4 means vert4 <= point < vert5
-% %
-% % with inputs:
-% % CROSS: crossing location on the obstacle [x y]
-% % VERTICES: vertices of the obstacle [x1 y1;...; xn+1 yn+1], where n is the
-% %   number of vertices in an obstacle
-% %
-% % Examples:
-% %      
-% %      % BASIC example
-% %      vertices = [2 1; 1 2; -1 2; -2 1; -2 -1; -1 -2; 1 -2; 2 -1; 2 1];
-% %      cross1 = [-2 0];
-% %      gap1 = fcn_find_gap_location(cross1,vertices)
-% %      cross2 = [2 0];
-% %      gap2 = fcn_find_gap_location(cross2,vertices)
-% %      cross3 = [-2 0.75];
-% %      gap3 = fcn_find_gap_location(cross3,vertices)
-% %      cross4 = [2 1];
-% %      gap4 = fcn_find_gap_location(cross4,vertices)
-% %      figure
-% %      plot(vertices(:,1),vertices(:,2),'k-','linewidth',1)
-% %      hold on
-% %      plot(cross1(1),cross1(2),'bx','linewidth',1)
-% %      plot(cross2(1),cross2(2),'rx','linewidth',1)
-% %      plot(cross3(1),cross3(2),'gx','linewidth',1)
-% %      plot(cross4(1),cross4(2),'mx','linewidth',1)
-% %      axis([-3 3 -3 3])
-% %      axis square
-% % 
-% % This function was written on 2018_12_21 by Seth Tau
-% % Questions or comments? sat5340@psu.edu 
-% %
-% 
-% % xy-vertices and crossing point
-% x1 = vertices(1:end-1,1);
-% y1 = vertices(1:end-1,2);
-% x2 = vertices(2:end,1);
-% y2 = vertices(2:end,2);
-% xi = xing(1);
-% yi = xing(2);
-% 
-% % check if the point is on the line between two points
-% acc = 1e-8;
-% TF = fcn_BoundedAStar_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc); % row vector of 1 or 0 if on lines between (x1,y1) and (x2,y2)
-% gap = find(TF,1);
-% 
-% % ensure gap is defined
-% while isempty(gap)
-%     acc = acc*10; % decrease accuracy to account for changes in variable types
-%     TF = fcn_BoundedAStar_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc); % row vector of 1 or 0 if on lines between (x1,y1) and (x2,y2)
-%     gap = find(TF,1);
-%     if acc > 100 % if point too far stop searching
-%         error('Intersecting point does not appear to be on the line')
-%     end
-% end
-% if acc > 1e-8 % warn if the point is too far away
-%     warning('Gap assignment may be incorrect, accuracy decreased to %.0e',acc)
-% end
-% 
-% end
+if flag_do_plots
+   
+    figure(fig_num)
+
+    hold on
+    box on
+    
+    plotFormat.LineWidth = 3;
+    plotFormat.Color = 'black';
+    plotFormat.DisplayName = 'Polytope';
+    fcn_MapGen_plotPolytopes(polytope, plotFormat, [1 0 0 1 1],fig_num);
+    % fcn_BoundedAStar_plotPolytopes(polytope,[],'k-',4,[-3 3 -3 3],'square');
+    % plot(path1(:,1),path1(:,2),'g--','linewidth',2)
+    % plot(path2(:,1),path2(:,2),'r--','linewidth',2)
+    plot(xing1(1),xing1(2),'gx','linewidth',2,'DisplayName','Entry point');
+    plot(xing2(1),xing2(2),'rx','linewidth',2, 'DisplayName', 'Exit point');
+
+    legend
+
+end % end function
+
+end
+
+%% Functions follow
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   ______                _   _
+%  |  ____|              | | (_)
+%  | |__ _   _ _ __   ___| |_ _  ___  _ __  ___
+%  |  __| | | | '_ \ / __| __| |/ _ \| '_ \/ __|
+%  | |  | |_| | | | | (__| |_| | (_) | | | \__ \
+%  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
+%
+% See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
         
 function [perim1,perim2] = fcn_create_perimeter_paths(check,xing1,xing2,gap1,gap2) %,path1,path2]
 % FCN_CREATE_PERIMETER_PATHS find the perimeter distance and paths

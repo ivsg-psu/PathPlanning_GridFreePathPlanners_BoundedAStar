@@ -131,7 +131,7 @@ end
 
 % Does user want to specify all_pts?
 all_pts = []; % Default is to NOT show plots
-if 2 <= nargin
+if 2 >= nargin
     temp = varargin{1};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
        all_pts = temp;

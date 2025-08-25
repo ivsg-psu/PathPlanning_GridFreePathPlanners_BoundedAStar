@@ -340,6 +340,36 @@
 %   % * completed first end-to-end working version
 % - In script_test_fcn_BoundedAStar_pathCalculationBackToStart
 %   % * Added working example of backward path calculation
+%
+% 2025_08_19 by K. Hayes
+% - updated all_pts generation to use
+%   fcn_BoundedAStar_polytopesGenerateAllPtsTable
+% - DEPRECATED: fcn_general_calculation_points_on_lines
+%   % * now fcn_BoundedAStar_calculatePointsOnLines
+% - added script_test_fcn_BoundedAStar_calculatePointsOnLines
+%
+% 2025_08_21 by K. Hayes
+% - In fcn_BoundedAStar_Astar
+%   % * fixed unrecognized variables bug
+% - In fcn_BoundedAStar_loadTestMap
+%   % * fixed bug where non-convex maps would not load
+%   % * updated MapGen references
+%
+% 2025_08_22 by K. Hayes
+% - In script_test_fcn_BoundedAStar_loadTestMap
+%   % * added test cases to check all maps in fcn_BoundedAStar_loadTestMap
+%
+% 2025_08_25 by K. Hayes
+% - DEPRECATED: fcn_general_calculation_count_obs_in_path
+%   % * now fcn_BoundedAStar_countObstaclesInPath
+% - added script_test_fcn_BoundedAStar_countObstaclesInPath
+% - DEPRECATED: fcn_polytope_calculation_dual_perimeters
+%   % * now fcn_BoundedAStar_polytopeCalculateDualPerimeters
+% - added script_test_fcn_BoundedAstar_polytopeCalculateDualPerimeters
+% - DEPRECATED: fcn_polytope_calculation_point_gap_location
+%   % * now fcn_BoundedAStar_pointGapLocation
+% - added script_test_fcn_BoundedAStar_polytopePointGapLocation
+% - DEPRECATED: fcn_polytope_editing_shrink_evenly
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
@@ -356,6 +386,8 @@
 % 2025_08_18 - K. Hayes
 % -- add 3d formatted all_pts capabilities to
 %    fcn_BoundedAStar_polytopesGenerateAllPtsTable
+% 2025_08_25 - K. Hayes
+% -- fix dependencies lists to include MapGen and other BoundedAStar fcns
 
 
 clear library_name library_folders library_url
