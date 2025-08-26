@@ -19,7 +19,12 @@
 %
 % 2025_08_17 by S. Brennan, sbrennan@psu.edu
 % - in script_test_fcn_BoundedAStar_expandReachabilityWithWind
-%   % * added demo/test cases for outputting exact paths. See demo 10007
+%   % * added demo/test cases for outputting exact paths. See test 90001
+%
+% 2025_08_25 by S. Brennan, sbrennan@psu.edu
+% - in script_test_fcn_BoundedAStar_expandReachabilityWithWind
+%   % * added demo/test cases for outputting exact paths. See test 90002
+
 
 % TO DO:
 % (none)
@@ -109,7 +114,7 @@ startPoints = [0 0];
 flagWindRoundingType = 1;
 
 cellArrayOfWindExitConditions = cell(5,1);
-cellArrayOfWindExitConditions{1} = 250; % Nsteps
+cellArrayOfWindExitConditions{1} = 100; % Nsteps
 cellArrayOfWindExitConditions{2} = 1;   % flagStopIfEntireFieldCovered
 cellArrayOfWindExitConditions{3} = 0.2; % toleranceToStopIfSameResult
 cellArrayOfWindExitConditions{4} = [];  % allGoalPointsList
@@ -371,7 +376,8 @@ cellArrayOfWindExitConditions{5} = 0;   % flagStopIfHitOneGoalPoint
 % Call function
 [reachableSet, exitCondition, cellArrayOfExitInfo, ...
     reachableSetExactCosts, cellArrayOfReachableSetPaths] = fcn_BoundedAStar_expandReachabilityWithWind(...
-    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), (figNum));
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), ...
+    (flagWindRoundingType), (cellArrayOfWindExitConditions), (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -559,7 +565,7 @@ assert(size(exitCondition,2)==1);
 assert(isequal(size(cellArrayOfExitInfo),[2 1]));
 
 % Check variable values
-assert(isequal(exitCondition,3));
+assert(isequal(exitCondition,1));
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
@@ -692,6 +698,20 @@ figure(figNum); close(figNum);
 radius = 2;
 maxWindSpeed = 4;
 
+% % Call graph generation function
+% radius = 1;
+% maxWindSpeed = 0.5;
+% 
+% windFieldU = normalizedEastWind*maxWindSpeed;
+% windFieldV = normalizedNorthWind*maxWindSpeed;
+% startPoints = [0 0];
+% flagWindRoundingType = 1;
+% cellArrayOfWindExitConditions = [];
+% 
+% % Call function
+% [reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
+%     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), (figNum));
+
 windFieldU = normalizedEastWind*maxWindSpeed;
 windFieldV = normalizedNorthWind*maxWindSpeed;
 startPoints = [0 0; 1 2];
@@ -700,7 +720,8 @@ cellArrayOfWindExitConditions = [];
 
 % Call function
 [reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
-    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), ([]));
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), ...
+    (flagWindRoundingType), (cellArrayOfWindExitConditions), ([]));
 
 % Check variable types
 assert(isnumeric(reachableSet));
@@ -783,7 +804,7 @@ startPoints = [0 0; 1 2];
 flagWindRoundingType = 1;
 cellArrayOfWindExitConditions = [];
 
-Niterations = 10;
+Niterations = 5;
 
 % Slow mode
 tic;
@@ -870,7 +891,75 @@ assert(~any(figHandles==figNum));
 
 % close all;
 
-%% BUG 
+%% BUG case: Demo case 10001 from fcn_BoundedAStar_solveTSPwithWind 
+figNum = 90001;
+titleString = sprintf('BUG case: Demo case 10001 from fcn_BoundedAStar_solveTSPwithWind');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+% Load starting data
+load('BUG_90001_fcn_BoundedAStar_expandReachabilityWithWind.mat',...
+    'radius', 'windFieldU', 'windFieldV', 'windFieldX', 'windFieldY', ...
+    'startPoint', 'flagWindRoundingType','cellArrayOfWindExitConditions');
+
+% Call function
+[reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoint), (flagWindRoundingType), (cellArrayOfWindExitConditions), (figNum));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(reachableSet));
+assert(isnumeric(exitCondition));
+assert(iscell(cellArrayOfExitInfo));
+
+% Check variable sizes
+assert(size(reachableSet,1)>=3); 
+assert(size(reachableSet,2)==2);
+assert(size(exitCondition,1)==1); 
+assert(size(exitCondition,2)==1);
+assert(isequal(size(cellArrayOfExitInfo),[2 1]));
+
+% Check variable values
+% (too difficult - randomly generated)
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+%% BUG case: Demo case 10001 from fcn_BoundedAStar_solveTSPwithWind #2
+figNum = 90002;
+titleString = sprintf('BUG case: Demo case 10001 from fcn_BoundedAStar_solveTSPwithWind #2');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+% Load starting data
+load('BUG_90002_fcn_BoundedAStar_expandReachabilityWithWind.mat',...
+    'radius', 'windFieldU', 'windFieldV', 'windFieldX', 'windFieldY', ...
+    'startPoint', 'flagWindRoundingType','cellArrayOfWindExitConditions');
+
+% Call function
+[reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoint), (flagWindRoundingType), (cellArrayOfWindExitConditions), (figNum));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(reachableSet));
+assert(isnumeric(exitCondition));
+assert(iscell(cellArrayOfExitInfo));
+
+% Check variable sizes
+assert(size(reachableSet,1)>=3); 
+assert(size(reachableSet,2)==2);
+assert(size(exitCondition,1)==1); 
+assert(size(exitCondition,2)==1);
+assert(isequal(size(cellArrayOfExitInfo),[2 1]));
+
+% Check variable values
+% (too difficult - randomly generated)
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
 
 %% Fail conditions
 if 1==0
@@ -878,14 +967,6 @@ if 1==0
        
 end
 
-
-%% Saving maps
-
-[normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData(4822262);
-
-figure(1)
-fcn_BoundedAStar_plotWindField(normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY, 'default', 1);
-title('Wind Field 4822262')
 
 %% Functions follow
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

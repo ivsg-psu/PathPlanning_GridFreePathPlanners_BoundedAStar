@@ -331,6 +331,13 @@
 % - in script_test_fcn_BoundedAStar_AStarBounded
 %   % * fixed formatting and debug plotting calls
 %
+% 2025_08_18 by S. Brennan
+% - In fcn_BoundedAStar_Astar
+%   % * fixed unrecognized variables bug
+% - In fcn_BoundedAStar_pathCalculationBackToStart
+%   % first write of function
+%   % * using fcn_BoundedAStar_matrixEnvelopeExpansion as a starter
+%
 % 2025_08_19 by K. Hayes
 % - updated all_pts generation to use
 %   fcn_BoundedAStar_polytopesGenerateAllPtsTable
@@ -338,17 +345,11 @@
 %   % * now fcn_BoundedAStar_calculatePointsOnLines
 % - added script_test_fcn_BoundedAStar_calculatePointsOnLines
 %
-% 2025_08_21 by K. Hayes
-% - In fcn_BoundedAStar_Astar
-%   % * fixed unrecognized variables bug
-% - In fcn_BoundedAStar_loadTestMap
-%   % * fixed bug where non-convex maps would not load
-%   % * updated MapGen references
-%
-% 2025_08_22 by K. Hayes
-% - In script_test_fcn_BoundedAStar_loadTestMap
-%   % * added test cases to check all maps in fcn_BoundedAStar_loadTestMap
-
+% 2025_08_19 by S. Brennan
+% - In fcn_BoundedAStar_pathCalculationBackToStart
+%   % * completed first end-to-end working version
+% - In script_test_fcn_BoundedAStar_pathCalculationBackToStart
+%   % * Added working example of backward path calculation
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan

@@ -360,6 +360,7 @@ minX = windFieldX(1);
 maxX = windFieldX(end);
 minY = windFieldY(1);
 maxY = windFieldY(end);
+axisRange = [minX minY maxX maxY];
 deltaX = windFieldX(2) - windFieldX(1);
 
 allExpansions = cell(Nsteps,1);
@@ -384,13 +385,13 @@ while 1==flagContinueExpansion
     ith_step = ith_step+1;
     allExpansions{ith_step,1} = startPoints;
 
-    if 15==ith_step
-        disp('Stop here');
-        dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 427
-        dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 455
-        dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 464
-        dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 485
-    end
+    % if 20==ith_step
+    %     disp('Stop here');
+    %     % dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 427
+    %     % dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 455
+    %     dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 496 % This one s
+    %     % dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 553 % +
+    % end
 
     if 1==0
         save('BUG_90004_fcn_BoundedAStar_reachabilityWithInputs.mat',...
@@ -399,11 +400,19 @@ while 1==flagContinueExpansion
     end
 
     % Call function to find reachable set on this time step
+    % figure(2343);
+    % clf;
+
+    if any(isnan(startPoints),'all')
+        error('startPoints have points that are NaN valued. Unable to continue');
+    end
+
     % FORMAT:
     % [reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
     %     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
     [reachableSet, thisCellArrayOfIntermediateCalculations] = fcn_BoundedAStar_reachabilityWithInputs(...
-        radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (2343));
+        radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
+    legend off;
    
     if any(isnan(reachableSet),'all')
         error('Reachable set has point that is NaN valued. Unable to continue');
@@ -469,27 +478,162 @@ while 1==flagContinueExpansion
         unboundedRegion = fcn_INTERNAL_makeRegion(startPointsSparse);
         insideRegion = intersect(boundingRegion, unboundedRegion);
         boundedVertices = flipud(insideRegion.Vertices);
-        newStartPoints = [boundedVertices; boundedVertices(1,:)];
+        newStartPoints = [boundedVertices; boundedVertices(1,:)];        
+
 
         % If region breaks apart into different areas, need to reconnect
         % them. Do this by converting nan values "between" regions into
         % slivers that are near boundaries.
         if any(isnan(newStartPoints),'all')
+            unboundedVertices = flipud(unboundedRegion.Vertices);
+            unboundedPoints = [unboundedVertices; unboundedVertices(1,:)];
             nanIndices = find(isnan(newStartPoints(:,1)));
-            for ith_location = 1:length(nanIndices)
-                thisIndex = nanIndices(ith_location);
+            pointsBelow = newStartPoints(nanIndices-1,:);
+            pointsAbove = newStartPoints(nanIndices+1,:);
+            meanPoints = (pointsBelow+pointsAbove)./2;
+            
+            
+            if 1==1
+                closestWalls = fcn_INTERNAL_findClosestWall(meanPoints, axisRange);
+                Npoints = length(nanIndices);
+                if ~all(isequal(closestWalls,ones(Npoints,1)*closestWalls(1)))
+                    error('Not all wals are equal');
+                end
+                
+                % Find max/min points in region
+                minXallRegions = min(minX,min(unboundedVertices(:,1)));
+                maxXallRegions = max(maxX,max(unboundedVertices(:,1)));
+                minYallRegions = min(minY,min(unboundedVertices(:,2)));
+                maxYallRegions = max(maxY,max(unboundedVertices(:,2)));
+                if 1==closestWalls
+                    intersectWallStart = [minXallRegions minY];
+                    intersectWallEnd   = [maxXallRegions minY];
+                    offsetDirection = [0 1];
+                    
+                elseif 2==closestWalls
+                    intersectWallStart = [maxX minYallRegions];
+                    intersectWallEnd   = [maxX maxYallRegions];
+                    offsetDirection = [-1 0];
+                elseif 3==closestWalls
+                    intersectWallStart = [maxXallRegions maxY];
+                    intersectWallEnd   = [minXallRegions maxY];
+                    offsetDirection = [0 -1];
+                elseif 4==closestWalls
+                    intersectWallStart = [minX maxYallRegions];
+                    intersectWallEnd   = [minX minYallRegions];
+                    offsetDirection = [1 0];
+                else
+                    error('unknown wall index encountered');
+                end
+                % FORMAT:
+                %      [distance, location, wall_segment, t, u] = ...
+                %         fcn_Path_findSensorHitOnWall(...
+                %         wall_start, wall_end,...
+                %         sensor_vector_start,sensor_vector_end,...
+                %         (flag_search_return_type), (flag_search_range_type), ...
+                %         (tolerance), (fig_num))
+                [~, locations, ~, ~, u_values] = ...
+                    fcn_Path_findSensorHitOnWall(...
+                    unboundedPoints(1:end-1,:), unboundedPoints(2:end,:),...
+                    intersectWallStart,intersectWallEnd,...
+                    (1), (0), ...
+                    ([]), (-1));
+                [~,minSensorPercentageIndex] = min(u_values);
+                [~,maxSensorPercentageIndex] = max(u_values);
 
-                % Find the nearby points up and down that are not NaN
-                URHERE
-                tempDataUp = newStartPoints;
-                tempDataUp(1:thisIndex,:) = [nan nan];
-                nearbyPointUp = find(~isnan(tempDataUp(:,1)));
-                tempDataDown = newStartPoints;
-                tempDataDown(thisIndex:end,:) = [nan nan];
-                nearbyPointDown = find(~isnan(tempDataDown(:,1)),1,'last');
+                minPoint = locations(minSensorPercentageIndex,:); 
+                maxPoint = locations(maxSensorPercentageIndex,:);
 
+                if 1==closestWalls
+                    wallStart = [minPoint(1,1) minY];
+                    wallEnd   = [maxPoint(1,1) minY];                   
+                elseif 2==closestWalls
+                    wallStart = [maxX minPoint(1,2)];
+                    wallEnd   = [maxX maxPoint(1,2)];
+                elseif 3==closestWalls
+                    wallStart = [maxPoint(1,1) maxY];
+                    wallEnd   = [minPoint(1,1) maxY];
+                elseif 4==closestWalls
+                    wallStart = [minX maxPoint(1,2)];
+                    wallEnd   = [minX minPoint(1,2)];
+                else
+                    error('unknown wall index encountered');
+                end
+
+
+                offsetAmount = 0.1;
+                offsetWall = [minPoint; maxPoint] + offsetAmount*ones(2,1)*offsetDirection;
+                offsetRegionPoints = [offsetWall; wallEnd; wallStart];
+                offsetRegion = polyshape(offsetRegionPoints,'KeepCollinearPoints', true,'Simplify', false);
+
+                
+                insideRegionMerged = union(insideRegion, offsetRegion);
+                insideRegionMergedBounded = intersect(boundingRegion, insideRegionMerged);
+                boundedVertices = flipud(insideRegionMergedBounded.Vertices);
+                newStartPoints = [boundedVertices; boundedVertices(1,:)];
+
+                if 1==0
+                    figure(775757)
+                    clf;
+                    hold on;
+                    plot(insideRegionMergedBounded);
+                    % plot(offsetRegion);
+                    % plot(insideRegion);
+                end
+  
+
+            elseif 2==3
+                % % Find inward-facing faces. The points that are outside 
+                % 
+                % % Find upward facing points
+                % edgeVectors = newStartPoints(2:end,:) - newStartPoints(1:end-1,:);
+                % edgeVectorLengths = sum(edgeVectors.^2,2).^0.5;
+                % unitEdgeVectors = edgeVectors./edgeVectorLengths;
+                % 
+                % % Rotate by -90 degrees. These are vectors that are facing
+                % % out of the region.
+                % outwardFacingVectors = unitEdgeVectors*[0 -1; 1 0];
+                % 
+                % % Points attached to outward facing vectors, that are
+                % % outside the region, get pushed inward
+                % pointPushedToClosestWall = fcn_INTERNAL_pushToClosestWall(averageNearBy, axisRange);
+
+            else
+
+                % for ith_location = 1:length(nanIndices)
+                %     thisIndex = nanIndices(ith_location);
+                % 
+                %     % Find the nearby points up and down that are not NaN
+                %     % tempDataUp = newStartPoints;
+                %     % tempDataUp(1:thisIndex,1) = nan;
+                %     % nearbyPointUpIndex = find(~isnan(tempDataUp(:,1)),1);
+                %     % nearbyPointUp = tempDataUp(nearbyPointUpIndex,:);
+                %     % tempDataDown = newStartPoints;
+                %     % tempDataDown(thisIndex:end,1) = nan;
+                %     % nearbyPointDownIndex = find(~isnan(tempDataDown(:,1)),1,'last');
+                %     % nearbyPointDown = tempDataDown(nearbyPointDownIndex,:);
+                %     % nearbyPoints = [nearbyPointUp; nearbyPointDown];
+                %     nearbyPoints = [newStartPoints(thisIndex-1,:); newStartPoints(thisIndex+1,:)];
+                %     if any(isnan(nearbyPoints),'all')
+                %         error('nan values found in nearby points');
+                %     end
+                %     averageNearBy = mean(nearbyPoints,1);
+                % 
+                %     pointPushedToClosestWall = fcn_INTERNAL_pushToClosestWall(averageNearBy, axisRange);
+                %     oldStartPoints = newStartPoints;
+                %     newStartPoints(thisIndex,:) = pointPushedToClosestWall;
+                % 
+                %     if 1==1
+                %         figure(121212);
+                %         clf;
+                %         hold on;
+                %         plot(oldStartPoints(:,1), oldStartPoints(:,2),'b.-');
+                %         plot(averageNearBy(:,1), averageNearBy(:,2),'r.-');
+                %         plot(newStartPoints(:,1), newStartPoints(:,2),'g.-');
+                %     end
+                % end
             end
-        end
+        end % Ends if statement to check if nan values are there
     else
         % OLD way
         newStartPointsX =  max(min(startPointsSparse(:,1),maxX),minX);
@@ -504,8 +648,13 @@ while 1==flagContinueExpansion
         pause(0.1);
     end
 
+
     % Save results for next loop
     startPoints = newStartPoints;
+
+    if any(isnan(startPoints),'all')
+        error('startPoints have points that are NaN valued. Unable to continue');
+    end
 
     % Check exit conditions
     if ith_step>=Nsteps
@@ -911,3 +1060,57 @@ uniquePoints = flipud(regionBoundary); % for some silly reason, polyshape takes 
 uniquePoints = unique(uniquePoints,'rows','stable');
 region = polyshape(uniquePoints,'KeepCollinearPoints', true,'Simplify', false);
 end % Ends fcn_INTERNAL_makeRegion
+
+% %% fcn_INTERNAL_pushToClosestWall
+% function pointPushedToClosestWall = fcn_INTERNAL_pushToClosestWall(averageNearBy, axisRange)
+% minX = axisRange(1,1);
+% minY = axisRange(1,2);
+% maxX = axisRange(1,3);
+% maxY = axisRange(1,4);
+% closestWall = fcn_INTERNAL_findClosestWall(averageNearBy, axisRange);
+% wallOffset = 0.1;
+% if 1==closestWall
+%     pointPushedToClosestWall = [averageNearBy(1,1) minY+wallOffset];
+% elseif 2==closestWall
+%     pointPushedToClosestWall = [maxX-wallOffset averageNearBy(1,2)];
+% elseif 3==closestWall
+%     pointPushedToClosestWall = [averageNearBy(1,1) maxY-wallOffset];
+% elseif 4==closestWall
+%     pointPushedToClosestWall = [minX+wallOffset averageNearBy(1,2)];
+% else
+%     error('unknown wall index encountered');
+% end
+% end % Ends fcn_INTERNAL_pushToClosestWall
+
+
+%% fcn_INTERNAL_findClosestWall
+function closestWalls = fcn_INTERNAL_findClosestWall(pointsToTest, axisRange)
+
+minX = axisRange(1,1);
+minY = axisRange(1,2);
+maxX = axisRange(1,3);
+maxY = axisRange(1,4);
+
+wallStartCorers = [...
+    minX minY;
+    maxX minY;
+    maxX maxY;
+    minX maxY];
+
+wallInwardNormalVectors = [...
+    0 1;
+    -1 0;
+    0 -1;
+    1 0];
+
+Npoints = length(pointsToTest(:,1));
+closestWalls = nan(Npoints,1);
+
+for ith_point = 1:Npoints
+    vectorsFromCornersToNearby = ones(4,1)*pointsToTest(ith_point,:) - wallStartCorers;
+    distancesFromWalls = sum(vectorsFromCornersToNearby.*wallInwardNormalVectors,2);
+    [~,closestWallIndex] = min(distancesFromWalls);
+    closestWalls(ith_point,1) = closestWallIndex;
+end
+
+end % fcn_INTERNAL_findClosestWall
