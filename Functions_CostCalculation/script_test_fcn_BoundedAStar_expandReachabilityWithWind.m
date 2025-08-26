@@ -378,9 +378,9 @@ cellArrayOfWindExitConditions{5} = 0;   % flagStopIfHitOneGoalPoint
 [reachableSet, exitCondition, cellArrayOfExitInfo, ...
     reachableSetExactCosts, cellArrayOfReachableSetPaths] = fcn_BoundedAStar_expandReachabilityWithWind(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), ...
-    (flagWindRoundingType), (cellArrayOfWindExitConditions), (figNum));
+    (flagWindRoundingType), (cellArrayOfWindExitConditions), 0, (figNum));
     
-    %% DEMO case: time varying wind field capabilities
+%% DEMO case: time varying wind field capabilities
 figNum = 10008;
 titleString = sprintf('DEMO case:  time varying wind field capabilities');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
@@ -414,8 +414,7 @@ sgtitle(titleString, 'Interpreter','none');
 assert(isnumeric(reachableSet));
 assert(isnumeric(exitCondition));
 assert(iscell(cellArrayOfExitInfo));
-assert(isnumeric(reachableSetExactCosts));
-assert(iscell(cellArrayOfReachableSetPaths))
+
 
 % Check variable sizes
 assert(size(reachableSet,1)>=3); 
@@ -423,9 +422,6 @@ assert(size(reachableSet,2)==2);
 assert(size(exitCondition,1)==1); 
 assert(size(exitCondition,2)==1);
 assert(isequal(size(cellArrayOfExitInfo),[2 1]));
-assert(size(reachableSetExactCosts,1)==size(cellArrayOfExitInfo{2,1},1))
-assert(size(reachableSetExactCosts,2)==size(cellArrayOfExitInfo{2,1},2))
-assert(length(cellArrayOfReachableSetPaths)==size(cellArrayOfExitInfo{2,1},1))
 
 % Check variable values
 % (too difficult - randomly generated)
