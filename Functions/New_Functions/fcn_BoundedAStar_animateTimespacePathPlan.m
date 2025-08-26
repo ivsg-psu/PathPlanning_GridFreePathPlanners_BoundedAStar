@@ -1,4 +1,4 @@
-function fcn_BoundedAStar_animateTimespacePathPlan(start, finish, time_space_polytopes, route_dense, dt, xlims, ylims)
+function fcn_BoundedAStar_animateTimespacePathPlan(start, finish, time_space_polytopes, route_dense, dt, xlims, ylims, varargin)
 % fcn_BoundedAStar_animateTimespacePathPlan
 %
 % Uses the gif library to plot the vehicle position, route progress, and polytope positions
@@ -36,12 +36,16 @@ function fcn_BoundedAStar_animateTimespacePathPlan(start, finish, time_space_pol
 %       none, but it will save a gif locally
 %
 % DEPENDENCIES:
+%
 %    the gif library which can be found on the MATLAB file exchange here: https://www.mathworks.com/matlabcentral/fileexchange/63239-gif
+%
+%    fcn_DebugTools_checkInputsToFunctions
 %
 %
 % EXAMPLES:
 %
-% See the script: script_test_3d* files for examples of function calls
+% See the script: script_test_3d* files for examples of function calls. See
+% script_test_fcn_BoundedAStar_animateTimespacePathPlan for more use cases.
 % Example outputs are shown in the README for this repo
 %
 % This function was written on summer 2023 by Steve Harnett
@@ -55,8 +59,98 @@ function fcn_BoundedAStar_animateTimespacePathPlan(start, finish, time_space_pol
 % 2025_07_17 - K. Hayes, kxh1031@psu.edu
 % -- copied to new function from fcn_animate_timespace_path_plan.m to
 %    follow library conventions
+% 2025_08_25 - K. Hayes
+% -- updated fcn header and formatting
 %
 % TO DO:
+
+%% Debugging and Input checks
+% Check if flag_max_speed set. This occurs if the fig_num variable input
+% argument (varargin) is given a number of -1, which is not a valid figure
+% number.
+MAX_NARGIN = 8; % The largest Number of argument inputs to the function
+flag_max_speed = 0;
+if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
+    flag_check_inputs = 0; % Flag to perform input checking
+    flag_max_speed = 1;
+else
+    % Check to see if we are externally setting debug mode to be "on"
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
+    flag_check_inputs = 1; % Flag to perform input checking
+    MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS");
+    MATLABFLAG_MAPGEN_FLAG_DO_DEBUG = getenv("MATLABFLAG_MAPGEN_FLAG_DO_DEBUG");
+    if ~isempty(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG)
+        flag_do_debug = str2double(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG);
+        flag_check_inputs  = str2double(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS);
+    end
+end
+
+% flag_do_debug = 1;
+
+if flag_do_debug
+    st = dbstack; %#ok<*UNRCH>
+    fprintf(1,'STARTING function: %s, in file: %s\n',st(1).name,st(1).file);
+    debug_fig_num = 999978; %#ok<NASGU>
+else
+    debug_fig_num = []; %#ok<NASGU>
+end
+
+%% check input arguments?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____                   _
+%  |_   _|                 | |
+%    | |  _ __  _ __  _   _| |_ ___
+%    | | | '_ \| '_ \| | | | __/ __|
+%   _| |_| | | | |_) | |_| | |_\__ \
+%  |_____|_| |_| .__/ \__,_|\__|___/
+%              | |
+%              |_|
+% See: http://patorjk.com/software/taag/#p=display&f=Big&t=Inputs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+if 0==flag_max_speed
+    if flag_check_inputs
+        % Are there the right number of inputs?
+        narginchk(7,MAX_NARGIN);
+
+        % % Check the all_points input, make sure it has 5 columns
+        % fcn_DebugTools_checkInputsToFunctions(...
+        %     all_pts, '5column_of_numbers');
+        % 
+        % % Check the start input, make sure it has 5 columns
+        % fcn_DebugTools_checkInputsToFunctions(...
+        %     start, '5column_of_numbers');
+        % 
+        % % Check the finish input, make sure it has 5 columns
+        % fcn_DebugTools_checkInputsToFunctions(...
+        %     finish, '5column_of_numbers');
+
+    end
+end
+
+% Does user want to show the plots?
+flag_do_plots = 0; % Default is to NOT show plots
+if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
+    temp = varargin{end};
+    if ~isempty(temp) % Did the user NOT give an empty figure number?
+        fig_num = temp;
+        figure(fig_num);
+        flag_do_plots = 1;
+    end
+end
+
+%% Main code
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   __  __       _
+%  |  \/  |     (_)
+%  | \  / | __ _ _ _ __
+%  | |\/| |/ _` | | '_ \
+%  | |  | | (_| | | | | |
+%  |_|  |_|\__,_|_|_| |_|
+%
+%See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
     close all; % close all figures so they aren't included as a gif frame
     dense_times = route_dense(:,3); % extract time column from route
@@ -125,4 +219,31 @@ function fcn_BoundedAStar_animateTimespacePathPlan(start, finish, time_space_pol
         delete(p_finish)
         delete(p_finish_traj)
     end
-end
+%% Plot the results (for debugging)?
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   _____       _
+%  |  __ \     | |
+%  | |  | | ___| |__  _   _  __ _
+%  | |  | |/ _ \ '_ \| | | |/ _` |
+%  | |__| |  __/ |_) | |_| | (_| |
+%  |_____/ \___|_.__/ \__,_|\__, |
+%                            __/ |
+%                           |___/
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  
+
+if flag_do_plots
+  
+end % Ends the flag_do_plot if statement
+
+end % end function
+%% Functions follow
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   ______                _   _
+%  |  ____|              | | (_)
+%  | |__ _   _ _ __   ___| |_ _  ___  _ __  ___
+%  |  __| | | | '_ \ / __| __| |/ _ \| '_ \/ __|
+%  | |  | |_| | | | | (__| |_| | (_) | | | \__ \
+%  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
+%
+% See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§

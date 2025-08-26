@@ -3,9 +3,9 @@ clc
 close all
 
 %% add necessary directories
-addpath([pwd '\Example_Map_Generation_Code'])
-addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
-addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
+% addpath([pwd '\Example_Map_Generation_Code'])
+% addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
+% addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 
 %% initialize loop params and storage arrays for plotting
 des_gap_size = linspace(0.0001,0.08,20);
@@ -94,7 +94,7 @@ for Halton_seed = 1%:20:101
                 total_lengths = [total_lengths, total_length];
                 % num_predicted_obs_traversals_this_rd = [num_predicted_obs_traversals_this_rd, num_predicted_obs_traversals];
                 [obs_around, obs_through] =...
-                    fcn_general_calculation_count_obs_in_path(path);
+                    fcn_BoundedAStar_countObstaclesInPath(path);
                 obs_around_all = [obs_around_all, obs_around];
                 obs_through_all = [obs_through_all, obs_through];
 

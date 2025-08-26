@@ -12,7 +12,7 @@ tic
 
 flag_do_plot = 1;
 flag_do_slow_plot = 0;
-flag_do_animation = 0;
+flag_do_animation = 1;
 
 %% manually define three polytopes
 verts = [1 1 0 1; 1.5 2 0 2; 2 1 0 3; 2 2 20 1; 2.5 3 20 2; 3 2 20 3;1 1 30 1; 1.5 2 30 2; 2 1 30 3]; % a line that translates its length in x over the course of 20 seconds
@@ -23,10 +23,10 @@ verts = [2 4 0 1; 2 5 0 2; 2.5 5 0 3; 2 6 20 1; 2 7 20 2; 2.5 7 20 3; 2 4 30 1; 
 time_space_polytopes(3).vertices = verts;
 
 %% turn polytopes from vertices into facets
-time_space_polytopes = fcn_make_facets_from_verts(time_space_polytopes);
+time_space_polytopes = fcn_BoundedAStar_makeFacetsFromVerts(time_space_polytopes, -1);
 
 %% turn polytopes into triangular surfels for intersection checking
-all_surfels = fcn_make_triangular_surfels_from_facets(time_space_polytopes);
+all_surfels = fcn_BoundedAStar_makeTriangularSurfelsFromFacets(time_space_polytopes);
 if flag_do_plot
     figure; hold on; box on; title('triangular surfels of polytopes in timespace')
     fig = gcf;
@@ -41,12 +41,12 @@ start = [2.5 7 0];
 % finish = [1.5*ones(6,1) -1*ones(6,1) (21:2:31)']; % multiple time static finish
 finish = [1.5 -1 21; 2 -1 31]; % moving finish
 dt = 1;
-finish = fcn_interpolate_route_in_time(finish,dt);
+finish = fcn_BoundedAStar_interpolateRouteInTime(finish,dt);
 num_finish_pts = size(finish,1);
 starts = [2*ones(num_finish_pts,1) 2*ones(num_finish_pts,1) zeros(num_finish_pts,1)];
 
 %% interpolate polytopes in time
-[verts, time_space_polytopes] = fcn_interpolate_polytopes_in_time(time_space_polytopes,dt);
+[verts, time_space_polytopes] = fcn_BoundedAStar_interpolatePolytopesInTime(time_space_polytopes,dt);
 
 %% make all_pts matrix
 verts = verts(:,1:3);
@@ -72,19 +72,19 @@ finish_with_ids = all_pts(num_verts+num_starts+1:num_verts+num_starts+num_finish
 
 %% make vgraph
 speed_limit = 1/1.25;
-vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit, time_space_polytopes, dt);
+vgraph = fcn_Visibility_3dGraphGlobal(verts, start, finish, all_surfels, speed_limit, time_space_polytopes, dt);
 
 %% make rgraph
-[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph, start_with_ids(:,4), finish_with_ids(:,4));
+[is_reachable, num_steps, rgraph] = fcn_BoundedAStar_checkReachability(vgraph, start_with_ids(:,4), finish_with_ids(:,4));
 
 %% make cgraph
 % mode = "xy spatial only";
 % mode = 'time or z only';
 mode = "xyz or xyt";
-[cgraph, hvec] = fcn_algorithm_generate_cost_graph(verts_with_ids, start_with_ids, finish_with_ids, mode);
+[cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(verts_with_ids, start_with_ids, finish_with_ids, mode);
 
 %% plan route
-[cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, verts_with_ids, start_with_ids, finish_with_ids);
+[cost, route] = fcn_BoundedAStar_Astar3d(vgraph, cgraph, hvec, verts_with_ids, start_with_ids, finish_with_ids);
 % route metrics follow
 total_time = max(route(:,3));
 route_x = route(:,1);
@@ -167,11 +167,11 @@ if flag_do_plot
     view([1 0 0])
 end
 
-route_dense = fcn_interpolate_route_in_time(route,dt);
+route_dense = fcn_BoundedAStar_interpolateRouteInTime(route,dt);
 toc
 
 if flag_do_animation
-    fcn_animate_timespace_path_plan(start, finish, time_space_polytopes, route_dense, dt, [1 3], [-2 8]);
+    fcn_BoundedAStar_animateTimespacePathPlan(start, finish, time_space_polytopes, route_dense, dt, [1 3], [-2 8]);
 end
 
 function INTERNAL_fcn_format_timespace_plot()
