@@ -73,7 +73,7 @@ cellArrayOfWindExitConditions = [];
 
 % Call function
 [reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
-    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), (figNum));
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), 0, (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -122,7 +122,7 @@ cellArrayOfWindExitConditions{5} = 0;   % flagStopIfHitOneGoalPoint
 
 % Call function
 [reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
-    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), (figNum));
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), 0, (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -165,7 +165,7 @@ cellArrayOfWindExitConditions = [];
 
 % Call function
 [reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
-    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), (figNum));
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), 0, (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -209,7 +209,7 @@ cellArrayOfWindExitConditions = [];
 
 % Call function
 [reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
-    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), (figNum));
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), 0, (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -264,7 +264,7 @@ cellArrayOfWindExitConditions{5} = 0;   % flagStopIfHitOneGoalPoint
 
 % Call function
 [reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
-    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), (figNum));
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), 0, (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -320,7 +320,7 @@ cellArrayOfWindExitConditions{5} = 0;   % flagStopIfHitOneGoalPoint
 
 % Call function
 [reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
-    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), (figNum));
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), 0, (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -340,6 +340,7 @@ assert(isequal(size(cellArrayOfExitInfo),[2 1]));
 % (too difficult - randomly generated)
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
+
 
 %% DEMO case: matched wind field, goal points specified
 figNum = 10007;
@@ -378,6 +379,34 @@ cellArrayOfWindExitConditions{5} = 0;   % flagStopIfHitOneGoalPoint
     reachableSetExactCosts, cellArrayOfReachableSetPaths] = fcn_BoundedAStar_expandReachabilityWithWind(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), ...
     (flagWindRoundingType), (cellArrayOfWindExitConditions), (figNum));
+    
+    %% DEMO case: time varying wind field capabilities
+figNum = 10008;
+titleString = sprintf('DEMO case:  time varying wind field capabilities');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+% Load time varying wind field 
+load('TVwindField.mat');
+
+% Call graph generation function
+radius = 0.5;
+maxWindSpeed = 1;
+
+windFieldU = windFieldUk;
+windFieldV = windFieldVk;
+
+% FIX
+windFieldX = linspace(-10, 10, length(windFieldU{1}));
+windFieldY = linspace(-10, 10, length(windFieldV{1}));
+
+startPoints = [0 0];
+flagWindRoundingType = 1;
+cellArrayOfWindExitConditions = [];
+
+% Call function
+[reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), 1, (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
