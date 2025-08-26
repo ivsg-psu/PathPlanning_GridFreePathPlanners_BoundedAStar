@@ -478,16 +478,16 @@ if flag_do_plots
 
 
     % Plot results
-    plotFormat.LineWidth = 3;
+    plotFormat.LineWidth = 2;
     plotFormat.MarkerSize = 10;
     plotFormat.LineStyle = '-';
-    plotFormat.Color = [0 0 1];
+    plotFormat.Color = 'black';
 
     % fillFormat = [1 0 0 0 0.5];
     fillFormat = [];
     h_plot = fcn_MapGen_plotPolytopes(polytopes, (plotFormat),(fillFormat),(fig_num));
     set(h_plot,'DisplayName','Input: polytopes');
-    plot([start(1) finish(1)],[start(2) finish(2)],'kx','LineWidth',2,'DisplayName','Input: start and end pts')
+    plot([start(1) finish(1)],[start(2) finish(2)],'rx','LineWidth',2,'DisplayName','Input: start and end pts')
     plot(route(:,1),route(:,2),'k-','linewidth',2,'DisplayName','Output: route');
     box on
     xlabel('X Position')

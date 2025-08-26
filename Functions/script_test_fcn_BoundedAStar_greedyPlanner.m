@@ -36,6 +36,9 @@ titleString = sprintf('DEMO case: plan path through field with greedy planner');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
+
+repetitions = 1;
+rep = 1;
 % final information can be stored in one variable (not suggested to save
 % variables of the structure type, as it will take a lot of memory)
 final_info(repetitions) = struct('polytopes',[],'start',[],'finish',[],'path_x',[],'path_y',[],'appex1_x',[],'appex1_y',[],'appex2_x',[],'appex2_y',[]);
@@ -102,14 +105,28 @@ starts = [all_pts; start; finish];
 % Final Info
 % A, B, appex_x, appex_y
 final_info(rep).polytopes = shrunk_polytopes;
-final_info(rep).start = A;
-final_info(rep).finish = B;
-final_info(rep).path_x = appex_x(:,1);
-final_info(rep).path_y = appex_y(:,1);
-final_info(rep).appex1_x = appex_x(:,2);
-final_info(rep).appex1_y = appex_y(:,2);
-final_info(rep).appex2_x = appex_x(:,3);
-final_info(rep).appex2_y = appex_y(:,3);
+final_info(rep).start = start_xy;
+final_info(rep).finish = finish_xy;
+% final_info(rep).path_x = appex_x(:,1);
+% final_info(rep).path_y = appex_y(:,1);
+% final_info(rep).appex1_x = appex_x(:,2);
+% final_info(rep).appex1_y = appex_y(:,2);
+% final_info(rep).appex2_x = appex_x(:,3);
+% final_info(rep).appex2_y = appex_y(:,3);
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(cost));
+assert(isnumeric(route));
+
+% Check variable sizes
+Nsteps = 12;
+assert(isequal(Nsteps,length(route))); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
 
 
 %% Test cases start here. These are very simple, usually trivial

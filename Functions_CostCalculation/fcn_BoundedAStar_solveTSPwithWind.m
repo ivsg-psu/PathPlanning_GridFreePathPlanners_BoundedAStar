@@ -94,6 +94,11 @@ function [orderedVisitSequence] = ...
 % - in fcn_BoundedAStar_solveTSPwithWind
 %   % * TSP working with Djkstra's method. Prior bug fixed. 
 %   % * Added plotting of results
+%
+% 2025_08_11 by S. Brennan
+% - in fcn_BoundedAStar_solveTSPwithWind
+%   % * TSP working with Djkstra's method. Prior bug fixed. 
+%   % * Added plotting of results
 
 % TO-DO
 % (none)
@@ -198,6 +203,13 @@ end
 %See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
+%172652 iterations with 10 goalpoints
+% Ideas:
+% 1) Preallocate array
+% 2) Batch sort?
+% 3) Remove infeasible points based on minimum point-to-point path costs
+% 4) 
+
 % Save the original goal points, in case some are infeasible
 originalGoalPoints = goalPoints;
 
@@ -263,7 +275,7 @@ if flag_do_debug
     figure(debug_figNum);
     % Number the unique points
     for ith_point = 1:Npoints
-        text(allPoints(ith_point,1),allPoints(ith_point,2),sprintf('%.0f',pointNumbers(ith_point)));
+        text(allPoints(ith_point,1)+0.2,allPoints(ith_point,2),sprintf('%.0f',pointNumbers(ith_point)));
     end
 end
 
@@ -273,6 +285,7 @@ end
 % Costs are saved as "from" as rows, and "to" as columns. Note: self costs
 % are -1. Costs that are not possible (infeasible) are NaN.
 costsFromTo = nan(Npoints,Npoints);
+pathsFromTo = cell(Npoints,Npoints);
 
 % Make a matrix that is all true values. We use this to trigger the points
 % that are NOT the source point as temporary goalPoints.
@@ -299,8 +312,17 @@ for ith_point = 1:Npoints
     cellArrayOfWindExitConditions{4} = tempGoalPoints;  % allGoalPointsList
     cellArrayOfWindExitConditions{5} = 0;   % flagStopIfHitOneGoalPoint
 
-    % Call function
-    [reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
+    if 1==0
+        save('BUG_90002_fcn_BoundedAStar_expandReachabilityWithWind.mat',...
+            'radius', 'windFieldU', 'windFieldV', 'windFieldX', 'windFieldY', ...
+            'startPoint', 'flagWindRoundingType','cellArrayOfWindExitConditions');
+    end
+
+    % Call function to expand outward into wind field
+    % figure(222222);
+    % clf;
+    [reachableSet, exitCondition, cellArrayOfExitInfo, ...
+    reachableSetExactCosts, cellArrayOfReachableSetPaths] = fcn_BoundedAStar_expandReachabilityWithWind(...
         radius, windFieldU, windFieldV, windFieldX, windFieldY,...
         (startPoint), (flagWindRoundingType), (cellArrayOfWindExitConditions), (-1));
 
@@ -308,7 +330,19 @@ for ith_point = 1:Npoints
         warning('Not all goal points are reachable from other goal points');
     end
     reachableFlags = cellArrayOfExitInfo{2};
-    costsFromTo(ith_point,tempGoalPointIDs) = reachableFlags';
+
+    % Save the costs and paths
+    if 1==1
+        costsFromTo(ith_point,tempGoalPointIDs) = reachableSetExactCosts';
+        for ith_goal = 1:length(tempGoalPointIDs)
+            thisGoalID = tempGoalPointIDs(ith_goal);
+            pathsFromTo{ith_point,thisGoalID} = cellArrayOfReachableSetPaths{ith_goal};
+        end
+    else
+        % Use approximate costs
+        costsFromTo(ith_point,tempGoalPointIDs) = reachableFlags';
+    end
+
     costsFromTo(ith_point,ith_point) = -1; % Self costs are -1
 
     if flag_do_debug
@@ -321,17 +355,41 @@ for ith_point = 1:Npoints
         feasibleGoalPoints = allPoints(reachableIndices,:); 
 
         % Plot the reachableSet output for this source point
-        plot(reachableSet(:,1),reachableSet(:,2),'LineWidth',3,'Color',thisColor,'DisplayName','Output: reachableSet')
+        if 1==0
+            plot( reachableSet(:,1), reachableSet(:,2), 'LineWidth', 3, 'Color', thisColor, 'HandleVisibility', 'off'); % ,'DisplayName','Output: finalReachableSet')
+        end
 
         % Plot the feasible goal points
-        plot(feasibleGoalPoints(:,1),feasibleGoalPoints(:,2),'o','Color',thisColor,'MarkerSize',5+5*ith_point,'LineWidth', 2, 'DisplayName','feasibleGoalPoints');
+        plot(feasibleGoalPoints(:,1),feasibleGoalPoints(:,2), 'o', 'Color', thisColor,...
+            'MarkerSize', 5+5*ith_point, 'LineWidth', 2, 'HandleVisibility', 'off'); %'DisplayName','feasibleGoalPoints');
 
-    end
+        % Plot the paths to feasible goal points
+        for ith_goal = 1:length(tempGoalPointIDs)
+           thisPath =  pathsFromTo{ith_point,ith_goal};
+           if ~isempty(thisPath)
+               plot(thisPath(:,1),thisPath(:,2),'-','Color',thisColor,'LineWidth', 2,'HandleVisibility','off');
+           end
+        end
+
+    end % Ends if flag_do_debug
 
 end
 
 %%%%%
 % Remove infeasible points
+
+% Save indices of original costs, so that when the rows/cols are deleted,
+% we can remap the cell array of paths correctly
+previousRows = nan(size(costsFromTo));
+previousCols = nan(size(costsFromTo));
+for ith_row = 1:size(costsFromTo,1)
+    for jth_col = 1:size(costsFromTo,2)
+        previousRows(ith_row,jth_col) = ith_row;
+        previousCols(ith_row,jth_col) = jth_col;
+    end
+end
+
+% Delete infeasible goal points from cost matrix
 feasibleCostsFromTo = costsFromTo;
 if any(isnan(costsFromTo),'all')
     notReachable = isnan(costsFromTo);
@@ -347,12 +405,18 @@ if any(isnan(costsFromTo),'all')
         % Delete rows/columns
         feasibleCostsFromTo(thisBad,:) = [];
         feasibleCostsFromTo(:,thisBad) = [];
+        previousRows(thisBad,:) = [];
+        previousRows(:,thisBad) = [];
+        previousCols(thisBad,:) = [];
+        previousCols(:,thisBad) = [];
+
 
     end
+
     feasibleAllPoints = allPoints(pointsToKeep,:);
     feasiblePointNumbers = pointNumbers(pointsToKeep,:);
     notFeasiblePointNumbers = pointNumbers(~pointsToKeep,:);
-    
+
     if ~any(1==feasiblePointNumbers,'all')
         warning('on','backtrace');
         warning('Catastrophic error detected where start point is not reachable from goal points');
@@ -372,8 +436,22 @@ else
     feasiblePointNumbers = pointNumbers;
 end
 
+% Save the paths
+pathsFromToFeasible = cell(size(feasibleCostsFromTo));
+for ith_row = 1:size(pathsFromToFeasible,1)
+    for jth_col = 1:size(pathsFromToFeasible,2)
+        sourceRow = previousRows(ith_row,jth_col);
+        sourceCol = previousCols(ith_row,jth_col);
+        pathsFromToFeasible{ith_row, jth_col} = pathsFromTo{sourceRow, sourceCol};
+    end
+end
+
+
+
 NgoodGoals = length(feasiblePointNumbers(:,1));
 
+% NgoodGoals
+% feasibleCostsFromTo
 
 %%%%%
 % Run a "greedy" algorithm to estimate number of steps to simulate
@@ -410,12 +488,25 @@ greedySearchSimLength = accumulatedCosts(end,1);
 if flag_do_debug
     figure(debug_figNum);
 
-    pointSequence = feasibleAllPoints(visitSequence,:);
+    % pointSequence = feasibleAllPoints(visitSequence,:);
     % Plot the ordered visit sequence
-    for ith_point = 1:NgoodGoals
-        arrowMagnitude = pointSequence(ith_point+1,:)-pointSequence(ith_point,:);
-        quiver(pointSequence(ith_point,1),pointSequence(ith_point,2),arrowMagnitude(1,1),arrowMagnitude(1,2),0,...
-            'LineWidth',3);
+
+    for ith_point = 1:length(visitSequence)-1
+        thisColorRow = mod(ith_point-1,Ncolors)+1;
+        thisColor = colorOrder(thisColorRow,:);
+
+        from_index = visitSequence(ith_point,1);
+        goal_index = visitSequence(ith_point+1,1);
+        try
+            thisPath =  pathsFromToFeasible{from_index,goal_index};
+        catch
+            disp('Stop here');
+        end
+        plot(thisPath(:,1),thisPath(:,2),'-','Color',thisColor,'LineWidth',5);
+        % arrowMagnitude = pointSequence(ith_point+1,:)-pointSequence(ith_point,:);
+        % quiver(pointSequence(ith_point,1),pointSequence(ith_point,2),arrowMagnitude(1,1),arrowMagnitude(1,2),0,...
+        %     'LineWidth',3);
+
     end
 end
 
@@ -423,7 +514,7 @@ end
 % Run the TSP solver
 % The maximum problem size is the max number of sim steps times the number
 % of cities, e.g. a sim starting for every city, at every time step
-maxSolutions = greedySearchSimLength*NgoodGoals;
+maxSolutions = ceil(greedySearchSimLength)*NgoodGoals;
 
 % Solutions have the form:
 % 1x1 (accumulated cost) Ngx1 (flags city was visited)  Ngx1 (visit sequence) 1x1 (flagHeadingHome) 
@@ -443,13 +534,17 @@ flagKeepGoing = 1;
 % greedy search.
 costCropLimit = greedySearchSimLength; 
 
+iteration_number = 0;
 while 1==flagKeepGoing
+    iteration_number = iteration_number+1;
 
     % Pull out all the details from this solutions row
     previousCost                = solutions(currentBestExpansionSolution,1);
     previousFlagsCityWasVisited = solutions(currentBestExpansionSolution,2:1+NgoodGoals);
     previousVisitSequence       = solutions(currentBestExpansionSolution,2+NgoodGoals:(1+2*NgoodGoals));
     flagHeadingHome             = solutions(currentBestExpansionSolution,end);
+
+    fprintf(1, '%.0f: Previous cost: %.2f of max: %.2f\n', iteration_number, previousCost, costCropLimit);
 
     visitSequence = previousVisitSequence(~isnan(previousVisitSequence));
     currentBestCity = visitSequence(end);
@@ -532,12 +627,22 @@ orderedVisitSequence = [visitSequence'; 1];
 if flag_do_debug
     figure(debug_figNum);
 
-    pointSequence = feasibleAllPoints(orderedVisitSequence,:);
+    % pointSequence = feasibleAllPoints(orderedVisitSequence,:);
     % Plot the TSP result, the ordered visit sequence
-    for ith_point = 1:NgoodGoals
-        arrowMagnitude = pointSequence(ith_point+1,:)-pointSequence(ith_point,:);
-        quiver(pointSequence(ith_point,1),pointSequence(ith_point,2),arrowMagnitude(1,1),arrowMagnitude(1,2),0,...
-            'LineWidth',5,'Color',[0 1 0]);
+
+    for ith_point = 1:length(orderedVisitSequence)-1
+        thisColorRow = mod(ith_point-1,Ncolors)+1;
+        thisColor = colorOrder(thisColorRow,:);
+
+        from_index = orderedVisitSequence(ith_point,1);
+        goal_index = orderedVisitSequence(ith_point+1,1);
+        thisPath =  pathsFromToFeasible{from_index,goal_index};
+        plot(thisPath(:,1),thisPath(:,2),'-','Color',thisColor,'LineWidth',10);
+
+        % for ith_point = 1:NgoodGoals
+        %     arrowMagnitude = pointSequence(ith_point+1,:)-pointSequence(ith_point,:);
+        %     quiver(pointSequence(ith_point,1),pointSequence(ith_point,2),arrowMagnitude(1,1),arrowMagnitude(1,2),0,...
+        %         'LineWidth',5,'Color',[0 1 0]);
     end
 end
 
@@ -646,19 +751,28 @@ if flag_do_plots
     plot(feasibleAllPoints(:,1),feasibleAllPoints(:,2),'o','Color',[0 1 0],'LineWidth',3,'MarkerSize',15,'DisplayName','feasibleAllPoints');
 
     % Plot the TSP result, the ordered visit sequence
-    pointSequence = feasibleAllPoints(orderedVisitSequence,:);
+    % pointSequence = feasibleAllPoints(orderedVisitSequence,:);
 
-    for ith_point = 1:NgoodGoals
-        thisPoint = orderedVisitSequence(ith_point);
-        thisColorRow = mod(thisPoint-1,Ncolors)+1;
+    for ith_point = 1:length(orderedVisitSequence)-1
+        thisColorRow = mod(ith_point-1,Ncolors)+1;
         thisColor = colorOrder(thisColorRow,:);
-        arrowMagnitude = pointSequence(ith_point+1,:)-pointSequence(ith_point,:);
-        h_quiver = quiver(pointSequence(ith_point,1),pointSequence(ith_point,2),arrowMagnitude(1,1),arrowMagnitude(1,2),0,...
-            'LineWidth',5,'Color',thisColor);
+
+        from_index = orderedVisitSequence(ith_point,1);
+        goal_index = orderedVisitSequence(ith_point+1,1);
+        thisPath =  pathsFromToFeasible{from_index,goal_index};
+        h_plot = plot(thisPath(:,1),thisPath(:,2),'-','Color',thisColor,'LineWidth',5);
+
+        % Plot the base in green and head in red so we know directions
+        plot(thisPath(1:2,1),thisPath(1:2,2),'g-','LineWidth',5,'HandleVisibility','off');
+        plot(thisPath(end-1:end,1),thisPath(end-1:end,2),'r-','LineWidth',5,'HandleVisibility','off');
+        % h_quiver = quiver(thisPath(end-1,1),thisPath(end-1,2),arrowMagnitude(1,1),arrowMagnitude(1,2),0,...
+        %     'LineWidth',5,'Color',thisColor,'HandleVisibility','off','ShowArrowHead','on',...
+        %     'MaxHeadSize',4,'AutoScale','off','AutoScaleFactor',20);
+
         if ith_point==1
-            set(h_quiver,'DisplayName','Output: TSP solution');
+            set(h_plot,'DisplayName','Output: TSP solution');
         else
-            set(h_quiver,'HandleVisibility','off');
+            set(h_plot,'HandleVisibility','off');
         end
     end
 

@@ -252,10 +252,104 @@
 % - DEPRECATED: fcn_convert_polytope_struct_to_deduped_points
 %   % * now fcn_BoundedAStar_convertPolytopetoDedupedPoints
 %
+% 2025_08_11 by S. Brennan, sbrennan@psu.edu
+% - In script_test_fcn_BoundedAStar_reachabilityWithInputs
+%   % * Added test scripts to check new output: boundingPolytopeVertices
+% - In fcn_BoundedAStar_reachabilityWithInputs
+%   % * added boundingPolytopeVertices to outputs
+%
 % 2025_08_12 by K. Hayes
 % - DEPRECATED: fcn_algorithm_create_phantom_goal
 %   % * now fcn_BoundedAStar_createPhantomGoal
 % - Added script_test_fcn_createPhantomGoal
+% - DEPRECATED: fcn_check_reachability
+%   % * now fcn_BoundedAStar_checkReachability
+% - Added script_test_fcn_checkReachability
+%
+% 2025_08_13 by K. Hayes
+% - DEPRECATED: fcn_interpolate_polytopes_in_time
+%   % * now fcn_BoundedAStar_interpolatePolytopesInTime
+% - Added script_test_fcn_interpolatePolytopesInTime
+% - DEPRECATED: fcn_interpolate_route_in_time
+%   % * now fcn_BoundedAStar_interpolateRouteInTime
+% - Added script_test_fcn_interpolateRouteInTime
+%
+% 2025_08_14 by K. Hayes
+% - DEPRECATED: fcn_make_facets_from_verts
+%	% * now fcn_BoundedAStar_makeFacetsFromVerts
+% - added script_test_fcn_BoundedAStar_makeFacetsFromVerts
+% - DEPRECATED: fcn_util_load_test_map
+% 	% * now fcn_BoundedAStar_loadTestMap
+% - added script_test_fcn_BoundedAStar_loadTestMap
+% - DEPRECATED: fcn_calculation_points_in_polytopes
+%	% * now fcn_BoundedAStar_polytopesPointsInPolytopes
+% - added script_test_fcn_BoundedAStar_polytopesPointsInPolytopes
+%
+% 2025_08_15 by K. Hayes
+% - DEPRECATED: fcn_make_timespace_polyhedra_from_polygons
+% 	% * now fcn_BoundedAStar_makeTimespacePolyhedrafromPolygons
+% - added script_test_fcn_BoundedAStar_makeTimespacePolyhedrafromPolygons
+% - DEPRECATED: fcn_make_triangular_surfels_from_facets
+% 	% * now fcn_BoundedAStar_makeTriangularSurfelsFromFacets
+% - added script_test_fcn_BoundedAStar_makeTriangularSurfelsFromFacets
+% - DEPRECATED: fcn_general_calculation_point_to_line_distances_squared
+% 	% * now fcn_BoundedAStar_calculatePointToLineDistSquared
+% - added script_test_fcn_BoundedAStar_calculatePointToLineDistSquared
+%
+% 2024_08_15 to 2024_08_16 by S. Brennan
+% - In fcn_BoundedAStar_reachabilityWithInputs
+%   % * moved meshgrid cacluation into debugging, as it is not used for
+%   %   % main outputs - only for debugging
+%   % * improved the header description for clarity
+%   % * fixed bug where the expansion due to wind disturbance was
+%   %   % after the state expansion, instead of prior
+%   % * updated function to output intermediate calculations
+%   % * moved set simplification steps to PRIOR to states
+%
+% 2025_08_16 by S. Brennan, sbrennan@psu.edu
+% - In script_test_fcn_BoundedAStar_reachabilityWithInputs
+%   % * Added test scripts to check new output: cellArrayOfIntermediateCalculations
+%
+% 2025_08_17 to 2025_08_18 by S. Brennan, sbrennan@psu.edu
+% - Added fcn_BoundedAStar_pathCalculationBackToStart
+%   % * Given a destination, finds the path and control
+%   %   % inputs back to startPoint, such that, if one
+%   %   % starts at the startPoint, applies the control inputs, one arrives
+%   %   % at the destination.
+% - In fcn_BoundedAStar_pathCalculation
+%   % * first write of function
+%   % * using fcn_BoundedAStar_matrixEnvelopeExpansion as a starter
+% - In script_test_fcn_BoundedAStar_pathCalculation
+%   % * first write of script 
+%   % * using script_test_fcn_BoundedAStar_reachabilityWithInputs as 
+%   %   % starter
+%
+% 2025_08_18 by K. Hayes
+% - added script_test_fcn_BoundedAStar_Astar
+% - in fcn_BoundedAStar_greedyPlanner
+%   % * fixed debug plotting
+% - in script_test_fcn_BoundedAStar_AStarBounded
+%   % * fixed formatting and debug plotting calls
+%
+% 2025_08_18 by S. Brennan
+% - In fcn_BoundedAStar_Astar
+%   % * fixed unrecognized variables bug
+% - In fcn_BoundedAStar_pathCalculationBackToStart
+%   % first write of function
+%   % * using fcn_BoundedAStar_matrixEnvelopeExpansion as a starter
+%
+% 2025_08_19 by K. Hayes
+% - updated all_pts generation to use
+%   fcn_BoundedAStar_polytopesGenerateAllPtsTable
+% - DEPRECATED: fcn_general_calculation_points_on_lines
+%   % * now fcn_BoundedAStar_calculatePointsOnLines
+% - added script_test_fcn_BoundedAStar_calculatePointsOnLines
+%
+% 2025_08_19 by S. Brennan
+% - In fcn_BoundedAStar_pathCalculationBackToStart
+%   % * completed first end-to-end working version
+% - In script_test_fcn_BoundedAStar_pathCalculationBackToStart
+%   % * Added working example of backward path calculation
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
@@ -267,8 +361,9 @@
 % 2025_08_01 - K. Hayes
 % -- add fcn to plot visibility graph
 % -- fast modes for visibility test scripts
-% 2025_08_05 - K. Hayes
-% -- replace manual all_pts generation with fcn in visibility fcns
+% 2025_08_18 - K. Hayes
+% -- add 3d formatted all_pts capabilities to
+%    fcn_BoundedAStar_polytopesGenerateAllPtsTable
 
 
 clear library_name library_folders library_url

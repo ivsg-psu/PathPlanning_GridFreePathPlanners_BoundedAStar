@@ -51,27 +51,9 @@ polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(convex_polytope);
 % generate all_pts table
 start = [-2.5, 1];
 finish = start + [4 0];
-point_tot = length([polytopes.xv]); % total number of vertices in the convex polytopes
-beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-curpt = 0;
-for poly = 1:size(polytopes,2) % check each polytope
-    verts = unique(polytopes(poly).vertices,'stable','rows');
-    num_verts = size(verts,1);
-    polytopes(poly).obs_id = ones(1,num_verts)*poly; % obs_id is the same for every vertex on a single polytope
-    polytopes(poly).xv = verts(:,1)';
-    polytopes(poly).yv = verts(:,2)';
-    polytopes(poly).vertices = [verts; verts(1,:)];
-    polytopes(poly).distances = sum((polytopes(poly).vertices(1:end-1,:) - polytopes(poly).vertices(2:end,:)).^2,2).^0.5;
-    beg_end([curpt+1,curpt+num_verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-    curpt = curpt+num_verts;
-    polytopes(poly).perimeter = sum(polytopes(poly).distances);
-end
-obs_id = [polytopes.obs_id];
-point_tot = length([polytopes.xv]); % need to recheck total points
-beg_end = beg_end(1:point_tot); % remove any extra points
 
-all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
-all_pts = [all_pts; start, point_tot + 1, -1, 0; finish, point_tot + 2, -1, 0];
+all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes, start, finish,-1);
+
 % hardcode what we expect the visibility graph to be for the convex polytope example
 convex_obstacle_vgraph = [1 1 0 0 1 0 1;
                           1 1 1 0 0 0 1;
@@ -112,27 +94,7 @@ polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(concave_polytope,1);
 % generate all_pts table
 start = [-2.5, 1];
 finish = start + [4 0];
-point_tot = length([polytopes.xv]); % total number of vertices in the convex polytopes
-beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-curpt = 0;
-for poly = 1:size(polytopes,2) % check each polytope
-    verts = unique(polytopes(poly).vertices,'stable','rows');
-    num_verts = size(verts,1);
-    polytopes(poly).obs_id = ones(1,num_verts)*poly; % obs_id is the same for every vertex on a single polytope
-    polytopes(poly).xv = verts(:,1)';
-    polytopes(poly).yv = verts(:,2)';
-    polytopes(poly).vertices = [verts; verts(1,:)];
-    polytopes(poly).distances = sum((polytopes(poly).vertices(1:end-1,:) - polytopes(poly).vertices(2:end,:)).^2,2).^0.5;
-    beg_end([curpt+1,curpt+num_verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-    curpt = curpt+num_verts;
-    polytopes(poly).perimeter = sum(polytopes(poly).distances);
-end
-obs_id = [polytopes.obs_id];
-point_tot = length([polytopes.xv]); % need to recheck total points
-beg_end = beg_end(1:point_tot); % remove any extra points
-
-all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
-all_pts = [all_pts; start, point_tot + 1, -1, 0; finish, point_tot + 2, -1, 0];
+all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes, start, finish,-1);
 % hard code what we expect the concave obstacle vgraph to be when it is treated as a convex obstalce in vgraph calculation
 concave_obstacle_vgraph_sub_optimal_result = [1 1 0 0 0 0 1 0 1;
                                               1 1 1 0 0 0 0 0 1;
@@ -201,26 +163,7 @@ ylabel('y [km]')
 
 
 % generate all_pts table
-point_tot = length([polytopes.xv]); % total number of vertices in the convex polytopes
-beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-curpt = 0;
-for poly = 1:size(polytopes,2) % check each polytope
-    verts = unique(polytopes(poly).vertices,'stable','rows');
-    num_verts = size(verts,1);
-    polytopes(poly).obs_id = ones(1,num_verts)*poly; % obs_id is the same for every vertex on a single polytope
-    polytopes(poly).xv = verts(:,1)';
-    polytopes(poly).yv = verts(:,2)';
-    polytopes(poly).vertices = [verts; verts(1,:)];
-    polytopes(poly).distances = sum((polytopes(poly).vertices(1:end-1,:) - polytopes(poly).vertices(2:end,:)).^2,2).^0.5;   
-    beg_end([curpt+1,curpt+num_verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-    curpt = curpt+num_verts;
-    polytopes(poly).perimeter = sum(polytopes(poly).distances);
-end
-obs_id = [polytopes.obs_id];
-point_tot = length([polytopes.xv]); % need to recheck total points
-beg_end = beg_end(1:point_tot); % remove any extra points
-
-all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
+all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes, start, finish,-1);
 
 
 % calculate visibility graph
@@ -229,7 +172,7 @@ tic
 [vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts,(isConcave),(-1));
 toc
 % plot visibility graph edges
-if flag_do_plot
+if 1==1
     for i = 1:size(vgraph,1)
         for j = 1:size(vgraph,1)
             if vgraph(i,j) == 1
@@ -277,6 +220,8 @@ titleString = sprintf('TEST case: zero gap between polytopes');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
+flag_do_plot = 1;
+
 % test zero gap case
 % generate map
 polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
@@ -303,26 +248,7 @@ if flag_do_plot
 end
 
 % generate all_pts table
-point_tot = length([polytopes.xv]); % total number of vertices in the convex polytopes
-beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-curpt = 0;
-for poly = 1:size(polytopes,2) % check each polytope
-    verts = unique(polytopes(poly).vertices,'stable','rows');
-    num_verts = size(verts,1);
-    polytopes(poly).obs_id = ones(1,num_verts)*poly; % obs_id is the same for every vertex on a single polytope
-    polytopes(poly).xv = verts(:,1)';
-    polytopes(poly).yv = verts(:,2)';
-    polytopes(poly).vertices = [verts; verts(1,:)];
-    polytopes(poly).distances = sum((polytopes(poly).vertices(1:end-1,:) - polytopes(poly).vertices(2:end,:)).^2,2).^0.5;
-    beg_end([curpt+1,curpt+num_verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-    curpt = curpt+num_verts;
-    polytopes(poly).perimeter = sum(polytopes(poly).distances);
-end
-obs_id = [polytopes.obs_id];
-point_tot = length([polytopes.xv]); % need to recheck total points
-beg_end = beg_end(1:point_tot); % remove any extra points
-
-all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
+all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes, start, finish,-1);
 
 % calculate vibility graph
 tic
@@ -567,26 +493,7 @@ if 1==0
     end
     
     % generate all_pts table
-    point_tot = length([polytopes.xv]); % total number of vertices in the convex polytopes
-    beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-    curpt = 0;
-    for poly = 1:size(polytopes,2) % check each polytope
-        verts = unique(polytopes(poly).vertices,'stable','rows');
-        num_verts = size(verts,1);
-        polytopes(poly).obs_id = ones(1,num_verts)*poly; % obs_id is the same for every vertex on a single polytope
-        polytopes(poly).xv = verts(:,1)';
-        polytopes(poly).yv = verts(:,2)';
-        polytopes(poly).vertices = [verts; verts(1,:)];
-        polytopes(poly).distances = sum((polytopes(poly).vertices(1:end-1,:) - polytopes(poly).vertices(2:end,:)).^2,2).^0.5;
-        beg_end([curpt+1,curpt+num_verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-        curpt = curpt+num_verts;
-        polytopes(poly).perimeter = sum(polytopes(poly).distances);
-    end
-    obs_id = [polytopes.obs_id];
-    point_tot = length([polytopes.xv]); % need to recheck total points
-    beg_end = beg_end(1:point_tot); % remove any extra points
-    
-    all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
+    all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes, start, finish,-1);
     
     % calculate vibility graph
     tic

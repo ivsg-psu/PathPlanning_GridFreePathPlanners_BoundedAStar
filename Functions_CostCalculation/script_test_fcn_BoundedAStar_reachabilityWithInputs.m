@@ -19,7 +19,11 @@
 %
 % 2025_08_08 by S. Brennan, sbrennan@psu.edu
 % - In script_test_fcn_BoundedAStar_reachabilityWithInputs
-%   % * Added test scripts to check new output: boundingPolytopeVertices
+%   % * Added test scripts to check new output: cellArrayOfIntermediateCalculations
+%
+% 2025_08_16 by S. Brennan, sbrennan@psu.edu
+% - In script_test_fcn_BoundedAStar_reachabilityWithInputs
+%   % * Added test scripts to check new output: cellArrayOfIntermediateCalculations
 
 % TO DO:
 % -- take wind post-processing out of this script and put it into another
@@ -57,29 +61,30 @@ figure(figNum); clf;
 [normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData;
 
 % Call graph generation function
-radius = 2;
+radius = 1;
 maxWindSpeed = 4;
 
 windFieldU = normalizedEastWind*maxWindSpeed;
 windFieldV = normalizedNorthWind*maxWindSpeed;
-startPoints = [0 0; -1 -2];
+% startPoints = [0 0; -1 -2];
+startPoints = [0 0; 0 2];
 flagWindRoundingType = 0;
 
 % Call function
-[reachableSet, boundingPolytopeVertices] =  fcn_BoundedAStar_reachabilityWithInputs(...
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
 assert(isnumeric(reachableSet));
-assert(isnumeric(boundingPolytopeVertices));
+assert(iscell(cellArrayOfIntermediateCalculations));
 
 % Check variable sizes
 assert(size(reachableSet,1)>=3); 
 assert(size(reachableSet,2)==2);
-assert(size(boundingPolytopeVertices,1)>=3); 
-assert(size(boundingPolytopeVertices,2)==2);
+assert(size(cellArrayOfIntermediateCalculations,1)==5); 
+assert(size(cellArrayOfIntermediateCalculations,2)==1);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
@@ -103,20 +108,20 @@ startPoints = [0 0];
 flagWindRoundingType = 0;
 
 % Call function
-[reachableSet, boundingPolytopeVertices] =  fcn_BoundedAStar_reachabilityWithInputs(...
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
 assert(isnumeric(reachableSet));
-assert(isnumeric(boundingPolytopeVertices));
+assert(iscell(cellArrayOfIntermediateCalculations));
 
 % Check variable sizes
 assert(size(reachableSet,1)>=3); 
 assert(size(reachableSet,2)==2);
-assert(size(boundingPolytopeVertices,1)>=3); 
-assert(size(boundingPolytopeVertices,2)==2);
+assert(size(cellArrayOfIntermediateCalculations,1)==5); 
+assert(size(cellArrayOfIntermediateCalculations,2)==1);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
@@ -140,27 +145,27 @@ startPoints = [-1 -1; 1 -1; 1 1; -1 1; -1 -1];
 flagWindRoundingType = 1;
 
 % Call function
-[reachableSet, boundingPolytopeVertices] =  fcn_BoundedAStar_reachabilityWithInputs(...
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
 assert(isnumeric(reachableSet));
-assert(isnumeric(boundingPolytopeVertices));
+assert(iscell(cellArrayOfIntermediateCalculations));
 
 % Check variable sizes
 assert(size(reachableSet,1)>=3); 
 assert(size(reachableSet,2)==2);
-assert(size(boundingPolytopeVertices,1)>=3); 
-assert(size(boundingPolytopeVertices,2)==2);
+assert(size(cellArrayOfIntermediateCalculations,1)==5); 
+assert(size(cellArrayOfIntermediateCalculations,2)==1);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
 
 %% DEMO case: get reachable envelope in wind field (weird shape starting set)
-figNum = 10003;
-titleString = sprintf('DEMO case: get reachable envelope in wind field (square starting set)');
+figNum = 10004;
+titleString = sprintf('DEMO case: get reachable envelope in wind field (weird shape starting set)');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 figure(figNum); clf;
 
@@ -177,20 +182,20 @@ startPoints = [-1 -1; 1 -1; 1 1; -2 3; -1 1; -1 -1];
 flagWindRoundingType = 0;
 
 % Call function
-[reachableSet, boundingPolytopeVertices] =  fcn_BoundedAStar_reachabilityWithInputs(...
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
 assert(isnumeric(reachableSet));
-assert(isnumeric(boundingPolytopeVertices));
+assert(iscell(cellArrayOfIntermediateCalculations));
 
 % Check variable sizes
 assert(size(reachableSet,1)>=3); 
 assert(size(reachableSet,2)==2);
-assert(size(boundingPolytopeVertices,1)>=3); 
-assert(size(boundingPolytopeVertices,2)==2);
+assert(size(cellArrayOfIntermediateCalculations,1)==5); 
+assert(size(cellArrayOfIntermediateCalculations,2)==1);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
@@ -257,18 +262,18 @@ startPoints = [0 0; 1 2];
 flagWindRoundingType = 0;
 
 % Call function
-[reachableSet, boundingPolytopeVertices] =  fcn_BoundedAStar_reachabilityWithInputs(...
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), ([]));
 
 % Check variable types
 assert(isnumeric(reachableSet));
-assert(isnumeric(boundingPolytopeVertices));
+assert(iscell(cellArrayOfIntermediateCalculations));
 
 % Check variable sizes
 assert(size(reachableSet,1)>=3); 
 assert(size(reachableSet,2)==2);
-assert(size(boundingPolytopeVertices,1)>=3); 
-assert(size(boundingPolytopeVertices,2)==2);
+assert(size(cellArrayOfIntermediateCalculations,1)==5); 
+assert(size(cellArrayOfIntermediateCalculations,2)==1);
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -293,18 +298,18 @@ startPoints = [0 0; 1 2];
 flagWindRoundingType = 0;
 
 % Call function
-[reachableSet, boundingPolytopeVertices] =  fcn_BoundedAStar_reachabilityWithInputs(...
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
 
 % Check variable types
 assert(isnumeric(reachableSet));
-assert(isnumeric(boundingPolytopeVertices));
+assert(iscell(cellArrayOfIntermediateCalculations));
 
 % Check variable sizes
 assert(size(reachableSet,1)>=3); 
 assert(size(reachableSet,2)==2);
-assert(size(boundingPolytopeVertices,1)>=3); 
-assert(size(boundingPolytopeVertices,2)==2);
+assert(size(cellArrayOfIntermediateCalculations,1)==5); 
+assert(size(cellArrayOfIntermediateCalculations,2)==1);
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -335,39 +340,39 @@ Niterations = 10;
 tic;
 for ith_test = 1:Niterations
     % Call function
-    [reachableSet, boundingPolytopeVertices] =  fcn_BoundedAStar_reachabilityWithInputs(...
+    [reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
         radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), ([]));
 end
 slow_method = toc;
 
 % Check variable types
 assert(isnumeric(reachableSet));
-assert(isnumeric(boundingPolytopeVertices));
+assert(iscell(cellArrayOfIntermediateCalculations));
 
 % Check variable sizes
 assert(size(reachableSet,1)>=3); 
 assert(size(reachableSet,2)==2);
-assert(size(boundingPolytopeVertices,1)>=3); 
-assert(size(boundingPolytopeVertices,2)==2);
+assert(size(cellArrayOfIntermediateCalculations,1)==5); 
+assert(size(cellArrayOfIntermediateCalculations,2)==1);
 
 % Do calculation with pre-calculation, FAST_MODE on
 tic;
 for ith_test = 1:Niterations
     % Call function
-    [reachableSet, boundingPolytopeVertices] =  fcn_BoundedAStar_reachabilityWithInputs(...
+    [reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
         radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
 end
 fast_method = toc;
 
 % Check variable types
 assert(isnumeric(reachableSet));
-assert(isnumeric(boundingPolytopeVertices));
+assert(iscell(cellArrayOfIntermediateCalculations));
 
 % Check variable sizes
 assert(size(reachableSet,1)>=3); 
 assert(size(reachableSet,2)==2);
-assert(size(boundingPolytopeVertices,1)>=3); 
-assert(size(boundingPolytopeVertices,2)==2);
+assert(size(cellArrayOfIntermediateCalculations,1)==5); 
+assert(size(cellArrayOfIntermediateCalculations,2)==1);
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -722,18 +727,18 @@ deltaX = windFieldX(2) - windFieldX(1);
 startPoints = fcn_INTERNAL_sparsifyPoints(startPoints,deltaX);
 
 % Call function
-[reachableSet, boundingPolytopeVertices] =  fcn_BoundedAStar_reachabilityWithInputs(...
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
 
 % Check variable types
 assert(isnumeric(reachableSet));
-assert(isnumeric(boundingPolytopeVertices));
+assert(iscell(cellArrayOfIntermediateCalculations));
 
 % Check variable sizes
 assert(size(reachableSet,1)>=3); 
 assert(size(reachableSet,2)==2);
-assert(size(boundingPolytopeVertices,1)>=3); 
-assert(size(boundingPolytopeVertices,2)==2);
+assert(size(cellArrayOfIntermediateCalculations,1)==5); 
+assert(size(cellArrayOfIntermediateCalculations,2)==1);
 
 %% BUG case: expansion produces NaN values
 
@@ -861,18 +866,18 @@ startPoints = [...
   -6.256652947871200   3.008257015566111];
 
 % Call function
-[reachableSet, boundingPolytopeVertices] =  fcn_BoundedAStar_reachabilityWithInputs(...
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
 
 % Check variable types
 assert(isnumeric(reachableSet));
-assert(isnumeric(boundingPolytopeVertices));
+assert(iscell(cellArrayOfIntermediateCalculations));
 
 % Check variable sizes
 assert(size(reachableSet,1)>=3); 
 assert(size(reachableSet,2)==2);
-assert(size(boundingPolytopeVertices,1)>=3); 
-assert(size(boundingPolytopeVertices,2)==2);
+assert(size(cellArrayOfIntermediateCalculations,1)==5); 
+assert(size(cellArrayOfIntermediateCalculations,2)==1);
 
 
 %% BUG case: startPoints have self cross over
@@ -904,18 +909,45 @@ if length(startPointsPinched(:,1))<length(startPoints(:,1)/2)
 end
 
 % Call function
-[reachableSet, boundingPolytopeVertices] =  fcn_BoundedAStar_reachabilityWithInputs(...
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
 
 % Check variable types
 assert(isnumeric(reachableSet));
-assert(isnumeric(boundingPolytopeVertices));
+assert(iscell(cellArrayOfIntermediateCalculations));
 
 % Check variable sizes
 assert(size(reachableSet,1)>=3); 
 assert(size(reachableSet,2)==2);
-assert(size(boundingPolytopeVertices,1)>=3); 
-assert(size(boundingPolytopeVertices,2)==2);
+assert(size(cellArrayOfIntermediateCalculations,1)==5); 
+assert(size(cellArrayOfIntermediateCalculations,2)==1);
+
+%% BUG case: NaN values generated in expandReachabilityWithWind
+
+figNum = 90004;
+titleString = sprintf('BUG case: NaN values generated in expandReachabilityWithWind');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+% Load starting data
+load('BUG_90004_fcn_BoundedAStar_reachabilityWithInputs.mat',...
+    'radius', 'windFieldU', 'windFieldV', 'windFieldX', 'windFieldY', ...
+    'startPoints', 'flagWindRoundingType');
+
+% Call function
+[reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
+
+% Check variable types
+assert(isnumeric(reachableSet));
+assert(iscell(cellArrayOfIntermediateCalculations));
+
+% Check variable sizes
+assert(size(reachableSet,1)>=3); 
+assert(size(reachableSet,2)==2);
+assert(size(cellArrayOfIntermediateCalculations,1)==5); 
+assert(size(cellArrayOfIntermediateCalculations,2)==1);
+
 
 %% Fail conditions
 if 1==0

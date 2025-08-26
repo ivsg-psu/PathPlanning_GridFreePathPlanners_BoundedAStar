@@ -45,25 +45,8 @@ trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0.1 0.1 99.9 99.9
 % Shrink polytopes to form obstacle field
 shrunk_polytopes = fcn_MapGen_polytopesShrinkEvenly(trim_polytopes, 2.5, (-1));
 
-% Get x and y coordinates of each polytope
-xvert = [shrunk_polytopes.xv]';
-yvert = [shrunk_polytopes.yv]';
-point_tot = length(xvert);
-
-% Get polytope ids
-beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-curpt = 0;
-for poly = 1:size(shrunk_polytopes,2)
-    polyVerts = unique(shrunk_polytopes(poly).vertices,'stable','rows');
-    num_verts = size(polyVerts,1);
-    shrunk_polytopes(poly).obs_id = ones(1,num_verts)*poly;
-    beg_end([curpt+1,curpt+num_verts]) = 1;
-    curpt = curpt+num_verts;
-end
-totalObsId = [shrunk_polytopes.obs_id]';
-
 % Create all_pts matrix
-all_pts = [xvert, yvert, [1:point_tot]', totalObsId, beg_end'];
+all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start, finish,-1);
 
 cur_pt = all_pts(6,:);
 [cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...

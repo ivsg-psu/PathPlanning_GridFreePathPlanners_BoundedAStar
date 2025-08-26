@@ -1,4 +1,6 @@
-function [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(radius, windFieldU, windFieldV, windFieldX, windFieldY, varargin)
+function [finalReachableSet, exitCondition, cellArrayOfExitInfo, varargout] = ...
+    fcn_BoundedAStar_expandReachabilityWithWind(radius, ...
+    windFieldU, windFieldV, windFieldX, windFieldY, varargin)
 % fcn_BoundedAStar_expandReachabilityWithWind
 % performs iterative reachability expansion from a startPoint until one of
 % the following criteria are met:
@@ -11,7 +13,9 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAS
 %     flagWindExitConditions input.
 %
 % FORMAT:
-% [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
+% [finalReachableSet, exitCondition, cellArrayOfExitInfo,...
+%  (reachableSetExactCosts), (cellArrayOfReachableSetPaths)] = ...
+%   fcn_BoundedAStar_expandReachabilityWithWind(...
 %     radius, ... 
 %     windFieldU,  ...
 %     windFieldV,  ...
@@ -107,6 +111,22 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAS
 %     2: goal points hit (as counts of sim steps to hit that point).
 %     Returns empty if allGoalPointsList is empty.
 %
+%     (OPTIONAL OUTPUTS)
+%     NOTE: to allow fast execution, the optional outputs are NOT calculated unless the user has
+%     requested them.
+%
+%     reachableSetExactCosts: an Mx1 matrix, where M is the number of
+%     achievable goals in finalReachableSet, containing a more exact
+%     estimate of costs. These are calculated by interpolation of the
+%     distance between the inner and outer set boundaries for each goal.
+% 
+%     cellArrayOfReachableSetPaths: an Mx1 cell array that contains, for each M
+%     achievable goals, an estimate of the path that leads to the point.
+%     The array is of format: [X Y U V] where X,Y represent the XY position
+%     coordinates, and UV represent for each position the control vector in
+%     XY directions, respectively, that would give the solution within the
+%     given wind field.
+%
 % DEPENDENCIES:
 %
 %     fcn_DebugTools_checkInputsToFunctions
@@ -133,12 +153,29 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAS
 %   % * Added cellArrayOfWindExitConditions
 %   % * Added exitCondition output information
 %   % * Added cellArrayOfExitInfo output information
+%
 % 2025_08_05 by S. Brennan
 %   % * Changed flag outputs to count sim steps to hit goal, not just
 %   %   % binary
+%
+% 2025_08_11 by S. Brennan
+% - In fcn_BoundedAStar_expandReachabilityWithWind
+%   % * Added varargout option to allow optional calculations including:
+%   %   % ** reachableSetExactCosts: Exact costs per each feasible goal
+%   %   % ** cellArrayOfReachableSetPaths: Exact paths per each feasible goal
+%
 % 2025_08_12 by K. Hayes
 % - in fcn_BoundedAStar_expandReachabilityWithWind
 %   % * added handling for time varying wind fields
+%
+% 2025_08_17 by S. Brennan
+% - In fcn_BoundedAStar_expandReachabilityWithWind
+%   % * fixed bug where interpolation fails with highly non-convex set
+%   %   % boundaries
+%
+% 2025_08_19 by S. Brennan
+% - In fcn_BoundedAStar_expandReachabilityWithWind
+%   % * added calculation of exact "backward" paths from goals to start
 
 % TO-DO
 % -- when wind is VERY high, higher than self speed, the set pushes away
@@ -262,6 +299,21 @@ if (0==flag_max_speed) && (MAX_NARGIN == nargin)
     end
 end
 
+nout = max(nargout,1)-3;
+if nout>=1
+    varargout = cell(nout,1);
+    flagCaclulateReachableSetExactCosts = 1;
+else
+    flagCaclulateReachableSetExactCosts = 0;
+end
+
+if nout>=2
+    flagCaclulateReachableSetPaths = 1;
+else
+    flagCaclulateReachableSetPaths = 0;
+end
+
+
 %% Main code
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   __  __       _
@@ -286,7 +338,7 @@ if flag_do_debug
     hold on;
     
     % Plot the windfield as an image
-    fcn_BoundedAStar_plotWindField(windFieldU,windFieldV,windFieldX,windFieldY,'default',debug_figNum)
+    fcn_BoundedAStar_plotWindField(windFieldU,windFieldV,windFieldX,windFieldY,'default',debug_figNum);
     s = streamslice(meshX,meshY,windFieldU,windFieldV);
     set(s,'Color',[0.6 0.6 0.6])
 
@@ -326,30 +378,78 @@ minX = windFieldX(1);
 maxX = windFieldX(end);
 minY = windFieldY(1);
 maxY = windFieldY(end);
+axisRange = [minX minY maxX maxY];
 deltaX = windFieldX(2) - windFieldX(1);
 
 allExpansions = cell(Nsteps,1);
 
 if ~isempty(allGoalPointsList)
     stepsWhenGoalPointsHit = nan(length(allGoalPointsList(:,1)),1);
+    if 1==flagCaclulateReachableSetExactCosts
+        exactStepsWhenGoalPointsHit = nan(length(allGoalPointsList(:,1)),1);
+    end
+    cellArrayOfExpansions = cell(Nsteps+1,1);
+    cellArrayOfExpansions{1,1} = originalStartPoints;
+    cellArrayOfIntermediateCalculations = cell(Nsteps+1,5);
 end
+
+% Define the bounding region
+regionBoundaryPoints = [minX minY; maxX minY; maxX maxY; minX maxY; minX minY];
+boundingRegion = fcn_INTERNAL_makeRegion(regionBoundaryPoints);
 
 ith_step = 0;
 flagContinueExpansion = 1;
 while 1==flagContinueExpansion
     ith_step = ith_step+1;
     allExpansions{ith_step,1} = startPoints;
-    
+
+    % if 20==ith_step
+    %     disp('Stop here');
+    %     % dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 427
+    %     % dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 455
+    %     dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 496 % This one s
+    %     % dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 553 % +
+    % end
+
+    if 1==0
+        save('BUG_90004_fcn_BoundedAStar_reachabilityWithInputs.mat',...
+            'radius', 'windFieldU', 'windFieldV', 'windFieldX', 'windFieldY', ...
+            'startPoints', 'flagWindRoundingType');
+    end
+
+    % Call function to find reachable set on this time step
+    % figure(2343);
+    % clf;
+
+    if any(isnan(startPoints),'all')
+        error('startPoints have points that are NaN valued. Unable to continue');
+    end
+  
     if 1 == flagTimeVarying
         windFieldUk = windFieldU{ith_step};
         windFieldVk = windFieldV{ith_step};
-        reachableSet = fcn_BoundedAStar_reachabilityWithInputs(...
+        [reachableSet, thisCellArrayOfIntermediateCalculations] = fcn_BoundedAStar_reachabilityWithInputs(...
             radius, windFieldUk, windFieldVk, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
     else
-        % Call function to find reachable set on this time step
-        reachableSet = fcn_BoundedAStar_reachabilityWithInputs(...
-            radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
+    % FORMAT:
+    % [reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
+    %     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
+    [reachableSet, thisCellArrayOfIntermediateCalculations] = fcn_BoundedAStar_reachabilityWithInputs(...
+        radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
+    legend off;
     end
+   
+    if any(isnan(reachableSet),'all')
+        error('Reachable set has point that is NaN valued. Unable to continue');
+    end
+
+    % Save results for backward calculations
+    cellArrayOfExpansions{ith_step+1,1} = reachableSet;
+    for ith_cell = 1:5
+        temp = thisCellArrayOfIntermediateCalculations{ith_cell,1};
+        cellArrayOfIntermediateCalculations{ith_step+1,ith_cell} = temp;
+    end
+
 
     if flag_do_debug && 1==1
         figure(debug_figNum);
@@ -369,6 +469,8 @@ while 1==flagContinueExpansion
     if length(reachableSetNotPinched(:,1))< (Nreachable/2)
         reachableSetNotPinched = setdiff(reachableSet,reachableSetNotPinched,'rows','stable');
     end
+    % The removePinchPointInPath removes repeated points, so need to add
+    % start/end back in
     reachableSetNotPinched = [reachableSetNotPinched; reachableSetNotPinched(1,:)]; %#ok<AGROW>
 
     % Clean up set boundary from "jogs"?
@@ -396,9 +498,173 @@ while 1==flagContinueExpansion
     end
 
     % Bound the XY values
-    newStartPointsX =  max(min(startPointsSparse(:,1),maxX),minX);
-    newStartPointsY =  max(min(startPointsSparse(:,2),maxY),minY);
-    newStartPoints = [newStartPointsX newStartPointsY];
+    if 1==1
+        % NEW way
+        unboundedRegion = fcn_INTERNAL_makeRegion(startPointsSparse);
+        insideRegion = intersect(boundingRegion, unboundedRegion);
+        boundedVertices = flipud(insideRegion.Vertices);
+        newStartPoints = [boundedVertices; boundedVertices(1,:)];        
+
+
+        % If region breaks apart into different areas, need to reconnect
+        % them. Do this by converting nan values "between" regions into
+        % slivers that are near boundaries.
+        if any(isnan(newStartPoints),'all')
+            unboundedVertices = flipud(unboundedRegion.Vertices);
+            unboundedPoints = [unboundedVertices; unboundedVertices(1,:)];
+            nanIndices = find(isnan(newStartPoints(:,1)));
+            pointsBelow = newStartPoints(nanIndices-1,:);
+            pointsAbove = newStartPoints(nanIndices+1,:);
+            meanPoints = (pointsBelow+pointsAbove)./2;
+            
+            
+            if 1==1
+                closestWalls = fcn_INTERNAL_findClosestWall(meanPoints, axisRange);
+                Npoints = length(nanIndices);
+                if ~all(isequal(closestWalls,ones(Npoints,1)*closestWalls(1)))
+                    error('Not all wals are equal');
+                end
+                
+                % Find max/min points in region
+                minXallRegions = min(minX,min(unboundedVertices(:,1)));
+                maxXallRegions = max(maxX,max(unboundedVertices(:,1)));
+                minYallRegions = min(minY,min(unboundedVertices(:,2)));
+                maxYallRegions = max(maxY,max(unboundedVertices(:,2)));
+                if 1==closestWalls
+                    intersectWallStart = [minXallRegions minY];
+                    intersectWallEnd   = [maxXallRegions minY];
+                    offsetDirection = [0 1];
+                    
+                elseif 2==closestWalls
+                    intersectWallStart = [maxX minYallRegions];
+                    intersectWallEnd   = [maxX maxYallRegions];
+                    offsetDirection = [-1 0];
+                elseif 3==closestWalls
+                    intersectWallStart = [maxXallRegions maxY];
+                    intersectWallEnd   = [minXallRegions maxY];
+                    offsetDirection = [0 -1];
+                elseif 4==closestWalls
+                    intersectWallStart = [minX maxYallRegions];
+                    intersectWallEnd   = [minX minYallRegions];
+                    offsetDirection = [1 0];
+                else
+                    error('unknown wall index encountered');
+                end
+                % FORMAT:
+                %      [distance, location, wall_segment, t, u] = ...
+                %         fcn_Path_findSensorHitOnWall(...
+                %         wall_start, wall_end,...
+                %         sensor_vector_start,sensor_vector_end,...
+                %         (flag_search_return_type), (flag_search_range_type), ...
+                %         (tolerance), (fig_num))
+                [~, locations, ~, ~, u_values] = ...
+                    fcn_Path_findSensorHitOnWall(...
+                    unboundedPoints(1:end-1,:), unboundedPoints(2:end,:),...
+                    intersectWallStart,intersectWallEnd,...
+                    (1), (0), ...
+                    ([]), (-1));
+                [~,minSensorPercentageIndex] = min(u_values);
+                [~,maxSensorPercentageIndex] = max(u_values);
+
+                minPoint = locations(minSensorPercentageIndex,:); 
+                maxPoint = locations(maxSensorPercentageIndex,:);
+
+                if 1==closestWalls
+                    wallStart = [minPoint(1,1) minY];
+                    wallEnd   = [maxPoint(1,1) minY];                   
+                elseif 2==closestWalls
+                    wallStart = [maxX minPoint(1,2)];
+                    wallEnd   = [maxX maxPoint(1,2)];
+                elseif 3==closestWalls
+                    wallStart = [maxPoint(1,1) maxY];
+                    wallEnd   = [minPoint(1,1) maxY];
+                elseif 4==closestWalls
+                    wallStart = [minX maxPoint(1,2)];
+                    wallEnd   = [minX minPoint(1,2)];
+                else
+                    error('unknown wall index encountered');
+                end
+
+
+                offsetAmount = 0.1;
+                offsetWall = [minPoint; maxPoint] + offsetAmount*ones(2,1)*offsetDirection;
+                offsetRegionPoints = [offsetWall; wallEnd; wallStart];
+                offsetRegion = polyshape(offsetRegionPoints,'KeepCollinearPoints', true,'Simplify', false);
+
+                
+                insideRegionMerged = union(insideRegion, offsetRegion);
+                insideRegionMergedBounded = intersect(boundingRegion, insideRegionMerged);
+                boundedVertices = flipud(insideRegionMergedBounded.Vertices);
+                newStartPoints = [boundedVertices; boundedVertices(1,:)];
+
+                if 1==0
+                    figure(775757)
+                    clf;
+                    hold on;
+                    plot(insideRegionMergedBounded);
+                    % plot(offsetRegion);
+                    % plot(insideRegion);
+                end
+  
+
+            elseif 2==3
+                % % Find inward-facing faces. The points that are outside 
+                % 
+                % % Find upward facing points
+                % edgeVectors = newStartPoints(2:end,:) - newStartPoints(1:end-1,:);
+                % edgeVectorLengths = sum(edgeVectors.^2,2).^0.5;
+                % unitEdgeVectors = edgeVectors./edgeVectorLengths;
+                % 
+                % % Rotate by -90 degrees. These are vectors that are facing
+                % % out of the region.
+                % outwardFacingVectors = unitEdgeVectors*[0 -1; 1 0];
+                % 
+                % % Points attached to outward facing vectors, that are
+                % % outside the region, get pushed inward
+                % pointPushedToClosestWall = fcn_INTERNAL_pushToClosestWall(averageNearBy, axisRange);
+
+            else
+
+                % for ith_location = 1:length(nanIndices)
+                %     thisIndex = nanIndices(ith_location);
+                % 
+                %     % Find the nearby points up and down that are not NaN
+                %     % tempDataUp = newStartPoints;
+                %     % tempDataUp(1:thisIndex,1) = nan;
+                %     % nearbyPointUpIndex = find(~isnan(tempDataUp(:,1)),1);
+                %     % nearbyPointUp = tempDataUp(nearbyPointUpIndex,:);
+                %     % tempDataDown = newStartPoints;
+                %     % tempDataDown(thisIndex:end,1) = nan;
+                %     % nearbyPointDownIndex = find(~isnan(tempDataDown(:,1)),1,'last');
+                %     % nearbyPointDown = tempDataDown(nearbyPointDownIndex,:);
+                %     % nearbyPoints = [nearbyPointUp; nearbyPointDown];
+                %     nearbyPoints = [newStartPoints(thisIndex-1,:); newStartPoints(thisIndex+1,:)];
+                %     if any(isnan(nearbyPoints),'all')
+                %         error('nan values found in nearby points');
+                %     end
+                %     averageNearBy = mean(nearbyPoints,1);
+                % 
+                %     pointPushedToClosestWall = fcn_INTERNAL_pushToClosestWall(averageNearBy, axisRange);
+                %     oldStartPoints = newStartPoints;
+                %     newStartPoints(thisIndex,:) = pointPushedToClosestWall;
+                % 
+                %     if 1==1
+                %         figure(121212);
+                %         clf;
+                %         hold on;
+                %         plot(oldStartPoints(:,1), oldStartPoints(:,2),'b.-');
+                %         plot(averageNearBy(:,1), averageNearBy(:,2),'r.-');
+                %         plot(newStartPoints(:,1), newStartPoints(:,2),'g.-');
+                %     end
+                % end
+            end
+        end % Ends if statement to check if nan values are there
+    else
+        % OLD way
+        newStartPointsX =  max(min(startPointsSparse(:,1),maxX),minX);
+        newStartPointsY =  max(min(startPointsSparse(:,2),maxY),minY);
+        newStartPoints = [newStartPointsX newStartPointsY];
+    end
 
     if flag_do_debug && 1==1
         figure(debug_figNum);
@@ -407,8 +673,13 @@ while 1==flagContinueExpansion
         pause(0.1);
     end
 
+
     % Save results for next loop
     startPoints = newStartPoints;
+
+    if any(isnan(startPoints),'all')
+        error('startPoints have points that are NaN valued. Unable to continue');
+    end
 
     % Check exit conditions
     if ith_step>=Nsteps
@@ -426,8 +697,8 @@ while 1==flagContinueExpansion
     end
     if ~isempty(toleranceToStopIfSameResult)
         if ith_step>2
-            thisBoundary = allExpansions{ith_step,1};
-            lastBoundary = allExpansions{ith_step-1,1};
+            thisBoundary = newStartPoints; % allExpansions{ith_step,1};
+            lastBoundary = allExpansions{ith_step,1}; % allExpansions{ith_step-1,1};
             if length(thisBoundary(:,1))==length(lastBoundary(:,1))
                 % Check distances
                 differences = thisBoundary-lastBoundary;
@@ -444,12 +715,63 @@ while 1==flagContinueExpansion
     if ~isempty(allGoalPointsList)
         goalPointsHit = fcn_INTERNAL_findGoalPointsHit(newStartPoints,allGoalPointsList);
         pointsFoundThisSimStep = find(isnan(stepsWhenGoalPointsHit) & goalPointsHit);
+
+        % Were any points found in this simulation step?
         if ~isempty(pointsFoundThisSimStep)
             stepsWhenGoalPointsHit(pointsFoundThisSimStep) = ith_step;
+
+            % Do we calculate reachableSetExactCosts?
+            if 1==flagCaclulateReachableSetExactCosts
+                thisBoundary = newStartPoints; % allExpansions{ith_step,1};
+                lastBoundary = allExpansions{ith_step,1}; % allExpansions{ith_step-1,1};
+                thesePoints = allGoalPointsList(pointsFoundThisSimStep,:);
+
+                % For debugging
+                if 1==0
+                    figure(77777);
+                    clf;
+                    hold on;
+                    axis equal
+                    plot(thisBoundary(:,1),thisBoundary(:,2),'r.-');
+                    plot(lastBoundary(:,1),lastBoundary(:,2),'b.-');
+                    plot(thesePoints(:,1),thesePoints(:,2),'k.','MarkerSize',10);
+                    
+                end
+                % FORMAT:
+                % St_points = fcn_Path_convertXY2St(referencePath,XY_points,...
+                %    (flag_rounding_type), (fig_num));
+
+                St_points_before_method1 = real(fcn_Path_convertXY2St(lastBoundary, thesePoints, (1), (-1)));
+                St_points_before_method2 = real(fcn_Path_convertXY2St(lastBoundary, thesePoints, (2), (-1)));
+                t_points_before = min(St_points_before_method1(:,2),St_points_before_method2(:,2));
+                St_points_after_method1 =  real(fcn_Path_convertXY2St(thisBoundary, thesePoints, (1), (-1)));
+                St_points_after_method2 =  real(fcn_Path_convertXY2St(thisBoundary, thesePoints, (2), (-1)));
+                t_points_after = min(St_points_after_method1(:,2),St_points_after_method2(:,2));
+
+                % Make sure all points are as expected: negative t values
+                % for the before, and positive after. Note: in strong wind
+                % fields, the points may be outside the boundary.
+                try
+                    assert(all(t_points_before<=0,'all'))
+                    assert(all(t_points_after>=0,'all'))
+                catch
+                    error('Unexpected t values');
+                end
+
+                % Calculate fraction of step
+                totalTransverseDistance = sum([t_points_after -t_points_before],2);
+                fractionalStep = -t_points_before./totalTransverseDistance;
+                exactStepsWhenGoalPointsHit(pointsFoundThisSimStep) = ith_step-1+fractionalStep;
+
+
+            end
+
+            % Do we stop with all points hit?
             if all(goalPointsHit==1,'all')
                 flagContinueExpansion = 0;
                 exitCondition = 4;
             end
+            % Do we stop with one point hit?
             if 1==flagStopIfHitOneGoalPoint && any(goalPointsHit==1,'all')
                 flagContinueExpansion = 0;
                 exitCondition = 5;
@@ -474,6 +796,66 @@ else
 end
 cellArrayOfExitInfo{2,1} = goalPointsHit;
 
+
+% Set variable argument outputs
+if 1==flagCaclulateReachableSetExactCosts
+   varargout{1} = exactStepsWhenGoalPointsHit;
+end
+
+if 1==flagCaclulateReachableSetPaths
+    cellArrayOfReachableSetPaths = cell(length(exactStepsWhenGoalPointsHit(:,1)),1);    
+    for ith_goal = 1:length(exactStepsWhenGoalPointsHit)
+        if isnan(goalPointsHit(ith_goal,1))
+            pathXYAndControlUV = [];
+        else
+            thisGoal = allGoalPointsList(ith_goal,:);
+            % stepWhenGoalReached = stepsWhenGoalPointsHit(ith_goal,:);
+
+            tempfigNum = -1; % 28383;
+            if tempfigNum~=-1
+                figure(tempfigNum);
+                clf;
+            end
+
+            % Save data for debugging
+            if 1==1
+                save('BUG_90006_fcn_BoundedAStar_pathCalculationBackToStart.mat',...
+                    'thisGoal','cellArrayOfExpansions','cellArrayOfIntermediateCalculations');
+            end
+
+            % Call function to find "backward" path?
+            pathXYAndControlUV =  ...
+                fcn_BoundedAStar_pathCalculationBackToStart(...
+                thisGoal, cellArrayOfExpansions, cellArrayOfIntermediateCalculations, (tempfigNum));
+
+            if tempfigNum~=-1
+                % Do forward simlation (to test)
+                fcn_BoundedAStar_pathCalculation(...
+                    originalStartPoints, pathXYAndControlUV(:,3:4), ...
+                    windFieldU,  ...
+                    windFieldV,  ...
+                    windFieldX,  ...
+                    windFieldY,  ...
+                    (tempfigNum));
+
+                figure(tempfigNum);
+                hold on;
+
+                % Plot the final XY path in blue
+                plot(pathXYAndControlUV(:,1),pathXYAndControlUV(:,2),'LineWidth',3,...
+                    'MarkerSize',30,...
+                    'Color',[0 0 1],'DisplayName','Expected: XY path')
+
+                % Plot the endPoint
+                plot(thisGoal(:,1),thisGoal(:,2),'.','Color',[1 0 0],'MarkerSize',30,'LineWidth', 2, 'DisplayName','Expected: endPoint');
+            end
+        end
+
+        % Save resulting path
+        cellArrayOfReachableSetPaths{ith_goal} = pathXYAndControlUV;
+    end
+    varargout{2} = cellArrayOfReachableSetPaths;
+end
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -559,10 +941,13 @@ if flag_do_plots
 
     % Plot the start points
     plot(originalStartPoints(:,1),originalStartPoints(:,2),'.-','Color',[0 1 0],'MarkerSize',20,'LineWidth', 2, 'DisplayName','Input: startPoints');
+    plot(originalStartPoints(:,1),originalStartPoints(:,2),'o','Color',[0 0 0],'MarkerSize',5, ...
+        'LineWidth', 2, 'HandleVisibility','off');
 
     % Plot the goal points
     if ~isempty(allGoalPointsList)
-        plot(allGoalPointsList(:,1),allGoalPointsList(:,2),'.','Color',[1 0 1],'MarkerSize',40,'LineWidth', 2, 'DisplayName','Input: allGoalPointsList');
+        plot(allGoalPointsList(:,1),allGoalPointsList(:,2),'.','Color',[1 0 1],...
+            'MarkerSize',40,'LineWidth', 2, 'DisplayName','Input: allGoalPointsList');
     end
 
     % Plot the expansion sets
@@ -586,12 +971,30 @@ if flag_do_plots
         end
 
         plot(thisExpansion(:,1),thisExpansion(:,2),'-',...
-            'Color',thisColor,'MarkerSize',30, 'LineWidth', 0.5, 'DisplayName',sprintf('Expansion: %.0f',ith_expansion),'HandleVisibility','off');
+            'Color',thisColor,'MarkerSize',30, 'LineWidth', 0.5, ...
+            'DisplayName',sprintf('Expansion: %.0f',ith_expansion), ...
+            'HandleVisibility','off');
         pause(0.1);
     end
 
     % Plot the final output
-    plot(finalReachableSet(:,1),finalReachableSet(:,2),'LineWidth',3,'Color',[1 0 0],'DisplayName','Output: reachableSet')
+    plot(finalReachableSet(:,1),finalReachableSet(:,2),'LineWidth',3,'Color',[1 0 0],'DisplayName',':: reachableSet')
+
+    % Plot the trajectories to goals?
+    if 1==flagCaclulateReachableSetPaths
+        for ith_goal = 1:length(cellArrayOfReachableSetPaths)
+            thisPath = cellArrayOfReachableSetPaths{ith_goal};
+            if ~isempty(thisPath)
+                h_plot = plot(thisPath(:,1),thisPath(:,2),'-','Color',[1 0 1],...
+                    'MarkerSize',20,'LineWidth', 1);
+                if 1==ith_goal
+                    set(h_plot, 'DisplayName','Output: exactPaths');
+                else
+                    set(h_plot,'HandleVisibility','off');
+                end
+            end
+        end
+    end
 
     % Shut the hold off?
     if flag_shut_hold_off
@@ -632,6 +1035,10 @@ if ~isequal(densePoints(1,:),densePoints(end,:))
     densePoints(end,:) = densePoints(1,:);
 end
 
+if any(isnan(densePoints),'all')
+    error('Cannot create sparse points if any points are NaN valued');
+end
+
 segmentVectors = densePoints(2:end,:) - densePoints(1:end-1,:);
 segmentLengths = sum(segmentVectors.^2,2).^0.5;
 
@@ -639,6 +1046,7 @@ Npoints = length(densePoints(:,1));
 currentPoint = 1;
 currentDistance = 0;
 sparsePointIndices = false(Npoints,1);
+sparsePointIndices(1,1) = true;
 while currentPoint<Npoints
     currentPoint = currentPoint+1;
     currentDistance  = currentDistance + segmentLengths(currentPoint-1);
@@ -670,11 +1078,70 @@ end
 end % Ends fcn_INTERNAL_sparsifyPoints
 
 %% fcn_INTERNAL_findGoalPointsHit
-function goalPointsHit = fcn_INTERNAL_findGoalPointsHit(newStartPoints,allGoalPointsList)
+function goalPointsHit = fcn_INTERNAL_findGoalPointsHit(regionBoundary,allGoalPointsList)
 if ~isempty(allGoalPointsList)
-    uniquePoints = flipud(newStartPoints); % for some silly reason, polyshape takes points "backwards" (?!)
-    uniquePoints = unique(uniquePoints,'rows','stable');
-    region = polyshape(uniquePoints(1:end-1,:),'KeepCollinearPoints', true,'Simplify', false);
+    region = fcn_INTERNAL_makeRegion(regionBoundary);
     goalPointsHit = isinterior(region,allGoalPointsList);
 end
 end % Ends fcn_INTERNAL_findGoalPointsHit
+
+%% fcn_INTERNAL_makeRegion
+function region = fcn_INTERNAL_makeRegion(regionBoundary)
+uniquePoints = flipud(regionBoundary); % for some silly reason, polyshape takes points "backwards" (?!)
+uniquePoints = unique(uniquePoints,'rows','stable');
+region = polyshape(uniquePoints,'KeepCollinearPoints', true,'Simplify', false);
+end % Ends fcn_INTERNAL_makeRegion
+
+% %% fcn_INTERNAL_pushToClosestWall
+% function pointPushedToClosestWall = fcn_INTERNAL_pushToClosestWall(averageNearBy, axisRange)
+% minX = axisRange(1,1);
+% minY = axisRange(1,2);
+% maxX = axisRange(1,3);
+% maxY = axisRange(1,4);
+% closestWall = fcn_INTERNAL_findClosestWall(averageNearBy, axisRange);
+% wallOffset = 0.1;
+% if 1==closestWall
+%     pointPushedToClosestWall = [averageNearBy(1,1) minY+wallOffset];
+% elseif 2==closestWall
+%     pointPushedToClosestWall = [maxX-wallOffset averageNearBy(1,2)];
+% elseif 3==closestWall
+%     pointPushedToClosestWall = [averageNearBy(1,1) maxY-wallOffset];
+% elseif 4==closestWall
+%     pointPushedToClosestWall = [minX+wallOffset averageNearBy(1,2)];
+% else
+%     error('unknown wall index encountered');
+% end
+% end % Ends fcn_INTERNAL_pushToClosestWall
+
+
+%% fcn_INTERNAL_findClosestWall
+function closestWalls = fcn_INTERNAL_findClosestWall(pointsToTest, axisRange)
+
+minX = axisRange(1,1);
+minY = axisRange(1,2);
+maxX = axisRange(1,3);
+maxY = axisRange(1,4);
+
+wallStartCorers = [...
+    minX minY;
+    maxX minY;
+    maxX maxY;
+    minX maxY];
+
+wallInwardNormalVectors = [...
+    0 1;
+    -1 0;
+    0 -1;
+    1 0];
+
+Npoints = length(pointsToTest(:,1));
+closestWalls = nan(Npoints,1);
+
+for ith_point = 1:Npoints
+    vectorsFromCornersToNearby = ones(4,1)*pointsToTest(ith_point,:) - wallStartCorers;
+    distancesFromWalls = sum(vectorsFromCornersToNearby.*wallInwardNormalVectors,2);
+    [~,closestWallIndex] = min(distancesFromWalls);
+    closestWalls(ith_point,1) = closestWallIndex;
+end
+
+end % fcn_INTERNAL_findClosestWall

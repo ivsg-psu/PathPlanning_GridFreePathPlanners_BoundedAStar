@@ -214,7 +214,7 @@ num_points = size(starts,1);
         i = starts(j,3);
         % legacy visibility function returns visibility vector for this point
         [visibility_results(i).clear_pts,visibility_results(i).blocked_pts,visibility_results(i).D,visibility_results(i).di,visibility_results(i).dj,visibility_results(i).num_int,visibility_results(i).xiP,visibility_results(i).yiP,visibility_results(i).xiQ,visibility_results(i).yiQ,visibility_results(i).xjP,visibility_results(i).yjP,visibility_results(i).xjQ,visibility_results(i).yjQ] = ...
-            fcn_Visibility_clearAndBlockedPoints(polytopes,starts(j,:),finishes,isConcave);
+            fcn_Visibility_clearAndBlockedPoints(polytopes,starts(j,:),finishes,isConcave,-1);
         % D is finish points on the rows and polytope sides on the columns
         % transpose this so we have column for each point
         % sum each column into a row vector so each element is the sum of number

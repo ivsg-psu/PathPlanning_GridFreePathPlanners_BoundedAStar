@@ -33,6 +33,22 @@ titleString = sprintf('DEMO case: call function to associate phantom goal with i
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
+tiled_polytopes = fcn_MapGen_haltonVoronoiTiling([1,20],[1 1]);
+% remove the edge polytope that extend past the high and low points
+% shink the polytopes so that they are no longer tiled
+des_radius = 0.05; % desired average maximum radius
+sigma_radius = 0.002; % desired standard deviation in maximum radii
+min_rad = 0.0001; % minimum possible maximum radius for any obstacle
+[shrunk_polytopes,mu_final,sigma_final] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes,des_radius,sigma_radius,min_rad);
+
+max_translation_distance = 0.15;
+final_time = 20;
+time_space_polytopes = fcn_make_timespace_polyhedra_from_polygons(shrunk_polytopes, max_translation_distance, final_time);
+
+time_space_polytopes = fcn_make_facets_from_verts(time_space_polytopes);
+
+all_surfels = fcn_make_triangular_surfels_from_facets(time_space_polytopes);
+
 % Example updated from script originally in
 % script_test_3d_polytope_multiple
 
@@ -98,7 +114,9 @@ assert(isnumeric(hvec_phantom));
 assert(isnumeric(all_pts_with_ids_no_start_and_fin_phantom));
 
 % Check that x,y,t values of finish are NaN
-assert(isnan(finish_phantom(1:3)));
+assert(isnan(finish_phantom(1)));
+assert(isnan(finish_phantom(2)));
+assert(isnan(finish_phantom(3)));
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));

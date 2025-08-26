@@ -42,11 +42,11 @@ for time_sample_iter = 1:number_of_time_samples
     %% make 2D spatial polytopes into 3D timespace polytopes with velocities, then break into triangular surfels
     max_translation_distance = 0.15;
     final_time = 20;
-    time_space_polytopes = fcn_make_timespace_polyhedra_from_polygons(shrunk_polytopes, max_translation_distance, final_time);
+    time_space_polytopes = fcn_BoundedAStar_makeTimespacePolyhedrafromPolygons(shrunk_polytopes, max_translation_distance, final_time);
 
-    time_space_polytopes = fcn_make_facets_from_verts(time_space_polytopes);
+    time_space_polytopes = fcn_BoundedAStar_makeFacetsFromVerts(time_space_polytopes);
 
-    all_surfels = fcn_make_triangular_surfels_from_facets(time_space_polytopes);
+    all_surfels = fcn_BoundedAStar_makeTriangularSurfelsFromFacets(time_space_polytopes);
 
     if flag_do_plot
         figure; hold on; box on; title('polytopes in timespace')
