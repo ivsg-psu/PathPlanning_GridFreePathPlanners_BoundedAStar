@@ -565,13 +565,20 @@ solutionBatchSize = 100000;
 
 % Solutions have the form:
 % 1x1 (accumulated cost) 1x1 (minimum possible total cost) Ngx1 (flags city was visited)  Ngx1 (visit sequence) 1x1 (flagHeadingHome) 
-solutions = nan(solutionBatchSize,3+NFeasibleGoals*2);
+accumulatedCosts = nan(solutionBatchSize,1);
+minPossibleTotalCosts = ones(solutionBatchSize,1)*minimumPossibleTrajectoryCost;
+flagsCityWasVisited = ones(solutionBatchSize,NFeasibleGoals);
+visitSequence = nan(solutionBatchSize,NFeasibleGoals);
+flagHeadingHome = zeros(solutionBatchSize,1);
+
+
+stagedTests = [accumulatedCosts, minPossibleTotalCosts, flagsCityWasVisited, visitSequence, flagHeadingHome];
 
 % Initialize values
 currentBestExpansionSolution = 1;
 currentBestCity = 1;
-solutions(currentBestExpansionSolution,1) = 0;
-solutions(currentBestExpansionSolution,1+NFeasibleGoals+1) = currentBestCity;
+stagedTests(currentBestExpansionSolution,1) = 0;
+stagedTests(currentBestExpansionSolution,1+NFeasibleGoals+1) = currentBestCity;
 
 flagKeepGoing = 1;
 % Set an upper bound on allowable searches. Once a viable solution is
@@ -586,10 +593,10 @@ while 1==flagKeepGoing
     iteration_number = iteration_number+1;
 
     % Pull out all the details from this solutions row
-    previousCost                = solutions(currentBestExpansionSolution,1);
-    previousFlagsCityWasVisited = solutions(currentBestExpansionSolution,3:2+NFeasibleGoals);
-    previousVisitSequence       = solutions(currentBestExpansionSolution,3+NFeasibleGoals:(2+2*NFeasibleGoals));
-    flagHeadingHome             = solutions(currentBestExpansionSolution,end);
+    previousCost                = stagedTests(currentBestExpansionSolution,1);
+    previousFlagsCityWasVisited = stagedTests(currentBestExpansionSolution,3:2+NFeasibleGoals);
+    previousVisitSequence       = stagedTests(currentBestExpansionSolution,3+NFeasibleGoals:(2+2*NFeasibleGoals));
+    flagHeadingHome             = stagedTests(currentBestExpansionSolution,end);
 
     fprintf(1, '%.0f: Previous cost: %.2f of max: %.2f\n', iteration_number, previousCost, costCropLimit);
 
@@ -653,23 +660,23 @@ while 1==flagKeepGoing
 
         % Push results into solutions for searching
         NsolutionRows = length(solutionRows(:,1));
-        rowStartToFill = find(~isnan(solutions(:,1)),1,'last')+1;
+        rowStartToFill = find(~isnan(stagedTests(:,1)),1,'last')+1;
         rowEndToFill   = rowStartToFill+NsolutionRows-1;
-        solutions(rowStartToFill:rowEndToFill,:) = solutionRows;
+        stagedTests(rowStartToFill:rowEndToFill,:) = solutionRows;
 
         % Remove the row that was just searched
-        solutions(currentBestExpansionSolution,:) = [];
+        stagedTests(currentBestExpansionSolution,:) = [];
 
         % Remove any queued solutions higher than the current completed
         % cost
         if ~isinf(costCropLimit)
-            solutionRowsToRemove = solutions(:,1)>costCropLimit;
-            solutions(solutionRowsToRemove,:) = [];
+            solutionRowsToRemove = stagedTests(:,1)>costCropLimit;
+            stagedTests(solutionRowsToRemove,:) = [];
         end
 
         
         % Find next best city
-        [~,currentBestExpansionSolution] = min(solutions(:,1));
+        [~,currentBestExpansionSolution] = min(stagedTests(:,1));
     end
 end
 
