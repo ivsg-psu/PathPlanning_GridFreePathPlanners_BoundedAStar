@@ -126,7 +126,7 @@ else
     end
 end
 
-% flag_do_debug = 1;
+flag_do_debug = 1;
 
 if flag_do_debug
     st = dbstack; %#ok<*UNRCH>
@@ -577,8 +577,8 @@ stagedTests = [accumulatedCosts, minPossibleTotalCosts, flagsCityWasVisited, vis
 % Initialize values
 currentBestExpansionSolution = 1;
 currentBestCity = 1;
-stagedTests(currentBestExpansionSolution,1) = 0;
-stagedTests(currentBestExpansionSolution,1+NFeasibleGoals+1) = currentBestCity;
+solutions(currentBestExpansionSolution,1) = 0;
+solutions(currentBestExpansionSolution,2+NFeasibleGoals+1) = currentBestCity;
 
 flagKeepGoing = 1;
 % Set an upper bound on allowable searches. Once a viable solution is
@@ -645,14 +645,14 @@ while 1==flagKeepGoing
 
         % Convert the cost search options into rows to add to solutionRows
         % queue. Start by creating a "copy" of all the current city
-        solutionRows = repmat([nan previousFlagsCityWasVisited previousVisitSequence flagHeadingHome], Nunvisited,1);
+        solutionRows = repmat([nan nan previousFlagsCityWasVisited previousVisitSequence flagHeadingHome], Nunvisited,1);
 
         % Fill in the costs for the cities that can be visited
         solutionRows(:,1) = unvisitedCosts';
         
         % Set the visit sequence to indicate which cities were added. NOTE:
         % for the last "home" city, this will put 1 into the last column
-        solutionRows(:,1+NFeasibleGoals+Nvisited+1) = unvisitedCities';
+        solutionRows(:,2+NFeasibleGoals+Nvisited+1) = unvisitedCities';
 
         % Remove any solution rows that are not feasible for later
         % exploration. These will have NaN costs

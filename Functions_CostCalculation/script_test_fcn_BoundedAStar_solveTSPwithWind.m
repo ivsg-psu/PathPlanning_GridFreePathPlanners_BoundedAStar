@@ -48,15 +48,6 @@ maxWindSpeed = 1;
 windFieldU = normalizedEastWind*maxWindSpeed;
 windFieldV = normalizedNorthWind*maxWindSpeed;
 startPoint = [0 0];
-flagWindRoundingType = 1;
-
-xRange = windFieldX(end)-windFieldX(1);
-yRange = windFieldY(end)-windFieldY(1);
-
-Ngoals = 3;
-% rng(1);
-% goalPoints = rand(Ngoals,2).*[xRange yRange] + ones(Ngoals,1)*[windFieldX(1) windFieldY(1)];
-
 goalPoints = [4 6; -6 4; 8 -4; -6 -2];
 
 cellArrayOfSearchOptions = cell(5,1);
@@ -102,15 +93,6 @@ maxWindSpeed = 1;
 windFieldU = normalizedEastWind*maxWindSpeed;
 windFieldV = normalizedNorthWind*maxWindSpeed;
 startPoint = [0 -8];
-flagWindRoundingType = 1;
-
-xRange = windFieldX(end)-windFieldX(1);
-yRange = windFieldY(end)-windFieldY(1);
-
-Ngoals = 3;
-% rng(1);
-% goalPoints = rand(Ngoals,2).*[xRange yRange] + ones(Ngoals,1)*[windFieldX(1) windFieldY(1)];
-
 goalPoints = [0 -2; 0 4; -3 8; -8 8; -8 0; -8 -8];
 
 cellArrayOfSearchOptions = cell(5,1);
@@ -156,15 +138,6 @@ maxWindSpeed = 1;
 windFieldU = normalizedEastWind*maxWindSpeed;
 windFieldV = normalizedNorthWind*maxWindSpeed;
 startPoint = [0 -8];
-flagWindRoundingType = 1;
-
-xRange = windFieldX(end)-windFieldX(1);
-yRange = windFieldY(end)-windFieldY(1);
-
-Ngoals = 3;
-% rng(1);
-% goalPoints = rand(Ngoals,2).*[xRange yRange] + ones(Ngoals,1)*[windFieldX(1) windFieldY(1)];
-
 goalPoints = [0 -2; 0 4; -3 8; -8 8; -8 0; -8 -8];
 
 cellArrayOfSearchOptions = cell(5,1);
@@ -193,10 +166,9 @@ assert(size(orderedVisitSequence,2)==1);
 assert(isequal(get(gcf,'Number'),figNum));
 
 
-%% DEMO case: negative circulating wind field, goal points specified
-% NOTE: this takes about 20+ minutes on laptop
+%% DEMO case: negative circulating wind field, 6 goal points specified
 figNum = 10004;
-titleString = sprintf('DEMO case: negative circulating wind field, goal points specified');
+titleString = sprintf('DEMO case: negative circulating wind field, 6 goal points specified');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 figure(figNum); clf;
 
@@ -212,12 +184,9 @@ maxWindSpeed = 1;
 windFieldU = normalizedEastWind*maxWindSpeed;
 windFieldV = normalizedNorthWind*maxWindSpeed;
 startPoint = [0 -8];
-flagWindRoundingType = 1;
 
 xRange = windFieldX(end)-windFieldX(1);
 yRange = windFieldY(end)-windFieldY(1);
-
-URHERE
 
 Ngoals = 6;
 rng(5);
@@ -254,10 +223,67 @@ assert(size(orderedVisitSequence,2)==1);
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
 
-%% DEMO case: negative circulating wind field, goal points specified
-% NOTE: this takes about 20+ minutes on laptop
+%% DEMO case: negative circulating wind field, 8 goal points specified
 figNum = 10005;
-titleString = sprintf('DEMO case: negative circulating wind field, goal points specified');
+titleString = sprintf('DEMO case: negative circulating wind field, 8 goal points specified');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+% Load starting data
+% Map 6 is OK, 8 is fairly good,
+[normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData(14);
+
+% Call graph generation function
+radius = 0.6;
+maxWindSpeed = 1;
+
+windFieldU = normalizedEastWind*maxWindSpeed;
+windFieldV = normalizedNorthWind*maxWindSpeed;
+startPoint = [0 -8];
+
+xRange = windFieldX(end)-windFieldX(1);
+yRange = windFieldY(end)-windFieldY(1);
+
+Ngoals = 8;
+rng(5);
+percentCut = 0.1;
+randDeviation = (rand(Ngoals,2)-0.5)*(1-percentCut);
+midX = mean(windFieldX);
+midY = mean(windFieldY);
+goalPoints = randDeviation.*[xRange yRange] + ones(Ngoals,1)*[midX midY];
+
+%goalPoints = [0 -2; 0 4; -3 8; -8 8; -8 0; -8 -8];
+
+cellArrayOfSearchOptions = cell(5,1);
+cellArrayOfSearchOptions{1} = 50; % Nsteps
+cellArrayOfSearchOptions{2} = 1;   % flagStopIfEntireFieldCovered
+cellArrayOfSearchOptions{3} = 0.2; % toleranceToStopIfSameResult
+cellArrayOfSearchOptions{4} = goalPoints;  % allGoalPointsList
+cellArrayOfSearchOptions{5} = 0;   % flagStopIfHitOneGoalPoint
+
+% Call function
+[orderedVisitSequence] = fcn_BoundedAStar_solveTSPwithWind(...
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, startPoint, goalPoints, (cellArrayOfSearchOptions), (figNum));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(orderedVisitSequence));
+
+% Check variable sizes
+assert(size(orderedVisitSequence,1)>=3); 
+assert(size(orderedVisitSequence,2)==1);
+
+% Check variable values
+% (too difficult - randomly generated)
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+
+%% DEMO case: negative circulating wind field, 10 goal points specified
+% NOTE: this takes about 20+ minutes on laptop
+figNum = 10006;
+titleString = sprintf('DEMO case: negative circulating wind field, 10 goal points specified');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 figure(figNum); clf;
 
@@ -273,7 +299,7 @@ maxWindSpeed = 1;
 windFieldU = normalizedEastWind*maxWindSpeed;
 windFieldV = normalizedNorthWind*maxWindSpeed;
 startPoint = [0 -8];
-flagWindRoundingType = 1;
+
 
 xRange = windFieldX(end)-windFieldX(1);
 yRange = windFieldY(end)-windFieldY(1);
@@ -371,7 +397,7 @@ figure(figNum); close(figNum);
 % windFieldU = normalizedEastWind*maxWindSpeed;
 % windFieldV = normalizedNorthWind*maxWindSpeed;
 % startPoint = [0 0; 1 2];
-% flagWindRoundingType = 1;
+% 
 % cellArrayOfSearchOptions = [];
 % 
 % % Call function
@@ -413,7 +439,7 @@ figure(figNum); close(figNum);
 % windFieldU = normalizedEastWind*maxWindSpeed;
 % windFieldV = normalizedNorthWind*maxWindSpeed;
 % startPoint = [0 0; 1 2];
-% flagWindRoundingType = 1;
+% 
 % cellArrayOfSearchOptions = [];
 % 
 % % Call function
@@ -456,7 +482,7 @@ close(figNum);
 % windFieldU = normalizedEastWind*maxWindSpeed;
 % windFieldV = normalizedNorthWind*maxWindSpeed;
 % startPoint = [0 0; 1 2];
-% flagWindRoundingType = 1;
+% 
 % cellArrayOfSearchOptions = [];
 % 
 % Niterations = 10;
@@ -584,6 +610,12 @@ if 1==0
     [orderedVisitSequence] = fcn_BoundedAStar_solveTSPwithWind(...
         radius, windFieldU, windFieldV, windFieldX, windFieldY, startPoint, goalPoints, (cellArrayOfSearchOptions), (figNum));
 
+    % Check variable types
+    assert(isnumeric(orderedVisitSequence));
+
+    % Check variable sizes
+    assert(size(orderedVisitSequence,1)>=3);
+    assert(size(orderedVisitSequence,2)==1);
    %% WARNING case: two repeated goal points
     figNum = 99002;
     titleString = sprintf('WARNING case: two repeated goal points');
@@ -618,6 +650,12 @@ if 1==0
     [orderedVisitSequence] = fcn_BoundedAStar_solveTSPwithWind(...
         radius, windFieldU, windFieldV, windFieldX, windFieldY, startPoint, goalPoints, (cellArrayOfSearchOptions), (figNum));
 
+    % Check variable types
+    assert(isnumeric(orderedVisitSequence));
+
+    % Check variable sizes
+    assert(size(orderedVisitSequence,1)>=3);
+    assert(size(orderedVisitSequence,2)==1);
 
     %% ERROR case: start/end is repeated within goal points
     figNum = 99003;
@@ -635,7 +673,7 @@ if 1==0
     windFieldU = normalizedEastWind*maxWindSpeed;
     windFieldV = normalizedNorthWind*maxWindSpeed;
     startPoint = [0 0];
-    flagWindRoundingType = 1;
+    
 
     xRange = windFieldX(end)-windFieldX(1);
     yRange = windFieldY(end)-windFieldY(1);
@@ -657,6 +695,12 @@ if 1==0
     [orderedVisitSequence] = fcn_BoundedAStar_solveTSPwithWind(...
         radius, windFieldU, windFieldV, windFieldX, windFieldY, startPoint, goalPoints, (cellArrayOfSearchOptions), (figNum));
 
+    % Check variable types
+    assert(isnumeric(orderedVisitSequence));
+
+    % Check variable sizes
+    assert(size(orderedVisitSequence,1)>=3);
+    assert(size(orderedVisitSequence,2)==1);
        
 end
 

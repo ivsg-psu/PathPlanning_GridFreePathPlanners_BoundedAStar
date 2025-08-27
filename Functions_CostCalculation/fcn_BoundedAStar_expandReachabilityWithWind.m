@@ -176,6 +176,10 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo, varargout] = ..
 % 2025_08_19 by S. Brennan
 % - In fcn_BoundedAStar_expandReachabilityWithWind
 %   % * added calculation of exact "backward" paths from goals to start
+% 
+% 2025_08_27 by S. Brennan
+% - In fcn_BoundedAStar_expandReachabilityWithWind
+%   % * functionalized fractional path calc: fcn_INTERNAL_findStepFraction
 
 % TO-DO
 % -- when wind is VERY high, higher than self speed, the set pushes away
@@ -357,6 +361,8 @@ end
 
 %%%%%
 % Estimate number of steps to simulate
+
+
 % XYvectors = [windFieldX' windFieldY'];
 % maxXYs = max(XYvectors,[],1,'omitmissing');
 % minXYs = min(XYvectors,[],1,'omitmissing');
@@ -381,8 +387,8 @@ maxY = windFieldY(end);
 axisRange = [minX minY maxX maxY];
 deltaX = windFieldX(2) - windFieldX(1);
 
-allExpansions = cell(Nsteps,1);
 
+allExpansions = cell(Nsteps,1);
 if ~isempty(allGoalPointsList)
     stepsWhenGoalPointsHit = nan(length(allGoalPointsList(:,1)),1);
     if 1==flagCaclulateReachableSetExactCosts
@@ -403,14 +409,18 @@ while 1==flagContinueExpansion
     ith_step = ith_step+1;
     allExpansions{ith_step,1} = startPoints;
 
-    % if 20==ith_step
-    %     disp('Stop here');
-    %     % dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 427
-    %     % dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 455
-    %     dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 496 % This one s
-    %     % dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 553 % +
-    % end
+    % FOR DEBUGGING
+    if 1==0
+        if 20==ith_step
+            disp('Stop here');
+            % dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 427
+            % dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 455
+            dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 496 % This one s
+            % dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 553 % +
+        end
+    end
 
+    % FOR DEBUGGING
     if 1==0
         save('BUG_90004_fcn_BoundedAStar_reachabilityWithInputs.mat',...
             'radius', 'windFieldU', 'windFieldV', 'windFieldX', 'windFieldY', ...
@@ -418,9 +428,6 @@ while 1==flagContinueExpansion
     end
 
     % Call function to find reachable set on this time step
-    % figure(2343);
-    % clf;
-
     if any(isnan(startPoints),'all')
         error('startPoints have points that are NaN valued. Unable to continue');
     end
@@ -431,12 +438,11 @@ while 1==flagContinueExpansion
         [reachableSet, thisCellArrayOfIntermediateCalculations] = fcn_BoundedAStar_reachabilityWithInputs(...
             radius, windFieldUk, windFieldVk, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
     else
-    % FORMAT:
-    % [reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
-    %     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
-    [reachableSet, thisCellArrayOfIntermediateCalculations] = fcn_BoundedAStar_reachabilityWithInputs(...
-        radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
-    legend off;
+        % FORMAT:
+        % [reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
+        %     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
+        [reachableSet, thisCellArrayOfIntermediateCalculations] = fcn_BoundedAStar_reachabilityWithInputs(...
+            radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
     end
    
     if any(isnan(reachableSet),'all')
@@ -446,10 +452,8 @@ while 1==flagContinueExpansion
     % Save results for backward calculations
     cellArrayOfExpansions{ith_step+1,1} = reachableSet;
     for ith_cell = 1:5
-        temp = thisCellArrayOfIntermediateCalculations{ith_cell,1};
-        cellArrayOfIntermediateCalculations{ith_step+1,ith_cell} = temp;
+        cellArrayOfIntermediateCalculations{ith_step+1,ith_cell} = thisCellArrayOfIntermediateCalculations{ith_cell,1};
     end
-
 
     if flag_do_debug && 1==1
         figure(debug_figNum);
@@ -499,6 +503,7 @@ while 1==flagContinueExpansion
 
     % Bound the XY values
     if 1==1
+        % TO DO - functionalize this below
         % NEW way
         unboundedRegion = fcn_INTERNAL_makeRegion(startPointsSparse);
         insideRegion = intersect(boundingRegion, unboundedRegion);
@@ -722,48 +727,11 @@ while 1==flagContinueExpansion
 
             % Do we calculate reachableSetExactCosts?
             if 1==flagCaclulateReachableSetExactCosts
-                thisBoundary = newStartPoints; % allExpansions{ith_step,1};
-                lastBoundary = allExpansions{ith_step,1}; % allExpansions{ith_step-1,1};
+                thisBoundary = newStartPoints; % allExpansions{ith_step,1};                
+                lastBoundary = cellArrayOfIntermediateCalculations{ith_step+1,1}; 
                 thesePoints = allGoalPointsList(pointsFoundThisSimStep,:);
-
-                % For debugging
-                if 1==0
-                    figure(77777);
-                    clf;
-                    hold on;
-                    axis equal
-                    plot(thisBoundary(:,1),thisBoundary(:,2),'r.-');
-                    plot(lastBoundary(:,1),lastBoundary(:,2),'b.-');
-                    plot(thesePoints(:,1),thesePoints(:,2),'k.','MarkerSize',10);
-                    
-                end
-                % FORMAT:
-                % St_points = fcn_Path_convertXY2St(referencePath,XY_points,...
-                %    (flag_rounding_type), (fig_num));
-
-                St_points_before_method1 = real(fcn_Path_convertXY2St(lastBoundary, thesePoints, (1), (-1)));
-                St_points_before_method2 = real(fcn_Path_convertXY2St(lastBoundary, thesePoints, (2), (-1)));
-                t_points_before = min(St_points_before_method1(:,2),St_points_before_method2(:,2));
-                St_points_after_method1 =  real(fcn_Path_convertXY2St(thisBoundary, thesePoints, (1), (-1)));
-                St_points_after_method2 =  real(fcn_Path_convertXY2St(thisBoundary, thesePoints, (2), (-1)));
-                t_points_after = min(St_points_after_method1(:,2),St_points_after_method2(:,2));
-
-                % Make sure all points are as expected: negative t values
-                % for the before, and positive after. Note: in strong wind
-                % fields, the points may be outside the boundary.
-                try
-                    assert(all(t_points_before<=0,'all'))
-                    assert(all(t_points_after>=0,'all'))
-                catch
-                    error('Unexpected t values');
-                end
-
-                % Calculate fraction of step
-                totalTransverseDistance = sum([t_points_after -t_points_before],2);
-                fractionalStep = -t_points_before./totalTransverseDistance;
-                exactStepsWhenGoalPointsHit(pointsFoundThisSimStep) = ith_step-1+fractionalStep;
-
-
+                fractionalSteps = fcn_INTERNAL_findStepFraction(thesePoints,thisBoundary,lastBoundary);
+                exactStepsWhenGoalPointsHit(pointsFoundThisSimStep) = ith_step-1+fractionalSteps;
             end
 
             % Do we stop with all points hit?
@@ -824,9 +792,13 @@ if 1==flagCaclulateReachableSetPaths
             end
 
             % Call function to find "backward" path?
+            try
             pathXYAndControlUV =  ...
                 fcn_BoundedAStar_pathCalculationBackToStart(...
                 thisGoal, cellArrayOfExpansions, cellArrayOfIntermediateCalculations, (tempfigNum));
+            catch
+                error('Bug encountered when doing back-path calculations.');
+            end
 
             if tempfigNum~=-1
                 % Do forward simlation (to test)
@@ -1145,3 +1117,54 @@ for ith_point = 1:Npoints
 end
 
 end % fcn_INTERNAL_findClosestWall
+
+%% fcn_INTERNAL_findStepFraction
+function fractionalSteps = fcn_INTERNAL_findStepFraction(thesePoints,thisBoundary,lastBoundary)
+% For debugging, plot inputs
+if 1==0
+    figure(77777);
+    clf;
+    hold on;
+    axis equal
+    plot(thisBoundary(:,1),thisBoundary(:,2),'r.-');
+    plot(lastBoundary(:,1),lastBoundary(:,2),'b.-');
+    plot(thesePoints(:,1),thesePoints(:,2),'k.','MarkerSize',10);
+
+end
+% FORMAT:
+% St_points = fcn_Path_convertXY2St(referencePath,XY_points,...
+%    (flag_rounding_type), (fig_num));
+
+St_points_before_method1 = real(fcn_Path_convertXY2St(lastBoundary, thesePoints, (1), (-1)));
+St_points_before_method2 = real(fcn_Path_convertXY2St(lastBoundary, thesePoints, (2), (-1)));
+t_points_before_raw = [St_points_before_method1(:,2),St_points_before_method2(:,2)];
+t_points_before_raw(t_points_before_raw>0) = nan;
+t_point_before = min(t_points_before_raw);
+
+St_points_after_method1 =  real(fcn_Path_convertXY2St(thisBoundary, thesePoints, (1), (-1)));
+St_points_after_method2 =  real(fcn_Path_convertXY2St(thisBoundary, thesePoints, (2), (-1)));
+t_points_after_raw = [St_points_after_method1(:,2),St_points_after_method2(:,2)];
+t_points_after_raw(t_points_after_raw<0) = nan;
+t_point_after = min(t_points_after_raw);
+
+% Make sure all points are as expected: negative t values
+% for the before, and positive after. Note: in strong wind
+% fields, the points may be outside the boundary.
+try
+    assert(all(t_point_before<=0,'all'))
+    assert(all(t_point_after>=0,'all'))
+catch
+    figure(77777);
+    clf;
+    hold on;
+    axis equal
+    plot(thisBoundary(:,1),thisBoundary(:,2),'r.-');
+    plot(lastBoundary(:,1),lastBoundary(:,2),'b.-');
+    plot(thesePoints(:,1),thesePoints(:,2),'k.','MarkerSize',10);
+    error('Unexpected t values. See Fig 77777 for debugging');
+end
+
+% Calculate fraction of step
+totalTransverseDistance = sum([t_point_after -t_point_before],2);
+fractionalSteps = -t_point_before./totalTransverseDistance;
+end % Ends fcn_INTERNAL_findStepFraction
