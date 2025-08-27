@@ -126,7 +126,7 @@ else
     end
 end
 
-flag_do_debug = 1;
+% flag_do_debug = 1;
 
 if flag_do_debug
     st = dbstack; %#ok<*UNRCH>
@@ -234,9 +234,9 @@ if flag_do_debug
     plot(startPoint(:,1),startPoint(:,2),'.','Color',colorOrder(1,:),'MarkerSize',30,'DisplayName','Input: startPoint');
 
     % Plot the goal points
-    for ith_point = 1:length(originalGoalPoints(:,1))
-        thisColorRow = mod(ith_point,Ncolors)+1;
-        plot(originalGoalPoints(ith_point,1),originalGoalPoints(ith_point,2),'.','Color',colorOrder(thisColorRow,:),'MarkerSize',20,'LineWidth', 2, 'DisplayName','Input: goalPoints');
+    for ith_fromPoint = 1:length(originalGoalPoints(:,1))
+        thisColorRow = mod(ith_fromPoint,Ncolors)+1;
+        plot(originalGoalPoints(ith_fromPoint,1),originalGoalPoints(ith_fromPoint,2),'.','Color',colorOrder(thisColorRow,:),'MarkerSize',20,'LineWidth', 2, 'DisplayName','Input: goalPoints');
     end
 end
 
@@ -259,8 +259,8 @@ if length(allPoints(:,1))~=length(allPointsOriginal(:,1))
     end
 
     fprintf(1,'The following goal points were found as repeated:\n');
-    for ith_point = 1:length(pointsMissing)
-        thisPointIndex = pointsMissing(ith_point);
+    for ith_fromPoint = 1:length(pointsMissing)
+        thisPointIndex = pointsMissing(ith_fromPoint);
         fprintf(1,'\tPoint %.0d, with [X Y] of: %.2f %.2f\n',thisPointIndex-1,allPointsOriginal(thisPointIndex,1),allPointsOriginal(thisPointIndex,2));
     end
     warning('on','backtrace');
@@ -269,13 +269,13 @@ end
 
 %%%%
 % Number all the points (now unique)
-Npoints = length(allPoints(:,1));
-pointNumbers = (1:Npoints)';
+NUniqueGoals = length(allPoints(:,1));
+pointNumbers = (1:NUniqueGoals)';
 if flag_do_debug
     figure(debug_figNum);
     % Number the unique points
-    for ith_point = 1:Npoints
-        text(allPoints(ith_point,1)+0.2,allPoints(ith_point,2),sprintf('%.0f',pointNumbers(ith_point)));
+    for ith_fromPoint = 1:NUniqueGoals
+        text(allPoints(ith_fromPoint,1)+0.2,allPoints(ith_fromPoint,2),sprintf('%.0f',pointNumbers(ith_fromPoint)));
     end
 end
 
@@ -284,21 +284,19 @@ end
 % For each point, find costs to go from that point to the others
 % Costs are saved as "from" as rows, and "to" as columns. Note: self costs
 % are -1. Costs that are not possible (infeasible) are NaN.
-costsFromTo = nan(Npoints,Npoints);
-pathsFromTo = cell(Npoints,Npoints);
+costsFromTo = nan(NUniqueGoals,NUniqueGoals);
+pathsFromTo = cell(NUniqueGoals,NUniqueGoals);
 
 % Make a matrix that is all true values. We use this to trigger the points
 % that are NOT the source point as temporary goalPoints.
-allTrue = true(Npoints,1);
-
-for ith_point = 1:Npoints
+for ith_fromPoint = 1:NUniqueGoals
     % For each source point, find the costs to all the other points. For
     % the self-to-self cost, we'll treat this as infinite to avoid pushing
     % points to loop back onto themselves
 
-    startPoint = allPoints(ith_point,:);
-    notThisPoint = allTrue;
-    notThisPoint(ith_point,1) = 0;
+    startPoint = allPoints(ith_fromPoint,:);
+    notThisPoint = fcn_INTERNAL_flagAllTrueBut(NUniqueGoals,ith_fromPoint);
+
     tempGoalPoints = allPoints(notThisPoint,:);
     tempGoalPointIDs = pointNumbers(notThisPoint,:);
 
@@ -333,22 +331,22 @@ for ith_point = 1:Npoints
 
     % Save the costs and paths
     if 1==1
-        costsFromTo(ith_point,tempGoalPointIDs) = reachableSetExactCosts';
+        costsFromTo(ith_fromPoint,tempGoalPointIDs) = reachableSetExactCosts';
         for ith_goal = 1:length(tempGoalPointIDs)
             thisGoalID = tempGoalPointIDs(ith_goal);
-            pathsFromTo{ith_point,thisGoalID} = cellArrayOfReachableSetPaths{ith_goal};
+            pathsFromTo{ith_fromPoint,thisGoalID} = cellArrayOfReachableSetPaths{ith_goal};
         end
     else
         % Use approximate costs
-        costsFromTo(ith_point,tempGoalPointIDs) = reachableFlags';
+        costsFromTo(ith_fromPoint,tempGoalPointIDs) = reachableFlags';
     end
 
-    costsFromTo(ith_point,ith_point) = -1; % Self costs are -1
+    costsFromTo(ith_fromPoint,ith_fromPoint) = -1; % Self costs are -1
 
     if flag_do_debug
         figure(debug_figNum);
 
-        thisColorRow = mod(ith_point-1,Ncolors)+1;
+        thisColorRow = mod(ith_fromPoint-1,Ncolors)+1;
         thisColor = colorOrder(thisColorRow,:);
 
         reachableIndices = tempGoalPointIDs(reachableFlags>0);
@@ -361,11 +359,11 @@ for ith_point = 1:Npoints
 
         % Plot the feasible goal points
         plot(feasibleGoalPoints(:,1),feasibleGoalPoints(:,2), 'o', 'Color', thisColor,...
-            'MarkerSize', 5+5*ith_point, 'LineWidth', 2, 'HandleVisibility', 'off'); %'DisplayName','feasibleGoalPoints');
+            'MarkerSize', 5+5*ith_fromPoint, 'LineWidth', 2, 'HandleVisibility', 'off'); %'DisplayName','feasibleGoalPoints');
 
         % Plot the paths to feasible goal points
         for ith_goal = 1:length(tempGoalPointIDs)
-           thisPath =  pathsFromTo{ith_point,ith_goal};
+           thisPath =  pathsFromTo{ith_fromPoint,ith_goal};
            if ~isempty(thisPath)
                plot(thisPath(:,1),thisPath(:,2),'-','Color',thisColor,'LineWidth', 2,'HandleVisibility','off');
            end
@@ -373,17 +371,18 @@ for ith_point = 1:Npoints
 
     end % Ends if flag_do_debug
 
-end
+end % Ends looping through "from" points to generate entire matrix of costs
+
 
 %%%%%
 % Remove infeasible points
 
 % Save indices of original costs, so that when the rows/cols are deleted,
 % we can remap the cell array of paths correctly
-previousRows = nan(size(costsFromTo));
-previousCols = nan(size(costsFromTo));
-for ith_row = 1:size(costsFromTo,1)
-    for jth_col = 1:size(costsFromTo,2)
+previousRows = nan(NUniqueGoals,NUniqueGoals);
+previousCols = nan(NUniqueGoals,NUniqueGoals);
+for ith_row = 1:NUniqueGoals
+    for jth_col = 1:NUniqueGoals
         previousRows(ith_row,jth_col) = ith_row;
         previousCols(ith_row,jth_col) = jth_col;
     end
@@ -392,27 +391,29 @@ end
 % Delete infeasible goal points from cost matrix
 feasibleCostsFromTo = costsFromTo;
 if any(isnan(costsFromTo),'all')
+
+    % Find all the nan values in the cost matrix
     notReachable = isnan(costsFromTo);
+
+    % Add up the columns via a row-sum, these are the "to" locations
     rowSum = sum(notReachable,1);
-    badGoals = find(rowSum==(Npoints-1));
-    NbadGoals = length(badGoals);
-    pointsToKeep = allTrue;
-    for ith_bad = 1:NbadGoals
-        % Work from outside inward, since we're removing rows and columns
-        thisBad = badGoals(NbadGoals-ith_bad+1);
-        pointsToKeep(thisBad) = false;
 
-        % Delete rows/columns
-        feasibleCostsFromTo(thisBad,:) = [];
-        feasibleCostsFromTo(:,thisBad) = [];
-        previousRows(thisBad,:) = [];
-        previousRows(:,thisBad) = [];
-        previousCols(thisBad,:) = [];
-        previousCols(:,thisBad) = [];
+    % If row sum is Npoints-1, the every other "from" point found this "to"
+    % point not reachable. So this goal is not reachable. Find these "bad"
+    % goals
+    badGoalIndices = find(rowSum==(NUniqueGoals-1));
 
+    pointsToKeep = fcn_INTERNAL_flagAllTrueBut(NUniqueGoals,badGoalIndices);
 
-    end
+    % Delete rows/columns
+    feasibleCostsFromTo(badGoalIndices,:) = [];
+    feasibleCostsFromTo(:,badGoalIndices) = [];
+    previousRows(badGoalIndices,:) = [];
+    previousRows(:,badGoalIndices) = [];
+    previousCols(badGoalIndices,:) = [];
+    previousCols(:,badGoalIndices) = [];
 
+    % Keep good points
     feasibleAllPoints = allPoints(pointsToKeep,:);
     feasiblePointNumbers = pointNumbers(pointsToKeep,:);
     notFeasiblePointNumbers = pointNumbers(~pointsToKeep,:);
@@ -423,41 +424,59 @@ if any(isnan(costsFromTo),'all')
         error('The start/end point is not reachable!');
     end
 
+    NbadGoals = length(notFeasiblePointNumbers);
     if NbadGoals>0
         fprintf(1,'The following goal points were found as infeasible:\n');
-        for ith_point = 1:length(notFeasiblePointNumbers)
-            thisPointIndex = notFeasiblePointNumbers(ith_point);
+        for ith_fromPoint = 1:NbadGoals
+            thisPointIndex = notFeasiblePointNumbers(ith_fromPoint);
             fprintf(1,'\tPoint %.0d, with [X Y] of: %.2f %.2f\n',thisPointIndex,allPoints(thisPointIndex,1), allPoints(thisPointIndex,2));
         end
     end
 else
     % All points are feasible
     feasibleAllPoints = allPoints;
-    feasiblePointNumbers = pointNumbers;
 end
 
+NFeasibleGoals = size(feasibleCostsFromTo,1);
+
 % Save the paths
-pathsFromToFeasible = cell(size(feasibleCostsFromTo));
-for ith_row = 1:size(pathsFromToFeasible,1)
-    for jth_col = 1:size(pathsFromToFeasible,2)
+pathsFromToFeasible = cell(NFeasibleGoals,NFeasibleGoals);
+for ith_row = 1:NFeasibleGoals
+    for jth_col = 1:NFeasibleGoals
         sourceRow = previousRows(ith_row,jth_col);
         sourceCol = previousCols(ith_row,jth_col);
         pathsFromToFeasible{ith_row, jth_col} = pathsFromTo{sourceRow, sourceCol};
     end
 end
 
+%%%%
+% Find the minimum "to" costs. This is the absolute minimum possible, and
+% usually infeasible, cost to get to a goal regardless of the "from"
+% origin. For example, if goal 3 and 7 remain, and the minimum cost to get
+% to each respectively is 15 and 6, then there is a minimum of 21 more
+% "cost" to fill these missing cities in. This minimum cost value is VERY
+% useful in later steps to eliminate bad options. To continue this example,
+% if the minimum all-city circuit cost discovered so far is 100, and an
+% option being examined has looked at all cities except 3 and 7, and
+% currently has a cost of 85, there's no possible way that the addition of
+% 3 and 7 as paths will better than the best cost found so far. So this
+% option can be deleted without even checking.
 
+% To find minimum costs, set all -1 costs in costsFromTo to large value
+% (inf). Then find minimum along each column.
+resetCosts = feasibleCostsFromTo;
+negativeOneIndices = feasibleCostsFromTo==-1;
+resetCosts(negativeOneIndices) = inf;
+minimumToCosts = min(resetCosts,[],1);
+minimumPossibleTrajectoryCost = sum(minimumToCosts);
 
-NgoodGoals = length(feasiblePointNumbers(:,1));
-
-% NgoodGoals
-% feasibleCostsFromTo
+fprintf(1,'Absolute minimum possible cost: %.2f\n',minimumPossibleTrajectoryCost)
 
 %%%%%
 % Run a "greedy" algorithm to estimate number of steps to simulate
-accumulatedCosts = nan(NgoodGoals+1,1);
-flagsCityWasVisited = zeros(NgoodGoals,1);
-visitSequence = nan(NgoodGoals+1,1);
+accumulatedCosts = nan(NFeasibleGoals+1,1);
+flagsCityWasVisited = zeros(NFeasibleGoals,1);
+visitSequence = nan(NFeasibleGoals+1,1);
 
 % Initialize values
 visitSequence(1,1) = 1;
@@ -465,7 +484,7 @@ flagsCityWasVisited(1,1) = 1;
 accumulatedCosts(1,1) = 0;
 
 
-for ith_visit = 2:NgoodGoals
+for ith_visit = 2:NFeasibleGoals
     previousCity = visitSequence(ith_visit-1,1);
     unvisitedCities = find(flagsCityWasVisited==0);
     previousCosts = feasibleCostsFromTo(previousCity,:);
@@ -484,6 +503,8 @@ accumulatedCosts(end,1) = accumulatedCosts(end-1,1) + feasibleCostsFromTo(thisCi
 % TO DO: use this to crop solutions
 greedySearchSimLength = accumulatedCosts(end,1);
 
+fprintf(1,'Greedy search result: %.2f\n',greedySearchSimLength);
+
 % Plot the greedy result
 if flag_do_debug
     figure(debug_figNum);
@@ -491,12 +512,12 @@ if flag_do_debug
     % pointSequence = feasibleAllPoints(visitSequence,:);
     % Plot the ordered visit sequence
 
-    for ith_point = 1:length(visitSequence)-1
-        thisColorRow = mod(ith_point-1,Ncolors)+1;
+    for ith_fromPoint = 1:length(visitSequence)-1
+        thisColorRow = mod(ith_fromPoint-1,Ncolors)+1;
         thisColor = colorOrder(thisColorRow,:);
 
-        from_index = visitSequence(ith_point,1);
-        goal_index = visitSequence(ith_point+1,1);
+        from_index = visitSequence(ith_fromPoint,1);
+        goal_index = visitSequence(ith_fromPoint+1,1);
         try
             thisPath =  pathsFromToFeasible{from_index,goal_index};
         catch
@@ -511,20 +532,46 @@ if flag_do_debug
 end
 
 %%%%
+% What is the average cost per destination? This is useful to know how
+% selective the path is relative to greedy.
+resetCosts = feasibleCostsFromTo;
+negativeOneIndices = feasibleCostsFromTo==-1;
+resetCosts(negativeOneIndices) = nan;
+meanCostsEachDestination = mean(resetCosts,1,'omitmissing');
+meanTrajectoryCost = sum(meanCostsEachDestination);
+fprintf(1,'Mean (randomized) search result: %.2f\n',meanTrajectoryCost);
+
+
+%%%%
 % Run the TSP solver
+
+% BATCH ideas:
+% Batch first by number of cities visited, then by current best city.
+% Total batches? Ngoals (visited) * Ngoals (best cities at this stage)
+% Pros? 
+% * the operations expand by "best city", so this calculation doesn't need
+%   to be repeated and solution steps "done" are easy to prune
+% * the depth of search is clear in the process, e.g. one step deeper each
+%   time
+% * the remaining cost prune might be easier, e.g. prune all branches at
+%   once?
+% Cons? each best city option expansion will be different
+
 % The maximum problem size is the max number of sim steps times the number
 % of cities, e.g. a sim starting for every city, at every time step
-maxSolutions = ceil(greedySearchSimLength)*NgoodGoals;
+maxSims = ceil(greedySearchSimLength)*NFeasibleGoals;
+fprintf(1,'Maximum number of simulations needed: %.d\n',maxSims);
+solutionBatchSize = 100000;
 
 % Solutions have the form:
-% 1x1 (accumulated cost) Ngx1 (flags city was visited)  Ngx1 (visit sequence) 1x1 (flagHeadingHome) 
-solutions = nan(maxSolutions,2+NgoodGoals*2);
+% 1x1 (accumulated cost) 1x1 (minimum possible total cost) Ngx1 (flags city was visited)  Ngx1 (visit sequence) 1x1 (flagHeadingHome) 
+solutions = nan(solutionBatchSize,3+NFeasibleGoals*2);
 
 % Initialize values
 currentBestExpansionSolution = 1;
 currentBestCity = 1;
 solutions(currentBestExpansionSolution,1) = 0;
-solutions(currentBestExpansionSolution,1+NgoodGoals+1) = currentBestCity;
+solutions(currentBestExpansionSolution,1+NFeasibleGoals+1) = currentBestCity;
 
 flagKeepGoing = 1;
 % Set an upper bound on allowable searches. Once a viable solution is
@@ -540,12 +587,17 @@ while 1==flagKeepGoing
 
     % Pull out all the details from this solutions row
     previousCost                = solutions(currentBestExpansionSolution,1);
-    previousFlagsCityWasVisited = solutions(currentBestExpansionSolution,2:1+NgoodGoals);
-    previousVisitSequence       = solutions(currentBestExpansionSolution,2+NgoodGoals:(1+2*NgoodGoals));
+    previousFlagsCityWasVisited = solutions(currentBestExpansionSolution,3:2+NFeasibleGoals);
+    previousVisitSequence       = solutions(currentBestExpansionSolution,3+NFeasibleGoals:(2+2*NFeasibleGoals));
     flagHeadingHome             = solutions(currentBestExpansionSolution,end);
 
     fprintf(1, '%.0f: Previous cost: %.2f of max: %.2f\n', iteration_number, previousCost, costCropLimit);
 
+    % Pull out the visit sequence. This is the ordering of cities that were
+    % previously visited on this cycle. The last city in the sequence was
+    % the one that is the "currentBestCity", e.g. the city that needs to be
+    % expanded as the "from" city. The remaining unvisited cities are the
+    % ones which will be staged as the subsequent branches.
     visitSequence = previousVisitSequence(~isnan(previousVisitSequence));
     currentBestCity = visitSequence(end);
     
@@ -555,7 +607,7 @@ while 1==flagKeepGoing
     % Find which cities were not visited
     unvisitedCities = find(isnan(previousFlagsCityWasVisited));
     Nunvisited = length(unvisitedCities);
-    Nvisited   = NgoodGoals-Nunvisited;
+    Nvisited   = NFeasibleGoals-Nunvisited;
 
     % Find the visit list. This is the list of cities that have been
     % visited thus far
@@ -593,7 +645,7 @@ while 1==flagKeepGoing
         
         % Set the visit sequence to indicate which cities were added. NOTE:
         % for the last "home" city, this will put 1 into the last column
-        solutionRows(:,1+NgoodGoals+Nvisited+1) = unvisitedCities';
+        solutionRows(:,1+NFeasibleGoals+Nvisited+1) = unvisitedCities';
 
         % Remove any solution rows that are not feasible for later
         % exploration. These will have NaN costs
@@ -630,12 +682,12 @@ if flag_do_debug
     % pointSequence = feasibleAllPoints(orderedVisitSequence,:);
     % Plot the TSP result, the ordered visit sequence
 
-    for ith_point = 1:length(orderedVisitSequence)-1
-        thisColorRow = mod(ith_point-1,Ncolors)+1;
+    for ith_fromPoint = 1:length(orderedVisitSequence)-1
+        thisColorRow = mod(ith_fromPoint-1,Ncolors)+1;
         thisColor = colorOrder(thisColorRow,:);
 
-        from_index = orderedVisitSequence(ith_point,1);
-        goal_index = orderedVisitSequence(ith_point+1,1);
+        from_index = orderedVisitSequence(ith_fromPoint,1);
+        goal_index = orderedVisitSequence(ith_fromPoint+1,1);
         thisPath =  pathsFromToFeasible{from_index,goal_index};
         plot(thisPath(:,1),thisPath(:,2),'-','Color',thisColor,'LineWidth',10);
 
@@ -736,11 +788,11 @@ if flag_do_plots
     plot(startPoint(:,1),startPoint(:,2),'.','Color',colorOrder(1,:),'MarkerSize',30,'DisplayName','Input: startPoint');
 
     % Plot the goal points in different colors
-    for ith_point = 1:length(originalGoalPoints(:,1))
-        thisColorRow = mod(ith_point,Ncolors)+1;
-        h_plot = plot(originalGoalPoints(ith_point,1),originalGoalPoints(ith_point,2),'*',...
+    for ith_fromPoint = 1:length(originalGoalPoints(:,1))
+        thisColorRow = mod(ith_fromPoint,Ncolors)+1;
+        h_plot = plot(originalGoalPoints(ith_fromPoint,1),originalGoalPoints(ith_fromPoint,2),'*',...
             'Color',colorOrder(thisColorRow,:),'MarkerSize',30,'LineWidth', 2);
-        if ith_point ==1
+        if ith_fromPoint ==1
             set(h_plot, 'DisplayName','Input: goalPoints');
         else
             set(h_plot,'HandleVisibility','off');
@@ -753,12 +805,12 @@ if flag_do_plots
     % Plot the TSP result, the ordered visit sequence
     % pointSequence = feasibleAllPoints(orderedVisitSequence,:);
 
-    for ith_point = 1:length(orderedVisitSequence)-1
-        thisColorRow = mod(ith_point-1,Ncolors)+1;
+    for ith_fromPoint = 1:length(orderedVisitSequence)-1
+        thisColorRow = mod(ith_fromPoint-1,Ncolors)+1;
         thisColor = colorOrder(thisColorRow,:);
 
-        from_index = orderedVisitSequence(ith_point,1);
-        goal_index = orderedVisitSequence(ith_point+1,1);
+        from_index = orderedVisitSequence(ith_fromPoint,1);
+        goal_index = orderedVisitSequence(ith_fromPoint+1,1);
         thisPath =  pathsFromToFeasible{from_index,goal_index};
         h_plot = plot(thisPath(:,1),thisPath(:,2),'-','Color',thisColor,'LineWidth',5);
 
@@ -769,7 +821,7 @@ if flag_do_plots
         %     'LineWidth',5,'Color',thisColor,'HandleVisibility','off','ShowArrowHead','on',...
         %     'MaxHeadSize',4,'AutoScale','off','AutoScaleFactor',20);
 
-        if ith_point==1
+        if ith_fromPoint==1
             set(h_plot,'DisplayName','Output: TSP solution');
         else
             set(h_plot,'HandleVisibility','off');
@@ -777,8 +829,8 @@ if flag_do_plots
     end
 
     % Number the unique points
-    for ith_point = 1:Npoints
-        text(allPoints(ith_point,1)+nudge,allPoints(ith_point,2),sprintf('%.0f',pointNumbers(ith_point)));
+    for ith_fromPoint = 1:NUniqueGoals
+        text(allPoints(ith_fromPoint,1)+nudge,allPoints(ith_fromPoint,2),sprintf('%.0f',pointNumbers(ith_fromPoint)));
     end
 
     % Shut the hold off?
@@ -809,5 +861,11 @@ end % Ends the main function
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
+%% fcn_INTERNAL_flagAllTrueButIth
+function flags = fcn_INTERNAL_flagAllTrueBut(Npoints,butIndices)
+% Creates an array of "true" flags, shutting off the "but" points
+flags = true(Npoints,1);
+flags(butIndices,1) = 0;
+end % Ends fcn_INTERNAL_flagAllTrueButIth
 
 

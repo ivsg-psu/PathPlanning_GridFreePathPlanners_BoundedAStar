@@ -818,7 +818,7 @@ if 1==flagCaclulateReachableSetPaths
             end
 
             % Save data for debugging
-            if 1==1
+            if 1==0
                 save('BUG_90006_fcn_BoundedAStar_pathCalculationBackToStart.mat',...
                     'thisGoal','cellArrayOfExpansions','cellArrayOfIntermediateCalculations');
             end
