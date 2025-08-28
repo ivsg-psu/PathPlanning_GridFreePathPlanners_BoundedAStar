@@ -419,11 +419,7 @@ if flag_do_debug
 
         from_index = visitSequence(ith_fromPoint,1);
         goal_index = visitSequence(ith_fromPoint+1,1);
-        try
-            thisPath =  pathsFromToFeasible{from_index,goal_index};
-        catch
-            disp('Stop here');
-        end
+        thisPath =  pathsFromToFeasible{from_index,goal_index};
         plot(thisPath(:,1),thisPath(:,2),'-','Color',thisColor,'LineWidth',5);
         % arrowMagnitude = pointSequence(ith_point+1,:)-pointSequence(ith_point,:);
         % quiver(pointSequence(ith_point,1),pointSequence(ith_point,2),arrowMagnitude(1,1),arrowMagnitude(1,2),0,...
@@ -492,7 +488,7 @@ iteration_number = 0;
 while 1==flagKeepGoing
     iteration_number = iteration_number+1;
 
-    % if iteration_number==11
+    % if iteration_number==775
     %     disp('Stop here');
     % end
 
@@ -510,7 +506,7 @@ while 1==flagKeepGoing
     % the one that is the "currentBestCity", e.g. the city that needs to be
     % expanded as the "from" city. The remaining unvisited cities are the
     % ones which will be staged as the subsequent branches.
-    visitSequence = previousVisitSequence(~isnan(previousVisitSequence));
+    visitSequence = previousVisitSequence(~isnan(previousVisitSequence));   
     currentFromCity = visitSequence(end);
     
     % Update the previous city's flag to indicate that city was visited
@@ -529,6 +525,7 @@ while 1==flagKeepGoing
 
     if NumUnvisited==0 && 1==flagHeadingHome
         flagKeepGoing = 0;
+        bestCost = previousCost;
         % This solution is the best one as it has minimum time, and
         % completes all the circuit
     else
@@ -590,7 +587,11 @@ while 1==flagKeepGoing
         else
             sumCostsVisitedSoFar = sum(minimumCostsVisitedSoFar,2);
         end
-        branchesMinPossibleTotalCosts = branchesAccumulatedCosts' + minimumPossibleTrajectoryCost*ones(NumBranches,1) - sumCostsVisitedSoFar;
+        if flagHeadingHome==0
+            branchesMinPossibleTotalCosts = branchesAccumulatedCosts' + minimumPossibleTrajectoryCost*ones(NumBranches,1) - sumCostsVisitedSoFar;
+        else
+            branchesMinPossibleTotalCosts = branchesAccumulatedCosts;
+        end
 
         % Convert the cost search options into rows to add to solutionRows
         % queue. 
@@ -621,7 +622,7 @@ while 1==flagKeepGoing
         % Remove any queued solutions higher than the current completed
         % cost
         if ~isinf(costCropLimit)
-            solutionRowsToRemove = stagedTests(:,1)>costCropLimit;
+            solutionRowsToRemove = stagedTests(:,1)>costCropLimit | stagedTests(:,2)>costCropLimit;
             stagedTests(solutionRowsToRemove,:) = [];
         end
 
@@ -632,6 +633,18 @@ while 1==flagKeepGoing
 end
 
 orderedVisitSequence = [visitSequence'; 1];
+
+% Confirm the cost
+costCalculated = 0;
+for ith_sequence = 2:length(orderedVisitSequence)
+    fromIndex = orderedVisitSequence(ith_sequence-1);
+    toIndex = orderedVisitSequence(ith_sequence);
+    costCalculated = costCalculated + feasibleCostsFromTo(fromIndex,toIndex);
+end
+
+if ~isequal(costCalculated, bestCost)
+    warning('Discrepancy found between expected and actual traversal cost');
+end
 
 % Plot the TSP result
 if flag_do_debug

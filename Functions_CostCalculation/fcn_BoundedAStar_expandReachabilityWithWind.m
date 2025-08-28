@@ -787,15 +787,15 @@ if 1==flagCaclulateReachableSetPaths
 
             % Save data for debugging
             if 1==0
-                save('BUG_90006_fcn_BoundedAStar_pathCalculationBackToStart.mat',...
+                save('BUG_90007_fcn_BoundedAStar_pathCalculationBackToStart.mat',...
                     'thisGoal','cellArrayOfExpansions','cellArrayOfIntermediateCalculations');
             end
 
             % Call function to find "backward" path?
             try
-            pathXYAndControlUV =  ...
-                fcn_BoundedAStar_pathCalculationBackToStart(...
-                thisGoal, cellArrayOfExpansions, cellArrayOfIntermediateCalculations, (tempfigNum));
+                pathXYAndControlUV =  ...
+                    fcn_BoundedAStar_pathCalculationBackToStart(...
+                    thisGoal, cellArrayOfExpansions, cellArrayOfIntermediateCalculations, (tempfigNum));
             catch
                 error('Bug encountered when doing back-path calculations.');
             end

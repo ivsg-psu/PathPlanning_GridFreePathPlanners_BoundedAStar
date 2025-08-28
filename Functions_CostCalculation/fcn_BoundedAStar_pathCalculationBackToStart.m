@@ -207,19 +207,20 @@ if isempty(stepContainingEndPoint)
     error('endPoint not containted within any of the given set sequences');
 end
 
+% Step backward, set by set, finding "containment" area for each step.
 pathXYAndControlUV = nan(stepContainingEndPoint,4);
 currentLocation = endPoint;
 flagFirstTimeInLoop = 1;
 for ith_step = stepContainingEndPoint:-1:2
-    if 1==0 && 15==ith_step
-        disp('Stop here');
-        flag_do_deep_debug = 1;
-        dbstop in fcn_BoundedAStar_pathCalculationBackToStart at 380
-        % dbstop in fcn_BoundedAStar_pathCalculationBackToStart at 717
-        % dbstop in fcn_BoundedAStar_pathCalculationBackToStart at 634
-    else
-        flag_do_deep_debug = 0;
-    end
+    % if 1==1 && 14==ith_step
+    %     disp('Stop here');
+    %     flag_do_deep_debug = 1;
+    %     dbstop in fcn_BoundedAStar_pathCalculationBackToStart at 380
+    %     % dbstop in fcn_BoundedAStar_pathCalculationBackToStart at 717
+    %     % dbstop in fcn_BoundedAStar_pathCalculationBackToStart at 634
+    % else
+    %     flag_do_deep_debug = 0;
+    % end
 
     currentExpansionPoints        = cellArrayOfExpansions{ith_step,1};
     preExpansionPoints            = cellArrayOfIntermediateCalculations{ith_step,1};
@@ -233,8 +234,8 @@ for ith_step = stepContainingEndPoint:-1:2
 
 
         % Plot currentLocation
-        h_plot0 = plot(currentLocation(:,1),currentLocation(:,2),'*',...
-            'Color',[1 0 0],'MarkerSize',20);
+        h_plot0 = plot(currentLocation(:,1),currentLocation(:,2),'.',...
+            'Color',[1 0 0],'MarkerSize',40);
 
         % Plot starting expansion
         h_plot1 = plot(preExpansionPoints(:,1),preExpansionPoints(:,2),'.-',...
@@ -292,6 +293,10 @@ for ith_step = stepContainingEndPoint:-1:2
         end
     end
 
+
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % FUNCTION STARTS HERE
+
     %%%%
     % Find enclosing vectors. These are the vectors to the right and left
     % of the currentLocation. To find these, we first find the vectors
@@ -325,10 +330,6 @@ for ith_step = stepContainingEndPoint:-1:2
     changesInCrossProducts(crossProductsNearZero) = 1;
     
     locationsBetween = find(signsOfProjectionDistances.*(abs(changesInCrossProducts)>0));
-    if isempty(locationsBetween)
-        warning('Unable to find any locations between expansion vectors');
-    end
-
 
     if 1==0 && flag_do_deep_debug
         figure(484848);
@@ -370,60 +371,77 @@ for ith_step = stepContainingEndPoint:-1:2
 
     end % Ends debug plotting
 
+    if isempty(locationsBetween)
+        % Enter here when the vectors "twist" so much that the point is
+        % behind the "inside", typically.
+        % Find the closest points
+        [~,~,~,....
+            first_path_point_index,...
+            second_path_point_index,...
+            percentageAlongTop] = ...
+            fcn_Path_snapPointOntoNearestPath(currentLocation, currentExpansionPoints, (-1));
+        sideBases = [preExpansionPoints(first_path_point_index,:); preExpansionPoints(second_path_point_index,:)];
+
+    else
 
 
-    % For some expansions, get many locations where the point is "between"
-    % vectors. Need to test each.
-    NlocationsToTest = length(locationsBetween);
-    percentagesAlongTop = nan(NlocationsToTest,1);
-    percentagesBeyondEndPoint = nan(NlocationsToTest,1);
-    for ith_location = 1:NlocationsToTest
-        indexOfQuery = locationsBetween(ith_location);
-        [percentagesAlongTop(ith_location,1), percentagesBeyondEndPoint(ith_location,1)] = ...
-            fcn_INTERNAL_percentageAlongTop(...
-            currentLocation, indexOfQuery, preExpansionPoints, currentExpansionPoints, vectorsFromPreToPostExpansion, ith_location);
+        % For some expansions, get many locations where the point is "between"
+        % vectors. Need to test each.
+        NlocationsToTest = length(locationsBetween);
+        percentagesAlongTop = nan(NlocationsToTest,1);
+        percentagesBeyondEndPoint = nan(NlocationsToTest,1);
+        for ith_location = 1:NlocationsToTest
+            indexOfQuery = locationsBetween(ith_location);
+            tempFigNum = -1;
+            [percentagesAlongTop(ith_location,1), percentagesBeyondEndPoint(ith_location,1)] = ...
+                fcn_INTERNAL_percentageAlongTop(...
+                currentLocation, indexOfQuery, preExpansionPoints, ...
+                currentExpansionPoints, vectorsFromPreToPostExpansion, ith_location, tempFigNum);
+        end
+
+        [~, goodIndex] = max(percentagesBeyondEndPoint);
+        percentageAlongTop = percentagesAlongTop(goodIndex);
+        indexOfQuery = locationsBetween(goodIndex);
+        indexRange = indexOfQuery:indexOfQuery+1;
+        sideBases   = preExpansionPoints(indexRange,:);
     end
-    
-    [~, goodIndex] = max(percentagesBeyondEndPoint);
-    percentageAlongTop = percentagesAlongTop(goodIndex);
-    indexOfQuery = locationsBetween(goodIndex);
-    indexRange = indexOfQuery:indexOfQuery+1;
-    sideBases   = preExpansionPoints(indexRange,:);
 
     if isnan(percentageAlongTop)
-        % Can come in here is when point is outside both envelopes. Check
-        % for this.
+        % Can come in here is when point is outside both envelopes, or when
+        % envelope correspondence is so bad that points don't align from
+        % inside to outside envelopes. Best option is to snap to the outer
+        % boundary.
 
-        goalPointInsideOuterBoundary = fcn_INTERNAL_findGoalPointsHit(currentExpansionPoints,currentLocation);
-        if ~goalPointInsideOuterBoundary
-            % Find closest 2 points in outside boundary, and use these
-            % FORMAT:
-            %      [closest_path_point,s_coordinate,path_point_yaw,....
-            %      first_path_point_index,...
-            %      second_path_point_index,...
-            %      percent_along_length] = ...
-            %      fcn_Path_snapPointOntoNearestPath(point, path, (fig_num))       
-            [~,~,~,....
-                first_path_point_index,...
-                second_path_point_index,...
-                percentageAlongTop] = ...
-                fcn_Path_snapPointOntoNearestPath(currentLocation, currentExpansionPoints, (-1));
-            if 1==0
-                figure(585858);
-                clf;
-                hold on;
-                plot(currentLocation(:,1),currentLocation(:,2),'b.','MarkerSize',20);
-                plot(currentExpansionPoints(:,1),currentExpansionPoints(:,2),'k.-','MarkerSize',30);
-                plot(currentExpansionPoints(first_path_point_index,1),currentExpansionPoints(first_path_point_index,2),...
-                    'g.','MarkerSize',10);
-                plot(currentExpansionPoints(second_path_point_index,1),currentExpansionPoints(second_path_point_index,2),...
-                    'r.','MarkerSize',10);
-            end
-                
-        else
-            error('Nan value encountered for percentages along top. Likely to crash.');
+        % goalPointInsideOuterBoundary = fcn_INTERNAL_findGoalPointsHit(currentExpansionPoints,currentLocation);
+        % Find closest 2 points in outside boundary, and use these
+        % FORMAT:
+        %      [closest_path_point,s_coordinate,path_point_yaw,....
+        %      first_path_point_index,...
+        %      second_path_point_index,...
+        %      percent_along_length] = ...
+        %      fcn_Path_snapPointOntoNearestPath(point, path, (fig_num))
+        [~,~,~,....
+            first_path_point_index,...
+            second_path_point_index,...
+            percentageAlongTop] = ...
+            fcn_Path_snapPointOntoNearestPath(currentLocation, currentExpansionPoints, (-1));
+        sideBases = [preExpansionPoints(first_path_point_index,:); preExpansionPoints(second_path_point_index,:)];
+        
+        if 1==0
+            figure(585858);
+            clf;
+            hold on;
+            plot(currentLocation(:,1),currentLocation(:,2),'b.','MarkerSize',20);
+            plot(currentExpansionPoints(:,1),currentExpansionPoints(:,2),'k.-','MarkerSize',30);
+            plot(currentExpansionPoints(first_path_point_index,1),currentExpansionPoints(first_path_point_index,2),...
+                'g.','MarkerSize',10);
+            plot(currentExpansionPoints(second_path_point_index,1),currentExpansionPoints(second_path_point_index,2),...
+                'r.','MarkerSize',10);
         end
     end
+
+    % FUNCTION ENDS HERE
+    %%%%%%%%%%%%%%%%%%%%
 
     positionsAtThisStep = ...
         (1 - percentageAlongTop)*sideBases(1,:) + ...
@@ -617,7 +635,7 @@ end
 
 %% fcn_INTERNAL_percentageAlongTop - calculate percentage of inputs
 function [percentageAlongTop,percentageBeyondEndPoint] = fcn_INTERNAL_percentageAlongTop(...
-    currentLocation, indexOfQuery, preExpansionPoints, currentExpansionPoints, vectorsFromPreToPostExpansion, plotNumber)
+    currentLocation, indexOfQuery, preExpansionPoints, currentExpansionPoints, vectorsFromPreToPostExpansion, plotNumber, figNum)
 % Define bounding vectors
 indexRange  = indexOfQuery:indexOfQuery+1;
 sideBases   = preExpansionPoints(indexRange,:);
@@ -694,8 +712,8 @@ else
 end
 
 % Used to debug the interpolation process
-if (1==0)
-    figure(43536);
+if ~isempty(figNum) && (-1 ~= figNum)
+    figure(figNum);
     if 1==plotNumber
         clf;
         tiledlayout('horizontal');

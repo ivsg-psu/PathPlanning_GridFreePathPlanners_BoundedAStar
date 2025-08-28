@@ -535,6 +535,28 @@ assert(isnumeric(pathXYAndControlUV));
 assert(size(pathXYAndControlUV,1)>=2); 
 assert(size(pathXYAndControlUV,2)==4);
 
+%% BUG case: found error in expandReachabilityWithWind case 10007 #7 (fixed)
+
+figNum = 90007;
+titleString = sprintf('BUG case: found error in expandReachabilityWithWind case 10007 #7 (fixed)');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+load('BUG_90007_fcn_BoundedAStar_pathCalculationBackToStart.mat',...
+    'thisGoal','cellArrayOfExpansions','cellArrayOfIntermediateCalculations');
+
+%thisGoal = [2 2];
+pathXYAndControlUV =  ...
+    fcn_BoundedAStar_pathCalculationBackToStart(...
+    thisGoal, cellArrayOfExpansions, cellArrayOfIntermediateCalculations, (figNum));
+
+% Check variable types
+assert(isnumeric(pathXYAndControlUV));
+
+% Check variable sizes
+assert(size(pathXYAndControlUV,1)>=2); 
+assert(size(pathXYAndControlUV,2)==4);
+
 
 %% Fail conditions
 if 1==0
