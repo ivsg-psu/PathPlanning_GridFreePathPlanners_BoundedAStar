@@ -323,6 +323,9 @@ end
 % Create state matrices
 % For now, this is
 % trivial: x_(k+1) = A*x_k for A=identity gives x_(k+1) = x(k)
+
+% X(K+1) = A(D)*X + B(D)*U + W(X,T)
+
 % A - the vehicle remains in the same position unless moved
 NPreExpansionPoints = length(preExpansionPoints(:,1));
 A = eye(NPreExpansionPoints);

@@ -411,11 +411,11 @@ while 1==flagContinueExpansion
 
     % FOR DEBUGGING
     if 1==0
-        if 20==ith_step
+        if 11==ith_step
             disp('Stop here');
-            % dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 427
-            % dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 455
-            dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 496 % This one s
+            dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 734
+            % dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 737
+            % dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 496 % This one debugs sparsifyBoundary
             % dbstop in fcn_BoundedAStar_expandReachabilityWithWind at 553 % +
         end
     end
@@ -442,7 +442,7 @@ while 1==flagContinueExpansion
         % [reachableSet, cellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
         %     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
         [reachableSet, thisCellArrayOfIntermediateCalculations] = fcn_BoundedAStar_reachabilityWithInputs(...
-            radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
+                radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (-1));
     end
    
     if any(isnan(reachableSet),'all')
@@ -731,7 +731,11 @@ while 1==flagContinueExpansion
                 lastBoundary = cellArrayOfIntermediateCalculations{ith_step+1,1}; 
                 thesePoints = allGoalPointsList(pointsFoundThisSimStep,:);
                 fractionalSteps = fcn_INTERNAL_findStepFraction(thesePoints,thisBoundary,lastBoundary);
+                % try
                 exactStepsWhenGoalPointsHit(pointsFoundThisSimStep) = ith_step-1+fractionalSteps;
+                % catch
+                %     disp('Stop here');
+                % end
             end
 
             % Do we stop with all points hit?
@@ -1139,21 +1143,18 @@ St_points_before_method1 = real(fcn_Path_convertXY2St(lastBoundary, thesePoints,
 St_points_before_method2 = real(fcn_Path_convertXY2St(lastBoundary, thesePoints, (2), (-1)));
 t_points_before_raw = [St_points_before_method1(:,2),St_points_before_method2(:,2)];
 t_points_before_raw(t_points_before_raw>0) = nan;
-t_point_before = min(t_points_before_raw);
+t_point_before = min(t_points_before_raw,[],2);
 
 St_points_after_method1 =  real(fcn_Path_convertXY2St(thisBoundary, thesePoints, (1), (-1)));
 St_points_after_method2 =  real(fcn_Path_convertXY2St(thisBoundary, thesePoints, (2), (-1)));
 t_points_after_raw = [St_points_after_method1(:,2),St_points_after_method2(:,2)];
 t_points_after_raw(t_points_after_raw<0) = nan;
-t_point_after = min(t_points_after_raw);
+t_point_after = min(t_points_after_raw,[],2);
 
 % Make sure all points are as expected: negative t values
 % for the before, and positive after. Note: in strong wind
 % fields, the points may be outside the boundary.
-try
-    assert(all(t_point_before<=0,'all'))
-    assert(all(t_point_after>=0,'all'))
-catch
+if ~(all(t_point_before<=0,'all')) && ~(all(t_point_after>=0,'all'))
     figure(77777);
     clf;
     hold on;

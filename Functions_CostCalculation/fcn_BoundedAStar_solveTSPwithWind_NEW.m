@@ -155,7 +155,7 @@ end
 if 0==flag_max_speed
     if flag_check_inputs
         % Are there the right number of inputs?
-        narginchk(5,MAX_NARGIN);
+        narginchk(7,MAX_NARGIN);
 
         % Check the radius input, make sure it is '1column_of_numbers'
         % type, 1 row
@@ -919,7 +919,7 @@ for ith_fromPoint = 1:NUniqueGoals
     [reachableSet, exitCondition, cellArrayOfExitInfo, ...
         reachableSetExactCosts, cellArrayOfReachableSetPaths] = fcn_BoundedAStar_expandReachabilityWithWind(...
         radius, windFieldU, windFieldV, windFieldX, windFieldY,...
-        (startPoint), (flagWindRoundingType), (cellArrayOfWindExitConditions), (-1));
+        (startPoint), (flagWindRoundingType), (cellArrayOfWindExitConditions), [], (-1));
 
     if 4~=exitCondition
         warning('Not all goal points are reachable from other goal points');
