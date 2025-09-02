@@ -26,8 +26,11 @@ function [windFieldU, windFieldV, windFieldX, windFieldY] = fcn_BoundedAStar_gen
 %           blending the wind field movement back to the start. Used only
 %           for wind fields where the looping flag is enabled. Defaults to
 %           10.
-%       occupancyRatio: a scalar indicating the occupied ratio of the grid.
-%       dilationLevel: 
+%       occupancyRatio: a scalar indicating the occupied ratio of the
+%           grid. Defaults to 0.2.
+%       dilationLevel: a scalar that directly changes the 'zoom' of the
+%           wind field. Higher numbers 'zoom' into the wind field
+%           pheonomena further than lower numbers. Defaults to 400.
 %       randomSeed: a scalar used as the random seed for wind field
 %           generation. If -1 is passed, the random seed is not specified.
 %           Defaults to 1. 
@@ -85,7 +88,7 @@ function [windFieldU, windFieldV, windFieldX, windFieldY] = fcn_BoundedAStar_gen
 % Check if flag_max_speed set. This occurs if the fig_num variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 9; % The largest Number of argument inputs to the function
+MAX_NARGIN = 4; % The largest Number of argument inputs to the function
 flag_max_speed = 0;
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; %     % Flag to plot the results for debugging
@@ -128,7 +131,7 @@ end
 if 0==flag_max_speed
     if flag_check_inputs
         % Are there the right number of inputs?
-        narginchk(7,MAX_NARGIN);
+        narginchk(2,MAX_NARGIN);
 
         % Check the radius input, make sure it is '1column_of_numbers'
         % type, 1 row
@@ -137,13 +140,41 @@ if 0==flag_max_speed
     end
 end
 
-% Does user want to specify rngSeed input?
-rngSeed = 1; % Default is 1
-if 8 <= nargin
-    temp = varargin{1};
-    if ~isempty(temp)
-        rngSeed = temp;
-    end
+% Check fields in optStruct and unpack them for fcn use
+if ~isfield(optStruct, 'mapSize')
+    mapSize = [50 50];
+else
+    mapSize = optStruct.mapSize;
+end
+
+if ~isfield(optStruct, 'movementSideways')
+    movementSideways = 1;
+else
+    movementSideways = optStruct.movementSideways;
+end
+
+if ~isfield(optStruct, 'nBlendingSteps')
+    nBlendingSteps = 10;
+else
+    nBlendingSteps = optStruct.nBlendingSteps;
+end
+
+if ~isfield(optStruct, 'occupancyRatio')
+    occupancyRatio = 0.2;
+else
+    occupancyRatio = optStruct.occupancyRatio;
+end
+
+if ~isfield(optStruct, 'dilationLevel')
+    dilationLevel = 400;
+else
+    dilationLevel = optStruct.dilationLevel;
+end
+
+if ~isfield(optStruct, 'randomSeed')
+    randomSeed = 1;
+else
+    randomSeed = optStruct.randomSeed;
 end
 
 % Does user want to show the plots?
