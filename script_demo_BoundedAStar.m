@@ -350,6 +350,11 @@
 %   % * completed first end-to-end working version
 % - In script_test_fcn_BoundedAStar_pathCalculationBackToStart
 %   % * Added working example of backward path calculation
+%
+% 2025_09_04 by K. Hayes
+% - DEPRECATED: fcn_bounding_ellipse_polytope_bounding_box
+%   % * now fcn_BoundedAStar_calculateBoundingEllipsePolytopeBoundingBox
+% - added script_test_fcn_BoundedAStar_calculateBoundingEllipsePolytopeBoundingBox
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
