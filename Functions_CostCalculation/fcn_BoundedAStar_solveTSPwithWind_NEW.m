@@ -434,7 +434,7 @@ end
 resetCosts = feasibleCostsFromTo;
 negativeOneIndices = feasibleCostsFromTo==-1;
 resetCosts(negativeOneIndices) = nan;
-meanCostsEachDestination = mean(resetCosts,1,'omitmissing');
+meanCostsEachDestination = mean(resetCosts,1,'omitnan');
 meanTrajectoryCost = sum(meanCostsEachDestination);
 fprintf(1,'Mean (randomized) search result: %.2f\n',meanTrajectoryCost);
 
