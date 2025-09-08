@@ -336,6 +336,7 @@ knownOrderedVisitSequence = [ 1     7     4     3     5     6     2     1];
 [startAndGoalPoints, costsFromTo, pathsFromTo, ...
     windFieldU, windFieldV, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData(RNG, Ngoals, testCase);
 
+%%%%%%%%%%%%%%%
 % Update changedIndices
 NoriginalCosts = size(costsFromTo,1);
 allIndices = (1:NoriginalCosts)';
@@ -361,23 +362,71 @@ end
 
 %%%%
 % Convert rankings into visit order
+% These are saved as [probabiilty fromIndex toIndex]
+edgeLinkingAndRanking = nan(NoriginalCosts,3);
+Nfilled = 0;
+for ith_probability = 1:length(rankedIndices)
+    if ith_probability==9
+        disp('Stop here');
+    end
+    % Grab info from this ranking item
+    thisRow = rankedIndices(ith_probability,:);
+    thisProbability = thisRow(1,1);
+    thisFrom = thisRow(1,2);
+    thisTo   = thisRow(1,3);
+
+    % Is it in the list already?
+    flagInList = 0;
+    % * Has this "from" been used previously as "from"?
+    if any(edgeLinkingAndRanking(:,2)==thisFrom)
+        flagInList = 1;
+    end
+    % * Has this "to" link been used previously as "to"?
+    if any(edgeLinkingAndRanking(:,3)==thisTo)
+        flagInList = 1;
+    end    
+    % * Is this link a reflection of a prior link?
+    flippedToFromMatches = sum(fliplr(thisRow(1,2:3))==edgeLinkingAndRanking(:,2:3),2);
+    if any(flippedToFromMatches==2)
+        flagInList = 1;
+    end
 
 
-% %%%
-% % Itereatively recompute cost matrix?
-% for ith_merge = 1:NoriginalCosts-1
-%     figNum = 4000+ith_merge;
-%     mergeProbability = fcn_INTERNAL_evalAllSharedEdges(costsFromToMerged);
-%     % fcn_INTERNAL_plotTransitionsThroughCost(mergeProbability, [], figNum)
-%     [maxProbability,indexMax] = max(mergeProbability,[],'all');
-%     [A,N] = ind2sub(size(mergeProbability), indexMax);
-%     fprintf(1,'Best merge found:\n')
-%     fprintf(1,'\tProbability: %.2f',maxProbability);
-%     fprintf(1,'\tFrom: %s\n',num2str(changedIndices{A}));
-%     fprintf(1,'\tTo: %s\n', num2str(changedIndices{N}));
-%     [costsFromToMerged, changedIndices] = fcn_INTERNAL_mergeGoals(A,N,costsFromToMerged,changedIndices);
-% end
+    %     % trying to "close" the edge early?
+    %     %   % e.g. its "to" links to an existing "from" and its "from"
+    %     %   % link comes from an existing "to"?
+    %     if any(edgeLinkingAndRanking(:,2)==thisTo) && any(edgeLinkingAndRanking(:,3)==thisFrom) && Nfilled~=length(rankedIndices)
+    %         flagInList = 1;
+    %     end
 
+    % If not in the list, then add to edgeLinkingAndRanking
+    if 0==flagInList
+        Nfilled = Nfilled+1;
+        edgeLinkingAndRanking(Nfilled,:) = thisRow;
+    end
+
+end
+
+% Rearrange
+predictedOrderedVisitSequence = nan(1,NoriginalCosts+1);
+probabilitiesSequence = nan(1,NoriginalCosts+1);
+nextValue = 1;
+for ith_probability = 1:NoriginalCosts
+    rowIndexToUse = find(edgeLinkingAndRanking(:,2)==nextValue);
+    thisRow = edgeLinkingAndRanking(rowIndexToUse,:);
+
+    % Fill in results
+    predictedOrderedVisitSequence(1,ith_probability) = nextValue;
+    probabilitiesSequence(1,ith_probability) = thisRow(1,1);
+
+    % Grab next value
+    nextValue = thisRow(1,3);
+end
+predictedOrderedVisitSequence(1,end) = 1;
+
+disp([predictedOrderedVisitSequence; probabilitiesSequence]);
+
+%%%%%%%%%%%%%%%
 cellArrayOfFunctionOptions = cell(4,1);
 cellArrayOfFunctionOptions{1} = windFieldU;
 cellArrayOfFunctionOptions{2} = windFieldV;
@@ -819,7 +868,7 @@ end
 XANmatch = bestCols==A;
 XANratios = bestRatios;
  
-end fcn_INTERNAL_findSharedEdges
+end % ends fcn_INTERNAL_findSharedEdges
 
 %% fcn_INTERNAL_evalAllSharedEdges
 function mergeProbability = fcn_INTERNAL_evalAllSharedEdges(costsFromTo)
@@ -852,7 +901,7 @@ for ith_row = 1:Nmatrix
     end
 end
 
-end fcn_INTERNAL_evalAllSharedEdges
+end % Ends fcn_INTERNAL_evalAllSharedEdges
 
 %% fcn_INTERNAL_plotTransitionsThroughCost
 function fcn_INTERNAL_plotTransitionsThroughCost(costsFromTo, knownOrderedVisitSequence, figNum)
@@ -904,36 +953,36 @@ end
 end % Ends fcn_INTERNAL_plotTransitionsThroughCost
 
 %% fcn_INTERNAL_mergeGoals
-function [costsFromToMerged, changedIndices] = fcn_INTERNAL_mergeGoals(A,N,costsFromTo, inputIndices)
-
-% Fill a starter matrix
-costsFromToMerged = costsFromTo;
-
-% Grab the cost from row A to column N
-costAtoN = costsFromTo(A,N);
-
-% Add this cost to the "from N" (the row)
-costsFromToMerged(N,:) = costsFromToMerged(N,:) + costAtoN;
-
-% Change the "to N" cost (the column) to be the previous "to A" cost
-toACosts = costsFromTo(:,A);
-costsFromToMerged(:,N) = toACosts;
-
-costsFromToMerged(N,N) = -1;
-
-% Delete the A entry (rows and columns)
-costsFromToMerged(:,A) = [];
-costsFromToMerged(A,:) = [];
-
-inputIndices{N,1} = [inputIndices{A,1} inputIndices{N,1}];
-
-nextIndex = 1;
-changedIndices = cell(length(inputIndices)-1,1);
-for ith_index = 1:length(inputIndices)
-    if A~=ith_index
-        changedIndices{nextIndex} = inputIndices{ith_index};
-        nextIndex = nextIndex+1;
-    end
-end
-
-end % Ends fcn_INTERNAL_mergeGoals
+% function [costsFromToMerged, changedIndices] = fcn_INTERNAL_mergeGoals(A,N,costsFromTo, inputIndices)
+% 
+% % Fill a starter matrix
+% costsFromToMerged = costsFromTo;
+% 
+% % Grab the cost from row A to column N
+% costAtoN = costsFromTo(A,N);
+% 
+% % Add this cost to the "from N" (the row)
+% costsFromToMerged(N,:) = costsFromToMerged(N,:) + costAtoN;
+% 
+% % Change the "to N" cost (the column) to be the previous "to A" cost
+% toACosts = costsFromTo(:,A);
+% costsFromToMerged(:,N) = toACosts;
+% 
+% costsFromToMerged(N,N) = -1;
+% 
+% % Delete the A entry (rows and columns)
+% costsFromToMerged(:,A) = [];
+% costsFromToMerged(A,:) = [];
+% 
+% inputIndices{N,1} = [inputIndices{A,1} inputIndices{N,1}];
+% 
+% nextIndex = 1;
+% changedIndices = cell(length(inputIndices)-1,1);
+% for ith_index = 1:length(inputIndices)
+%     if A~=ith_index
+%         changedIndices{nextIndex} = inputIndices{ith_index};
+%         nextIndex = nextIndex+1;
+%     end
+% end
+% 
+% end % Ends fcn_INTERNAL_mergeGoals

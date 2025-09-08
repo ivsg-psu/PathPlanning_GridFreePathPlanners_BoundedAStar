@@ -222,7 +222,7 @@ priorCost = 0;
 resetCosts = costsFromTo;
 negativeOneIndices = costsFromTo==-1;
 resetCosts(negativeOneIndices) = nan;
-meanCostsEachDestination = mean(resetCosts,1,'omitmissing');
+meanCostsEachDestination = mean(resetCosts,1,'omitnan');
 meanTrajectoryCost = sum(meanCostsEachDestination);
 
 if flag_do_debug
