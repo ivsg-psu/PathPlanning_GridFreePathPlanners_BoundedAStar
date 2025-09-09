@@ -1,10 +1,10 @@
-function [predictedOrderedVisitSequence, probabilitiesSequence] = ...
+function [predictedOrderedVisitSequence, probabilitiesSequence, finalCost] = ...
     fcn_BoundedAStar_approximateTSPviaMerging(...
     costsFromTo, varargin)
 % fcn_BoundedAStar_approximateTSPviaMerging solves the Traveling Salesman Problem
 %
 % FORMAT:
-% [predictedOrderedVisitSequence, probabilitiesSequence] = fcn_BoundedAStar_solveTSP(...
+% [predictedOrderedVisitSequence, probabilitiesSequence, finalCost] = fcn_BoundedAStar_solveTSP(...
 %     costsFromTo, (cellArrayOfFunctionOptions), (figNum));
 %
 % INPUTS:
@@ -35,6 +35,8 @@ function [predictedOrderedVisitSequence, probabilitiesSequence] = ...
 %     contains the probability that the transition from (1,1) to (1,2) is
 %     used.
 %
+%     finalCost: the final traversal cost
+%
 % DEPENDENCIES:
 %
 %     fcn_DebugTools_checkInputsToFunctions
@@ -53,6 +55,12 @@ function [predictedOrderedVisitSequence, probabilitiesSequence] = ...
 % - in fcn_BoundedAStar_approximateTSPviaMerging
 %   % * first write of function using fcn_BoundedAStar_solveTSP
 %   %   % as a starter
+%
+% 2025_09_09 by S. Brennan
+% - In fcn_BoundedAStar_approximateTSPviaMerging:
+%   % * Added final cost as an output
+%   % * Fixed bug producing edge-closing path sequences
+%   % * Fixed bug where last plotted line color was wrong
 
 % TO-DO
 % (none)
@@ -80,7 +88,7 @@ else
     end
 end
 
-% flag_do_debug = 1;
+flag_do_debug = 1;
 
 if flag_do_debug
     st = dbstack; %#ok<*UNRCH>
@@ -179,56 +187,147 @@ end
 
 %%%%
 % Convert rankings into visit order
-% These are saved as [probabiilty fromIndex toIndex]
 edgeLinkingAndRanking = nan(NoriginalCosts,3);
 Nfilled = 0;
-for ith_probability = 1:length(rankedIndices)
+
+% Create a cell array to store linkages
+linkedEdges = nan(NoriginalCosts+1,NoriginalCosts+1);
+NlinkedEdges = 0;
+linkedEdgesStartEnd = [0 0]; % Initial value
+
+% tempRankedIndices has the following format for each row:
+Nranked = length(rankedIndices(:,1));
+tempRankedIndices = rankedIndices;
+for ith_probability = 1:Nranked
+
+    %     if ith_probability==71
+    %         disp('Stop here');
+    %     end
 
     % Grab info from this ranking item
-    thisRow = rankedIndices(ith_probability,:);
+    thisRow = tempRankedIndices(ith_probability,:);
+    thisProbability = thisRow(1,1);
     thisFrom = thisRow(1,2);
     thisTo   = thisRow(1,3);
 
-    % Is it in the list already?
     flagInList = 0;
-    % * Has this "from" been used previously as "from"?
-    if any(edgeLinkingAndRanking(:,2)==thisFrom)
+
+    % Is this row already invalid?
+    if isnan(thisProbability)
         flagInList = 1;
     end
-    % * Has this "to" link been used previously as "to"?
-    if any(edgeLinkingAndRanking(:,3)==thisTo)
-        flagInList = 1;
-    end    
-    % * Is this link a reflection of a prior link?
-    flippedToFromMatches = sum(fliplr(thisRow(1,2:3))==edgeLinkingAndRanking(:,2:3),2);
-    if any(flippedToFromMatches==2)
+
+    %     % * Has this "from" been used previously as "from"?
+    %     if any(edgeLinkingAndRanking(:,2)==thisFrom)
+    %         flagInList = 1;
+    %     end
+    %     % * Has this "to" link been used previously as "to"?
+    %     if any(edgeLinkingAndRanking(:,3)==thisTo)
+    %         flagInList = 1;
+    %     end
+    %     % * Is this link a reflection of a prior link?
+    %     flippedToFromMatches = sum(fliplr(thisRow(1,2:3))==edgeLinkingAndRanking(:,2:3),2);
+    %     if any(flippedToFromMatches==2)
+    %         flagInList = 1;
+    %     end
+
+    % * Does this link close a cycle early? in other words, is this link a
+    % reflection of a start/end pair?
+    flippedToFromMatches = sum(fliplr(thisRow(1,2:3))==linkedEdgesStartEnd,2);
+    if any(flippedToFromMatches==2) && Nfilled<(NoriginalCosts-1)
         flagInList = 1;
     end
 
     % If not in the list, then add to edgeLinkingAndRanking
     if 0==flagInList
         Nfilled = Nfilled+1;
-        edgeLinkingAndRanking(Nfilled,:) = thisRow;
+
+        % Add to the edge linking list
+        edgeLinkingAndRanking(Nfilled,:) = [thisProbability thisFrom thisTo];
+
+        % Set all the rows that have the same "from" value to invalid
+        rowsSameFrom = tempRankedIndices(:,2) == thisFrom;
+        tempRankedIndices(rowsSameFrom,1) = nan;
+
+        % Set all the rows that have the same "to" value to invalid
+        rowsSameTo = tempRankedIndices(:,3) == thisTo;
+        tempRankedIndices(rowsSameTo,1) = nan;
+
+        % Check to see if this addition links into existing edge linking?
+        % Does this addition join existing edges?
+        fromLink = find(thisFrom==linkedEdgesStartEnd(:,2));
+        toLink   = find(thisTo==linkedEdgesStartEnd(:,1));
+
+        if fromLink==toLink
+            if Nfilled==NoriginalCosts
+                fromLink = [];
+                toLink = [];
+            else
+                error('Unexpected match of from and to links');
+            end
+        end
+        fromIndices = linkedEdges(fromLink,~isnan(linkedEdges(fromLink,:)));
+        toIndices = linkedEdges(toLink,~isnan(linkedEdges(toLink,:)));        
+        if ~isempty(fromLink) && ~isempty(toLink)
+            % Merge edges
+            allIndices = [fromIndices toIndices];
+            Nindices = length(allIndices);
+            fullRow = [allIndices nan(1,NoriginalCosts-Nindices+1)];
+            linkedEdges(fromLink,:) = fullRow;
+            linkedEdges(toLink,:) = [];
+            NlinkedEdges = NlinkedEdges-1;
+        elseif ~isempty(fromLink)
+            % Add this edge onto end
+            allIndices = [fromIndices thisTo];
+            Nindices = length(allIndices);
+            fullRow = [allIndices nan(1,NoriginalCosts-Nindices+1)];
+            linkedEdges(fromLink,:) = fullRow;
+        elseif ~isempty(toLink)
+            % Add this edge onto start
+            allIndices = [thisFrom toIndices];
+            Nindices = length(allIndices);
+            fullRow = [allIndices nan(1,NoriginalCosts-Nindices+1)];
+            linkedEdges(toLink,:) = fullRow;
+        else
+            % This is a new addition
+            allIndices = [thisFrom thisTo];
+            Nindices = length(allIndices);
+            fullRow = [allIndices nan(1,NoriginalCosts-Nindices+1)];
+            NlinkedEdges = NlinkedEdges+1;
+            linkedEdges(NlinkedEdges,:) = fullRow;
+        end
+        
+        linkedEdgesStartEnd = nan(NlinkedEdges,2);
+        for ith_link = 1:NlinkedEdges
+            thisRow = linkedEdges(ith_link,~isnan(linkedEdges(ith_link,:)));
+            linkedEdgesStartEnd(ith_link,:) = [thisRow(1,1) thisRow(1,end)];
+        end
     end
 
 end
 
-% Rearrange
+% Rearrange, and add up visit costs
 predictedOrderedVisitSequence = nan(1,NoriginalCosts+1);
 probabilitiesSequence = nan(1,NoriginalCosts+1);
-nextValue = 1;
+fromCity = 1;
+totalCost = 0;
 for ith_probability = 1:NoriginalCosts
-    rowIndexToUse = edgeLinkingAndRanking(:,2)==nextValue;
+    rowIndexToUse = edgeLinkingAndRanking(:,2)==fromCity;
     thisRow = edgeLinkingAndRanking(rowIndexToUse,:);
+    toCity = thisRow(1,3);
 
     % Fill in results
-    predictedOrderedVisitSequence(1,ith_probability) = nextValue;
+    predictedOrderedVisitSequence(1,ith_probability) = fromCity;
+    totalCost = totalCost + costsFromTo(fromCity,toCity);
     probabilitiesSequence(1,ith_probability) = thisRow(1,1);
 
     % Grab next value
-    nextValue = thisRow(1,3);
+    fromCity = toCity;
 end
 predictedOrderedVisitSequence(1,end) = 1;
+
+
+finalCost = totalCost;
 
 if 1==flag_do_debug
     disp([predictedOrderedVisitSequence; probabilitiesSequence]);
@@ -398,6 +497,7 @@ end % ends fcn_INTERNAL_findSharedEdges
 
 %% fcn_INTERNAL_evalAllSharedEdges
 function mergeProbability = fcn_INTERNAL_evalAllSharedEdges(costsFromTo)
+% Finds the merging probability for all from/to permutations
 
 adjustedCostsFromTo = costsFromTo;
 indicesToChange = costsFromTo==-1;
@@ -473,7 +573,7 @@ if ~isempty(knownOrderedVisitSequence)
         %         end
 
         thisProbability = probabilitiesSequence(1,ith_sequence);
-        thisColor = min(ceil(thisProbability*Ncolors),Ncolors);
+        thisColor = max(min(ceil(thisProbability*Ncolors),Ncolors),1);
         fromColor = colorsRedToGreen(thisColor,:);
 
         toRow   = knownOrderedVisitSequence(ith_sequence+1);
@@ -485,6 +585,10 @@ if ~isempty(knownOrderedVisitSequence)
     end
 
     % Plot last point
+    thisProbability = probabilitiesSequence(1,end-1);
+    thisColor = max(min(ceil(thisProbability*Ncolors),Ncolors),1);
+    fromColor = colorsRedToGreen(thisColor,:);
+
     fromRow = knownOrderedVisitSequence(end-1);
     fromCol = knownOrderedVisitSequence(end);
     toRow   = knownOrderedVisitSequence(1);

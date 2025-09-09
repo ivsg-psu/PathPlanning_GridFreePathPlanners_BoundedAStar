@@ -1,9 +1,9 @@
-function [orderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
+function [orderedVisitSequence, finalCost] = fcn_BoundedAStar_solveTSP(...
     startAndGoalPoints, costsFromTo, pathsFromTo, varargin)
 % fcn_BoundedAStar_solveTSPwithWind solves the Traveling Salesman Problem
 %
 % FORMAT:
-% [orderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
+% [orderedVisitSequence, finalCost] = fcn_BoundedAStar_solveTSP(...
 %     startAndGoalPoints, costsFromTo, pathsFromTo, (figNum));
 %
 % INPUTS:
@@ -35,9 +35,12 @@ function [orderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
 %     orderedVisitSequence: the set of points, starting and ending with the
 %     startPoint, containing the visit sequence for goalPoints.
 %
+%     finalCost: the final traversal cost
+%
 % DEPENDENCIES:
 %
 %     fcn_DebugTools_checkInputsToFunctions
+%     fcn_BoundedAStar_plotTSPsolution
 %
 % EXAMPLES:
 %
@@ -50,9 +53,13 @@ function [orderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
 
 % REVISION HISTORY:
 % 2025_08_29 by S. Brennan
-% - in fcn_BoundedAStar_solveTSPwithWind
+% - in fcn_BoundedAStar_solveTSP
 %   % * first write of function using fcn_BoundedAStar_solveTSPwithWind
 %   %   % as a starter
+% 2025_09_09 by S. Brennan
+% - In fcn_BoundedAStar_solveTSP:
+%   % * Added final cost as an output
+%   % * Functionalized plotting
 
 % TO-DO
 % (none)
@@ -291,11 +298,11 @@ while 1==flagKeepGoing
     if currentBestExpansionSolution>=nextTriggeredPrint
         fprintf(1,'Current expansion: %.0f\n',currentBestExpansionSolution);
         nextTriggeredPrint = nextTriggeredPrint + nextTriggeredPrintInterval; 
-    end
 
-    % if iteration_number==775
-    %     disp('Stop here');
-    % end
+        % [visitSequence, greedySearchCost] = fcn_INTERNAL_greedySearch(...
+        %     costsFromTo, visitSequence, flagsCityWasVisited, priorCost, pathsFromTo, flag_do_debug, debug_figNum); %#ok<ASGLU>
+
+    end
 
     % Pull out all the details from this solutions row
     previousCost                = stagedTests(currentBestExpansionSolution,1);
@@ -498,18 +505,19 @@ if ~isequal(costCalculated, bestCost)
     warning('Discrepancy found between expected and actual traversal cost');
 end
 
-fprintf(1,'\nFINAL RESULTS:\n');
-fprintf(1,'Number of cities (goals, no start): %.0f\n',length(orderedVisitSequence)-2);
-fprintf(1,'Wall time: %.3f seconds\n',duration);
-fprintf(1,'Solution sequence: \t')
-for ith_sequence = 1:length(orderedVisitSequence)
-    fprintf(1, '%.0f ', orderedVisitSequence(ith_sequence,1));
+if 1==1
+    fprintf(1,'\nFINAL RESULTS:\n');
+    fprintf(1,'Number of cities (goals, no start): %.0f\n',length(orderedVisitSequence)-2);
+    fprintf(1,'Wall time: %.3f seconds\n',duration);
+    fprintf(1,'Solution sequence: \t')
+    for ith_sequence = 1:length(orderedVisitSequence)
+        fprintf(1, '%.0f ', orderedVisitSequence(ith_sequence,1));
+    end
+    fprintf(1,'\n');
+    fprintf(1,'Number of main loop iterations: %.0f\n',iteration_number);
+    fprintf(1,'Number of staged tests checked: %.0f\n',currentBestExpansionSolution);
+    fprintf(1,'Number of staged tests: %.0f\n',rowsFilledSoFar);
 end
-fprintf(1,'\n');
-fprintf(1,'Number of main loop iterations: %.0f\n',iteration_number);
-fprintf(1,'Number of staged tests checked: %.0f\n',currentBestExpansionSolution);
-fprintf(1,'Number of staged tests: %.0f\n',rowsFilledSoFar);
-
 
 
 % Plot the TSP result
@@ -538,6 +546,7 @@ if flag_do_debug
     end
 end
 
+finalCost = bestCost;
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -552,131 +561,23 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_do_plots
-    
+
     % Prep the figure for plotting
     temp_h = figure(figNum); %#ok<NASGU>
     % flag_rescale_axis = 0;
     % if isempty(get(temp_h,'Children'))
     %     flag_rescale_axis = 1;
-    % end      
-    
-    % Is this 2D or 3D?
-    dimension_of_points = 2; %#ok<NASGU>
-
-    % Find size of "nudge"
-    % allPointsBeingPlotted = [reachableSet; nan nan];
-    % 
-    % max_plotValues = max(allPointsBeingPlotted);
-    % min_plotValues = min(allPointsBeingPlotted);
-    % sizePlot = max(max_plotValues) - min(min_plotValues);
-    nudge = 0.15; %sizePlot*0.006; 
-
-    % % Find size of plotting domain
-    % if flag_rescale_axis
-    %     % NO NEED TO RESIZE THE AXIS FOR IMAGE PLOTTING
-    %     % percent_larger = 0.3;
-    %     % axis_range = max_plotValues - min_plotValues;
-    %     % if (0==axis_range(1,1))
-    %     %     axis_range(1,1) = 2/percent_larger;
-    %     % end
-    %     % if (0==axis_range(1,2))
-    %     %     axis_range(1,2) = 2/percent_larger;
-    %     % end
-    %     % if dimension_of_points==3 && (0==axis_range(1,3))
-    %     %     axis_range(1,3) = 2/percent_larger;
-    %     % end
-    %     % 
-    %     % % Force the axis to be equal?
-    %     % if 1==1
-    %     %     min_valuesInPlot = min(min_plotValues);
-    %     %     max_valuesInPlot = max(max_plotValues);
-    %     % else
-    %     %     min_valuesInPlot = min_plotValues;
-    %     %     max_valuesInPlot = max_plotValues;
-    %     % end
-    %     % 
-    %     % % Stretch the axes
-    %     % stretched_min_vertexValues = min_valuesInPlot - percent_larger.*axis_range;
-    %     % stretched_max_vertexValues = max_valuesInPlot + percent_larger.*axis_range;
-    %     % axesTogether = [stretched_min_vertexValues; stretched_max_vertexValues];
-    %     % newAxis = reshape(axesTogether, 1, []);
-    %     % axis(newAxis);
-    % 
     % end
-    % % goodAxis = axis;
 
-    % Check to see if hold is already on. If it is not, set a flag to turn it
-    % off after this function is over so it doesn't affect future plotting
-    flag_shut_hold_off = 0;
-    if ~ishold
-        flag_shut_hold_off = 1;
-        hold on
-    end   
 
-    % Turn on legend
-    legend('Interpreter','none','Location','northwest');
+    windFieldMatrices = cell(4,1);
+    windFieldMatrices{1} = windFieldU;
+    windFieldMatrices{2} = windFieldV;
+    windFieldMatrices{3} = windFieldX;
+    windFieldMatrices{4} = windFieldY;
+    fcn_BoundedAStar_plotTSPsolution(...
+        startAndGoalPoints, costsFromTo, pathsFromTo, windFieldMatrices, orderedVisitSequence, (figNum));
 
-    % Plot the windfield as an image
-    fcn_BoundedAStar_plotWindField(windFieldU,windFieldV,windFieldX,windFieldY,'default',figNum);
-    % Get meshgrid for streamline plotting
-    [meshX,meshY] = meshgrid(windFieldX,windFieldY);
-    s = streamslice(meshX,meshY,windFieldU,windFieldV);
-    set(s,'Color',[0.6 0.6 0.6],'HandleVisibility','off')
-
-    colorOrder = get(gca, 'ColorOrder');
-    Ncolors = length(colorOrder(:,1));
-
-    % Plot the start point
-    plot(startPoint(:,1),startPoint(:,2),'.','Color',colorOrder(1,:),'MarkerSize',30,'DisplayName','Input: startPoint');
-
-    % Plot the goal points in different colors
-    for ith_fromPoint = 1:length(goalPoints(:,1))
-        thisColorRow = mod(ith_fromPoint,Ncolors)+1;
-        h_plot = plot(goalPoints(ith_fromPoint,1),goalPoints(ith_fromPoint,2),'.',...
-            'Color',colorOrder(thisColorRow,:),'MarkerSize',30,'LineWidth', 2);
-        if ith_fromPoint ==1
-            set(h_plot, 'DisplayName','Input: goalPoints');
-        else
-            set(h_plot,'HandleVisibility','off');
-        end
-    end
-
-    % Plot the TSP result, the ordered visit sequence
-    % pointSequence = feasibleAllPoints(orderedVisitSequence,:);
-
-    for ith_fromPoint = 1:length(orderedVisitSequence)-1
-        thisColorRow = mod(ith_fromPoint-1,Ncolors)+1;
-        thisColor = colorOrder(thisColorRow,:);
-
-        from_index = orderedVisitSequence(ith_fromPoint,1);
-        goal_index = orderedVisitSequence(ith_fromPoint+1,1);
-        thisPath =  pathsFromTo{from_index,goal_index};
-        h_plot = plot(thisPath(:,1),thisPath(:,2),'-','Color',thisColor,'LineWidth',5);
-
-        % Plot the base in green and head in red so we know directions
-        plot(thisPath(1:2,1),thisPath(1:2,2),'g-','LineWidth',5,'HandleVisibility','off');
-        plot(thisPath(end-1:end,1),thisPath(end-1:end,2),'r-','LineWidth',5,'HandleVisibility','off');
-        % h_quiver = quiver(thisPath(end-1,1),thisPath(end-1,2),arrowMagnitude(1,1),arrowMagnitude(1,2),0,...
-        %     'LineWidth',5,'Color',thisColor,'HandleVisibility','off','ShowArrowHead','on',...
-        %     'MaxHeadSize',4,'AutoScale','off','AutoScaleFactor',20);
-
-        if ith_fromPoint==1
-            set(h_plot,'DisplayName','Output: TSP solution');
-        else
-            set(h_plot,'HandleVisibility','off');
-        end
-    end
-
-    % Number the unique points
-    for ith_fromPoint = 1:length(startAndGoalPoints)
-        text(startAndGoalPoints(ith_fromPoint,1)+nudge,startAndGoalPoints(ith_fromPoint,2), ...
-            sprintf('%.0f',ith_fromPoint),'FontSize',12);
-    end
-
-    % Shut the hold off?
-    if flag_shut_hold_off
-        hold off;
-    end
 
 end % Ends the flag_do_plot if statement
 

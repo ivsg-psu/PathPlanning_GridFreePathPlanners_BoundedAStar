@@ -6,6 +6,11 @@
 % - In script_test_fcn_BoundedAStar_approximateTSPviaMerging:
 %   % * first write of script 
 %   % * using script_test_fcn_BoundedAStar_solveTSP as starter
+%
+% 2025_09_09 by S. Brennan
+% - In script_test_fcn_BoundedAStar_approximateTSPviaMerging:
+%   % * Added case 2002 to show that TSP approximation does NOT always
+%   %   % match exact answer
 
 % TO DO:
 % (none)
@@ -73,38 +78,50 @@ testCase = 1;
 [startAndGoalPoints, costsFromTo, pathsFromTo, ...
     windFieldU, windFieldV, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData(RNG, Ngoals, testCase);
 
-cellArrayOfFunctionOptions = cell(4,1);
-cellArrayOfFunctionOptions{1} = windFieldU;
-cellArrayOfFunctionOptions{2} = windFieldV;
-cellArrayOfFunctionOptions{3} = windFieldX;
-cellArrayOfFunctionOptions{4} = windFieldY;
+windFieldMatrices = cell(4,1);
+windFieldMatrices{1} = windFieldU;
+windFieldMatrices{2} = windFieldV;
+windFieldMatrices{3} = windFieldX;
+windFieldMatrices{4} = windFieldY;
 
 % Call TSP function to get exact answer
 [knownOrderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
-    startAndGoalPoints, costsFromTo, pathsFromTo, (cellArrayOfFunctionOptions), (figNum));
-
+    startAndGoalPoints, costsFromTo, pathsFromTo, (windFieldMatrices), (figNum));
 
 % Call TSP solution approximation using merging
-cellArrayOfFunctionOptions = [];
+windFieldMatrices = [];
 figure(figNum); clf;
-[predictedOrderedVisitSequence, probabilitiesSequence] = fcn_BoundedAStar_approximateTSPviaMerging(...
-    costsFromTo, (cellArrayOfFunctionOptions), (figNum));
+[predictedOrderedVisitSequence, probabilitiesSequence, finalCost] = fcn_BoundedAStar_approximateTSPviaMerging(...
+    costsFromTo, (windFieldMatrices), (figNum));
+
+% PRINT RESULTS
+fprintf(1,'RESULTS: \n')
+table_data = [knownOrderedVisitSequence, predictedOrderedVisitSequence', probabilitiesSequence'];
+header_strings = [{'True Seq.'}, {'Pred. Seq.'},{'Prob Pred.'}]; % Headers for each column
+formatter_strings = [{'%.0f'},{'%.0f'},{'%.2f'}]; % How should each column be printed?
+N_chars = [12, 12, 12]; % Specify spaces for each column
+fcn_DebugTools_debugPrintTableToNCharacters(table_data, header_strings, formatter_strings,N_chars);
+fprintf(1,'\n');
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
 assert(isnumeric(predictedOrderedVisitSequence));
 assert(isnumeric(probabilitiesSequence));
+assert(isnumeric(finalCost));
 
 % Check variable sizes
 assert(size(predictedOrderedVisitSequence,1)==1); 
 assert(size(predictedOrderedVisitSequence,2)==Ngoals+2);
 assert(size(probabilitiesSequence,1)==1); 
 assert(size(probabilitiesSequence,2)==Ngoals+2);
+assert(size(finalCost,1)==1); 
+assert(size(finalCost,2)==1);
 
 % Check variable values
 assert(isequal(predictedOrderedVisitSequence, knownOrderedVisitSequence'));
 assert(all(probabilitiesSequence(1,1:end-1)>0));
+assert(finalCost>0);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
@@ -112,27 +129,41 @@ assert(isequal(get(gcf,'Number'),figNum));
 %%%% Slow mode
 tic;
 % Call TSP function to get exact answer
-cellArrayOfFunctionOptions = cell(4,1);
-cellArrayOfFunctionOptions{1} = windFieldU;
-cellArrayOfFunctionOptions{2} = windFieldV;
-cellArrayOfFunctionOptions{3} = windFieldX;
-cellArrayOfFunctionOptions{4} = windFieldY;
+windFieldMatrices = cell(4,1);
+windFieldMatrices{1} = windFieldU;
+windFieldMatrices{2} = windFieldV;
+windFieldMatrices{3} = windFieldX;
+windFieldMatrices{4} = windFieldY;
 [knownOrderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
-    startAndGoalPoints, costsFromTo, pathsFromTo, (cellArrayOfFunctionOptions), (-1));
+    startAndGoalPoints, costsFromTo, pathsFromTo, (windFieldMatrices), (-1));  
 slow_method = toc;
 
 
 %%%% Fast mode
 tic;
 % Call TSP solution approximation using merging
-cellArrayOfFunctionOptions = [];
-[predictedOrderedVisitSequence, probabilitiesSequence] = fcn_BoundedAStar_approximateTSPviaMerging(...
-    costsFromTo, (cellArrayOfFunctionOptions), (-1));
+windFieldMatrices = [];
+[predictedOrderedVisitSequence, probabilitiesSequence, finalCost] = fcn_BoundedAStar_approximateTSPviaMerging(...
+    costsFromTo, (windFieldMatrices), (-1));
 fast_method = toc;
 
 % Check variable types
 assert(isnumeric(predictedOrderedVisitSequence));
 assert(isnumeric(probabilitiesSequence));
+assert(isnumeric(finalCost));
+
+% Check variable sizes
+assert(size(predictedOrderedVisitSequence,1)==1); 
+assert(size(predictedOrderedVisitSequence,2)==Ngoals+2);
+assert(size(probabilitiesSequence,1)==1); 
+assert(size(probabilitiesSequence,2)==Ngoals+2);
+assert(size(finalCost,1)==1); 
+assert(size(finalCost,2)==1);
+
+% Check variable values
+assert(isequal(predictedOrderedVisitSequence, knownOrderedVisitSequence'));
+assert(all(probabilitiesSequence(1,1:end-1)>0));
+assert(finalCost>0);
 
 %%%% Plot results as bar chart
 figure(373737);
@@ -146,6 +177,367 @@ Y = [slow_method fast_method ]*1000;
 bar(X,Y)
 ylabel('Execution time (Milliseconds)')
 title(sprintf('Speed ratio: %.1f times faster',slow_method/fast_method));
+
+%% TEST case: estimating path in circulating wind field, 4 goal points specified - NOT match
+figNum = 20002;
+titleString = sprintf('TEST case: estimating path in circulating wind field, 4 goal points specified - NOT match');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+
+RNG = 4; 
+Ngoals = 4;
+testCase = 0;
+
+% Load starting data
+[startAndGoalPoints, costsFromTo, pathsFromTo, ...
+    windFieldU, windFieldV, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData(RNG, Ngoals, testCase);
+
+windFieldMatrices = cell(4,1);
+windFieldMatrices{1} = windFieldU;
+windFieldMatrices{2} = windFieldV;
+windFieldMatrices{3} = windFieldX;
+windFieldMatrices{4} = windFieldY;
+
+% Call TSP function to get exact answer
+[knownOrderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
+    startAndGoalPoints, costsFromTo, pathsFromTo, (windFieldMatrices), (figNum));
+
+
+% Call TSP solution approximation using merging
+windFieldMatrices = [];
+figure(figNum); clf;
+[predictedOrderedVisitSequence, probabilitiesSequence, finalCost] = fcn_BoundedAStar_approximateTSPviaMerging(...
+    costsFromTo, (windFieldMatrices), (figNum));
+
+% PRINT RESULTS
+fprintf(1,'RESULTS: \n')
+table_data = [knownOrderedVisitSequence, predictedOrderedVisitSequence', probabilitiesSequence'];
+header_strings = [{'True Seq.'}, {'Pred. Seq.'},{'Prob Pred.'}]; % Headers for each column
+formatter_strings = [{'%.0f'},{'%.0f'},{'%.2f'}]; % How should each column be printed?
+N_chars = [12, 12, 12]; % Specify spaces for each column
+fcn_DebugTools_debugPrintTableToNCharacters(table_data, header_strings, formatter_strings,N_chars);
+fprintf(1,'\n');
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(predictedOrderedVisitSequence));
+assert(isnumeric(probabilitiesSequence));
+assert(isnumeric(finalCost));
+
+% Check variable sizes
+assert(size(predictedOrderedVisitSequence,1)==1); 
+assert(size(predictedOrderedVisitSequence,2)==Ngoals+1);
+assert(size(probabilitiesSequence,1)==1); 
+assert(size(probabilitiesSequence,2)==Ngoals+1);
+assert(size(finalCost,1)==1); 
+assert(size(finalCost,2)==1);
+
+% Check variable values
+assert(~isequal(predictedOrderedVisitSequence, knownOrderedVisitSequence'));
+assert(all(probabilitiesSequence(1,1:end-1)>0));
+assert(finalCost>0);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+%%%% Slow mode
+tic;
+% Call TSP function to get exact answer
+windFieldMatrices = cell(4,1);
+windFieldMatrices{1} = windFieldU;
+windFieldMatrices{2} = windFieldV;
+windFieldMatrices{3} = windFieldX;
+windFieldMatrices{4} = windFieldY;
+[knownOrderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
+    startAndGoalPoints, costsFromTo, pathsFromTo, (windFieldMatrices), (-1));
+slow_method = toc;
+
+
+%%%% Fast mode
+tic;
+% Call TSP solution approximation using merging
+windFieldMatrices = [];
+[predictedOrderedVisitSequence, probabilitiesSequence, finalCost] = fcn_BoundedAStar_approximateTSPviaMerging(...
+    costsFromTo, (windFieldMatrices), (-1));
+fast_method = toc;
+
+% Check variable types
+assert(isnumeric(predictedOrderedVisitSequence));
+assert(isnumeric(probabilitiesSequence));
+assert(isnumeric(finalCost));
+
+% Check variable sizes
+assert(size(predictedOrderedVisitSequence,1)==1); 
+assert(size(predictedOrderedVisitSequence,2)==Ngoals+1);
+assert(size(probabilitiesSequence,1)==1); 
+assert(size(probabilitiesSequence,2)==Ngoals+1);
+assert(size(finalCost,1)==1); 
+assert(size(finalCost,2)==1);
+
+% Check variable values
+assert(~isequal(predictedOrderedVisitSequence, knownOrderedVisitSequence'));
+assert(all(probabilitiesSequence(1,1:end-1)>0));
+assert(finalCost>0);
+
+%%%% Plot results as bar chart
+figure(373737);
+clf;
+hold on;
+
+labels = {'TSP exact solution mode','TSP approximation mode'};
+X = categorical(labels);
+X = reordercats(X,labels); % Forces bars to appear in this exact order, not alphabetized
+Y = [slow_method fast_method ]*1000;
+bar(X,Y)
+ylabel('Execution time (Milliseconds)')
+title(sprintf('Speed ratio: %.1f times faster',slow_method/fast_method));
+
+
+%% TEST case: estimating path in circulating wind field, 8 goal points specified - NOT match
+figNum = 20003;
+titleString = sprintf('TEST case: estimating path in circulating wind field, 8 goal points specified - NOT match');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+
+RNG = 14;
+Ngoals = 8;
+testCase = 0;
+
+% Load starting data
+[startAndGoalPoints, costsFromTo, pathsFromTo, ...
+    windFieldU, windFieldV, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData(RNG, Ngoals, testCase);
+
+windFieldMatrices = cell(4,1);
+windFieldMatrices{1} = windFieldU;
+windFieldMatrices{2} = windFieldV;
+windFieldMatrices{3} = windFieldX;
+windFieldMatrices{4} = windFieldY;
+
+% Call TSP function to get exact answer
+figure(77777); clf;
+[knownOrderedVisitSequence, trueCost] = fcn_BoundedAStar_solveTSP(...
+    startAndGoalPoints, costsFromTo, pathsFromTo, (windFieldMatrices), (77777));
+
+% Call TSP solution approximation using merging
+figure(88888); clf;
+[predictedOrderedVisitSequence, probabilitiesSequence, finalCost] = fcn_BoundedAStar_approximateTSPviaMerging(...
+    costsFromTo, ([]), (88888));
+
+% Plot the solution
+fcn_BoundedAStar_plotTSPsolution(...
+    startAndGoalPoints, costsFromTo, pathsFromTo, windFieldMatrices, predictedOrderedVisitSequence', (figNum));
+
+% PRINT RESULTS
+fprintf(1,'RESULTS: \n')
+fprintf('True cost: %.2f\n',trueCost);
+fprintf('Approximation cost: %.2f\n',finalCost);
+table_data = [knownOrderedVisitSequence, predictedOrderedVisitSequence', probabilitiesSequence'];
+header_strings = [{'True Seq.'}, {'Pred. Seq.'},{'Prob Pred.'}]; % Headers for each column
+formatter_strings = [{'%.0f'},{'%.0f'},{'%.2f'}]; % How should each column be printed?
+N_chars = [12, 12, 12]; % Specify spaces for each column
+fcn_DebugTools_debugPrintTableToNCharacters(table_data, header_strings, formatter_strings,N_chars);
+fprintf(1,'\n');
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(predictedOrderedVisitSequence));
+assert(isnumeric(probabilitiesSequence));
+assert(isnumeric(finalCost));
+
+% Check variable sizes
+assert(size(predictedOrderedVisitSequence,1)==1); 
+assert(size(predictedOrderedVisitSequence,2)==Ngoals+2);
+assert(size(probabilitiesSequence,1)==1); 
+assert(size(probabilitiesSequence,2)==Ngoals+2);
+assert(size(finalCost,1)==1); 
+assert(size(finalCost,2)==1);
+
+% Check variable values
+assert(~isequal(predictedOrderedVisitSequence, knownOrderedVisitSequence'));
+assert(all(probabilitiesSequence(1,1:end-1)>-1));
+assert(finalCost>0);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+%%%% Slow mode
+tic;
+% Call TSP function to get exact answer
+windFieldMatrices = cell(4,1);
+windFieldMatrices{1} = windFieldU;
+windFieldMatrices{2} = windFieldV;
+windFieldMatrices{3} = windFieldX;
+windFieldMatrices{4} = windFieldY;
+[knownOrderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
+    startAndGoalPoints, costsFromTo, pathsFromTo, (windFieldMatrices), (-1));
+slow_method = toc;
+
+
+%%%% Fast mode
+tic;
+% Call TSP solution approximation using merging
+windFieldMatrices = [];
+[predictedOrderedVisitSequence, probabilitiesSequence, finalCost] = fcn_BoundedAStar_approximateTSPviaMerging(...
+    costsFromTo, (windFieldMatrices), (-1));
+fast_method = toc;
+
+% Check variable types
+assert(isnumeric(predictedOrderedVisitSequence));
+assert(isnumeric(probabilitiesSequence));
+assert(isnumeric(finalCost));
+
+% Check variable sizes
+assert(size(predictedOrderedVisitSequence,1)==1); 
+assert(size(predictedOrderedVisitSequence,2)==Ngoals+2);
+assert(size(probabilitiesSequence,1)==1); 
+assert(size(probabilitiesSequence,2)==Ngoals+2);
+assert(size(finalCost,1)==1); 
+assert(size(finalCost,2)==1);
+
+% Check variable values
+assert(~isequal(predictedOrderedVisitSequence, knownOrderedVisitSequence'));
+assert(all(probabilitiesSequence(1,1:end-1)>-1));
+assert(finalCost>0);
+
+%%%% Plot results as bar chart
+figure(373737);
+clf;
+hold on;
+
+labels = {'TSP exact solution mode','TSP approximation mode'};
+X = categorical(labels);
+X = reordercats(X,labels); % Forces bars to appear in this exact order, not alphabetized
+Y = [slow_method fast_method ]*1000;
+bar(X,Y)
+ylabel('Execution time (Milliseconds)')
+title(sprintf('Speed ratio: %.1f times faster',slow_method/fast_method));
+
+%% TEST case: estimating path in circulating wind field, 30 goal points specified - NOT match
+figNum = 20004;
+titleString = sprintf('TEST case: estimating path in circulating wind field, 30 goal points specified - NOT match');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+
+RNG = 14;
+Ngoals = 30;
+testCase = 0;
+
+% Load starting data
+[startAndGoalPoints, costsFromTo, pathsFromTo, ...
+    windFieldU, windFieldV, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData(RNG, Ngoals, testCase);
+
+windFieldMatrices = cell(4,1);
+windFieldMatrices{1} = windFieldU;
+windFieldMatrices{2} = windFieldV;
+windFieldMatrices{3} = windFieldX;
+windFieldMatrices{4} = windFieldY;
+
+% % Call TSP function to get exact answer
+% figure(77777); clf;
+% [knownOrderedVisitSequence, trueCost] = fcn_BoundedAStar_solveTSP(...
+%     startAndGoalPoints, costsFromTo, pathsFromTo, (windFieldMatrices), (77777));
+
+% Call TSP solution approximation using merging
+figure(88888); clf;
+[predictedOrderedVisitSequence, probabilitiesSequence, finalCost] = fcn_BoundedAStar_approximateTSPviaMerging(...
+    costsFromTo, ([]), (88888));
+
+% Plot the solution
+fcn_BoundedAStar_plotTSPsolution(...
+    startAndGoalPoints, costsFromTo, pathsFromTo, windFieldMatrices, predictedOrderedVisitSequence', (figNum));
+
+% PRINT RESULTS
+fprintf(1,'RESULTS: \n')
+fprintf('True cost: %.2f\n',trueCost);
+fprintf('Approximation cost: %.2f\n',finalCost);
+table_data = [knownOrderedVisitSequence, predictedOrderedVisitSequence', probabilitiesSequence'];
+header_strings = [{'True Seq.'}, {'Pred. Seq.'},{'Prob Pred.'}]; % Headers for each column
+formatter_strings = [{'%.0f'},{'%.0f'},{'%.2f'}]; % How should each column be printed?
+N_chars = [12, 12, 12]; % Specify spaces for each column
+fcn_DebugTools_debugPrintTableToNCharacters(table_data, header_strings, formatter_strings,N_chars);
+fprintf(1,'\n');
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(predictedOrderedVisitSequence));
+assert(isnumeric(probabilitiesSequence));
+assert(isnumeric(finalCost));
+
+% Check variable sizes
+assert(size(predictedOrderedVisitSequence,1)==1); 
+assert(size(predictedOrderedVisitSequence,2)==Ngoals+2);
+assert(size(probabilitiesSequence,1)==1); 
+assert(size(probabilitiesSequence,2)==Ngoals+2);
+assert(size(finalCost,1)==1); 
+assert(size(finalCost,2)==1);
+
+% Check variable values
+assert(~isequal(predictedOrderedVisitSequence, knownOrderedVisitSequence'));
+assert(all(probabilitiesSequence(1,1:end-1)>-1));
+assert(finalCost>0);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+%%%% Slow mode
+tic;
+% Call TSP function to get exact answer
+windFieldMatrices = cell(4,1);
+windFieldMatrices{1} = windFieldU;
+windFieldMatrices{2} = windFieldV;
+windFieldMatrices{3} = windFieldX;
+windFieldMatrices{4} = windFieldY;
+[knownOrderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
+    startAndGoalPoints, costsFromTo, pathsFromTo, (windFieldMatrices), (-1));
+slow_method = toc;
+
+
+%%%% Fast mode
+tic;
+% Call TSP solution approximation using merging
+windFieldMatrices = [];
+[predictedOrderedVisitSequence, probabilitiesSequence, finalCost] = fcn_BoundedAStar_approximateTSPviaMerging(...
+    costsFromTo, (windFieldMatrices), (-1));
+fast_method = toc;
+
+% Check variable types
+assert(isnumeric(predictedOrderedVisitSequence));
+assert(isnumeric(probabilitiesSequence));
+assert(isnumeric(finalCost));
+
+% Check variable sizes
+assert(size(predictedOrderedVisitSequence,1)==1); 
+assert(size(predictedOrderedVisitSequence,2)==Ngoals+2);
+assert(size(probabilitiesSequence,1)==1); 
+assert(size(probabilitiesSequence,2)==Ngoals+2);
+assert(size(finalCost,1)==1); 
+assert(size(finalCost,2)==1);
+
+% Check variable values
+assert(~isequal(predictedOrderedVisitSequence, knownOrderedVisitSequence'));
+assert(all(probabilitiesSequence(1,1:end-1)>-1));
+assert(finalCost>0);
+
+%%%% Plot results as bar chart
+figure(373737);
+clf;
+hold on;
+
+labels = {'TSP exact solution mode','TSP approximation mode'};
+X = categorical(labels);
+X = reordercats(X,labels); % Forces bars to appear in this exact order, not alphabetized
+Y = [slow_method fast_method ]*1000;
+bar(X,Y)
+ylabel('Execution time (Milliseconds)')
+title(sprintf('Speed ratio: %.1f times faster',slow_method/fast_method));
+
+
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -178,22 +570,33 @@ testCase = 0;
 [startAndGoalPoints, costsFromTo, pathsFromTo, ...
     windFieldU, windFieldV, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData(RNG, Ngoals, testCase);
 
-cellArrayOfFunctionOptions = cell(4,1);
-cellArrayOfFunctionOptions{1} = windFieldU;
-cellArrayOfFunctionOptions{2} = windFieldV;
-cellArrayOfFunctionOptions{3} = windFieldX;
-cellArrayOfFunctionOptions{4} = windFieldY;
+windFieldMatrices = cell(4,1);
+windFieldMatrices{1} = windFieldU;
+windFieldMatrices{2} = windFieldV;
+windFieldMatrices{3} = windFieldX;
+windFieldMatrices{4} = windFieldY;
 
 % Call TSP function
-[orderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
-    startAndGoalPoints, costsFromTo, pathsFromTo, (cellArrayOfFunctionOptions), ([]));
+[knownOrderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
+    startAndGoalPoints, costsFromTo, pathsFromTo, (windFieldMatrices), ([]));
 
 % Check variable types
-assert(isnumeric(orderedVisitSequence));
+assert(isnumeric(predictedOrderedVisitSequence));
+assert(isnumeric(probabilitiesSequence));
+assert(isnumeric(finalCost));
 
 % Check variable sizes
-assert(size(orderedVisitSequence,1)>=3); 
-assert(size(orderedVisitSequence,2)==1);
+assert(size(predictedOrderedVisitSequence,1)==1); 
+assert(size(predictedOrderedVisitSequence,2)==Ngoals+2);
+assert(size(probabilitiesSequence,1)==1); 
+assert(size(probabilitiesSequence,2)==Ngoals+2);
+assert(size(finalCost,1)==1); 
+assert(size(finalCost,2)==1);
+
+% Check variable values
+assert(isequal(predictedOrderedVisitSequence, knownOrderedVisitSequence'));
+assert(all(probabilitiesSequence(1,1:end-1)>0));
+assert(finalCost>0);
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -213,22 +616,33 @@ testCase = 0;
 [startAndGoalPoints, costsFromTo, pathsFromTo, ...
     windFieldU, windFieldV, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData(RNG, Ngoals, testCase);
 
-cellArrayOfFunctionOptions = cell(4,1);
-cellArrayOfFunctionOptions{1} = windFieldU;
-cellArrayOfFunctionOptions{2} = windFieldV;
-cellArrayOfFunctionOptions{3} = windFieldX;
-cellArrayOfFunctionOptions{4} = windFieldY;
+windFieldMatrices = cell(4,1);
+windFieldMatrices{1} = windFieldU;
+windFieldMatrices{2} = windFieldV;
+windFieldMatrices{3} = windFieldX;
+windFieldMatrices{4} = windFieldY;
 
 % Call TSP function
-[orderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
-    startAndGoalPoints, costsFromTo, pathsFromTo, (cellArrayOfFunctionOptions), (-1));
+[knownOrderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
+    startAndGoalPoints, costsFromTo, pathsFromTo, (windFieldMatrices), (-1));
 
 % Check variable types
-assert(isnumeric(orderedVisitSequence));
+assert(isnumeric(predictedOrderedVisitSequence));
+assert(isnumeric(probabilitiesSequence));
+assert(isnumeric(finalCost));
 
 % Check variable sizes
-assert(size(orderedVisitSequence,1)>=3); 
-assert(size(orderedVisitSequence,2)==1);
+assert(size(predictedOrderedVisitSequence,1)==1); 
+assert(size(predictedOrderedVisitSequence,2)==Ngoals+2);
+assert(size(probabilitiesSequence,1)==1); 
+assert(size(probabilitiesSequence,2)==Ngoals+2);
+assert(size(finalCost,1)==1); 
+assert(size(finalCost,2)==1);
+
+% Check variable values
+assert(isequal(predictedOrderedVisitSequence, knownOrderedVisitSequence'));
+assert(all(probabilitiesSequence(1,1:end-1)>0));
+assert(finalCost>0);
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -249,11 +663,11 @@ testCase = 0;
 [startAndGoalPoints, costsFromTo, pathsFromTo, ...
     windFieldU, windFieldV, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData(RNG, Ngoals, testCase);
 
-cellArrayOfFunctionOptions = cell(4,1);
-cellArrayOfFunctionOptions{1} = windFieldU;
-cellArrayOfFunctionOptions{2} = windFieldV;
-cellArrayOfFunctionOptions{3} = windFieldX;
-cellArrayOfFunctionOptions{4} = windFieldY;
+windFieldMatrices = cell(4,1);
+windFieldMatrices{1} = windFieldU;
+windFieldMatrices{2} = windFieldV;
+windFieldMatrices{3} = windFieldX;
+windFieldMatrices{4} = windFieldY;
 
 Niterations = 1;
 
@@ -261,33 +675,55 @@ Niterations = 1;
 tic;
 for ith_test = 1:Niterations
     % Call TSP function
-    [orderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
-        startAndGoalPoints, costsFromTo, pathsFromTo, (cellArrayOfFunctionOptions), ([]));
+    [knownOrderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
+        startAndGoalPoints, costsFromTo, pathsFromTo, (windFieldMatrices), ([]));
 end
 slow_method = toc;
 
 % Check variable types
-assert(isnumeric(orderedVisitSequence));
+assert(isnumeric(predictedOrderedVisitSequence));
+assert(isnumeric(probabilitiesSequence));
+assert(isnumeric(finalCost));
 
 % Check variable sizes
-assert(size(orderedVisitSequence,1)>=3); 
-assert(size(orderedVisitSequence,2)==1);
+assert(size(predictedOrderedVisitSequence,1)==1); 
+assert(size(predictedOrderedVisitSequence,2)==Ngoals+2);
+assert(size(probabilitiesSequence,1)==1); 
+assert(size(probabilitiesSequence,2)==Ngoals+2);
+assert(size(finalCost,1)==1); 
+assert(size(finalCost,2)==1);
+
+% Check variable values
+assert(isequal(predictedOrderedVisitSequence, knownOrderedVisitSequence'));
+assert(all(probabilitiesSequence(1,1:end-1)>0));
+assert(finalCost>0);
 
 % Do calculation with pre-calculation, FAST_MODE on
 tic;
 for ith_test = 1:Niterations
     % Call TSP function
-    [orderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
-        startAndGoalPoints, costsFromTo, pathsFromTo, (cellArrayOfFunctionOptions), (-1));
+    [knownOrderedVisitSequence] = fcn_BoundedAStar_solveTSP(...
+        startAndGoalPoints, costsFromTo, pathsFromTo, (windFieldMatrices), (-1));
 end
 fast_method = toc;
 
 % Check variable types
-assert(isnumeric(orderedVisitSequence));
+assert(isnumeric(predictedOrderedVisitSequence));
+assert(isnumeric(probabilitiesSequence));
+assert(isnumeric(finalCost));
 
 % Check variable sizes
-assert(size(orderedVisitSequence,1)>=3); 
-assert(size(orderedVisitSequence,2)==1);
+assert(size(predictedOrderedVisitSequence,1)==1); 
+assert(size(predictedOrderedVisitSequence,2)==Ngoals+2);
+assert(size(probabilitiesSequence,1)==1); 
+assert(size(probabilitiesSequence,2)==Ngoals+2);
+assert(size(finalCost,1)==1); 
+assert(size(finalCost,2)==1);
+
+% Check variable values
+assert(isequal(predictedOrderedVisitSequence, knownOrderedVisitSequence'));
+assert(all(probabilitiesSequence(1,1:end-1)>0));
+assert(finalCost>0);
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -384,7 +820,7 @@ else
     % 4 produces a saddle point near the middle
     % 4822262 produces wind field that is mostly left to right
 
-    if ~exist('seed','var') || isempty(RNGseed)
+    if isempty(RNGseed)
         randomSeed = 4;
     else
         randomSeed = RNGseed;
