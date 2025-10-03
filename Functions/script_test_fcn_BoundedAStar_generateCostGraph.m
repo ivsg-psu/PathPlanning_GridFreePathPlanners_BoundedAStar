@@ -5,6 +5,8 @@
 % Revision history
 % 2025_08_06 - K. Hayes, kxh1031@psu.edu
 % -- first write of script
+% 2025_10_03 - K. Hayes
+% -- fixed bug causing assertion failure in DEMO case 1
 
 % TO DO:
 % -- set up fast mode tests
@@ -31,7 +33,7 @@ close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
 %% DEMO case: generate a cost graph and heuristic vector 
 fig_num = 10001;
-titleString = sprintf('DEMO case: plan a straight line path through a map');
+titleString = sprintf('DEMO case:  generate a cost graph and heuristic vector ');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
@@ -62,8 +64,8 @@ mode = 'xy spatial only';
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(isnumeric(clear_pts));
-assert(isnumeric(blocked_pts));
+assert(isnumeric(cgraph));
+assert(isnumeric(hvec));
 
 % Check variable sizes
 Npolys = 100;

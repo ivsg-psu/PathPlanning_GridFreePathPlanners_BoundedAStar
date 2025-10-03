@@ -5,6 +5,10 @@
 % 2025_07_25 - K. Hayes, kxh1031@psu.edu
 % -- first write of script, code taken from example originally in
 %    fcn_bounding_ellipse_min_perimeter_path
+% 2025_10_03 - K. Hayes
+% -- changed name to
+%    script_test_fcn_BoundedAStar_calculateBoundingEllipseMinPerimPa to avoid
+%    overlength error
 
 % TO DO:
 % (none)

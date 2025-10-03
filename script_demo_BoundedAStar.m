@@ -371,6 +371,16 @@
 %   % * fixed bug causing assertion failure in DEMO case 1
 % - In script_test_fcn_Visibility_3dGraphGlobal
 %   % * fixed bug causing assertion failure in DEMO case 1
+% - Changed
+%   script_test_fcn_BoundedAStar_calculateBoundingEllipseMinPerimPath to
+%   script_test_fcn_BoundedAStar_calculateBoundingEllipseMinPerimPa to
+%   avoid overlength error
+% - In script_test_fcn_BoundedAStar_findEdgeWeights
+%   % * fixed bug causing assertion failure in DEMO case 1
+% - In script_test_fcn_BoundedAStar_generateCostGraph
+%   % * fixed bug causing assertion failure in DEMO case 1
+% - In script_test_fcn_BoundedAStar_polytopesNearLine
+%   % * fixed bug causing assertion failure in DEMO case 1
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan

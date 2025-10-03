@@ -26,9 +26,9 @@ close all
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
 
-%% DEMO case: interpolate along timespace polytope edges
+%% DEMO case: calculate point to line distance
 fig_num = 10001;
-titleString = sprintf('DEMO case: interpolate along timespace polytope edges');
+titleString = sprintf('DEMO case: calculate point to line distance');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 

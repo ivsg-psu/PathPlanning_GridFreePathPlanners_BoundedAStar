@@ -13,6 +13,8 @@
 % -- moved test to new script 
 % -- fixed script formatting
 % -- moved plotting to function debug 
+% 2025_10_03 - K. Hayes
+% -- fixed bug causing assertion failure in DEMO case 1
 %%%%%%%%%%%%%%§
 
 %% Set up the workspace
@@ -65,7 +67,7 @@ assert(isnumeric(vgraph));
 
 % Check variable sizes
 Npoly = 5;
-assert(isequal(Npoly,length(shrunk_polytopes))); 
+assert(isequal(Npoly,length(polytopes))); 
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));

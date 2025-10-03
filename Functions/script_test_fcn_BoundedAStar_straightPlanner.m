@@ -62,8 +62,10 @@ finish_xy = [100 50];
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(isnumeric(clear_pts));
-assert(isnumeric(blocked_pts));
+assert(isnumeric(cost));
+assert(isnumeric(distance_in_polys));
+assert(isnumeric(distance_outside_polys));
+assert(isnumeric(num_polys_traversed));
 
 % Check variable sizes
 Npolys = 100;

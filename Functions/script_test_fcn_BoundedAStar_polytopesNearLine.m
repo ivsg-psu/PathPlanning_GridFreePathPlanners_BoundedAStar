@@ -5,6 +5,8 @@
 % 2025_08_05 - K. Hayes, kxh1031@psu.edu
 % -- initial write of script, using script_test_fcn_BoundedAStar_polytopesGenerateAllPtsTable as
 %    starter
+% 2025_10_03 - K. Hayes
+% -- fixed bug causing assertion failure in DEMO case 1
 
 %% Set up the workspace
 close all
@@ -50,12 +52,10 @@ close_polytopes=fcn_BoundedAStar_polytopesNearLine(start,finish,shrunk_polytopes
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(isnumeric(all_pts));
-assert(isnumeric(start));
-assert(isnumeric(finish));
+assert(isstruct(close_polytopes));
 
 % Check variable sizes
-Npoly = 10;
+Npoly = 100;
 assert(isequal(Npoly,length(shrunk_polytopes))); 
 
 % Make sure plot opened up
