@@ -251,7 +251,9 @@ end
 
     %% check for edges entirely contained by polytopes
     % first, we need polytopes at intermediate positions
+    if ~isempty(time_space_polytopes)
     [~, double_time_space_polytopes] = fcn_BoundedAStar_interpolatePolytopesInTime(time_space_polytopes,dt/2);
+    end
     % for each edge that is allowed
     vgraph_without_self_visible = vgraph - eye(size(vgraph,1));
     linear_idx = find(vgraph_without_self_visible); % find 1s in vgraph

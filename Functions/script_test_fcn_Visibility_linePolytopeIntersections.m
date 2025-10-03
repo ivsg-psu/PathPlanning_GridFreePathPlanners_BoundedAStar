@@ -10,6 +10,8 @@
 % -- updated script to be compatible with new MapGen
 % -- moved plotting into fcn debug options
 % -- reformatted script
+% 2025_10_03 - K. Hayes
+% -- fixed bug causing assertion in DEMO case 1 to fail
 
 % TO DO:
 % -- set up fast mode tests
@@ -77,7 +79,7 @@ assert(isfield(xings,'obstacles'));
 
 % Check variable sizes
 Nxings = 2;
-assert(isequal(Npolys,length(xings.points))); 
+assert(isequal(Nxings,length(xings.points))); 
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));

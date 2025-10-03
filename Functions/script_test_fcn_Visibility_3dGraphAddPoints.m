@@ -8,6 +8,8 @@
 % script_test_fcn_Visibility_addObstacle as a starter
 % 2025_08_05 - K. Hayes 
 % -- moved plotting into fcn_Visibility_3dGraphAddPoints
+% 2025_10_03 - K. Hayes
+% -- fixed bug with failed assertions in DEMO case 1
 
 % TO DO:
 % -- set up fast mode tests
@@ -81,15 +83,11 @@ new_vgraph = fcn_Visibility_3dGraphAddPoints(verts, start, finish, all_surfels, 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(isnumeric(vgraphNew));
-assert(isnumeric(all_ptsNew));
-assert(isnumeric(startNew));
-assert(isnumeric(finishNew));
-assert(isstruct(polytopesNew));
+assert(isnumeric(new_vgraph));
 
 % Check variable sizes
-Npolys = length(shrunk_polytopes)+1;
-assert(isequal(Npolys,length(polytopesNew))); 
+Npolys = length(shrunk_polytopes);
+assert(isequal(Npolys,length(time_space_polytopes))); 
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));

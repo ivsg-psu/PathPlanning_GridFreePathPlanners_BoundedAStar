@@ -3,9 +3,11 @@
 % a basic test of calculation of points blocked by a 
 
 % Revision history
-% 2025_08_05 - K. Hayes, kxh1031@psu.edu
+% 2025_08_05 - K. Hayes, kaeleahayes@psu.edu
 % -- first write of script using
 %    script_test_fcn_Visibility_clearAndBlockedPoints
+% 2025_10_03 - K. Hayes
+% -- fixed bug with missing variables in DEMO case 1
 
 % TO DO:
 % -- set up fast mode tests
@@ -46,6 +48,8 @@ trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0.1 0.1 99.9 99.9
 shrunk_polytopes = fcn_MapGen_polytopesShrinkEvenly(trim_polytopes, 2.5, (-1));
 
 % Create all_pts matrix
+start = [-2.5, 1];
+finish = start + [4 0];
 all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start, finish,-1);
 
 cur_pt = all_pts(6,:);

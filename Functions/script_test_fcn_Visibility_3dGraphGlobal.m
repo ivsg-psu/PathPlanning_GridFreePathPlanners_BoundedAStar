@@ -6,6 +6,8 @@
 % 2025_08_04 - K. Hayes, kxh1031@psu.edu
 % -- first write of script, using
 % script_test_fcn_Visibility_addObstacle as a starter
+% 2025_10_03 - K. Hayes
+% -- fixed bug causing assertion failure in DEMO case 1
 
 % TO DO:
 % -- set up fast mode tests
@@ -78,8 +80,8 @@ sgtitle(titleString, 'Interpreter','none');
 assert(isnumeric(vgraph));
 
 % Check variable sizes
-Npolys = length(shrunk_polytopes)+1;
-assert(isequal(Npolys,length(polytopesNew))); 
+Npolys = length(shrunk_polytopes);
+assert(isequal(Npolys,length(time_space_polytopes))); 
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));

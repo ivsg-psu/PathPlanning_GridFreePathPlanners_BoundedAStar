@@ -355,6 +355,22 @@
 % - DEPRECATED: fcn_bounding_ellipse_polytope_bounding_box
 %   % * now fcn_BoundedAStar_calculateBoundingEllipsePolytopeBoundingBox
 % - added script_test_fcn_BoundedAStar_calculateBoundingEllipsePolytopeBoundingBox
+%
+% 2025_10_03 by K. Hayes
+% - In script_test_fcn_Visibility_linePolytopeIntersections
+%   % * fixed bug causing assertion failure in DEMO case 1
+% - In script_test_fcn_Visibility_clearAndBlockedPointsGlobal
+%   % * fixed bug causing Npoly assertion failures in DEMO cases
+%   % * fixed bug with missing variables in DEMO case 3
+%   % * fixed bug with missing variables in TEST case 1
+% - In script_test_fcn_Visibility_removeObstacle
+%   % * fixed bug with missing variables in DEMO case 1
+% - In script_test_fcn_Visibility_selfBlockedPoints
+%   % * fixed bug with missing variables in DEMO case 1
+% - In script_test_fcn_Visibility_3dGraphAddPoints
+%   % * fixed bug causing assertion failure in DEMO case 1
+% - In script_test_fcn_Visibility_3dGraphGlobal
+%   % * fixed bug causing assertion failure in DEMO case 1
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
@@ -369,6 +385,9 @@
 % 2025_08_18 - K. Hayes
 % -- add 3d formatted all_pts capabilities to
 %    fcn_BoundedAStar_polytopesGenerateAllPtsTable
+% 2025_10_03 - K. Hayes
+% -- fix bug with hardcoded expected vgraphs in
+%    script_test_fcn_Visibility_clearAndBlockedPointsGlobal
 
 
 clear library_name library_folders library_url
