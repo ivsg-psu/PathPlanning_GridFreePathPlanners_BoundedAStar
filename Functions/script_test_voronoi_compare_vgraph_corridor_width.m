@@ -6,12 +6,16 @@
 % 2025_07_08 - K. Hayes, kxh1031@psu.edu
 % -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
 %    with vector sum method 
+% 2025_10_05 by S. Brennan
+% -- removed call to fcn_MapGen_fillPolytopeFieldsFromVertices 
+%    % replaced with fcn_MapGen_polytopesFillFieldsFromVertices
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
 
-clear; close all; clc
-
-addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
+% clear; close all; clc
+% addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 flag_do_plot = 1;
 flag_do_animation = 0;
@@ -40,7 +44,7 @@ stretched_polytopes = [];
 for poly = 1:length(tiled_polytopes) % pull each cell from the voronoi diagram
     stretched_polytopes(poly).vertices  = tiled_polytopes(poly).vertices.*new_stretch;
 end % Ends for loop for stretch
-stretched_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(stretched_polytopes);
+stretched_polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(stretched_polytopes);
 
 % shrink polytopes to desired radius
 % des_rad = 2; sigma_radius = 0.4; min_rad = 0.1;
@@ -60,7 +64,7 @@ finish_init = [32 20];
 %% make a boundary around the polytope field
 boundary.vertices = [-3 -5; -3 45; 33 45; 33 -5];
 boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % close the shape by repeating first vertex
-boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
+boundary = fcn_MapGen_polytopesFillFieldsFromVertices(boundary); % fill polytope fields
 shrunk_polytopes = [boundary, polytopes]; % put the boundary polytope as the first polytope
 
 resolution_scale = 20; % this map has many fine features and resolution can be 10x the nominal

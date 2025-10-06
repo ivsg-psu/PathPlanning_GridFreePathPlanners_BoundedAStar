@@ -1,13 +1,16 @@
-clear; close all; clc
-addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
+% REVISION HISTORY:
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
+% -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
 
-addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
+% clear; close all; clc
+% addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
+% addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
+% addpath 'C:\Users\sjhar\Desktop\gif\gif'
+% addpath 'C:\Users\sjh6473\Desktop\gif\gif'
 
-addpath 'C:\Users\sjhar\Desktop\gif\gif'
-
-addpath 'C:\Users\sjh6473\Desktop\gif\gif'
 %% plotting flags
 flag_do_plot = 1;
 flag_do_plot_slow= 0;
@@ -16,7 +19,7 @@ flag_save_plots = 1;
 navigated_portion = 0.4; % portion of initial path to be completed prior to triggering replanning
 
 map_idx = 6 %
-[shrunk_polytopes, start_inits, finish_inits,~, length_cost_weights] = fcn_util_load_test_map(map_idx); % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
+[shrunk_polytopes, start_inits, finish_inits,~, length_cost_weights] = fcn_BoundedAStar_loadTestMap(map_idx); % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
 
 mission_idx = 4;
 

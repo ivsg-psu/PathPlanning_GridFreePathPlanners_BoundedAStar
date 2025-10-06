@@ -2,12 +2,17 @@
 % tests fcn_MedialAxis_plannerWrapper and fcn_MedialAxis_replanWrapper
 % test script of planning along voronoi diagram edges via a wrapper function that encompases the
 % medial axis planning stack
-clear; close all; clc
 
-%% declair dependencies
-addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
+% REVISION HISTORY:
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
+% 
+% clear; close all; clc
+% 
+% %% declair dependencies
+% addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 %% polytopes for testing
 n_polys = 16; % number of polytopes

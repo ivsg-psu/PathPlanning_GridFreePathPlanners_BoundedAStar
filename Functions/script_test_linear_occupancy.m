@@ -1,8 +1,13 @@
-% %% add necessary directories
-addpath([pwd '\..\Example_Map_Generation_Code'])
-addpath([pwd '\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
-addpath([pwd '\..\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
-%
+% REVISION HISTORY:
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
+% -- fixed calls to fcn_MapGen_polytopesStatistics, replaced with fcn_MapGen_statsPolytopes
+
+% % add necessary directories
+% addpath([pwd '\..\Example_Map_Generation_Code'])
+% addpath([pwd '\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
+% addpath([pwd '\..\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
+
 % %% initialize loop params and storage arrays for plotting
 des_gap_size = linspace(0.0001,0.08,30);
 all_rd = [];
@@ -41,8 +46,8 @@ est_d_eff7 = [];
         shrunk_polytopes = fcn_MapGen_polytopesShrinkFromEdges(trim_polytopes,gap_size);
 
         %% polytope stats to create inputs for predictor code
-        field_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes);
-        field_stats_pre_shrink = fcn_MapGen_polytopesStatistics(trim_polytopes);
+        field_stats = fcn_MapGen_statsPolytopes(shrunk_polytopes);
+        field_stats_pre_shrink = fcn_MapGen_statsPolytopes(trim_polytopes);
         % extract parameters of interest
         field_avg_r_D = field_stats.avg_r_D;
         field_avg_r_D_pre_shrink = field_stats_pre_shrink.avg_r_D;
@@ -67,7 +72,7 @@ est_d_eff7 = [];
             % because the path length is 1, dist_inside is linear occupancy
             measured_unoccupancy = [measured_unoccupancy, (1-dist_inside)];
             %% polytope stats to create inputs for predictor code
-            field_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes_known_cost);
+            field_stats = fcn_MapGen_statsPolytopes(shrunk_polytopes_known_cost);
             % extract parameters of interest
             field_avg_r_D = field_stats.avg_r_D;
             r_D_for_meas = [r_D_for_meas, field_avg_r_D];
@@ -99,8 +104,8 @@ for gap_idx = 1:1:14%1:length(des_gap_size)
 
 
         %% polytope stats to create inputs for predictor code
-        field_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes);
-        field_stats_pre_shrink = fcn_MapGen_polytopesStatistics(trim_polytopes);
+        field_stats = fcn_MapGen_statsPolytopes(shrunk_polytopes);
+        field_stats_pre_shrink = fcn_MapGen_statsPolytopes(trim_polytopes);
         % extract parameters of interest
         field_avg_r_D = field_stats.avg_r_D;
         field_avg_r_D_pre_shrink = field_stats_pre_shrink.avg_r_D;

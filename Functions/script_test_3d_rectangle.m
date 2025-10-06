@@ -1,16 +1,18 @@
-clear; close all; clc
 % script_test_3d_polytope
 % a basic test of a 3D path planning scenario in timespace
 % there is are three basic manually defined polytopes between the start and the goal that the planner routes around
 
-addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
-addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
+% REVISION HISTORY:
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
 
-addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
-addpath 'C:\Users\sjhar\Desktop\gif\gif'
+% addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
+% addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
+% addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
+% addpath 'C:\Users\sjhar\Desktop\gif\gif'
+% addpath 'C:\Users\sjh6473\Desktop\TriangleRayIntersection'
+% addpath 'C:\Users\sjh473\Desktop\gif\gif'
 
-addpath 'C:\Users\sjh6473\Desktop\TriangleRayIntersection'
-addpath 'C:\Users\sjh473\Desktop\gif\gif'
 tic
 
 flag_do_plot = 1;

@@ -1,11 +1,12 @@
-clear
-clc
-% close all
+% REVISION HISTORY:
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
 
-%% add necessary directories
-addpath([pwd '\Example_Map_Generation_Code'])
-addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
-addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
+
+% %% add necessary directories
+% addpath([pwd '\Example_Map_Generation_Code'])
+% addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
+% addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 
 %% generate map
 % generate Voronoi tiling from Halton points

@@ -2,13 +2,10 @@
 % 2025_07_08 - K. Hayes, kxh1031@psu.edu
 % -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
 %    with vector sum method 
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
 
-clear
-clc
-close all
-
-%% add necessary directories
-addpath([pwd '\..\Example_Map_Generation_Code'])
+% addpath([pwd '\..\Example_Map_Generation_Code'])
 
 %% map generation control
 % repetition controls and storage

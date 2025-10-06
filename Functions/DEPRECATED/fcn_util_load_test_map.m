@@ -1,4 +1,11 @@
-function [polytopes, starts, finishes, resolution_scale, length_cost_weights, navigated_portions] = fcn_util_load_test_map(map_idx, varargin)
+function [polytopes, starts, finishes, resolution_scale, length_cost_weights, navigated_portions] = ...
+    fcn_util_load_test_map(map_idx, varargin)
+
+
+warning('on','backtrace');
+warning('fcn_util_load_test_map is being deprecated. Use fcn_BoundedAStar_loadTestMap instead.');
+
+
 % fcn_util_load_test_map
 %
 % A simple utility for loading a test fixture mat file containing a polytope map
@@ -130,7 +137,7 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
         start = [0 1.25];
         finish = [2 1.25];
         if add_boundary
-            my_warn = sprintf('boundary is not defined for map_idx %i.\n Either define a boundary in fcn_util_load_test_map or set the add_boundary flag to 0.', map_idx);
+            my_warn = sprintf('boundary is not defined for map_idx %i.\n Either define a boundary or set the add_boundary flag to 0.', map_idx);
             warning(my_warn)
         end
     elseif map_idx == 2 % the lower triangular flood plain
@@ -140,7 +147,7 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
         % finish = [-78.1 40.9];
         finish = [-78.07 40.82];
         if add_boundary
-            my_warn = sprintf('boundary is not defined for map_idx %i.\n Either define a boundary in fcn_util_load_test_map or set the add_boundary flag to 0.', map_idx);
+            my_warn = sprintf('boundary is not defined for map_idx %i.\n Either define a boundary or set the add_boundary flag to 0.', map_idx);
             warning(my_warn)
         end
     elseif map_idx == 3 % the mustafar mining rig map (the comb)
@@ -150,7 +157,7 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
         % finish = [-77.86 40.93];
         finish = [-77.82 40.97];
         if add_boundary
-            my_warn = sprintf('boundary is not defined for map_idx %i.\n Either define a boundary in fcn_util_load_test_map or set the add_boundary flag to 0.', map_idx);
+            my_warn = sprintf('boundary is not defined for map_idx %i.\n Either define a boundary or set the add_boundary flag to 0.', map_idx);
             warning(my_warn)
         end
     elseif map_idx == 4 % also good for edge deletion case (the long river valleys)
@@ -160,7 +167,7 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
         % finish = [-77.58 40.845];
         finish = [-77.68 40.85];
         if add_boundary
-            my_warn = sprintf('boundary is not defined for map_idx %i.\n Either define a boundary in fcn_util_load_test_map or set the add_boundary flag to 0.', map_idx);
+            my_warn = sprintf('boundary is not defined for map_idx %i.\n Either define a boundary or set the add_boundary flag to 0.', map_idx);
             warning(my_warn)
         end
     elseif map_idx == 5 % bridge map, good for random edge deletion case
@@ -297,7 +304,7 @@ function [polytopes, starts, finishes, resolution_scale, length_cost_weights, na
         end
         resolution_scale = 20; % this map has many fine features and resolution can be 10x the nominal
     elseif map_idx == 10
-        error("map 10 not yet defined in fcn_util_load_test_map.  You're welcome to add one following the convention of other maps.")
+        error("map 10 not yet defined.  You're welcome to add one following the convention of other maps.")
     end % if conditions for different map test fixtures
 
     %% some maps need to be converted from LLA to ENU

@@ -2,15 +2,15 @@
 % 2025_07_08 - K. Hayes, kxh1031@psu.edu
 % -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
 %    with vector sum method 
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
 
-%% add necessary directories
-addpath([pwd '\Example_Map_Generation_Code'])
-addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
-addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 
-clear
-clc
-close all
+% %% add necessary directories
+% addpath([pwd '\Example_Map_Generation_Code'])
+% addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
+% addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
+
 
 script_ui_manuallyDefineMapLayers
 

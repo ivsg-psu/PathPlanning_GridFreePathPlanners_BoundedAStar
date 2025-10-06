@@ -5,12 +5,14 @@
 % 2025_07_08 - K. Hayes, kxh1031@psu.edu
 % -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
 %    with vector sum method 
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
+% -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
 
-clear; close all; clc
-
-addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
+% clear; close all; clc
+% addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 
 map_idx = 6;
@@ -18,7 +20,7 @@ flag_do_plot = 1;
 flag_do_animation = 0;
 flag_do_plot_slow = 0;
 num_time_trials = 1; % repeat iterations of map creation to get timing data
-[shrunk_polytopes, start_init, finish_init, resolution_scale] = fcn_util_load_test_map(map_idx, 1);
+[shrunk_polytopes, start_init, finish_init, resolution_scale] = fcn_BoundedAStar_loadTestMap(map_idx, 1);
 start_init = start_init(2,:);
 finish_init = finish_init(2,:);
 %% for sake of comparisons, do this with a visibility graph as well

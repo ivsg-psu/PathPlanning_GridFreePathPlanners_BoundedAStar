@@ -2,10 +2,15 @@
 % example of routing through a field of polytopes with a large chokepoint in the middle
 % reachability and visibilty incentive cost functions can be used to route around the choke point
 
-clear; close all; clc
-addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
+% REVISION HISTORY:
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
+% -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
+
+% clear; close all; clc
+% addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 %% plotting flags
 flag_do_plot = 1;
@@ -13,7 +18,7 @@ flag_do_plot_slow = 0;
 
 %% mission options
 map_idx =5;
-[shrunk_polytopes, start_inits, finish_inits] = fcn_util_load_test_map(map_idx);
+[shrunk_polytopes, start_inits, finish_inits] = fcn_BoundedAStar_loadTestMap(map_idx);
 
 for mission_idx = 1:size(start_inits,1)
     start_init = start_inits(mission_idx,:);

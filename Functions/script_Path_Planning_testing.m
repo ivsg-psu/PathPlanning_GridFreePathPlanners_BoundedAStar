@@ -16,6 +16,8 @@
 %      with vector sum method
 %   -- Added planner_mode input to Astar setup function for compatibility
 %      with newer function versions
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
 
 
 %% Prep the workspace
@@ -25,19 +27,19 @@ clc
 % Set the random number seed so that the results are consistent throughout.
 rng(678);
 
-%% add necessary scripts so that scripts can be accessed
-cur_path = pwd;
-main_folder = '!Voronoi Tiling Obstacles - Organized';
-parent_dir = cur_path(1:strfind(cur_path,main_folder)-2);
-addpath([parent_dir '\' main_folder '\General_Calculation'])
-addpath([parent_dir '\' main_folder '\Plotting'])
-addpath([parent_dir '\' main_folder '\Map_Generation\polytope_calculation'])
-addpath([parent_dir '\' main_folder '\Map_Generation\polytope_editing'])
-addpath([parent_dir '\' main_folder '\Map_Generation\polytope_generation'])
-addpath([parent_dir '\' main_folder '\Path_Planning\visibility'])
-addpath([parent_dir '\' main_folder '\Path_Planning\bounding_ellipse'])
-addpath([parent_dir '\' main_folder '\Path_Planning\algorithm_setup'])
-addpath([parent_dir '\' main_folder '\Path_Planning\algorithm'])
+% %% add necessary scripts so that scripts can be accessed
+% cur_path = pwd;
+% main_folder = '!Voronoi Tiling Obstacles - Organized';
+% parent_dir = cur_path(1:strfind(cur_path,main_folder)-2);
+% addpath([parent_dir '\' main_folder '\General_Calculation'])
+% addpath([parent_dir '\' main_folder '\Plotting'])
+% addpath([parent_dir '\' main_folder '\Map_Generation\polytope_calculation'])
+% addpath([parent_dir '\' main_folder '\Map_Generation\polytope_editing'])
+% addpath([parent_dir '\' main_folder '\Map_Generation\polytope_generation'])
+% addpath([parent_dir '\' main_folder '\Path_Planning\visibility'])
+% addpath([parent_dir '\' main_folder '\Path_Planning\bounding_ellipse'])
+% addpath([parent_dir '\' main_folder '\Path_Planning\algorithm_setup'])
+% addpath([parent_dir '\' main_folder '\Path_Planning\algorithm'])
 
 %% generate the map
 % Details on what each of these functions do can be found in the

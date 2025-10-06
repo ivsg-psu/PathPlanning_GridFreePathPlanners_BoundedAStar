@@ -4,10 +4,15 @@
 % initial path. The final paths are then compared to show that replanning from the more connected path
 % is less costly and more likely to be successful.
 
-clear; close all; clc
-addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
+% REVISION HISTORY:
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
+% -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
+
+% clear; close all; clc
+% addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 %% plotting flags
 flag_do_plot = 1;
@@ -19,7 +24,7 @@ navigated_portion = 0.5; % portion of initial path to be completed prior to trig
 random_delete = 0; % toggle on random edge deletion vs length based deletion where long edges are deleted first (assumed to be more likely to be blocked as they cover more ground)
 num_repeats = 1; % since there is random edge deletion, the user may want to run each trial multiple times
 w = 10000; % relative weighting of heuristic cost function, heuristic_cost = dist_to_goal + w*num_visible_nodes + w*num_reachable_nodes
-[shrunk_polytopes, start_inits, finish_inits] = fcn_util_load_test_map(map_idx);
+[shrunk_polytopes, start_inits, finish_inits] = fcn_BoundedAStar_loadTestMap(map_idx);
 
 % map_ID nominal_or_reachable edge_deletion(edge_deletion_idx) pct_edges_removed init_route_length navigated_distance replan_route_length
 data = []; % initialize array for storing results

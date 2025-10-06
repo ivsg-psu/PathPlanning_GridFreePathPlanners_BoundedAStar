@@ -381,6 +381,12 @@
 %   % * fixed bug causing assertion failure in DEMO case 1
 % - In script_test_fcn_BoundedAStar_polytopesNearLine
 %   % * fixed bug causing assertion failure in DEMO case 1
+%
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls in many scripts
+% -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
+% -- added explicit deprecation message to fcn_util_load_test_map
+% -- fixed calls to fcn_MapGen_polytopesStatistics, replaced with fcn_MapGen_statsPolytopes
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan
@@ -442,7 +448,13 @@ end
 
 %% Do we need to set up the work space?
 if ~exist('flag_BoundAStar_Folders_Initialized','var')
-    this_project_folders = {'Functions','Functions_CostCalculation','Test_Fixtures','Utilities_gif','Utilities_TriangleRayIntersection','Utilities_streamcolor'}; % {'Functions','Data'};
+    this_project_folders = {...
+        'Functions',...
+        'Functions_CostCalculation',...
+        'Test_Fixtures',...
+        'Utilities_gif',...
+        'Utilities_TriangleRayIntersection',...
+        'Utilities_streamcolor'}; % {'Functions','Data'};
     fcn_INTERNAL_initializeUtilities(library_name,library_folders,library_url,this_project_folders);  
     flag_BoundAStar_Folders_Initialized = 1;
 end

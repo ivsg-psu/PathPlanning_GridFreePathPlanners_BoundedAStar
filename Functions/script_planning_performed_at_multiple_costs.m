@@ -1,8 +1,14 @@
-clear
-clc
-close all
+% REVISION HISTORY:
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
+% -- fixed calls to fcn_MapGen_polytopesStatistics, replaced with fcn_MapGen_statsPolytopes
 
-%% add necessary directories
+
+% clear
+% clc
+% close all
+%
+% add necessary directories
 % addpath([pwd '\Example_Map_Generation_Code'])
 % addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
 % addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
@@ -30,8 +36,8 @@ for Halton_seed = 1%:20:101
             shrunk_polytopes = fcn_MapGen_polytopesShrinkFromEdges(trim_polytopes,gap_size);
 
             %% polytope stats to create inputs for predictor code
-            field_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes);
-            field_stats_pre_shrink = fcn_MapGen_polytopesStatistics(trim_polytopes);
+            field_stats = fcn_MapGen_statsPolytopes(shrunk_polytopes);
+            field_stats_pre_shrink = fcn_MapGen_statsPolytopes(trim_polytopes);
             % extract parameters of interest
             field_avg_r_D = field_stats.avg_r_D;
             field_avg_r_D_pre_shrink = field_stats_pre_shrink.avg_r_D;

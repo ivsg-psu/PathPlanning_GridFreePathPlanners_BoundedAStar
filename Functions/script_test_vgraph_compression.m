@@ -1,4 +1,3 @@
-clear; close all; clc
 % script_test_vgraph_compression
 % experiment of removing "unecessary" edges from the vgraph by performing a singular value decomposition
 % and subsequent low rank matrix approximation using
@@ -7,10 +6,13 @@ clear; close all; clc
 % then plan through the compressed visibility graph to see how impacted the path is compared
 % to the original visibility graph
 
+% REVISION HISTORY:
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
 
-addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
+% addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 flag_do_plot = 1;
 flag_do_slow_plot = 0;

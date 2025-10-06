@@ -6,12 +6,12 @@
 %
 % 2024_02_01 by S. Harnett
 % -- first write of script
-%%%%%%%%%%%%%%§
-close all; clear all; clc;
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
 
-addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
+% addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 flag_do_plot = 1;
 flag_do_plot_slow = 0;

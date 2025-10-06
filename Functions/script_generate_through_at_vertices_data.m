@@ -1,11 +1,17 @@
-clear
-clc
-close all
+% REVISION HISTORY:
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
+% -- fixed calls to fcn_MapGen_polytopesStatistics, replaced with fcn_MapGen_statsPolytopes
 
-%% add necessary directories
-addpath([pwd '\Example_Map_Generation_Code'])
-addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
-addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
+
+% clear
+% clc
+% close all
+% 
+% %% add necessary directories
+% addpath([pwd '\Example_Map_Generation_Code'])
+% addpath([pwd '\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
+% addpath([pwd '\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 
 %% initialize loop params and storage arrays for plotting
 des_gap_size = linspace(0.0001,0.0125,30);
@@ -28,7 +34,7 @@ for Halton_seed = 1:20:101
     % generate Voronoi tiling from Halton points
     low_pt = 1+Halton_seed; high_pt = 1000+Halton_seed; % range of Halton points to use to generate the tiling
     trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
-    field_stats_pre_shrink = fcn_MapGen_polytopesStatistics(trim_polytopes);
+    field_stats_pre_shrink = fcn_MapGen_statsPolytopes(trim_polytopes);
     for gap_idx = 1:length(des_gap_size)
 
         
@@ -37,7 +43,7 @@ for Halton_seed = 1:20:101
         shrunk_polytopes = fcn_MapGen_polytopesShrinkFromEdges(trim_polytopes,gap_size);
 
         %% polytope stats to create inputs for predictor code
-        field_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes);
+        field_stats = fcn_MapGen_statsPolytopes(shrunk_polytopes);
         
         % extract parameters of interest
         field_avg_r_D = field_stats.avg_r_D;

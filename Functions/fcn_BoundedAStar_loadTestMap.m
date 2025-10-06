@@ -175,7 +175,8 @@ end
     % load test fixtures for polytope map rather than creating it here
     if map_idx == 1 % generic canyon map
         % load distribution north of canyon
-        load(strcat(pwd,'\..\Test_Fixtures\shrunk_polytopes1.mat'));
+        % load(strcat(pwd,'\..\Test_Fixtures\shrunk_polytopes1.mat'));
+        load('shrunk_polytopes1.mat');
         % this test fixture was made with the following block of code using functions from the MapGen repo
         % tiled_polytopes1 = fcn_MapGen_haltonVoronoiTiling([1,20],[2 1]);
         % % remove the edge polytope that extend past the high and low points
@@ -186,11 +187,13 @@ end
         % [shrunk_polytopes1,~,~] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes1,des_radius,sigma_radius,min_rad);
 
         % load polytopes representing canyon
-        load(strcat(pwd,'\..\Test_Fixtures\canyon_polys_without_exterior.mat'));
+        % load(strcat(pwd,'\..\Test_Fixtures\canyon_polys_without_exterior.mat'));
+        load('canyon_polys_without_exterior.mat');
         % these polytopes were manually defined
 
         % load distribution south of canyon
-        load(strcat(pwd,'\..\Test_Fixtures\shrunk_polytopes2.mat'));
+        % load(strcat(pwd,'\..\Test_Fixtures\shrunk_polytopes2.mat'));
+        load('shrunk_polytopes2.mat');
         % this test fixture was made with the following block of code using functions from the MapGen repo
         % tiled_polytopes2 = fcn_MapGen_haltonVoronoiTiling([1, 20],[2 1]);
         % % remove the edge polytope that extend past the high and low points
@@ -215,7 +218,8 @@ end
         end
 
     elseif map_idx == 2 % the lower triangular flood plain
-        load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_1.mat'));
+        % load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_1.mat'));
+        load('flood_plain_1.mat');
         polytopes = flood_plain_1;
         start = [-78.3 40.88];
         % finish = [-78.1 40.9];
@@ -226,7 +230,8 @@ end
         end
 
     elseif map_idx == 3 % the mustafar mining rig map (the comb)
-        load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_2.mat'));
+        % load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_2.mat'));
+        load('flood_plain_2.mat');
         polytopes = flood_plain_2;
         start = [-78.02 40.96];
         % finish = [-77.86 40.93];
@@ -237,7 +242,8 @@ end
         end
 
     elseif map_idx == 4 % also good for edge deletion case (the long river valleys)
-        load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_3.mat'));
+        % load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_3.mat'));
+        load('flood_plain_3.mat');
         polytopes = flood_plain_3;
         start = [-77.49 40.84];
         % finish = [-77.58 40.845];
@@ -248,7 +254,8 @@ end
         end
 
     elseif map_idx == 5 % bridge map, good for random edge deletion case
-        load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_4.mat'));
+        % load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_4.mat'));
+        load('flood_plain_4.mat');
         polytopes = flood_plain_4;
         start = [-77.68 40.9];
         finish = [-77.5 40.8];
@@ -262,7 +269,8 @@ end
         end
 
     elseif map_idx == 6 % large map, good for dilation case, nearly fully tiled
-        load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_5.mat'));
+        % load(strcat(pwd,'\..\Test_Fixtures\flood_plains\flood_plain_5.mat'));
+        load('flood_plain_5.mat');
         polytopes = flood_plain_5;
         start = [-78.01 41.06];
         finish = [-77.75 40.93];
@@ -325,7 +333,8 @@ end
         resolution_scale = 20; % this map has many fine features and resolution can be 10x the nominal
 
     elseif map_idx == 8 % Josh's polytope map from 24 April 2024
-        load(strcat(pwd,'\..\Test_Fixtures\april_24_example_josh.mat'));
+        % load(strcat(pwd,'\..\Test_Fixtures\april_24_example_josh.mat'));
+        load('april_24_example_josh.mat');
         start = [1 30];
         finish = [100 50];
         if add_boundary

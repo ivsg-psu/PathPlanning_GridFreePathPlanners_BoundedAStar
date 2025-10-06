@@ -1,20 +1,26 @@
-clear; close all; clc
 % script_test_3d_polytope_multiple
 % defacto example of 3D path planning scenario in timespace
 % typical field of polytopes, each with a random velocity, that the planner routes around
 
-addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
-addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
+% REVISION HISTORY:
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
 
-addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
-addpath 'C:\Users\sjhar\Desktop\gif\gif'
-
-addpath 'C:\Users\sjh6473\Desktop\gif\gif'
-addpath 'C:\Users\sjh6473\Desktop\TriangleRayIntersection'
+% 
+% addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
+% addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
+% 
+% addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
+% addpath 'C:\Users\sjhar\Desktop\gif\gif'
+% 
+% addpath 'C:\Users\sjh6473\Desktop\gif\gif'
+% addpath 'C:\Users\sjh6473\Desktop\TriangleRayIntersection'
 
 %% load test fixtures for polytope map rather than creating it here
 % load distribution north of canyon
 load(strcat(pwd,'\..\Test_Fixtures\shrunk_polytopes.mat'));
+
+
 % this test fixture was made with the following block of code using functions from the MapGen repo
 % tiled_polytopes = fcn_MapGen_haltonVoronoiTiling([1,20],[1 1]);
 % % remove the edge polytope that extend past the high and low points

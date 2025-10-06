@@ -1,16 +1,19 @@
-clear; close all; clc
 % script_test_3d_polytope_multiple
 % defacto example of 3D path planning scenario in timespace
 % typical field of polytopes, each with a random velocity, that the planner routes around
 
-addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
-addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
+% REVISION HISTORY:
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
 
-addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
-addpath 'C:\Users\sjhar\Desktop\gif\gif'
-
-addpath 'C:\Users\sjh6473\Desktop\gif\gif'
-addpath 'C:\Users\sjh6473\Desktop\TriangleRayIntersection'
+% addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
+% addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
+% 
+% addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
+% addpath 'C:\Users\sjhar\Desktop\gif\gif'
+% 
+% addpath 'C:\Users\sjh6473\Desktop\gif\gif'
+% addpath 'C:\Users\sjh6473\Desktop\TriangleRayIntersection'
 
 %% load test fixtures for polytope map rather than creating it here
 % load distribution north of canyon

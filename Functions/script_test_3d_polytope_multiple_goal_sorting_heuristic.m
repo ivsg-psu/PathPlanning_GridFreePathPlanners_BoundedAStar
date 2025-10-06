@@ -1,16 +1,23 @@
-clear; close all; clc
-% script_test_3d_polytope_multiple
-% defacto example of 3D path planning scenario in timespace
-% typical field of polytopes, each with a random velocity, that the planner routes around
+% % script_test_3d_polytope_multiple
+% % defacto example of 3D path planning scenario in timespace
+% % typical field of polytopes, each with a random velocity, that the planner routes around
 
-addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
-addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
 
-addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
-addpath 'C:\Users\sjhar\Desktop\gif\gif'
+% REVISION HISTORY:
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
+% -- fixed calls to fcn_MapGen_polytopesStatistics, replaced with fcn_MapGen_statsPolytopes
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
 
-addpath 'C:\Users\sjh6473\Desktop\gif\gif'
-addpath 'C:\Users\sjh6473\Desktop\TriangleRayIntersection'
+% clear; close all; clc
+% 
+% addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
+% addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
+% addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
+% addpath 'C:\Users\sjhar\Desktop\gif\gif'
+% addpath 'C:\Users\sjh6473\Desktop\gif\gif'
+% addpath 'C:\Users\sjh6473\Desktop\TriangleRayIntersection'
 
 %% load test fixtures for polytope map rather than creating it here
 % load distribution north of canyon
@@ -38,8 +45,8 @@ if flag_do_plot
          fill(shrunk_polytopes(i).vertices(:,1)',shrunk_polytopes(i).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
     end
 end
-addpath 'C:\Users\sjhar\Documents\GitHub\PathPlanning_MapTools_MapGenClassLibrary\Functions'
-map_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes);
+% addpath 'C:\Users\sjhar\Documents\GitHub\PathPlanning_MapTools_MapGenClassLibrary\Functions'
+map_stats = fcn_MapGen_statsPolytopes(shrunk_polytopes);
 title(sprintf('departure ratio: %.2f',map_stats.avg_r_D));
 r_LC_predicted = 1.013;
 tic

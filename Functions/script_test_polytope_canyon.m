@@ -1,16 +1,17 @@
-clear; close all; clc
 % script_test_3d_polytope_canyon
 % example of routing through a field of polytopes with a large chokepoint in the middle
 % reachability and visibilty incentive cost functions can be used to route around the choke point
 
-addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
-addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
+% REVISION HISTORY:
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
 
-addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
-addpath 'C:\Users\sjhar\Desktop\gif\gif'
-
-addpath 'C:\Users\sjh6473\Desktop\gif\gif'
-addpath 'C:\Users\sjh6473\Desktop\TriangleRayIntersection'
+% addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
+% addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
+% addpath 'C:\Users\sjhar\Desktop\TriangleRayIntersection'
+% addpath 'C:\Users\sjhar\Desktop\gif\gif'
+% addpath 'C:\Users\sjh6473\Desktop\gif\gif'
+% addpath 'C:\Users\sjh6473\Desktop\TriangleRayIntersection'
 
 %% load test fixtures for polytope map rather than creating it here
 % load distribution north of canyon

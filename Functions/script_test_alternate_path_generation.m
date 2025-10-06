@@ -2,10 +2,15 @@
 % example of using a cost matrix (such as corridor width) to create alternate paths
 % with increasingly tight hard constraints rather than only as an incentive/cost or soft constriant
 
-clear; close all; clc
-addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
+% REVISION HISTORY:
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
+% -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
+
+% clear; close all; clc
+% addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 %% plotting flags
 flag_do_plot = 1;
@@ -15,7 +20,7 @@ flag_do_plot_slow = 0;
 map_idx = 7;
 num_paths = 10; % number of alternate paths to generate
 corridor_width_buffer = 1.1; % how much larger should the smallest corridor in route n+1 be relative to the smallest corridor in route n?
-[shrunk_polytopes, start_inits, finish_inits] = fcn_util_load_test_map(map_idx);
+[shrunk_polytopes, start_inits, finish_inits] = fcn_BoundedAStar_loadTestMap(map_idx);
 
 for mission_idx = 1:size(start_inits,1)
     start_init = start_inits(mission_idx,:);

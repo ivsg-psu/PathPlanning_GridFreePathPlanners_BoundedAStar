@@ -4,18 +4,16 @@
 %    bounded Astar function
 % 2025_07_28 S. Brennan, sbrennan@psu.edu
 % -- updated polytope generation to fcn_MapGen_generatePolysFromSeedGeneratorNames
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
 
 % TO DO: 'through or around' planner is broken. Pseudocode is in the
 % bounded Astar function for future implementation
 
-clear
-clc
-close all
-
-%% add necessary directories
-addpath([pwd '\..\Example_Map_Generation_Code'])
-addpath([pwd '\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
-addpath([pwd '\..\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
+% %% add necessary directories
+% addpath([pwd '\..\Example_Map_Generation_Code'])
+% addpath([pwd '\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'])
+% addpath([pwd '\..\PathPlanning_GeomTools_GeomClassLibrary\Functions'])
 
 %% generate map
 % generate Voronoi tiling from Halton points
