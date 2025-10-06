@@ -59,6 +59,11 @@ function fcn_BoundedAStar_plotTSPsolution(...
 % - in fcn_BoundedAStar_plotTSPsolution
 %   % * first write of function using fcn_BoundedAStar_solveTSP
 %   %   % as a starter
+%
+% 2025_09_10 by S. Brennan
+% - in fcn_BoundedAStar_plotTSPsolution
+%   % * added shut-off of solution plotting if orderedVisitSequence is
+%   empty. Defaults to plotting all trajectories.
 
 % TO-DO
 % (none)
@@ -169,7 +174,7 @@ end
 %See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
-% NumGoals   = size(startAndGoalPoints,1);
+NumGoals   = size(startAndGoalPoints,1);
 startPoint = startAndGoalPoints(1,:);
 goalPoints = startAndGoalPoints(2:end,:);
 
@@ -235,28 +240,50 @@ if flag_do_plots
 
     % Plot the TSP result, the ordered visit sequence
     % pointSequence = feasibleAllPoints(orderedVisitSequence,:);
+    if ~isempty(orderedVisitSequence) && ~isequal(orderedVisitSequence,-1)
+        for ith_fromPoint = 1:length(orderedVisitSequence)-1
+            thisColorRow = mod(ith_fromPoint-1,Ncolors)+1;
+            thisColor = colorOrder(thisColorRow,:);
 
-    for ith_fromPoint = 1:length(orderedVisitSequence)-1
-        thisColorRow = mod(ith_fromPoint-1,Ncolors)+1;
-        thisColor = colorOrder(thisColorRow,:);
+            from_index = orderedVisitSequence(ith_fromPoint,1);
+            goal_index = orderedVisitSequence(ith_fromPoint+1,1);
+            thisPath =  pathsFromTo{from_index,goal_index};
+            h_plot = plot(thisPath(:,1),thisPath(:,2),'-','Color',thisColor,'LineWidth',5);
 
-        from_index = orderedVisitSequence(ith_fromPoint,1);
-        goal_index = orderedVisitSequence(ith_fromPoint+1,1);
-        thisPath =  pathsFromTo{from_index,goal_index};
-        h_plot = plot(thisPath(:,1),thisPath(:,2),'-','Color',thisColor,'LineWidth',5);
+            % Plot the base in green and head in red so we know directions
+            plot(thisPath(1:2,1),thisPath(1:2,2),'g-','LineWidth',5,'HandleVisibility','off');
+            plot(thisPath(end-1:end,1),thisPath(end-1:end,2),'r-','LineWidth',5,'HandleVisibility','off');
+            % h_quiver = quiver(thisPath(end-1,1),thisPath(end-1,2),arrowMagnitude(1,1),arrowMagnitude(1,2),0,...
+            %     'LineWidth',5,'Color',thisColor,'HandleVisibility','off','ShowArrowHead','on',...
+            %     'MaxHeadSize',4,'AutoScale','off','AutoScaleFactor',20);
 
-        % Plot the base in green and head in red so we know directions
-        plot(thisPath(1:2,1),thisPath(1:2,2),'g-','LineWidth',5,'HandleVisibility','off');
-        plot(thisPath(end-1:end,1),thisPath(end-1:end,2),'r-','LineWidth',5,'HandleVisibility','off');
-        % h_quiver = quiver(thisPath(end-1,1),thisPath(end-1,2),arrowMagnitude(1,1),arrowMagnitude(1,2),0,...
-        %     'LineWidth',5,'Color',thisColor,'HandleVisibility','off','ShowArrowHead','on',...
-        %     'MaxHeadSize',4,'AutoScale','off','AutoScaleFactor',20);
-
-        if ith_fromPoint==1
-            set(h_plot,'DisplayName','Output: TSP solution');
-        else
-            set(h_plot,'HandleVisibility','off');
+            if ith_fromPoint==1
+                set(h_plot,'DisplayName','Output: TSP solution');
+            else
+                set(h_plot,'HandleVisibility','off');
+            end
         end
+    elseif orderedVisitSequence==-1
+        for ith_fromPoint = 1:NumGoals
+            thisColorRow = mod(ith_fromPoint-1,Ncolors)+1;
+            thisColor = colorOrder(thisColorRow,:);
+            from_index = ith_fromPoint;
+
+            for jth_toPoint = 1:NumGoals
+                if ith_fromPoint~=jth_toPoint
+                    goal_index = jth_toPoint;
+                    thisPath =  pathsFromTo{from_index,goal_index};
+                    if ~isempty(thisPath)
+                        plot(thisPath(:,1),thisPath(:,2),'-','Color',thisColor,'LineWidth',5,'HandleVisibility','off');
+
+                        % Plot the base in green and head in red so we know directions
+                        plot(thisPath(1:2,1),thisPath(1:2,2),'g-','LineWidth',5,'HandleVisibility','off');
+                        plot(thisPath(end-1:end,1),thisPath(end-1:end,2),'r-','LineWidth',5,'HandleVisibility','off');
+                    end
+
+                end % Ends if statement to check if from/to cities are same
+            end % Ends looping through "to" cities
+        end % Ends looping through "from" cities
     end
 
     % Number the unique points

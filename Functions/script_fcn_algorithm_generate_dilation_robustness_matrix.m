@@ -6,43 +6,58 @@
 %
 % 2024_02_01 by S. Harnett
 % -- first write of script
-%%%%%%%%%%%%%%§
-close all; clear all; clc;
+% 2025_10_05 by S. Brennan
+% -- removed addpath calls
+% 2025_10_05 by S. Brennan
+% -- removed call to fcn_MapGen_fillPolytopeFieldsFromVertices 
+%    % replaced with fcn_MapGen_polytopesFillFieldsFromVertices
 
-addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
+%%%%%%%%%%%%%%§
+
+
+% addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 flag_do_plot = 1;
 flag_do_plot_slow = 0;
 
-fig_num = 2;
-line_width = 3;
+figNum = 2;
 
 for test_case_idx = 1:2
     if test_case_idx == 1
-        %% test case 1
+        % test case 1
         clear polytopes
         polytopes(1).vertices = [0 0; 4,0; 4 2; 2 4; 0 0];
         polytopes(2).vertices = [0 -1; 4, -1; 5 -2; 3 -10; 0 -1];
-        polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(polytopes);
+        polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(polytopes);
         start = ones(1,2)*(-0.5);
         finish = start;
         finish(1) = 6;
     end
     if test_case_idx == 2
-        %% test case 2
+        % test case 2
         clear polytopes
         polytopes(1).vertices = [0 0; 10 0; 10 1; 0 1; 0 0];
         polytopes(2).vertices = polytopes(1).vertices+[0,2];
         polytopes(3).vertices = polytopes(1).vertices+[0,5];
         polytopes(4).vertices = polytopes(1).vertices+[0,10];
-        polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(polytopes);
+        polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(polytopes);
         start = [0,9];
         finish = start + [10,0];
     end
-    fig_num = fig_num + 1;
-    fcn_MapGen_plotPolytopes(polytopes,fig_num,'b-',line_width);
+    figNum = figNum + 1;
+
+    clear plotFormat
+    plotFormat.LineWidth = 3;
+    plotFormat.MarkerSize = 10;
+    plotFormat.LineStyle = '-';
+    plotFormat.Color = [0 0 1];
+    fillFormat = [1 0 0 1 0.5];
+    % FUNCTION FORMAT:
+    % h_plot = fcn_MapGen_plotPolytopes(polytopes, (plotFormat),(fillFormat),(fig_num));
+
+    fcn_MapGen_plotPolytopes(polytopes,plotFormat, fillFormat, figNum);
     hold on; box on;
     xlabel('x [m]');
     ylabel('y [m]');
@@ -73,11 +88,23 @@ for test_case_idx = 1:2
 
     finishes = [all_pts; start; finish];
     starts = [all_pts; start; finish];
-    [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(polytopes, starts, finishes,1);
+    [vgraph, visibility_results_all_pts] = ...
+        fcn_visibility_clear_and_blocked_points_global(polytopes, starts, finishes,1);
+
     % plot visibility graph edges
-    if flag_do_plot_slow
-        fig_num = fig_num + 1;
-        fcn_MapGen_plotPolytopes(polytopes,fig_num,'b-',line_width);
+    if 0==flag_do_plot_slow
+        figNum = figNum + 1;
+        clear plotFormat
+        plotFormat.LineWidth = 3;
+        plotFormat.MarkerSize = 10;
+        plotFormat.LineStyle = '-';
+        plotFormat.Color = [0 0 1];
+        fillFormat = [1 0 0 1 0.5];
+        % FUNCTION FORMAT:
+        % h_plot = fcn_MapGen_plotPolytopes(polytopes, (plotFormat),(fillFormat),(fig_num));
+
+        fcn_MapGen_plotPolytopes(polytopes,plotFormat, fillFormat, figNum);
+
         hold on; box on;
         xlabel('x [m]');
         ylabel('y [m]');
@@ -104,8 +131,19 @@ for test_case_idx = 1:2
 
         % plot corridor width approximation graph edges
         if flag_do_plot
-            fig_num = fig_num + 1;
-            fcn_MapGen_plotPolytopes(polytopes,fig_num,'g-',line_width);
+            figNum = figNum + 1;
+
+            clear plotFormat
+            plotFormat.LineWidth = 3;
+            plotFormat.MarkerSize = 10;
+            plotFormat.LineStyle = '-';
+            plotFormat.Color = [0 1 0];
+            fillFormat = [1 0 1 0 0.5];
+            % FUNCTION FORMAT:
+            % h_plot = fcn_MapGen_plotPolytopes(polytopes, (plotFormat),(fillFormat),(fig_num));
+
+            fcn_MapGen_plotPolytopes(polytopes,plotFormat, fillFormat, figNum);
+
             hold on; box on;
             xlabel('x [m]');
             ylabel('y [m]');
@@ -130,8 +168,8 @@ for test_case_idx = 1:2
 
         % plot corridor width approximation values
         if flag_do_plot
-            fig_num = fig_num + 1;
-            figure(fig_num); hold on; box on;
+            figNum = figNum + 1;
+            figure(figNum); hold on; box on;
             for j = 1:length(polytopes)
                  fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
             end
@@ -158,8 +196,8 @@ for test_case_idx = 1:2
         end % if do plot loop
         % plot corridor width approximation values
         if flag_do_plot
-            fig_num = fig_num + 1;
-            figure(fig_num); hold on; box on;
+            figNum = figNum + 1;
+            figure(figNum); hold on; box on;
             for j = 1:length(polytopes)
                  fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
             end

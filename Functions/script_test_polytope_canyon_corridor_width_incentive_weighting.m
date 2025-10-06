@@ -46,6 +46,7 @@ for mission_idx = 1:size(start_inits,1)
         dilation_robustness_matrix_for_variance(dilation_robustness_matrix_for_variance == 0) = []; % remove 0s
         dilation_robustness_matrix_for_variance(isinf(dilation_robustness_matrix_for_variance)) = []; % remove infs
         variance_of_corridor_widths = var(dilation_robustness_matrix_for_variance); % find variance of corridor width/dilation robustness
+
         % make cost function
         inv_corridor_width = 1./dilation_robustness_matrix; % invert such that large corridors cost less
         infinite_idx = find(inv_corridor_width==inf); % find inf

@@ -6,10 +6,16 @@
 % are then compared to show that replanning from the path that uses wider corridors is less costly and
 % more likely to be successful.
 
-clear; close all; clc
-addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
-addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
+% REVISION HISTORY:
+% As: script_test__polytope_canyon_replan_with_dilation
+% 2025_10_06 - S. Brennan
+% -- removed addpath calls
+% -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
+
+% clear; close all; clc
+% addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
+% addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 %% plotting flags
 flag_do_plot = 1;
@@ -22,7 +28,7 @@ data = []; % initialize array for storing results
 %% mission options
 for map_idx = [7, 8, 9] % Halton maps
 % for map_idx = [3, 5, 6] % flood plain maps
-    [shrunk_polytopes, start_inits, finish_inits,~, length_cost_weights, navigated_portions] = fcn_util_load_test_map(map_idx); % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
+    [shrunk_polytopes, start_inits, finish_inits,~, length_cost_weights, navigated_portions] = fcn_BoundedAStar_loadTestMap(map_idx); % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
 
     %% get stats for this map to find gap size
     poly_map_stats = fcn_MapGen_polytopesStatistics(shrunk_polytopes);

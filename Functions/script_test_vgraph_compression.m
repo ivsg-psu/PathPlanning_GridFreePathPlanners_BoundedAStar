@@ -1,3 +1,9 @@
+
+% REVISION HISTORY:
+% 2025_10_05 by S. Brennan
+% -- removed call to fcn_MapGen_fillPolytopeFieldsFromVertices 
+%    % replaced with fcn_MapGen_polytopesFillFieldsFromVertices
+
 clear; close all; clc
 % script_test_vgraph_compression
 % experiment of removing "unecessary" edges from the vgraph by performing a singular value decomposition
@@ -45,7 +51,7 @@ for i = 1:length(shrunk_polytopes)
     end
     new_polytopes(i).vertices = wgs_verts;
 end
-shrunk_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(new_polytopes);
+shrunk_polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(new_polytopes);
 
 %% all_pts array creation
 point_tot = length([shrunk_polytopes.xv]); % total number of vertices in the polytopes

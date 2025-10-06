@@ -9,6 +9,9 @@
 % 2025_07_08 - K. Hayes, kxh1031@psu.edu
 % -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
 %    with vector sum method 
+% 2025_10_05 by S. Brennan
+% -- removed call to fcn_MapGen_fillPolytopeFieldsFromVertices 
+%    % replaced with fcn_MapGen_polytopesFillFieldsFromVertices
 
 % TO DO:
 % -- update functions to be compatible with new MapGen
@@ -157,7 +160,7 @@ end
 
 %% try adding another obstacle
 polytope_to_add2.vertices = [1.09, 0.78; 1.17, 0.78; 1.17, 0.86; 1.09, 0.86; 1.09, 0.78];
-polytope_to_add2 = fcn_MapGen_fillPolytopeFieldsFromVertices(polytope_to_add2);
+polytope_to_add2 = fcn_MapGen_polytopesFillFieldsFromVertices(polytope_to_add2);
 polytope_to_add2.obs_id = nan;
 polytope_to_add2.perimeter = sum(polytope_to_add2.distances);
 add_obs_timer = tic;

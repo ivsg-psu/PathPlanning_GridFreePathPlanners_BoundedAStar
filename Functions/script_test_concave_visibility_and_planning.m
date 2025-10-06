@@ -9,6 +9,10 @@
 % 2025_07_08 - K. Hayes, kxh1031@psu.edu
 % -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
 %    with vector sum method 
+% 2025_10_05 by S. Brennan
+% -- removed call to fcn_MapGen_fillPolytopeFieldsFromVertices 
+%    % replaced with fcn_MapGen_polytopesFillFieldsFromVertices
+
 %%%%%%%%%%%%%%§
 
 clear
@@ -110,7 +114,7 @@ polytopes(2).vertices = [0.5717    0.3059;
     0.9375    0.6633;
     0.7       0.42;
     0.7598    0.6233];
-polytopes(2) = fcn_MapGen_fillPolytopeFieldsFromVertices(polytopes(2));
+polytopes(2) = fcn_MapGen_polytopesFillFieldsFromVertices(polytopes(2));
 
 
 if flag_do_plot
@@ -190,7 +194,7 @@ polytopes(5).vertices = [
     0.4878    0.4096;
     0.6374    0.6620];
 
-polytopes(5) = fcn_MapGen_fillPolytopeFieldsFromVertices(polytopes(5));
+polytopes(5) = fcn_MapGen_polytopesFillFieldsFromVertices(polytopes(5));
 
 
 if flag_do_plot

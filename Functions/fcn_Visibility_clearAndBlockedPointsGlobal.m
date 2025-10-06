@@ -1,6 +1,6 @@
 function [visibility_matrix, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, starts, finishes, varargin)
 % fcn_Visibility_clearAndBlockedPointsGlobal
-%
+% This builds on fcn_Visibility_clearAndBlockedPoints which
 % returns an intersection matrix for a single start point, showing what was 
 % intersected between that start point and numerous possible end points.
 % This function wraps that function to call it on every possible start and end
@@ -85,6 +85,7 @@ function [visibility_matrix, visibility_results] = fcn_Visibility_clearAndBlocke
 % Questions or comments? contact sjh6473@psu.edu
 
 % REVISION HISTORY:
+% As: fcn_Visibility_clearAndBlockedPointsGlobal
 % 2021_10_28
 % -- first written by Steve Harnett
 % Questions? sjh6473@psu.edu
@@ -329,7 +330,7 @@ if flag_do_plots
     figure(fig_num)
     
     % Set up valid edges subplot
-    subplot(3,1,1)
+    subplot(1,3,1)
     plotFormat.Color = 'Blue'; % edge line plotting
     plotFormat.LineStyle = '-';
     plotFormat.LineWidth = 2; % linewidth of the edge
@@ -342,7 +343,7 @@ if flag_do_plots
     title('valid edges')
 
     % Set up blocked edges subplot
-    subplot(3,1,2)
+    subplot(1,3,2)
     plotFormat.Color = 'Blue'; % edge line plotting
     plotFormat.LineStyle = '-';
     plotFormat.LineWidth = 2; % linewidth of the edge
@@ -354,7 +355,7 @@ if flag_do_plots
     title('blocked edges')
 
     % Set up all edges subplot
-    subplot(3,1,3)
+    subplot(1,3,3)
     plotFormat.Color = 'Blue'; % edge line plotting
     plotFormat.LineStyle = '-';
     plotFormat.LineWidth = 2; % linewidth of the edge
@@ -369,17 +370,18 @@ if flag_do_plots
     for i = 1:size(visibility_matrix,1)
         for j = 1:size(visibility_matrix,1)
             if visibility_matrix(i,j) == 1
-                subplot(3,1,1)
-                plot([starts(i,1),finishes(j,1)],[starts(i,2),finishes(j,2)],'--g','LineWidth',2)
-                subplot(3,1,3)
-                plot([starts(i,1),finishes(j,1)],[starts(i,2),finishes(j,2)],'--g','LineWidth',2)
+                subplot(1,3,1)
+                plot([starts(i,1),finishes(j,1)],[starts(i,2),finishes(j,2)],'g-','LineWidth',2)
+                subplot(1,3,3)
+                plot([starts(i,1),finishes(j,1)],[starts(i,2),finishes(j,2)],'g-','LineWidth',2)
             end
             if visibility_matrix(i,j) == 0
-                subplot(3,1,2)
-                plot([starts(i,1),finishes(j,1)],[starts(i,2),finishes(j,2)],'--r','LineWidth',2)
-                subplot(3,1,3)
-                plot([starts(i,1),finishes(j,1)],[starts(i,2),finishes(j,2)],'--r','LineWidth',2)
+                subplot(1,3,2)
+                plot([starts(i,1),finishes(j,1)],[starts(i,2),finishes(j,2)],'r-','LineWidth',2)
+                subplot(1,3,3)
+                plot([starts(i,1),finishes(j,1)],[starts(i,2),finishes(j,2)],'r-','LineWidth',2)
             end
+            pause(0.01);
         end
     end
 

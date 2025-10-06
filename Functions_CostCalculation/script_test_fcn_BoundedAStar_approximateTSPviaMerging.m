@@ -437,17 +437,24 @@ windFieldMatrices{2} = windFieldV;
 windFieldMatrices{3} = windFieldX;
 windFieldMatrices{4} = windFieldY;
 
+knownOrderedVisitSequence = [];
 % % Call TSP function to get exact answer
-% figure(77777); clf;
+figure(77777); clf;
 % [knownOrderedVisitSequence, trueCost] = fcn_BoundedAStar_solveTSP(...
 %     startAndGoalPoints, costsFromTo, pathsFromTo, (windFieldMatrices), (77777));
 
+% Plot the TSP solution
+fcn_BoundedAStar_plotTSPsolution(...
+    startAndGoalPoints, costsFromTo, pathsFromTo, windFieldMatrices, -1, (77777));
+
+
+%%
 % Call TSP solution approximation using merging
 figure(88888); clf;
 [predictedOrderedVisitSequence, probabilitiesSequence, finalCost] = fcn_BoundedAStar_approximateTSPviaMerging(...
     costsFromTo, ([]), (88888));
 
-% Plot the solution
+% Plot the approximate solution
 fcn_BoundedAStar_plotTSPsolution(...
     startAndGoalPoints, costsFromTo, pathsFromTo, windFieldMatrices, predictedOrderedVisitSequence', (figNum));
 

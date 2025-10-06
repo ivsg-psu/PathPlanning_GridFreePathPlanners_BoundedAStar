@@ -314,7 +314,11 @@ totalCost = 0;
 for ith_probability = 1:NoriginalCosts
     rowIndexToUse = edgeLinkingAndRanking(:,2)==fromCity;
     thisRow = edgeLinkingAndRanking(rowIndexToUse,:);
-    toCity = thisRow(1,3);
+    try
+        toCity = thisRow(1,3);
+    catch
+        disp('Stop here');
+    end
 
     % Fill in results
     predictedOrderedVisitSequence(1,ith_probability) = fromCity;

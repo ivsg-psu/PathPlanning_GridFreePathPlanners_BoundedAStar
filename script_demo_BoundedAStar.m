@@ -351,12 +351,16 @@
 % - In script_test_fcn_BoundedAStar_pathCalculationBackToStart
 %   % * Added working example of backward path calculation
 %
-% 2025_09_09 by S. Brennan
-% - Fill here
+% 2025_10_02 by S. Brennan
+% - Updated DebugTools_v2025_09_26b
+% - In script_test_fcn_Visibility_clearAndBlockedPointsGlobal
+%   % * minor comments added
+%   % * removed calls to fcn_MapGen_haltonVoronoiTiling, replaced with 
+%   %   % fcn_MapGen_generatePolysFromSeedGeneratorNames
+% -- Where to start?! All functions need to be checked, verified, etc.
 
 % TO-DO:
-% 2025_07_03 - Sean Brennan
-% -- Where to start?! All functions need to be checked, verified, etc.
+
 % 2025_07_28 - Sean Brennan
 % -- Remove all "addpath" commands nested inside scripts and functions
 % -- DEPRECATE: fcn_polytope_editing_shrink_evenly
@@ -367,14 +371,16 @@
 % 2025_08_18 - K. Hayes
 % -- add 3d formatted all_pts capabilities to
 %    fcn_BoundedAStar_polytopesGenerateAllPtsTable
+% 2025_10_06 - S. Brennan
+% -- debug script_demo_fcn_BoundedAStar_Astar3d, not working anymore!?
 
 
 clear library_name library_folders library_url
 
 ith_library = 1;
-library_name{ith_library}    = 'DebugTools_v2025_07_15';
+library_name{ith_library}    = 'DebugTools_v2025_09_26b';
 library_folders{ith_library} = {'Functions','Data'};
-library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/DebugTools_v2025_07_15.zip';
+library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/DebugTools_v2025_09_26b.zip';
 
 ith_library = ith_library+1;
 library_name{ith_library}    = 'MapGenClass_v2025_07_29';
@@ -403,7 +409,7 @@ library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_PathToo
 
 
 %% Clear paths and folders, if needed
-if 1==0
+if 1==1
     clear flag_BoundAStar_Folders_Initialized
     fcn_INTERNAL_clearUtilitiesFromPathAndFolders;
 
