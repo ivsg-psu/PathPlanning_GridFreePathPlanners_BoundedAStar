@@ -15,10 +15,12 @@
 % -- fixed bug causing Npoly assertion failures in DEMO cases
 % -- fixed bug with missing variables in DEMO case 3
 % -- fixed bug with missing variables in TEST case 1
+% 2025_10_07 - S. Brennan
+% -- replaced fcn_MapGen_haltonVoronoiTiling call 
+%    % with fcn_MapGen_generatePolysFromSeedGeneratorNames
+% -- added example plotting of visibility for 2025 MECC paper
 
 % TO DO:
-% -- check fcn_MapGen_haltonVoronoiTiling function to see what it has been
-%    moved to
 % -- set up fast mode tests
 % -- bug in assertion checking against hardcoded expected results
 
@@ -44,10 +46,10 @@ close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
 
 %% DEMO case: clear and blocked edges of convex polytope
-fig_num = 10001;
+figNum = 10001;
 titleString = sprintf('DEMO case: clear and blocked edges of convex polytope');
-fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
-figure(fig_num); clf;
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
 
 % convex polytope
 convex_polytope(1).vertices = [0 0; 1 1; -1 2; -2 1; -1 0; 0 0];
@@ -70,7 +72,7 @@ convex_obstacle_vgraph = [1 1 0 0 1 0 1;
 
 % Calculate visibility graph
 isConcave = [];
-[vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts,(isConcave),(fig_num));
+[vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts,(isConcave),(figNum));
 sgtitle(titleString, 'Interpreter','none');
 
 
@@ -83,13 +85,13 @@ Npolys = 1;
 assert(isequal(Npolys,length(polytopes))); 
 
 % Make sure plot opened up
-assert(isequal(get(gcf,'Number'),fig_num));
+assert(isequal(get(gcf,'Number'),figNum));
 
 %% DEMO case: clear and blocked edges of concave polytope
-fig_num = 10002;
+figNum = 10002;
 titleString = sprintf('DEMO case: clear and blocked edges of concave polytope');
-fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
-figure(fig_num); clf;
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
 
 % nonconvex polytope
 concave_polytope(1).vertices = [0 0; 1 1; 0.5, 2.5; -2, 2.5; -1 2; -2 1; -1 0; 0 0];
@@ -121,7 +123,7 @@ concave_obstacle_vgraph_optimal_result = [1 1 0 0 0 0 1 0 1;
 
 % calculate visibility graph
 isConcave = 1;
-[vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts,(isConcave),(fig_num));
+[vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts,(isConcave),(figNum));
 sgtitle(titleString, 'Interpreter','none');
 
 %assert(isequal(vgraph,concave_obstacle_vgraph_sub_optimal_result));
@@ -135,20 +137,21 @@ Npolys = 1;
 assert(isequal(Npolys,length(polytopes))); 
 
 % Make sure plot opened up
-assert(isequal(get(gcf,'Number'),fig_num));
+assert(isequal(get(gcf,'Number'),figNum));
 
-%% DEMO case: compute a visibility graph
-fig_num = 10003;
-titleString = sprintf('DEMO case: compute a visibility graph');
-fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
-figure(fig_num); clf;
+%% DEMO case: compute a complex visibility graph
+figNum = 10003;
+titleString = sprintf('DEMO case: compute a complex visibility graph');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
 
 % generate map
 Halton_seed = 10;
 low_pt = 1+Halton_seed; high_pt = 11+Halton_seed; % range of Halton points to use to generate the tiling
-trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
+trim_polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset',[low_pt,high_pt]);
+
 % shink the polytopes so that they are no longer tiled
-gap_size = 0.025; % desired average maximum radius
+gap_size = 0.05; % desired average maximum radius
 polytopes = fcn_MapGen_polytopesShrinkEvenly(trim_polytopes,gap_size);
 % plot the map
 
@@ -159,9 +162,10 @@ plotFormat.LineStyle = '-';
 plotFormat.LineWidth = 2; % linewidth of the edge
 fillFormat = [];
 %fcn_MapGen_plotPolytopes(polytopes,fig_num,line_spec,line_width,axes_limits,axis_style);
-fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(fig_num))
+fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(figNum))
 hold on
 box on
+axis([-0.1 1.1 -0.1 1.1]);
 xlabel('x [km]')
 ylabel('y [km]')
 
@@ -177,17 +181,80 @@ isConcave = [];
 tic
 [vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts,(isConcave),(-1));
 toc
+
+filename = 'vGraphAnimation.gif'; % Specify the output file name
+delayTime = 0.1; % Delay between frames in seconds
+loopCount = Inf; % Loop indefinitely (0 for no loop)
+
 % plot visibility graph edges
 if 1==1
-    for i = 1:size(vgraph,1)
+    Npoints = size(vgraph,1);
+    for i = 1:Npoints
+        goodFromIndices = zeros(Npoints,1);
+        goodToIndices = zeros(Npoints,1);
+        pointsToPlot = [];
         for j = 1:size(vgraph,1)
             if vgraph(i,j) == 1
-                plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'-g')
+                % plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'-g')
+                % pause(0.01);
+                pointsToPlot = [pointsToPlot; [all_pts(i,1:2); all_pts(j,1:2); nan(1,2)]]; %#ok<AGROW>
+                        
+            end
+        end
+        plot(pointsToPlot(:,1),pointsToPlot(:,2),'-g')
+        drawnow;
+
+        if 1==0 % To save movie
+            % Capture the current frame
+            frame = getframe(gcf);
+            im = frame2im(frame);
+            [imind, cm] = rgb2ind(im, 256); % Convert to indexed image
+
+            % Write the frame to the GIF
+            if i == 1
+                % Create a new GIF file for the first frame
+                imwrite(imind, cm, filename, 'gif', 'LoopCount', loopCount, 'DelayTime', delayTime);
+            else
+                % Append subsequent frames
+                imwrite(imind, cm, filename, 'gif', 'WriteMode', 'append', 'DelayTime', delayTime);
+            end
+        end
+    end
+
+
+    % Plot just one result in a different color
+    for i = 1:1
+        goodFromIndices = zeros(Npoints,1);
+        goodToIndices = zeros(Npoints,1);
+        pointsToPlot = [];
+        for j = 1:size(vgraph,1)
+            if vgraph(i,j) == 1
+                % plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'-g')
+                % pause(0.01);
+                pointsToPlot = [pointsToPlot; [all_pts(i,1:2); all_pts(j,1:2); nan(1,2)]]; %#ok<AGROW>
+
+            end
+        end
+        plot(pointsToPlot(:,1),pointsToPlot(:,2),'r-','LineWidth',2)
+        drawnow;
+
+        if 1==0 % To save movie
+            % Capture the current frame
+            frame = getframe(gcf);
+            im = frame2im(frame);
+            [imind, cm] = rgb2ind(im, 256); % Convert to indexed image
+
+            % Write the frame to the GIF
+            if i == 1
+                % Create a new GIF file for the first frame
+                imwrite(imind, cm, filename, 'gif', 'LoopCount', loopCount, 'DelayTime', delayTime);
+            else
+                % Append subsequent frames
+                imwrite(imind, cm, filename, 'gif', 'WriteMode', 'append', 'DelayTime', delayTime);
             end
         end
     end
 end
-
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
@@ -199,7 +266,7 @@ Npolys = 11;
 assert(isequal(Npolys,length(polytopes))); 
 
 % Make sure plot opened up
-assert(isequal(get(gcf,'Number'),fig_num));
+assert(isequal(get(gcf,'Number'),figNum));
 
 %% Test cases start here. These are very simple, usually trivial
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -221,10 +288,10 @@ close all;
 fprintf(1,'Figure: 2XXXXXX: TEST mode cases\n');
 
 %% TEST case: zero gap between polytopes
-fig_num = 20001;
+figNum = 20001;
 titleString = sprintf('TEST case: zero gap between polytopes');
-fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
-figure(fig_num); clf;
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
 
 flag_do_plot = 1;
 
@@ -232,7 +299,7 @@ flag_do_plot = 1;
 % generate map
 Halton_seed = 10;
 low_pt = 1+Halton_seed; high_pt = 11+Halton_seed; % range of Halton points to use to generate the tiling
-polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
+polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset',[low_pt,high_pt]);
 % shink the polytopes so that they are no longer tiled
 gap_size = 0.01; % desired average maximum radius
 if gap_size ~=0
@@ -248,7 +315,7 @@ if flag_do_plot
     plotFormat.LineWidth = 2; % linewidth of the edge
     fillFormat = [];
     %fcn_MapGen_plotPolytopes(polytopes,fig_num,line_spec,line_width,axes_limits,axis_style);
-    fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(fig_num))
+    fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(figNum))
     hold on
     box on
     xlabel('x [km]')
@@ -266,7 +333,7 @@ tic
 toc
 deduped_pts = fcn_convert_polytope_struct_to_deduped_points(all_pts);
 % plot visibility graph edges
-figure(fig_num)
+figure(figNum)
 if flag_do_plot && gap_size ==0
     for i = 1:size(vgraph,1)
         for j = 1:size(vgraph,1)
@@ -297,7 +364,7 @@ Npolys = 11;
 assert(isequal(Npolys,length(polytopes))); 
 
 % Make sure plot opened up
-assert(isequal(get(gcf,'Number'),fig_num));
+assert(isequal(get(gcf,'Number'),figNum));
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -318,9 +385,9 @@ close all;
 fprintf(1,'Figure: 8XXXXXX: FAST mode cases\n');
 
 %% Basic example - NO FIGURE
-fig_num = 80001;
-fprintf(1,'Figure: %.0f: FAST mode, empty fig_num\n',fig_num);
-figure(fig_num); close(fig_num);
+figNum = 80001;
+fprintf(1,'Figure: %.0f: FAST mode, empty fig_num\n',figNum);
+figure(figNum); close(figNum);
 
 % map_name = "HST 1 100 SQT 0 1 0 1 SMV 0.01 0.001 1e-6 1111";
 % plot_flag = 1; 
@@ -362,9 +429,9 @@ figure(fig_num); close(fig_num);
 
 
 %% Basic fast mode - NO FIGURE, FAST MODE
-fig_num = 80002;
-fprintf(1,'Figure: %.0f: FAST mode, fig_num=-1\n',fig_num);
-figure(fig_num); close(fig_num);
+figNum = 80002;
+fprintf(1,'Figure: %.0f: FAST mode, fig_num=-1\n',figNum);
+figure(figNum); close(figNum);
 
 % map_name = "HST 1 100 SQT 0 1 0 1 SMV 0.01 0.001 1e-6 1111";
 % plot_flag = 1; 
@@ -406,10 +473,10 @@ figure(fig_num); close(fig_num);
 
 
 %% Compare speeds of pre-calculation versus post-calculation versus a fast variant
-fig_num = 80003;
-fprintf(1,'Figure: %.0f: FAST mode comparisons\n',fig_num);
-figure(fig_num);
-close(fig_num);
+figNum = 80003;
+fprintf(1,'Figure: %.0f: FAST mode comparisons\n',figNum);
+figure(figNum);
+close(figNum);
 
 % map_name = "HST 1 100 SQT 0 1 0 1 SMV 0.01 0.001 1e-6 1111";
 % plot_flag = 1; 
@@ -481,7 +548,7 @@ if 1==0
 
 % broken test for 0 gap size special case that is not implemented
     % generate map
-    polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
+    polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset',[low_pt,high_pt]);
     % shink the polytopes so that they are no longer tiled
     gap_size = 0; % desired average maximum radius
     if gap_size ~=0
