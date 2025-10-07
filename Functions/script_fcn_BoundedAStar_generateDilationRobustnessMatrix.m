@@ -16,6 +16,7 @@
 %    % replaced with fcn_MapGen_polytopesFillFieldsFromVertices
 
 
+close all;
 
 
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -23,24 +24,27 @@
 % addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
 
 flag_do_plot = 1;
-flag_do_plot_slow = 0;
+flag_do_plot_slow = 1;
 
 figNum = 2;
 line_width = 3;
 
 for test_case_idx = 1:2
     if test_case_idx == 1
-        %% test case 1
+        % test case 1
+        % Two polytopes with clear space right down middle
         clear polytopes
-        polytopes(1).vertices = [0 0; 4,0; 4 2; 2 4; 0 0];
-        polytopes(2).vertices = [0 -1; 4, -1; 5 -2; 3 -10; 0 -1];
+        polytopes(1).vertices = [0 0; 4,0; 4 2; 2 2.5; 0 0];
+        polytopes(2).vertices = [0 -1; 4 -1; 5 -2; 3 -3; 0 -1];
         polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(polytopes);
-        start = ones(1,2)*(-0.5);
+        start = [-2 -0.5];
         finish = start;
         finish(1) = 6;
+        selectedFromIndexToPlot = 1;
     end
     if test_case_idx == 2
-        %% test case 2
+        % test case 2
+        % Stacked sets of squares
         clear polytopes
         polytopes(1).vertices = [0 0; 10 0; 10 1; 0 1; 0 0];
         polytopes(2).vertices = polytopes(1).vertices+[0,2];
@@ -51,29 +55,19 @@ for test_case_idx = 1:2
         finish = start + [10,0];
     end
 
+    % Make sure all have same cost
+    for ith_poly = 1:length(polytopes)
+        polytopes(ith_poly).cost = 0.4;
+    end
 
     % Plot the polytopes
     figNum = figNum + 1;
-    % axes_limits = [0 1 0 1]; % x and y axes limits
-    % axis_style = 'square'; % plot axes style
-    plotFormat.Color = 'Blue'; % edge line plotting
-    plotFormat.LineStyle = '-';
-    plotFormat.LineWidth = 2; % linewidth of the edge
-    fillFormat = [1 0 0 1 0.4];
-    % FORMAT: fcn_MapGen_plotPolytopes(polytopes,fig_num,line_spec,line_width,axes_limits,axis_style);
-    fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(figNum))
-    hold on
-    box on
-    % axis([-0.1 1.1 -0.1 1.1]);
-    xlabel('x [m]');
-    ylabel('y [m]');
+    fcn_INTERNAL_plotPolytopes(polytopes, figNum)
     title('polytope map')
 
-
-
-
-    plot(start(1),start(2),'xg','MarkerSize',6);
-    plot(finish(1),finish(2),'xr','MarkerSize',6);
+    % Plot the start and end points
+    plot(start(1),start(2),'.','Color',[0 0.5 0],'MarkerSize',20);
+    plot(finish(1),finish(2),'r.','MarkerSize',20);
 
     point_tot = length([polytopes.xv]); % total number of vertices in the polytopes
     beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
@@ -86,8 +80,9 @@ for test_case_idx = 1:2
     end
     obs_id = [polytopes.obs_id];
     all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
-    start = [start size(all_pts,1)+1 -1 1];
-    finish = [finish size(all_pts,1)+2 -1 1];
+    
+    start = [start size(all_pts,1)+1 -1 1]; %#ok<AGROW>
+    finish = [finish size(all_pts,1)+2 -1 1]; %#ok<AGROW>
 
     % label point ids for debugging
     plot(all_pts(:,1), all_pts(:,2),'LineStyle','none','Marker','o','MarkerFaceColor',[255,165,0]./255);
@@ -97,77 +92,62 @@ for test_case_idx = 1:2
     finishes = [all_pts; start; finish];
     starts = [all_pts; start; finish];
     [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, starts, finishes,1);
+
     % plot visibility graph edges
     if 1==flag_do_plot_slow
 
         % Plot the polytopes
         figNum = figNum + 1;
-        % axes_limits = [0 1 0 1]; % x and y axes limits
-        % axis_style = 'square'; % plot axes style
-        plotFormat.Color = 'Blue'; % edge line plotting
-        plotFormat.LineStyle = '-';
-        plotFormat.LineWidth = 2; % linewidth of the edge
-        fillFormat = [1 0 0 1 0.4];
-        % FORMAT: fcn_MapGen_plotPolytopes(polytopes,fig_num,line_spec,line_width,axes_limits,axis_style);
-        fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(figNum))
-        hold on
-        box on
-        % axis([-0.1 1.1 -0.1 1.1]);
-        xlabel('x [m]');
-        ylabel('y [m]');
+        fcn_INTERNAL_plotPolytopes(polytopes, figNum)
         title('visibility graph');
-
-
 
         for i = 1:size(vgraph,1)
             for j = 1:size(vgraph,1)
                 if vgraph(i,j) == 1
-                    plot([starts(i,1),starts(j,1)],[starts(i,2),starts(j,2)],'--g','LineWidth',2)
+                    plot([starts(i,1),starts(j,1)],[starts(i,2),starts(j,2)],'g-','LineWidth',1)
                 end
                 if vgraph(i,j) == 0
-                    plot([starts(i,1),starts(j,1)],[starts(i,2),starts(j,2)],'--r','LineWidth',2)
+                    % plot([starts(i,1),starts(j,1)],[starts(i,2),starts(j,2)],'--r','LineWidth',2)
                 end
             end
         end
     end
     mode = '2d';
+
     dilation_robustness_matrix = fcn_BoundedAStar_generateDilationRobustnessMatrix(all_pts, start, finish, vgraph, mode, polytopes);
+    
+    % Find the maximum value, not including infinity
+    % Select left or right
+    % dilation_robustness_values = dilation_robustness_matrix(:,:,left_or_right)';
+    % dilation_robustness_values = dilation_robustness_values(:)';
+    % max_dilation_robustness_excluding_inf = max(dilation_robustness_values(~isinf(dilation_robustness_values) & ~isinf(-dilation_robustness_values)));
+    max_dilation_robustness_excluding_inf = max(dilation_robustness_matrix(~isinf(dilation_robustness_matrix)),[],"all");
+    normalizedDilationRobustnessMatrix = dilation_robustness_matrix./max_dilation_robustness_excluding_inf;
 
+    % show the difference between measuring to the right and to the left
     for left_or_right = [1,2]
-        % show the difference between measuring to the right and to the left
-        dilation_robustness_values = dilation_robustness_matrix(:,:,left_or_right)';
-        dilation_robustness_values = dilation_robustness_values(:)';
-        max_dilation_robustness_excluding_inf = max(dilation_robustness_values(~isinf(dilation_robustness_values) & ~isinf(-dilation_robustness_values)));
-
+    
         % plot corridor width approximation graph edges
         if flag_do_plot
 
             % Plot the polytopes
             figNum = figNum + 1;
-            % axes_limits = [0 1 0 1]; % x and y axes limits
-            % axis_style = 'square'; % plot axes style
-            plotFormat.Color = 'Blue'; % edge line plotting
-            plotFormat.LineStyle = '-';
-            plotFormat.LineWidth = 2; % linewidth of the edge
-            fillFormat = [1 0 0 1 0.4];
-            % FORMAT: fcn_MapGen_plotPolytopes(polytopes,fig_num,line_spec,line_width,axes_limits,axis_style);
-            fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(figNum))
-            hold on
-            box on
-            % axis([-0.1 1.1 -0.1 1.1]);
-            xlabel('x [m]');
-            ylabel('y [m]');
-            title('dilation robustness');
-
+            fcn_INTERNAL_plotPolytopes(polytopes, figNum)
+            if left_or_right==1
+                title('dilation robustness, left');
+            else
+                title('dilation robustness, right');
+            end
             
             for i = 1:size(vgraph,1)
                 for j = 1:size(vgraph,1)
                     if vgraph(i,j) == 1
-                        alpha = dilation_robustness_matrix(i,j,left_or_right)/max_dilation_robustness_excluding_inf;
+                        % alpha = dilation_robustness_matrix(i,j,left_or_right)/max_dilation_robustness_excluding_inf;
+                        alpha = normalizedDilationRobustnessMatrix(i,j,left_or_right);
                         if alpha == inf %| alpha == -inf
                             continue % don't plot infinite values
                         end
-                        plot([starts(i,1),starts(j,1)],[starts(i,2),starts(j,2)],'--','Color',[alpha 0 1-alpha],'LineWidth',2)
+                        plot([starts(i,1),starts(j,1)],[starts(i,2),starts(j,2)],'-','Color',[alpha 0 1-alpha],'LineWidth',3)
                     end
                 end
             end
@@ -199,13 +179,14 @@ for test_case_idx = 1:2
                     end
                     if vgraph(i,j) == 1
                         % plot a nice gray line
-                        quiver(starts(i,1),starts(i,2),starts(j,1)-starts(i,1),starts(j,2)-starts(i,2),'--','Color',0.4*ones(1,3),'LineWidth',2);
+                        quiver(starts(i,1),starts(i,2),starts(j,1)-starts(i,1),starts(j,2)-starts(i,2), 0, '-','Color',0.4*ones(1,3),'LineWidth',2);
                         % label the dilation robustness
                         text((starts(i,1)+starts(j,1))/2 ,(starts(i,2)+starts(j,2))/2, string(dilation_robustness_matrix(i,j,left_or_right)));
                     end
                 end % inner vgraph loop
             end % outer vgraph loop
         end % if do plot loop
+
         % plot corridor width approximation values
         if flag_do_plot
             figNum = figNum + 1;
@@ -227,7 +208,7 @@ for test_case_idx = 1:2
                     end
                     if vgraph(i,j) == 1
                         % plot a nice gray line
-                        quiver(starts(i,1),starts(i,2),starts(j,1)-starts(i,1),starts(j,2)-starts(i,2),'--','Color',0.4*ones(1,3),'LineWidth',2);
+                        quiver(starts(i,1),starts(i,2),starts(j,1)-starts(i,1),starts(j,2)-starts(i,2),0,'-','Color',0.4*ones(1,3),'LineWidth',2);
                         % label the dilation robustness
                         text((starts(i,1)+starts(j,1))/2 ,(starts(i,2)+starts(j,2))/2, string(dilation_robustness_matrix(i,j,left_or_right)));
                     end
@@ -236,3 +217,22 @@ for test_case_idx = 1:2
         end % if do plot loop
     end % left or right loop
 end % test case loop
+
+
+%% FUNCTIONS
+function fcn_INTERNAL_plotPolytopes(polytopes, figNum)
+% Plot the polytopes
+% axes_limits = [0 1 0 1]; % x and y axes limits
+% axis_style = 'square'; % plot axes style
+plotFormat.Color = 'Blue'; % edge line plotting
+plotFormat.LineStyle = '-';
+plotFormat.LineWidth = 2; % linewidth of the edge
+fillFormat = [1 0 0 1 0.4];
+% FORMAT: fcn_MapGen_plotPolytopes(polytopes,fig_num,line_spec,line_width,axes_limits,axis_style);
+fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(figNum));
+hold on
+box on
+% axis([-0.1 1.1 -0.1 1.1]);
+xlabel('x [m]');
+ylabel('y [m]');
+end
