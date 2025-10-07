@@ -7,6 +7,8 @@
 % -- removed addpath calls
 % -- removed calls to fcn_check_reachability,
 %    % replaced with fcn_BoundedAStar_checkReachability
+% -- removed calls to fcn_algorithm_generate_cost_graph,
+%    % replaced with fcn_BoundedAStar_generateCostGraph
 
 % addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
 % addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
@@ -84,7 +86,7 @@ vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed
 
 %% make cgraph
 mode = 'time or z only';
-[cgraph, hvec] = fcn_algorithm_generate_cost_graph(verts_with_ids, start_with_ids, finish_with_ids, mode);
+[cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(verts_with_ids, start_with_ids, finish_with_ids, mode);
 
 %% plan route
 [cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, verts_with_ids, start_with_ids, finish_with_ids);

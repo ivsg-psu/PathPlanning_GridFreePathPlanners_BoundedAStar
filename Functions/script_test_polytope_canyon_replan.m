@@ -14,6 +14,8 @@
 %    % replaced with fcn_BoundedAStar_polytopesGenerateAllPtsTable
 % -- removed calls to fcn_check_reachability,
 %    % replaced with fcn_BoundedAStar_checkReachability
+% -- removed calls to fcn_algorithm_generate_cost_graph,
+%    % replaced with fcn_BoundedAStar_generateCostGraph
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -70,7 +72,7 @@ for mission_idx = 1:size(start_inits,1)
                 visible_nodes_from_each_node = sum(vgraph,2);
                 inv_vis_cost = w*(1./(visible_nodes_from_each_node))'; % want inverse so more visible nodes cost less
                 mode = "xy spatial only";
-                [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
+                [cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts, start, finish, mode);
                 if nominal_or_reachable == 2
                     hvec = hvec + inv_reach_cost + inv_vis_cost; % makes more sense to combine visibility metrics with heuristic rather then cgraph because there is a visibility/reachability value per node not per edge
                 end
@@ -115,7 +117,7 @@ for mission_idx = 1:size(start_inits,1)
                         % thus we may want to delete edges in length order
                         % get the length based cgraph
                         mode = "xy spatial only";
-                        [cgraph, ~] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
+                        [cgraph, ~] = fcn_BoundedAStar_generateCostGraph(all_pts, start, finish, mode);
                         cgraph_without_start_and_fin = cgraph(1:end-2,1:end-2);
                         costs_of_valid_edges = cgraph_without_start_and_fin(valid_edges_initially); % cost of every 1 in vgraph
                         vgraph_edge_idx_to_cost_table = [valid_edges_initially, costs_of_valid_edges]; % associate costs to edges in a table
@@ -157,7 +159,7 @@ for mission_idx = 1:size(start_inits,1)
                 mode = "xy spatial only";
                 % mode = 'time or z only';
                 % mode = "xyz or xyt";
-                [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
+                [cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts, start, finish, mode);
                 % replan route
                 [replan_cost, replan_route] = fcn_algorithm_Astar(new_vgraph, cgraph, hvec, all_pts, start, finish);
 

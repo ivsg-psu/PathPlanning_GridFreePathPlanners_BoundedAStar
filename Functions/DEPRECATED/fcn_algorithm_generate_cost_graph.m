@@ -1,4 +1,8 @@
 function [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode)
+
+warning(['fcn_algorithm_generate_cost_graph is being deprecated.' ...
+    ' Use fcn_BoundedAStar_generateCostGraph instead.']);
+
 % fcn_algorithm_generate_cost_graph
 %
 % A function for generating a cost matrix and heuristic cost vector.  The cost matrix describes the

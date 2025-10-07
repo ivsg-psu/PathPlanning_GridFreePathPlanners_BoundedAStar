@@ -9,6 +9,8 @@
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 % -- removed calls to fcn_check_reachability,
 %    % replaced with fcn_BoundedAStar_checkReachability
+% -- removed calls to fcn_algorithm_generate_cost_graph,
+%    % replaced with fcn_BoundedAStar_generateCostGraph
 
 % addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
 % addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
@@ -98,7 +100,7 @@ inv_vis_cost = 10*(1./(visible_nodes_from_each_node))';
 mode = "xy spatial only";
 % mode = 'time or z only';
 % mode = "xyz or xyt";
-[cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
+[cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts, start, finish, mode);
 
 hvec = hvec + inv_reach_cost + inv_vis_cost;
 

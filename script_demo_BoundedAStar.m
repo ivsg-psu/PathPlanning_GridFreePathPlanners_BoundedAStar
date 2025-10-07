@@ -398,6 +398,10 @@
 %    % replaced with fcn_BoundedAStar_polytopesGenerateAllPtsTable
 % -- removed calls to fcn_check_reachability,
 %    % replaced with fcn_BoundedAStar_checkReachability
+% -- removed calls to fcn_algorithm_generate_cost_graph,
+%    % replaced with fcn_BoundedAStar_generateCostGraph
+% -- removed calls to fcn_algorithm_generate_dilation_robustness_matrix,
+%    % replaced with fcn_BoundedAStar_generateDilationRobustnessMatrix
 
 % TO-DO:
 % 2025_07_28 - Sean Brennan

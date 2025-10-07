@@ -11,6 +11,8 @@
 % -- removed addpath calls
 % -- removed calls to fcn_check_reachability,
 %    % replaced with fcn_BoundedAStar_checkReachability
+% -- removed calls to fcn_algorithm_generate_cost_graph,
+%    % replaced with fcn_BoundedAStar_generateCostGraph
 
 % clear; close all; clc
 % 
@@ -126,7 +128,7 @@ for finish_idx = 1:5
     mode = "xy spatial only";
     % mode = 'time or z only';
     % mode = "xyz or xyt";
-    [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids, mode);
+    [cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids, mode);
 
     %% plan route
     [cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids);

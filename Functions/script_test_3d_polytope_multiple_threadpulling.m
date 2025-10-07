@@ -7,6 +7,8 @@
 % -- removed addpath calls
 % -- removed calls to fcn_check_reachability,
 %    % replaced with fcn_BoundedAStar_checkReachability
+% -- removed calls to fcn_algorithm_generate_cost_graph,
+%    % replaced with fcn_BoundedAStar_generateCostGraph
 
 % 
 % addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
@@ -119,7 +121,7 @@ all_pts_with_ids_no_start_and_fin = all_pts(1:num_verts,:);
 mode = "xy spatial only";
 % mode = 'time or z only';
 % mode = "xyz or xyt";
-[cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids, mode);
+[cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids, mode);
 
 %% plan route
 [cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, all_pts_with_ids_no_start_and_fin, start_with_ids, finish_with_ids);
@@ -193,7 +195,7 @@ if second_pass_with_new_verts
     mode = "xy spatial only";
     % mode = 'time or z only';
     % mode = "xyz or xyt";
-    [new_cgraph, new_hvec] = fcn_algorithm_generate_cost_graph(verts_with_ids, start_with_ids, finish_with_ids, mode);
+    [new_cgraph, new_hvec] = fcn_BoundedAStar_generateCostGraph(verts_with_ids, start_with_ids, finish_with_ids, mode);
 
     %% plan route
     [cost, route] = fcn_algorithm_Astar3d(new_vgraph, new_cgraph, new_hvec, verts_with_ids, start_with_ids, finish_with_ids);
@@ -250,7 +252,7 @@ if threadpulling
     mode = "xy spatial only";
     % mode = 'time or z only';
     % mode = "xyz or xyt";
-    [new_cgraph, new_hvec] = fcn_algorithm_generate_cost_graph(verts_with_ids, start, finish, mode);
+    [new_cgraph, new_hvec] = fcn_BoundedAStar_generateCostGraph(verts_with_ids, start, finish, mode);
 
     %% plan route
     [cost, new_route] = fcn_algorithm_Astar3d(new_vgraph, new_cgraph, new_hvec, verts_with_ids, start, finish);

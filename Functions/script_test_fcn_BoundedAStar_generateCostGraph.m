@@ -7,6 +7,9 @@
 % -- first write of script
 % 2025_10_03 - K. Hayes
 % -- fixed bug causing assertion failure in DEMO case 1
+% 2025_10_07 - S. Brennan
+% -- removed calls to fcn_algorithm_generate_cost_graph,
+%    % replaced with fcn_BoundedAStar_generateCostGraph
 
 % TO DO:
 % -- set up fast mode tests
@@ -59,7 +62,7 @@ mode = 'xy spatial only';
 [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_xy, finish_xy, -1);
 
 % Find cost graph
-[cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
+[cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts, start, finish, mode);
 
 sgtitle(titleString, 'Interpreter','none');
 

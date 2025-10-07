@@ -13,6 +13,9 @@
 % 2025_07_31 - K. Hayes
 % -- moved plotting capabilities into fcn_BoundedAStar_Astar debug plotting
 %    option
+% 2025_10_07 - S. Brennan
+% -- removed calls to fcn_algorithm_generate_cost_graph,
+%    % replaced with fcn_BoundedAStar_generateCostGraph
 
 clear
 clc
@@ -131,7 +134,7 @@ for rep = 1:repetitions
     % Generate the cost graph. Flag the cost type (using a string) to
     % calculate cost based on XY spatial distance only (not energy)
     mode = 'xy spatial only';
-    [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
+    [cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts, start, finish, mode);
 
     % Call the A-star algorithm to do the path plan
     [cost, path] = fcn_BoundedAStar_Astar(vgraph, cgraph, hvec, all_pts, start, finish, shrunk_polytopes, (fig_num));

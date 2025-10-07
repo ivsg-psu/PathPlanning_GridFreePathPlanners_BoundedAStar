@@ -12,6 +12,10 @@
 %    % replaced with fcn_BoundedAStar_polytopesGenerateAllPtsTable
 % -- removed calls to fcn_check_reachability,
 %    % replaced with fcn_BoundedAStar_checkReachability
+% -- removed calls to fcn_algorithm_generate_cost_graph,
+%    % replaced with fcn_BoundedAStar_generateCostGraph
+% -- removed calls to fcn_algorithm_generate_dilation_robustness_matrix,
+%    % replaced with fcn_BoundedAStar_generateDilationRobustnessMatrix
 
 
 % clear; close all; clc
@@ -49,11 +53,11 @@ for mission_idx = 1:size(start_inits,1)
 
         % make cgraph
         mode = "xy spatial only";
-        [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
+        [cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts, start, finish, mode);
 
         % make dilation robustness matrix
         mode = '2d';
-        dilation_robustness_tensor = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode, shrunk_polytopes);
+        dilation_robustness_tensor = fcn_BoundedAStar_generateDilationRobustnessMatrix(all_pts, start, finish, vgraph, mode, shrunk_polytopes);
         dilation_robustness_matrix = max(dilation_robustness_tensor(:,:,1) , dilation_robustness_tensor(:,:,2)); % combine the left and right sides as a max
         dilation_robustness_matrix_for_variance = dilation_robustness_matrix(:)'; % extract vector of all values
         dilation_robustness_matrix_for_variance(dilation_robustness_matrix_for_variance == 0) = []; % remove 0s
@@ -106,28 +110,28 @@ for mission_idx = 1:size(start_inits,1)
     end % end cost function weight loop
 end % end mission (i.e., start goal pair) loop
 
-function INTERNAL_fcn_format_timespace_plot()
-    box on
-    % define figure properties
-    opts.width      = 8;
-    opts.height     = 6;
-    opts.fontType   = 'Times';
-    opts.fontSize   = 9;
-    fig = gcf;
-    % scaling
-    fig.Units               = 'centimeters';
-    fig.Position(3)         = opts.width;
-    fig.Position(4)         = opts.height;
-
-    % set text properties
-    set(fig.Children, ...
-        'FontName',     'Times', ...
-        'FontSize',     9);
-
-    % remove unnecessary white space
-    set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
-    xlabel('x [m]')
-    ylabel('y [m]')
-    zlabel('t [s]')
-    view([36 30])
-end
+% function INTERNAL_fcn_format_timespace_plot()
+%     box on
+%     % define figure properties
+%     opts.width      = 8;
+%     opts.height     = 6;
+%     opts.fontType   = 'Times';
+%     opts.fontSize   = 9;
+%     fig = gcf;
+%     % scaling
+%     fig.Units               = 'centimeters';
+%     fig.Position(3)         = opts.width;
+%     fig.Position(4)         = opts.height;
+% 
+%     % set text properties
+%     set(fig.Children, ...
+%         'FontName',     'Times', ...
+%         'FontSize',     9);
+% 
+%     % remove unnecessary white space
+%     set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+%     xlabel('x [m]')
+%     ylabel('y [m]')
+%     zlabel('t [s]')
+%     view([36 30])
+% end

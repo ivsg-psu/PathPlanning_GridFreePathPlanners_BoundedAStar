@@ -13,6 +13,8 @@
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 % -- removed calls to fcn_check_reachability,
 %    % replaced with fcn_BoundedAStar_checkReachability
+% -- removed calls to fcn_algorithm_generate_cost_graph,
+%    % replaced with fcn_BoundedAStar_generateCostGraph
 
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
 % addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
@@ -78,7 +80,7 @@ orig_vgraph_without_eye = vgraph - eye(size(vgraph));
 mode = "xy spatial only";
 % mode = 'time or z only';
 % mode = "xyz or xyt";
-[cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
+[cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts, start, finish, mode);
 init_planning_time = tic;
 [init_cost, init_route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
 toc(init_planning_time)

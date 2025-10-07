@@ -1,8 +1,12 @@
 function [dilation_robustness_matrix] = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode, polytopes)
+
+warning(['fcn_algorithm_generate_dilation_robustness_matrix is being deprecated.' ...
+    ' Use fcn_BoundedAStar_generateDilationRobustnessMatrix instead.']);
+
 % fcn_algorithm_generate_dilation_robustness_matrix
 %
 % This function operates on a visibility graph formed from a polytope map to estimate
-% the distance, for reach vgraph edge, that the polytopes would have to be dilated to block that edge.
+% the distance, for each vgraph edge, that the polytopes would have to be dilated to block that edge.
 % This is similar to corridor width except (1) it is only an estimate, the actual corridor around
 % the vgraph edge is not measured/calculated and (2) the distance is measured to each side independently meaning
 % it is more accurate to think of it as the lateral distance from the vgraph edge to the nearest polytope, rather

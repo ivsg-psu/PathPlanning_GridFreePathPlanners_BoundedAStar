@@ -12,6 +12,11 @@
 %    % replaced with fcn_BoundedAStar_polytopesGenerateAllPtsTable
 % -- removed calls to fcn_check_reachability,
 %    % replaced with fcn_BoundedAStar_checkReachability
+% -- removed calls to fcn_algorithm_generate_cost_graph,
+%    % replaced with fcn_BoundedAStar_generateCostGraph
+% -- removed calls to fcn_algorithm_generate_dilation_robustness_matrix,
+%    % replaced with fcn_BoundedAStar_generateDilationRobustnessMatrix
+
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -48,11 +53,11 @@ for mission_idx = 1:size(start_inits,1)
     end
     % make cgraph
     mode = "xy spatial only";
-    [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode);
+    [cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts, start, finish, mode);
 
     % make dilation robustness matrix
     mode = '2d';
-    dilation_robustness_tensor = fcn_algorithm_generate_dilation_robustness_matrix(all_pts, start, finish, vgraph, mode, shrunk_polytopes);
+    dilation_robustness_tensor = fcn_BoundedAStar_generateDilationRobustnessMatrix(all_pts, start, finish, vgraph, mode, shrunk_polytopes);
     dilation_robustness_matrix = max(dilation_robustness_tensor(:,:,1) , dilation_robustness_tensor(:,:,2)); % combine the left and right sides as a max
     dilation_robustness_matrix_for_variance = dilation_robustness_matrix(:)'; % extract vector of all values
     dilation_robustness_matrix_for_variance(dilation_robustness_matrix_for_variance == 0) = []; % remove 0s
@@ -167,7 +172,7 @@ for enlarge_idx = 1:(num_paths)
     end % end is_reachable condition for replanning
     % make cgraph for enlarged map
     mode = "xy spatial only";
-    [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts_new, start, finish, mode);
+    [cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts_new, start, finish, mode);
     % plan route for enlarged map
     [replan_cost, replan_route] = fcn_algorithm_Astar(new_vgraph, cgraph, hvec, all_pts_new, start, finish);
 

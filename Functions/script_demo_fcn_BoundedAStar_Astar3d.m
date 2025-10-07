@@ -9,6 +9,8 @@
 % 2025_10_06 - S. Brennan
 % -- removed calls to fcn_check_reachability,
 %    % replaced with fcn_BoundedAStar_checkReachability
+% -- removed calls to fcn_algorithm_generate_cost_graph,
+%    % replaced with fcn_BoundedAStar_generateCostGraph
 
 %% Set up the workspace
 close all
@@ -110,7 +112,7 @@ finish = all_pts(num_verts+2:end,:);
 % mode = 'time or z only';
 mode = 'xyz or xyt';
 % mode = 'xy spatial only';
-[cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts(1:num_verts,:), all_pts(num_verts+1,:), all_pts(num_verts+2:end,:), mode);
+[cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts(1:num_verts,:), all_pts(num_verts+1,:), all_pts(num_verts+2:end,:), mode);
 
 %% plan route
 [cost, route] = fcn_BoundedAStar_Astar3d(vgraph, cgraph, hvec, all_pts(1:num_verts,:), all_pts(num_verts+1,:), all_pts(num_verts+2:end,:));
