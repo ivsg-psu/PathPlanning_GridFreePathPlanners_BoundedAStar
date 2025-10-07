@@ -5,6 +5,8 @@
 % 2025_10_06 - S. Brennan
 % -- removed addpath calls
 % -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
+% -- removed calls to fcn_check_reachability,
+%    % replaced with fcn_BoundedAStar_checkReachability
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -46,7 +48,7 @@ vgraph = adjacency_matrix;
 num_nodes = length(nodes);
 vgraph(1:num_nodes+1:end) = 1;
 % check reachability prior to planning
-[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(3),finish(3));
+[is_reachable, num_steps, rgraph] = fcn_BoundedAStar_checkReachability(vgraph,start(3),finish(3));
 if ~is_reachable
     % if this iteration is not possible, issue a warning and try again
     my_err = sprintf('initial route planning not possible');

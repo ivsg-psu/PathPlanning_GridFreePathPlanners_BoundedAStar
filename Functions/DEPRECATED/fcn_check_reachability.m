@@ -1,4 +1,8 @@
 function [is_reachable, num_steps, rgraph_total] = fcn_check_reachability(vgraph,start_id,finish_id)
+
+warning(['fcn_check_reachability is being deprecated.' ...
+    ' Use fcn_BoundedAStar_checkReachability instead.']);
+
 % fcn_check_reachability
 %
 % From the visibility graph describing node visible from each node,

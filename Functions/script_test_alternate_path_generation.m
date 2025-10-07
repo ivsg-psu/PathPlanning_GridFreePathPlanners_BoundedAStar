@@ -10,6 +10,8 @@
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 % -- removed calls to fcn_polytopes_generate_all_pts_table,
 %    % replaced with fcn_BoundedAStar_polytopesGenerateAllPtsTable
+% -- removed calls to fcn_check_reachability,
+%    % replaced with fcn_BoundedAStar_checkReachability
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -40,7 +42,7 @@ for mission_idx = 1:size(start_inits,1)
     [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, starts, finishes,1);
     orig_vgraph = vgraph;
     % make rgraph
-    [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(3),finish(3));
+    [is_reachable, num_steps, rgraph] = fcn_BoundedAStar_checkReachability(vgraph,start(3),finish(3));
     if ~is_reachable
         error('initial mission, prior to edge deletion, is not possible')
     end
@@ -95,7 +97,7 @@ for mission_idx = 1:size(start_inits,1)
         pct_edges_removed = (num_edges_removed)/num_edges_initially*100;
         %% plan alternate route
         % find rgraph again
-        [is_reachable, num_steps, rgraph] = fcn_check_reachability(new_vgraph,start(3),finish(3));
+        [is_reachable, num_steps, rgraph] = fcn_BoundedAStar_checkReachability(new_vgraph,start(3),finish(3));
         if ~is_reachable
             warning(sprintf('mission planning is impossible with > %3f size corridors',smallest_corridor_in_init_path));
             routes{end+1} = nan;
@@ -158,7 +160,7 @@ for enlarge_idx = 1:(num_paths)
     [new_vgraph, visibility_results_all_pts_new] = fcn_Visibility_clearAndBlockedPointsGlobal(enlarged_polytopes, starts, finishes,1);
     reduced_vgraph = new_vgraph;
     % make rgraph for enlarged map
-    [is_reachable, num_steps, rgraph] = fcn_check_reachability(new_vgraph,start(3),finish(3));
+    [is_reachable, num_steps, rgraph] = fcn_BoundedAStar_checkReachability(new_vgraph,start(3),finish(3));
     if ~is_reachable
         warning(sprintf('mission planning impossible at enlargement %.3f',smallest_corridors(enlarge_idx)))
         continue

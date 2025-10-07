@@ -10,6 +10,8 @@
 % -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
 % -- removed calls to fcn_visibility_clear_and_blocked_points_global,
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
+% -- removed calls to fcn_check_reachability,
+%    % replaced with fcn_BoundedAStar_checkReachability
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -110,7 +112,7 @@ for w = 0:0.1:1
     num_nodes = length(nodes);
     vgraph(1:num_nodes+1:end) = 1;
     % check reachability
-    [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(3),finish(3));
+    [is_reachable, num_steps, rgraph] = fcn_BoundedAStar_checkReachability(vgraph,start(3),finish(3));
     if ~is_reachable
         error('initial mission, prior to edge deletion, is not possible')
     end

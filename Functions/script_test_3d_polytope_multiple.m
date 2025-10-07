@@ -1,3 +1,9 @@
+
+% REVISION HISTORY:
+% 2025_10_06 - S. Brennan
+% -- removed calls to fcn_check_reachability,
+%    % replaced with fcn_BoundedAStar_checkReachability
+
 clear; close all; clc
 % script_test_3d_polytope_multiple
 % defacto example of 3D path planning scenario in timespace
@@ -98,7 +104,7 @@ for time_sample_iter = 1:number_of_time_samples
     all_pts_with_ids_no_start_and_fin = all_pts(1:num_verts,:);
 
     %% form reachability graph
-    [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph, start_with_ids(:,4), finish_with_ids(:,4));
+    [is_reachable, num_steps, rgraph] = fcn_BoundedAStar_checkReachability(vgraph, start_with_ids(:,4), finish_with_ids(:,4));
 
     %% make cgraph
     % mode = "xy spatial only";

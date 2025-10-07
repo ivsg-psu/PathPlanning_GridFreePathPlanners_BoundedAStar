@@ -6,6 +6,9 @@
 % 2025_07_03 - S. Brennan, sbrennan@psu.edu
 % -- created code from script_test_3d.m written by S. Harnett
 % -- standardized headers on all test scripts
+% 2025_10_06 - S. Brennan
+% -- removed calls to fcn_check_reachability,
+%    % replaced with fcn_BoundedAStar_checkReachability
 
 %% Set up the workspace
 close all
@@ -102,7 +105,7 @@ speed_limit = 100;
 vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit,time_space_polytopes, dt);
 start = all_pts(num_verts+1,:);
 finish = all_pts(num_verts+2:end,:);
-[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(:,4),finish(:,4));
+[is_reachable, num_steps, rgraph] = fcn_BoundedAStar_checkReachability(vgraph,start(:,4),finish(:,4));
 
 % mode = 'time or z only';
 mode = 'xyz or xyt';

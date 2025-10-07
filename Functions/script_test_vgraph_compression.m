@@ -11,6 +11,8 @@
 % -- removed addpath calls
 % -- removed calls to fcn_visibility_clear_and_blocked_points_global,
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
+% -- removed calls to fcn_check_reachability,
+%    % replaced with fcn_BoundedAStar_checkReachability
 
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
 % addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
@@ -95,7 +97,7 @@ compressed_vgraph(end-1,:) = vgraph(end-1,:);
 % keep cgraph the same as it just contains costs for all  possible node pairs
 compressed_cgraph = cgraph;
 
-[is_reachable, num_steps, rgraph] = fcn_check_reachability(compressed_vgraph,start(3),finish(3));
+[is_reachable, num_steps, rgraph] = fcn_BoundedAStar_checkReachability(compressed_vgraph,start(3),finish(3));
 if ~is_reachable
     error('compressed map does not contain path from start to goal')
 end

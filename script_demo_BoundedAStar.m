@@ -396,10 +396,11 @@
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 % -- removed calls to fcn_polytopes_generate_all_pts_table,
 %    % replaced with fcn_BoundedAStar_polytopesGenerateAllPtsTable
+% -- removed calls to fcn_check_reachability,
+%    % replaced with fcn_BoundedAStar_checkReachability
 
 % TO-DO:
 % 2025_07_28 - Sean Brennan
-% -- DEPRECATE: fcn_polytope_editing_shrink_evenly
 % -- need to de-spaghetti fcn_BoundedAStar_AStarBounded
 % 2025_08_01 - K. Hayes
 % -- add fcn to plot visibility graph

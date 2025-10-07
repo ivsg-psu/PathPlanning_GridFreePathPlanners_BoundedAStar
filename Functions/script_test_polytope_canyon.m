@@ -7,6 +7,8 @@
 % -- removed addpath calls
 % -- removed calls to fcn_visibility_clear_and_blocked_points_global,
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
+% -- removed calls to fcn_check_reachability,
+%    % replaced with fcn_BoundedAStar_checkReachability
 
 % addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
 % addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
@@ -82,7 +84,7 @@ finishes = [all_pts; start; finish];
 starts = [all_pts; start; finish];
 [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, starts, finishes);
 
-[is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(3),finish(3));
+[is_reachable, num_steps, rgraph] = fcn_BoundedAStar_checkReachability(vgraph,start(3),finish(3));
 
 % new experimental cost function prioritizing reachability
 reachable_nodes_from_each_node = sum(rgraph,2);

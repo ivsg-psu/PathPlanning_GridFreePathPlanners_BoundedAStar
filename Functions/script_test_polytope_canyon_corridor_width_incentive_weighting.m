@@ -10,6 +10,9 @@
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 % -- removed calls to fcn_polytopes_generate_all_pts_table,
 %    % replaced with fcn_BoundedAStar_polytopesGenerateAllPtsTable
+% -- removed calls to fcn_check_reachability,
+%    % replaced with fcn_BoundedAStar_checkReachability
+
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -39,7 +42,7 @@ for mission_idx = 1:size(start_inits,1)
         [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, starts, finishes,1);
 
         % make rgraph
-        [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(3),finish(3));
+        [is_reachable, num_steps, rgraph] = fcn_BoundedAStar_checkReachability(vgraph,start(3),finish(3));
         if ~is_reachable
             error('initial mission, is not possible')
         end

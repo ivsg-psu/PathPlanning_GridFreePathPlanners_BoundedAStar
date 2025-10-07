@@ -49,7 +49,7 @@ function [route_full, route_length, route_choke] = fcn_MedialAxis_plannerWrapper
 %   fcn_MedialAxis_addCostsToTriangleChains
 %   fcn_MedialAxis_addPointToAdjacencyMatrixAndTriangleChains
 %   fcn_MedialAxis_makeCostGraphAndAllPoints
-%   fcn_check_reachability
+%   fcn_BoundedAStar_checkReachability
 %   fcn_algorithm_Astar
 %   fcn_MedialAxis_processRoute
 %
@@ -67,6 +67,10 @@ function [route_full, route_length, route_choke] = fcn_MedialAxis_plannerWrapper
 %
 % 2024, November by Steve Harnett
 % -- first write of function
+% 2025_10_06 - S. Brennan
+% -- removed calls to fcn_check_reachability,
+%    % replaced with fcn_BoundedAStar_checkReachability
+
 %
 % TO DO:
 %
@@ -123,7 +127,7 @@ function [route_full, route_length, route_choke] = fcn_MedialAxis_plannerWrapper
     num_nodes = length(nodes);
     vgraph(1:num_nodes+1:end) = 1;
     % check reachability
-    [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(3),finish(3));
+    [is_reachable, num_steps, rgraph] = fcn_BoundedAStar_checkReachability(vgraph,start(3),finish(3));
     if ~is_reachable
         error('start and finish are not connected in medial axis graph')
     end

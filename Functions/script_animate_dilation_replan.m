@@ -6,7 +6,8 @@
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 % -- removed calls to fcn_polytopes_generate_all_pts_table,
 %    % replaced with fcn_BoundedAStar_polytopesGenerateAllPtsTable
-
+% -- removed calls to fcn_check_reachability,
+%    % replaced with fcn_BoundedAStar_checkReachability
 
 
 
@@ -48,7 +49,7 @@ for nominal_or_width_based = [1, 2]
     orig_vgraph = vgraph; % note the original to compare it to the reduced vgraph
 
     % find rgraph
-    [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(3),finish(3));
+    [is_reachable, num_steps, rgraph] = fcn_BoundedAStar_checkReachability(vgraph,start(3),finish(3));
     if ~is_reachable
         error('initial mission, prior to edge deletion, is not possible')
     end
@@ -95,7 +96,7 @@ for nominal_or_width_based = [1, 2]
         starts_tp = [all_pts_tp; start_tp; finish_tp];
         [vgraph_tp, visibility_results_tp] = fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, starts_tp, finishes_tp,1);
         % make rgraph again
-        [is_reachable_tp, num_steps_tp, rgraph_tp] = fcn_check_reachability(vgraph_tp,start_tp(3),finish_tp(3));
+        [is_reachable_tp, num_steps_tp, rgraph_tp] = fcn_BoundedAStar_checkReachability(vgraph_tp,start_tp(3),finish_tp(3));
         if ~is_reachable_tp
             % we don't want to break if replanning is impossible, we want to save the data for what caused this
             error('threadpulling is impossible')
@@ -157,7 +158,7 @@ for nominal_or_width_based = [1, 2]
     num_edges_removed = num_edges_initially - num_edges_finally;
     pct_edges_removed = (num_edges_removed)/num_edges_initially*100;
     % make rgraph again
-    [is_reachable, num_steps, rgraph] = fcn_check_reachability(new_vgraph,start(3),finish(3));
+    [is_reachable, num_steps, rgraph] = fcn_BoundedAStar_checkReachability(new_vgraph,start(3),finish(3));
     if ~is_reachable
         % we don't want to break if replanning is impossible, we want to save the data for what caused this
         error('mission replanning is impossible')
