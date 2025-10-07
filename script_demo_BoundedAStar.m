@@ -387,6 +387,7 @@
 % -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
 % -- added explicit deprecation message to fcn_util_load_test_map
 % -- fixed calls to fcn_MapGen_polytopesStatistics, replaced with fcn_MapGen_statsPolytopes
+% -- fixed calls to fcn_polytope_editing_shrink_evenly, replace with fcn_MapGen_polytopesShrinkEvenly
 
 % TO-DO:
 % 2025_07_03 - Sean Brennan

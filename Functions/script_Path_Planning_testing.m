@@ -18,7 +18,7 @@
 %      with newer function versions
 % 2025_10_06 - S. Brennan
 % -- removed addpath calls
-
+% -- replaced fcn_polytope_editing_shrink_evenly with fcn_MapGen_polytopesShrinkEvenly
 
 %% Prep the workspace
 close all
@@ -46,7 +46,7 @@ rng(678);
 % Map_Generation folder in scrpt_Map_Generation_testing.m.
 polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 100],[],[100 100],-1);
 trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0 0 100 100], (-1));
-shrunk_polytopes=fcn_polytope_editing_shrink_evenly(trim_polytopes,2.5);
+shrunk_polytopes=fcn_MapGen_polytopesShrinkEvenly(trim_polytopes,2.5);
 
 %% determine vertice information
 % Determine the obstacle number for each vertex and whether or not each

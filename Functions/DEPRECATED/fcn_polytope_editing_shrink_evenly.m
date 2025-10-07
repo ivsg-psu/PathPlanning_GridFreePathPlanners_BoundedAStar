@@ -1,4 +1,8 @@
 function [shrunk_polytopes,point_polys] = fcn_polytope_editing_shrink_evenly(polytopes,dist)
+
+warning(['fcn_polytope_editing_shrink_evenly is being deprecated.' ...
+    ' Use fcn_MapGen_polytopesShrinkEvenly instead.']);
+
 % FCN_POLYTOPE_EDITING_SHRINK_EVENLY shrinks each polytope in poltyopes 
 % specified evenly on all sides by dist
 %
