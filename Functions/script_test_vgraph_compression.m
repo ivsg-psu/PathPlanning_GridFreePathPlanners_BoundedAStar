@@ -9,6 +9,8 @@
 % REVISION HISTORY:
 % 2025_10_06 - S. Brennan
 % -- removed addpath calls
+% -- removed calls to fcn_visibility_clear_and_blocked_points_global,
+%    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
 % addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
@@ -67,7 +69,7 @@ start = [start_init size(all_pts,1)+1 -1 1];
 finish = [finish_init size(all_pts,1)+2 -1 1];
 finishes = [all_pts; start; finish];
 starts = [all_pts; start; finish];
-[vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes,1);
+[vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, starts, finishes,1);
 orig_vgraph_without_eye = vgraph - eye(size(vgraph));
 
 %% plan original path

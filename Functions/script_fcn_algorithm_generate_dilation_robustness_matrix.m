@@ -8,6 +8,8 @@
 % -- first write of script
 % 2025_10_06 - S. Brennan
 % -- removed addpath calls
+% -- removed calls to fcn_visibility_clear_and_blocked_points_global,
+%    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
 % addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
@@ -73,7 +75,7 @@ for test_case_idx = 1:2
 
     finishes = [all_pts; start; finish];
     starts = [all_pts; start; finish];
-    [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(polytopes, starts, finishes,1);
+    [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, starts, finishes,1);
     % plot visibility graph edges
     if flag_do_plot_slow
         fig_num = fig_num + 1;

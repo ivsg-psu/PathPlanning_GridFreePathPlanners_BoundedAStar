@@ -1,4 +1,8 @@
 function [visibility_matrix, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes, starts, finishes, varargin)
+
+warning(['fcn_visibility_clear_and_blocked_points_global is being deprecated.' ...
+    ' Use fcn_Visibility_clearAndBlockedPointsGlobal instead.']);
+
     % fcn_visibility_clear_and_blocked_points_global
     % The function fcn_visibility_clear_and_blocked_points returns an intersection
     % matrix for a single start point, showing what was intersected between

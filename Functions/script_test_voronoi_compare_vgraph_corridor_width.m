@@ -11,6 +11,8 @@
 %    % replaced with fcn_MapGen_polytopesFillFieldsFromVertices
 % 2025_10_06 - S. Brennan
 % -- removed addpath calls
+% -- removed calls to fcn_visibility_clear_and_blocked_points_global,
+%    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -103,7 +105,7 @@ obs_id = [polytopes.obs_id];
 point_tot = length([polytopes.xv]); % need to recheck total points
 beg_end = beg_end(1:point_tot); % remove any extra points
 all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
-[vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts);
+[vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts);
 
 %% generate vgraph corridor width estimate
 start = [start_init size(all_pts,1)+1 -1 1];

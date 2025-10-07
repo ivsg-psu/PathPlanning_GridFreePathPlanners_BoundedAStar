@@ -2,6 +2,10 @@
 % 2025_10_06 - S. Brennan
 % -- removed addpath calls
 % -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
+% -- removed calls to fcn_visibility_clear_and_blocked_points_global,
+%    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
+
+
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -37,7 +41,7 @@ for nominal_or_width_based = [1, 2]
     % find vgraph
     finishes = [all_pts; start; finish];
     starts = [all_pts; start; finish];
-    [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes,1);
+    [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, starts, finishes,1);
     orig_vgraph = vgraph; % note the original to compare it to the reduced vgraph
 
     % find rgraph
@@ -86,7 +90,7 @@ for nominal_or_width_based = [1, 2]
         % make vgraph again
         finishes_tp = [all_pts_tp; start_tp; finish_tp];
         starts_tp = [all_pts_tp; start_tp; finish_tp];
-        [vgraph_tp, visibility_results_tp] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts_tp, finishes_tp,1);
+        [vgraph_tp, visibility_results_tp] = fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, starts_tp, finishes_tp,1);
         % make rgraph again
         [is_reachable_tp, num_steps_tp, rgraph_tp] = fcn_check_reachability(vgraph_tp,start_tp(3),finish_tp(3));
         if ~is_reachable_tp
@@ -142,7 +146,7 @@ for nominal_or_width_based = [1, 2]
     % make vgraph again
     finishes = [all_pts_new; start; finish];
     starts = [all_pts_new; start; finish];
-    [new_vgraph, visibility_results_all_pts_new] = fcn_visibility_clear_and_blocked_points_global(enlarged_polytopes, starts, finishes,1);
+    [new_vgraph, visibility_results_all_pts_new] = fcn_Visibility_clearAndBlockedPointsGlobal(enlarged_polytopes, starts, finishes,1);
     reduced_vgraph = new_vgraph;
     % get vgraph stats
     num_edges_initially = sum(sum(vgraph));

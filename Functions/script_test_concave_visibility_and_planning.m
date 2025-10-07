@@ -1,7 +1,4 @@
-% script_test_fcn_visibility_clear_and_blocked_points_global
-% Tests: fcn_visibility_clear_and_blocked_points_global
 
-%
 % REVISION HISTORY:
 %
 % 2022_10_28 by S. Harnett
@@ -11,7 +8,8 @@
 %    with vector sum method 
 % 2025_10_06 - S. Brennan
 % -- removed addpath calls
-
+% -- removed calls to fcn_visibility_clear_and_blocked_points_global,
+%    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 
 % clear
 % clc
@@ -71,7 +69,7 @@ all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all poi
 
 % calculate vibility graph
 tic
-[vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts);
+[vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts);
 toc
 % plot visibility graph edges
 if flag_do_plot
@@ -153,7 +151,7 @@ all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all poi
 
 % calculate vibility graph
 tic
-[vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts);
+[vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts);
 toc
 % plot visibility graph edges
 if flag_do_plot
@@ -233,7 +231,7 @@ all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all poi
 
 % calculate vibility graph
 tic
-[vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts);
+[vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts);
 toc
 % plot visibility graph edges
 if flag_do_plot

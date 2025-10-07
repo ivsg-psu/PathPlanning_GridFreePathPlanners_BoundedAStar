@@ -5,6 +5,8 @@
 % REVISION HISTORY:
 % 2025_10_06 - S. Brennan
 % -- removed addpath calls
+% -- removed calls to fcn_visibility_clear_and_blocked_points_global,
+%    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 
 % addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
 % addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
@@ -78,7 +80,7 @@ start = [start size(all_pts,1)+1 -1 1]
 finish = [finish size(all_pts,1)+2 -1 1]
 finishes = [all_pts; start; finish];
 starts = [all_pts; start; finish];
-[vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes);
+[vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, starts, finishes);
 
 [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(3),finish(3));
 

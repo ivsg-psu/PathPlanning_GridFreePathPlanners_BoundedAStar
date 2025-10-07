@@ -388,12 +388,15 @@
 % -- added explicit deprecation message to fcn_util_load_test_map
 % -- fixed calls to fcn_MapGen_polytopesStatistics, replaced with fcn_MapGen_statsPolytopes
 % -- fixed calls to fcn_polytope_editing_shrink_evenly, replace with fcn_MapGen_polytopesShrinkEvenly
+%
+% 2025_10_07 - S. Brennan
+% -- trying to get this working:
+%    % *script_test_polytope_canyon_corridor_width_incentive_weighting
+% -- removed calls to fcn_visibility_clear_and_blocked_points_global,
+%    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 
 % TO-DO:
-% 2025_07_03 - Sean Brennan
-% -- Where to start?! All functions need to be checked, verified, etc.
 % 2025_07_28 - Sean Brennan
-% -- Remove all "addpath" commands nested inside scripts and functions
 % -- DEPRECATE: fcn_polytope_editing_shrink_evenly
 % -- need to de-spaghetti fcn_BoundedAStar_AStarBounded
 % 2025_08_01 - K. Hayes

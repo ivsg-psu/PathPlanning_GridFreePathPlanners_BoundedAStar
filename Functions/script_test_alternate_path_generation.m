@@ -6,6 +6,8 @@
 % 2025_10_06 - S. Brennan
 % -- removed addpath calls
 % -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
+% -- removed calls to fcn_visibility_clear_and_blocked_points_global,
+%    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -33,7 +35,7 @@ for mission_idx = 1:size(start_inits,1)
     % make vgraph
     finishes = [all_pts; start; finish];
     starts = [all_pts; start; finish];
-    [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes,1);
+    [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, starts, finishes,1);
     orig_vgraph = vgraph;
     % make rgraph
     [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(3),finish(3));
@@ -151,7 +153,7 @@ for enlarge_idx = 1:(num_paths)
     % make vgraph for enlarged map
     finishes = [all_pts_new; start; finish];
     starts = [all_pts_new; start; finish];
-    [new_vgraph, visibility_results_all_pts_new] = fcn_visibility_clear_and_blocked_points_global(enlarged_polytopes, starts, finishes,1);
+    [new_vgraph, visibility_results_all_pts_new] = fcn_Visibility_clearAndBlockedPointsGlobal(enlarged_polytopes, starts, finishes,1);
     reduced_vgraph = new_vgraph;
     % make rgraph for enlarged map
     [is_reachable, num_steps, rgraph] = fcn_check_reachability(new_vgraph,start(3),finish(3));

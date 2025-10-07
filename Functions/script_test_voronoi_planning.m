@@ -8,6 +8,8 @@
 % 2025_10_06 - S. Brennan
 % -- removed addpath calls
 % -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
+% -- removed calls to fcn_visibility_clear_and_blocked_points_global,
+%    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -59,7 +61,7 @@ all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all poi
 vgraph_times = [];
 for i = 1:num_time_trials % get timing data for repeat iterations
     create_vgraph_timer = tic;
-    [vgraph, visibility_results] = fcn_visibility_clear_and_blocked_points_global(polytopes,all_pts,all_pts);
+    [vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,all_pts,all_pts);
     vgraph_time = toc(create_vgraph_timer)
     vgraph_times = [vgraph_times vgraph_time]
 end

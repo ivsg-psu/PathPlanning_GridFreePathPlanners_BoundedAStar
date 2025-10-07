@@ -6,6 +6,8 @@
 % 2025_10_06 - S. Brennan
 % -- removed addpath calls
 % -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
+% -- removed calls to fcn_visibility_clear_and_blocked_points_global,
+%    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -23,6 +25,7 @@ map_idx =5;
 for mission_idx = 1:size(start_inits,1)
     start_init = start_inits(mission_idx,:);
     finish_init = finish_inits(mission_idx,:);
+    
     %% all_pts array creation
     [all_pts, start, finish] = fcn_polytopes_generate_all_pts_table(shrunk_polytopes, start_init, finish_init);
 
@@ -31,7 +34,7 @@ for mission_idx = 1:size(start_inits,1)
         % make vgraph
         finishes = [all_pts; start; finish];
         starts = [all_pts; start; finish];
-        [vgraph, visibility_results_all_pts] = fcn_visibility_clear_and_blocked_points_global(shrunk_polytopes, starts, finishes,1);
+        [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, starts, finishes,1);
 
         % make rgraph
         [is_reachable, num_steps, rgraph] = fcn_check_reachability(vgraph,start(3),finish(3));
