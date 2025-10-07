@@ -28,7 +28,7 @@ flag_do_plot = 1;
 flag_do_plot_slow = 0;
 
 %% mission options
-map_idx =5;
+map_idx = 7;
 [shrunk_polytopes, start_inits, finish_inits] = fcn_BoundedAStar_loadTestMap(map_idx);
 
 for mission_idx = 1:size(start_inits,1)
@@ -37,6 +37,21 @@ for mission_idx = 1:size(start_inits,1)
     
     %% all_pts array creation
     [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_init, finish_init);
+
+    % Plot the polytopes
+    % axes_limits = [0 1 0 1]; % x and y axes limits
+    % axis_style = 'square'; % plot axes style
+    plotFormat.Color = 'Blue'; % edge line plotting
+    plotFormat.LineStyle = '-';
+    plotFormat.LineWidth = 2; % linewidth of the edge
+    fillFormat = [1 0 0 1 0.4];
+    %fcn_MapGen_plotPolytopes(polytopes,fig_num,line_spec,line_width,axes_limits,axis_style);
+    fcn_MapGen_plotPolytopes(shrunk_polytopes,(plotFormat),(fillFormat),(272727))
+    hold on
+    box on
+    % axis([-0.1 1.1 -0.1 1.1]);
+    xlabel('x [km]')
+    ylabel('y [km]')
 
     %% loop over different relative cost function term weights
     for w = 0.1:0.1:1

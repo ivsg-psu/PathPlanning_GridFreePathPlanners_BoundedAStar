@@ -43,7 +43,7 @@ function [route_full, route_length, route_choke] = fcn_MedialAxis_plannerWrapper
 %
 %
 % DEPENDENCIES:
-%   fcn_MapGen_fillPolytopeFieldsFromVertices
+%   fcn_MapGen_polytopesFillFieldsFromVertices
 %   fcn_MedialAxis_makeAdjacencyMatrixAndTriangleChains
 %   fcn_MedialAxis_pruneGraph
 %   fcn_MedialAxis_addCostsToTriangleChains
@@ -70,7 +70,8 @@ function [route_full, route_length, route_choke] = fcn_MedialAxis_plannerWrapper
 % 2025_10_06 - S. Brennan
 % -- removed calls to fcn_check_reachability,
 %    % replaced with fcn_BoundedAStar_checkReachability
-
+% -- removed calls to fcn_MapGen_fillPolytopeFieldsFromVertices,
+%    % replaced with fcn_MapGen_polytopesFillFieldsFromVertices
 %
 % TO DO:
 %
@@ -85,8 +86,8 @@ function [route_full, route_length, route_choke] = fcn_MedialAxis_plannerWrapper
     end
     boundary.vertices = boundary_verts;
     boundary.vertices = [boundary.vertices; boundary.vertices(1,:)]; % repeat first vert at end
-    boundary = fcn_MapGen_fillPolytopeFieldsFromVertices(boundary); % fill polytope fields
-    shrunk_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(polytopes);
+    boundary = fcn_MapGen_polytopesFillFieldsFromVertices(boundary); % fill polytope fields
+    shrunk_polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(polytopes);
     shrunk_polytopes = [boundary, shrunk_polytopes]; % put the boundary polytope as the first polytope
 
     %% assume necessary triangulation resolution

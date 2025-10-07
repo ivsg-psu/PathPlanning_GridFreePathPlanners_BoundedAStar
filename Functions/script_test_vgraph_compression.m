@@ -15,6 +15,8 @@
 %    % replaced with fcn_BoundedAStar_checkReachability
 % -- removed calls to fcn_algorithm_generate_cost_graph,
 %    % replaced with fcn_BoundedAStar_generateCostGraph
+% -- removed calls to fcn_MapGen_fillPolytopeFieldsFromVertices,
+%    % replaced with fcn_MapGen_polytopesFillFieldsFromVertices
 
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
 % addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
@@ -53,7 +55,7 @@ for i = 1:length(shrunk_polytopes)
     end
     new_polytopes(i).vertices = wgs_verts;
 end
-shrunk_polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(new_polytopes);
+shrunk_polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(new_polytopes);
 
 %% all_pts array creation
 point_tot = length([shrunk_polytopes.xv]); % total number of vertices in the polytopes

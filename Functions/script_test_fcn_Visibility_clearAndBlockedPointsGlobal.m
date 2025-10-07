@@ -160,7 +160,7 @@ polytopes = fcn_MapGen_polytopesShrinkEvenly(trim_polytopes,gap_size);
 plotFormat.Color = 'Blue'; % edge line plotting
 plotFormat.LineStyle = '-';
 plotFormat.LineWidth = 2; % linewidth of the edge
-fillFormat = [];
+fillFormat = [1 0 0 1 0.4];
 %fcn_MapGen_plotPolytopes(polytopes,fig_num,line_spec,line_width,axes_limits,axis_style);
 fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(figNum))
 hold on
@@ -188,50 +188,49 @@ loopCount = Inf; % Loop indefinitely (0 for no loop)
 
 % plot visibility graph edges
 if 1==1
-    Npoints = size(vgraph,1);
-    for i = 1:Npoints
-        goodFromIndices = zeros(Npoints,1);
-        goodToIndices = zeros(Npoints,1);
-        pointsToPlot = [];
-        for j = 1:size(vgraph,1)
-            if vgraph(i,j) == 1
-                % plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'-g')
-                % pause(0.01);
-                pointsToPlot = [pointsToPlot; [all_pts(i,1:2); all_pts(j,1:2); nan(1,2)]]; %#ok<AGROW>
-                        
-            end
-        end
-        plot(pointsToPlot(:,1),pointsToPlot(:,2),'-g')
-        drawnow;
 
-        if 1==0 % To save movie
-            % Capture the current frame
-            frame = getframe(gcf);
-            im = frame2im(frame);
-            [imind, cm] = rgb2ind(im, 256); % Convert to indexed image
+    fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-')
 
-            % Write the frame to the GIF
-            if i == 1
-                % Create a new GIF file for the first frame
-                imwrite(imind, cm, filename, 'gif', 'LoopCount', loopCount, 'DelayTime', delayTime);
-            else
-                % Append subsequent frames
-                imwrite(imind, cm, filename, 'gif', 'WriteMode', 'append', 'DelayTime', delayTime);
-            end
-        end
-    end
+    % Npoints = size(vgraph,1);
+    % for ith_fromIndex = 1:Npoints
+    %     pointsToPlot = [];
+    %     for jth_toIndex = 1:size(vgraph,1)
+    %         if vgraph(ith_fromIndex,jth_toIndex) == 1
+    %             % plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'-g')
+    %             % pause(0.01);
+    %             pointsToPlot = [pointsToPlot; [all_pts(ith_fromIndex,1:2); all_pts(jth_toIndex,1:2); nan(1,2)]]; %#ok<AGROW>
+    % 
+    %         end
+    %     end
+    %     plot(pointsToPlot(:,1),pointsToPlot(:,2),'-g')
+    %     drawnow;
+    % 
+    %     if 1==0 % To save movie
+    %         % Capture the current frame
+    %         frame = getframe(gcf);
+    %         im = frame2im(frame);
+    %         [imind, cm] = rgb2ind(im, 256); % Convert to indexed image
+    % 
+    %         % Write the frame to the GIF
+    %         if ith_fromIndex == 1
+    %             % Create a new GIF file for the first frame
+    %             imwrite(imind, cm, filename, 'gif', 'LoopCount', loopCount, 'DelayTime', delayTime);
+    %         else
+    %             % Append subsequent frames
+    %             imwrite(imind, cm, filename, 'gif', 'WriteMode', 'append', 'DelayTime', delayTime);
+    %         end
+    %     end
+    % end
 
 
     % Plot just one result in a different color
-    for i = 1:1
-        goodFromIndices = zeros(Npoints,1);
-        goodToIndices = zeros(Npoints,1);
+    for ith_fromIndex = 1:1
         pointsToPlot = [];
-        for j = 1:size(vgraph,1)
-            if vgraph(i,j) == 1
+        for jth_toIndex = 1:size(vgraph,1)
+            if vgraph(ith_fromIndex,jth_toIndex) == 1
                 % plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'-g')
                 % pause(0.01);
-                pointsToPlot = [pointsToPlot; [all_pts(i,1:2); all_pts(j,1:2); nan(1,2)]]; %#ok<AGROW>
+                pointsToPlot = [pointsToPlot; [all_pts(ith_fromIndex,1:2); all_pts(jth_toIndex,1:2); nan(1,2)]]; %#ok<AGROW>
 
             end
         end
@@ -245,7 +244,7 @@ if 1==1
             [imind, cm] = rgb2ind(im, 256); % Convert to indexed image
 
             % Write the frame to the GIF
-            if i == 1
+            if ith_fromIndex == 1
                 % Create a new GIF file for the first frame
                 imwrite(imind, cm, filename, 'gif', 'LoopCount', loopCount, 'DelayTime', delayTime);
             else
@@ -335,19 +334,19 @@ deduped_pts = fcn_convert_polytope_struct_to_deduped_points(all_pts);
 % plot visibility graph edges
 figure(figNum)
 if flag_do_plot && gap_size ==0
-    for i = 1:size(vgraph,1)
-        for j = 1:size(vgraph,1)
-            if vgraph(i,j) == 1
-                plot([deduped_pts(i).x,deduped_pts(j).x],[deduped_pts(i).y,deduped_pts(j).y],'--g','LineWidth',1)
+    for ith_fromIndex = 1:size(vgraph,1)
+        for jth_toIndex = 1:size(vgraph,1)
+            if vgraph(ith_fromIndex,jth_toIndex) == 1
+                plot([deduped_pts(ith_fromIndex).x,deduped_pts(jth_toIndex).x],[deduped_pts(ith_fromIndex).y,deduped_pts(jth_toIndex).y],'--g','LineWidth',1)
             end
         end
     end
 end
 if flag_do_plot && gap_size ~=0
-    for i = 1:size(vgraph,1)
-        for j = 1:size(vgraph,1)
-            if vgraph(i,j) == 1
-                plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'--g','LineWidth',2)
+    for ith_fromIndex = 1:size(vgraph,1)
+        for jth_toIndex = 1:size(vgraph,1)
+            if vgraph(ith_fromIndex,jth_toIndex) == 1
+                plot([all_pts(ith_fromIndex,1),all_pts(jth_toIndex,1)],[all_pts(ith_fromIndex,2),all_pts(jth_toIndex,2)],'--g','LineWidth',2)
             end
         end
     end
@@ -579,19 +578,19 @@ if 1==0
     deduped_pts = fcn_convert_polytope_struct_to_deduped_points(all_pts);
     % plot visibility graph edges
     if flag_do_plot && gap_size ==0
-        for i = 1:size(vgraph,1)
-            for j = 1:size(vgraph,1)
-                if vgraph(i,j) == 1
-                    plot([deduped_pts(i).x,deduped_pts(j).x],[deduped_pts(i).y,deduped_pts(j).y],'--g','LineWidth',1)
+        for ith_fromIndex = 1:size(vgraph,1)
+            for jth_toIndex = 1:size(vgraph,1)
+                if vgraph(ith_fromIndex,jth_toIndex) == 1
+                    plot([deduped_pts(ith_fromIndex).x,deduped_pts(jth_toIndex).x],[deduped_pts(ith_fromIndex).y,deduped_pts(jth_toIndex).y],'--g','LineWidth',1)
                 end
             end
         end
     end
     if flag_do_plot && gap_size ~=0
-        for i = 1:size(vgraph,1)
-            for j = 1:size(vgraph,1)
-                if vgraph(i,j) == 1
-                    plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'--g','LineWidth',2)
+        for ith_fromIndex = 1:size(vgraph,1)
+            for jth_toIndex = 1:size(vgraph,1)
+                if vgraph(ith_fromIndex,jth_toIndex) == 1
+                    plot([all_pts(ith_fromIndex,1),all_pts(jth_toIndex,1)],[all_pts(ith_fromIndex,2),all_pts(jth_toIndex,2)],'--g','LineWidth',2)
                 end
             end
         end

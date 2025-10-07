@@ -12,6 +12,10 @@
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 % -- removed calls to fcn_algorithm_generate_dilation_robustness_matrix,
 %    % replaced with fcn_BoundedAStar_generateDilationRobustnessMatrix
+% -- removed calls to fcn_MapGen_fillPolytopeFieldsFromVertices,
+%    % replaced with fcn_MapGen_polytopesFillFieldsFromVertices
+
+
 
 
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -21,7 +25,7 @@
 flag_do_plot = 1;
 flag_do_plot_slow = 0;
 
-fig_num = 2;
+figNum = 2;
 line_width = 3;
 
 for test_case_idx = 1:2
@@ -30,7 +34,7 @@ for test_case_idx = 1:2
         clear polytopes
         polytopes(1).vertices = [0 0; 4,0; 4 2; 2 4; 0 0];
         polytopes(2).vertices = [0 -1; 4, -1; 5 -2; 3 -10; 0 -1];
-        polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(polytopes);
+        polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(polytopes);
         start = ones(1,2)*(-0.5);
         finish = start;
         finish(1) = 6;
@@ -42,16 +46,30 @@ for test_case_idx = 1:2
         polytopes(2).vertices = polytopes(1).vertices+[0,2];
         polytopes(3).vertices = polytopes(1).vertices+[0,5];
         polytopes(4).vertices = polytopes(1).vertices+[0,10];
-        polytopes = fcn_MapGen_fillPolytopeFieldsFromVertices(polytopes);
+        polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(polytopes);
         start = [0,9];
         finish = start + [10,0];
     end
-    fig_num = fig_num + 1;
-    fcn_MapGen_plotPolytopes(polytopes,fig_num,'b-',line_width);
-    hold on; box on;
+
+
+    % Plot the polytopes
+    figNum = figNum + 1;
+    % axes_limits = [0 1 0 1]; % x and y axes limits
+    % axis_style = 'square'; % plot axes style
+    plotFormat.Color = 'Blue'; % edge line plotting
+    plotFormat.LineStyle = '-';
+    plotFormat.LineWidth = 2; % linewidth of the edge
+    fillFormat = [1 0 0 1 0.4];
+    % FORMAT: fcn_MapGen_plotPolytopes(polytopes,fig_num,line_spec,line_width,axes_limits,axis_style);
+    fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(figNum))
+    hold on
+    box on
+    % axis([-0.1 1.1 -0.1 1.1]);
     xlabel('x [m]');
     ylabel('y [m]');
     title('polytope map')
+
+
 
 
     plot(start(1),start(2),'xg','MarkerSize',6);
@@ -80,13 +98,27 @@ for test_case_idx = 1:2
     starts = [all_pts; start; finish];
     [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, starts, finishes,1);
     % plot visibility graph edges
-    if flag_do_plot_slow
-        fig_num = fig_num + 1;
-        fcn_MapGen_plotPolytopes(polytopes,fig_num,'b-',line_width);
-        hold on; box on;
+    if 1==flag_do_plot_slow
+
+        % Plot the polytopes
+        figNum = figNum + 1;
+        % axes_limits = [0 1 0 1]; % x and y axes limits
+        % axis_style = 'square'; % plot axes style
+        plotFormat.Color = 'Blue'; % edge line plotting
+        plotFormat.LineStyle = '-';
+        plotFormat.LineWidth = 2; % linewidth of the edge
+        fillFormat = [1 0 0 1 0.4];
+        % FORMAT: fcn_MapGen_plotPolytopes(polytopes,fig_num,line_spec,line_width,axes_limits,axis_style);
+        fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(figNum))
+        hold on
+        box on
+        % axis([-0.1 1.1 -0.1 1.1]);
         xlabel('x [m]');
         ylabel('y [m]');
         title('visibility graph');
+
+
+
         for i = 1:size(vgraph,1)
             for j = 1:size(vgraph,1)
                 if vgraph(i,j) == 1
@@ -109,12 +141,25 @@ for test_case_idx = 1:2
 
         % plot corridor width approximation graph edges
         if flag_do_plot
-            fig_num = fig_num + 1;
-            fcn_MapGen_plotPolytopes(polytopes,fig_num,'g-',line_width);
-            hold on; box on;
+
+            % Plot the polytopes
+            figNum = figNum + 1;
+            % axes_limits = [0 1 0 1]; % x and y axes limits
+            % axis_style = 'square'; % plot axes style
+            plotFormat.Color = 'Blue'; % edge line plotting
+            plotFormat.LineStyle = '-';
+            plotFormat.LineWidth = 2; % linewidth of the edge
+            fillFormat = [1 0 0 1 0.4];
+            % FORMAT: fcn_MapGen_plotPolytopes(polytopes,fig_num,line_spec,line_width,axes_limits,axis_style);
+            fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(figNum))
+            hold on
+            box on
+            % axis([-0.1 1.1 -0.1 1.1]);
             xlabel('x [m]');
             ylabel('y [m]');
             title('dilation robustness');
+
+            
             for i = 1:size(vgraph,1)
                 for j = 1:size(vgraph,1)
                     if vgraph(i,j) == 1
@@ -135,8 +180,8 @@ for test_case_idx = 1:2
 
         % plot corridor width approximation values
         if flag_do_plot
-            fig_num = fig_num + 1;
-            figure(fig_num); hold on; box on;
+            figNum = figNum + 1;
+            figure(figNum); hold on; box on;
             for j = 1:length(polytopes)
                  fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
             end
@@ -163,8 +208,8 @@ for test_case_idx = 1:2
         end % if do plot loop
         % plot corridor width approximation values
         if flag_do_plot
-            fig_num = fig_num + 1;
-            figure(fig_num); hold on; box on;
+            figNum = figNum + 1;
+            figure(figNum); hold on; box on;
             for j = 1:length(polytopes)
                  fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
             end

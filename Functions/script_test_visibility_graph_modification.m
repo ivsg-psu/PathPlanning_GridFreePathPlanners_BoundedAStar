@@ -12,6 +12,8 @@
 % 2025_10_07 by S. Brennan, sbrennan@psu.edu
 % -- removed calls to fcn_visibility_clear_and_blocked_points_global,
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
+% -- removed calls to fcn_MapGen_fillPolytopeFieldsFromVertices,
+%    % replaced with fcn_MapGen_polytopesFillFieldsFromVertices
 
 % TO DO:
 % -- update functions to be compatible with new MapGen
@@ -160,7 +162,7 @@ end
 
 %% try adding another obstacle
 polytope_to_add2.vertices = [1.09, 0.78; 1.17, 0.78; 1.17, 0.86; 1.09, 0.86; 1.09, 0.78];
-polytope_to_add2 = fcn_MapGen_fillPolytopeFieldsFromVertices(polytope_to_add2);
+polytope_to_add2 = fcn_MapGen_polytopesFillFieldsFromVertices(polytope_to_add2);
 polytope_to_add2.obs_id = nan;
 polytope_to_add2.perimeter = sum(polytope_to_add2.distances);
 add_obs_timer = tic;
