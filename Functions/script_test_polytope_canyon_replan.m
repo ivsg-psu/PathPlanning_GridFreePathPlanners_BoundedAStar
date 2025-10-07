@@ -10,6 +10,8 @@
 % -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
 % -- removed calls to fcn_visibility_clear_and_blocked_points_global,
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
+% -- removed calls to fcn_polytopes_generate_all_pts_table,
+%    % replaced with fcn_BoundedAStar_polytopesGenerateAllPtsTable
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -34,7 +36,7 @@ for mission_idx = 1:size(start_inits,1)
     start_init = start_inits(mission_idx,:);
     finish_init = finish_inits(mission_idx,:);
     % all_pts array creation
-    [all_pts, start, finish] = fcn_polytopes_generate_all_pts_table(shrunk_polytopes, start_init, finish_init);
+    [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_init, finish_init);
 
     % loop over multiple trials as there is randomness in edge deletion so we may wish to repeat the experiment
     for repeats = 1:num_repeats

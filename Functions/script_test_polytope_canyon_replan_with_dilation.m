@@ -13,6 +13,8 @@
 % -- fixed calls to fcn_MapGen_polytopesStatistics, replaced with fcn_MapGen_statsPolytopes
 % -- removed calls to fcn_visibility_clear_and_blocked_points_global,
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
+% -- removed calls to fcn_polytopes_generate_all_pts_table,
+%    % replaced with fcn_BoundedAStar_polytopesGenerateAllPtsTable
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -63,7 +65,7 @@ for map_idx = [7, 8, 9] % Halton maps
                 trial_identifier = sprintf('map idx: %i, nominal or corridor-width-based: %i,\npolytope size increase [km]: %.2f',str2num(strcat(num2str(map_idx),num2str(mission_idx))), nominal_or_width_based,polytope_size_increases)
                 %% plan the initial path
                 % all_pts array creation
-                [all_pts, start, finish] = fcn_polytopes_generate_all_pts_table(shrunk_polytopes, start_init, finish_init);
+                [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_init, finish_init);
                 % find vgraph
                 finishes = [all_pts; start; finish];
                 starts = [all_pts; start; finish];
@@ -169,7 +171,7 @@ for map_idx = [7, 8, 9] % Halton maps
 
                 %% plan the new path
                 % generate updated all_pts array
-                [all_pts_new, start, finish] = fcn_polytopes_generate_all_pts_table(enlarged_polytopes, start_midway, finish_init);
+                [all_pts_new, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(enlarged_polytopes, start_midway, finish_init);
 
                 % make vgraph again
                 finishes = [all_pts_new; start; finish];

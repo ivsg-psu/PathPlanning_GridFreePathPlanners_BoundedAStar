@@ -1,4 +1,8 @@
 function [all_pts, start, finish] = fcn_polytopes_generate_all_pts_table(polytopes, start_xy, finish_xy)
+
+warning(['fcn_polytopes_generate_all_pts_table is being deprecated.' ...
+    ' Use fcn_BoundedAStar_polytopesGenerateAllPtsTable instead.']);
+
 % fcn_polytopes_generate_all_pts_table
 %
 % A short function to turn polytope vertices into an nx5 table of poitns of the form used by:

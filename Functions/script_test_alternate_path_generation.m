@@ -8,6 +8,8 @@
 % -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
 % -- removed calls to fcn_visibility_clear_and_blocked_points_global,
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
+% -- removed calls to fcn_polytopes_generate_all_pts_table,
+%    % replaced with fcn_BoundedAStar_polytopesGenerateAllPtsTable
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -29,7 +31,7 @@ for mission_idx = 1:size(start_inits,1)
     finish_init = finish_inits(mission_idx,:);
 
     % all_pts array creation
-    [all_pts, start, finish] = fcn_polytopes_generate_all_pts_table(shrunk_polytopes, start_init, finish_init);
+    [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_init, finish_init);
 
     %% plan the initial path
     % make vgraph
@@ -149,7 +151,7 @@ for enlarge_idx = 1:(num_paths)
     % enlarge polytopes by the distance, below which corridors were filtered out, halved (because you dilate polytopes on both side of the corridor)
     enlarged_polytopes = fcn_MapGen_polytopesExpandEvenlyForConcave(shrunk_polytopes,(smallest_corridors(enlarge_idx))/2);
     % generate all_pts array for enlarged polytopes
-    [all_pts_new, start, finish] = fcn_polytopes_generate_all_pts_table(enlarged_polytopes, start_init, finish_init);
+    [all_pts_new, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(enlarged_polytopes, start_init, finish_init);
     % make vgraph for enlarged map
     finishes = [all_pts_new; start; finish];
     starts = [all_pts_new; start; finish];

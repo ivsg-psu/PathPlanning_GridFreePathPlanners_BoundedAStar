@@ -394,6 +394,8 @@
 %    % *script_test_polytope_canyon_corridor_width_incentive_weighting
 % -- removed calls to fcn_visibility_clear_and_blocked_points_global,
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
+% -- removed calls to fcn_polytopes_generate_all_pts_table,
+%    % replaced with fcn_BoundedAStar_polytopesGenerateAllPtsTable
 
 % TO-DO:
 % 2025_07_28 - Sean Brennan

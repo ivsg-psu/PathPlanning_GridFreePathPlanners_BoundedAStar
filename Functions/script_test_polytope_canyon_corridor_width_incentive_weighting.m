@@ -8,6 +8,8 @@
 % -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
 % -- removed calls to fcn_visibility_clear_and_blocked_points_global,
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
+% -- removed calls to fcn_polytopes_generate_all_pts_table,
+%    % replaced with fcn_BoundedAStar_polytopesGenerateAllPtsTable
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -27,7 +29,7 @@ for mission_idx = 1:size(start_inits,1)
     finish_init = finish_inits(mission_idx,:);
     
     %% all_pts array creation
-    [all_pts, start, finish] = fcn_polytopes_generate_all_pts_table(shrunk_polytopes, start_init, finish_init);
+    [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_init, finish_init);
 
     %% loop over different relative cost function term weights
     for w = 0.1:0.1:1
@@ -54,11 +56,13 @@ for mission_idx = 1:size(start_inits,1)
         dilation_robustness_matrix_for_variance(dilation_robustness_matrix_for_variance == 0) = []; % remove 0s
         dilation_robustness_matrix_for_variance(isinf(dilation_robustness_matrix_for_variance)) = []; % remove infs
         variance_of_corridor_widths = var(dilation_robustness_matrix_for_variance); % find variance of corridor width/dilation robustness
+
         % make cost function
         inv_corridor_width = 1./dilation_robustness_matrix; % invert such that large corridors cost less
         infinite_idx = find(inv_corridor_width==inf); % find inf
         inv_corridor_width(infinite_idx) = 10000; % set "infinity" to a large value so cost is finite
         cgraph = w*cgraph + (1-w)*inv_corridor_width; % apply relative weighting to get linear combination of distance and width cost
+        
         % plan route
         [init_cost, init_route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
 
