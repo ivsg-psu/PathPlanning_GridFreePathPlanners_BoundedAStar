@@ -12,6 +12,16 @@
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 % -- removed calls to fcn_MapGen_fillPolytopeFieldsFromVertices,
 %    % replaced with fcn_MapGen_polytopesFillFieldsFromVertices
+% 2025_10_08 - K. Hayes
+% -- removed calls to fcn_MapGen_polytopesShrinkFromEdges
+%    % replaced with fcn_MapGen_polytopesShrinkToGapSize
+% -- removed calls to fcn_plot_polytopes
+%    % replaced with fcn_MapGen_plotPolytopes
+% -- added call to fcn_BoundedAStar_polytopesGenerateAllPtsTable
+
+% TO DO:
+% - replace deprecated version of Bounded A Star setup function when new
+% version fixed
 
 % clear
 % clc
@@ -30,16 +40,14 @@ low_pt = 1+Halton_seed; high_pt = 6+Halton_seed; % range of Halton points to use
 trim_polytopes = fcn_MapGen_haltonVoronoiTiling([low_pt,high_pt],[1 1]);
 % shink the polytopes so that they are no longer tiled
 gap_size = 0.125; % desired average maximum radius
-polytopes = fcn_MapGen_polytopesShrinkFromEdges(trim_polytopes,gap_size);
+polytopes = fcn_MapGen_polytopesShrinkToGapSize(trim_polytopes,gap_size);
 
 % plot the map
 if flag_do_plot
     fig = 99; % figure to plot on
-    line_spec = 'b-'; % edge line plotting
-    line_width = 2; % linewidth of the edge
-    axes_limits = [0 1 0 1]; % x and y axes limits
-    axis_style = 'square'; % plot axes style
-    fcn_plot_polytopes(polytopes,fig,line_spec,line_width,axes_limits,axis_style);
+    plotFormat.Color = 'blue';
+    plotFormat.LineWidth = 2;
+    fcn_MapGen_plotPolytopes(polytopes, plotFormat, [1 0 0 1 1], fig);
     hold on
     box on
     xlabel('x [km]')
@@ -47,26 +55,7 @@ if flag_do_plot
 end
 %% plot visibility and path for convex map
 % generate all_pts table
-point_tot = length([polytopes.xv]); % total number of vertices in the convex polytopes
-beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-curpt = 0;
-for poly = 1:size(polytopes,2) % check each polytope
-    verts = unique(polytopes(poly).vertices,'stable','rows');
-    num_verts = size(verts,1);
-    polytopes(poly).obs_id = ones(1,num_verts)*poly; % obs_id is the same for every vertex on a single polytope
-    polytopes(poly).xv = verts(:,1)';
-    polytopes(poly).yv = verts(:,2)';
-    polytopes(poly).vertices = [verts; verts(1,:)];
-    polytopes(poly).distances = sum((polytopes(poly).vertices(1:end-1,:) - polytopes(poly).vertices(2:end,:)).^2,2).^0.5;
-    beg_end([curpt+1,curpt+num_verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-    curpt = curpt+num_verts;
-    polytopes(poly).perimeter = sum(polytopes(poly).distances);
-end
-obs_id = [polytopes.obs_id];
-point_tot = length([polytopes.xv]); % need to recheck total points
-beg_end = beg_end(1:point_tot); % remove any extra points
-
-all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
+[all_pts, ~, ~] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes, [0 0], [0 0], (-1))
 
 
 % calculate vibility graph
@@ -117,11 +106,9 @@ polytopes(2) = fcn_MapGen_polytopesFillFieldsFromVertices(polytopes(2));
 
 if flag_do_plot
     fig = 100; % figure to plot on
-    line_spec = 'b-'; % edge line plotting
-    line_width = 2; % linewidth of the edge
-    axes_limits = [0 1 0 1]; % x and y axes limits
-    axis_style = 'square'; % plot axes style
-    fcn_plot_polytopes(polytopes,fig,line_spec,line_width,axes_limits,axis_style);
+    plotFormat.Color = 'blue';
+    plotFormat.LineWidth = 2;
+    fcn_MapGen_plotPolytopes(polytopes, plotFormat, [1 0 0 1 1], fig);
     hold on
     box on
     xlabel('x [km]')
