@@ -189,7 +189,7 @@ loopCount = Inf; % Loop indefinitely (0 for no loop)
 % plot visibility graph edges
 if 1==1
 
-    fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-')
+    fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-', [])
 
     % Npoints = size(vgraph,1);
     % for ith_fromIndex = 1:Npoints
