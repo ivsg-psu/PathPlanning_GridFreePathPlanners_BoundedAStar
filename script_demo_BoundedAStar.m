@@ -404,13 +404,19 @@
 %    % replaced with fcn_BoundedAStar_generateDilationRobustnessMatrix
 % -- removed calls to fcn_MapGen_fillPolytopeFieldsFromVertices,
 %    % replaced with fcn_MapGen_polytopesFillFieldsFromVertices
+% 
+% 2025_10_07 - S. Brennan
+% -- updated DebugTools_v2025_09_26b
+% -- updated MapGenClass_v2025_10_07
+% -- added function, plotVgraph, to plot visibility graph
+% -- In script_fcn_BoundedAStar_generateDilationRobustnessMatrix
+%    % * Merged plotting to create "sequence" for MECC 2025 presentation
 
 % TO-DO:
 % 2025_07_28 - Sean Brennan
 % -- need to de-spaghetti fcn_BoundedAStar_AStarBounded
 % 2025_08_01 - K. Hayes
-% -- add fcn to plot visibility graph
-% -- fast modes for visibility test scripts
+% -- need to add fast modes for visibility test scripts
 % 2025_08_18 - K. Hayes
 % -- add 3d formatted all_pts capabilities to
 %    fcn_BoundedAStar_polytopesGenerateAllPtsTable
@@ -422,14 +428,14 @@
 clear library_name library_folders library_url
 
 ith_library = 1;
-library_name{ith_library}    = 'DebugTools_v2025_07_15';
+library_name{ith_library}    = 'DebugTools_v2025_09_26b';
 library_folders{ith_library} = {'Functions','Data'};
-library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/DebugTools_v2025_07_15.zip';
+library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/DebugTools_v2025_09_26b.zip';
 
 ith_library = ith_library+1;
-library_name{ith_library}    = 'MapGenClass_v2025_07_29';
+library_name{ith_library}    = 'MapGenClass_v2025_10_07';
 library_folders{ith_library} = {'Functions','testFixtures','GridMapGen'};
-library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTools_MapGenClassLibrary/archive/refs/tags/MapGenClass_v2025_07_29.zip';
+library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTools_MapGenClassLibrary/archive/refs/tags/MapGenClass_v2025_10_07.zip';
 
 ith_library = ith_library+1;
 library_name{ith_library}    = 'PathClass_v2025_08_03';
@@ -453,7 +459,7 @@ library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_PathToo
 
 
 %% Clear paths and folders, if needed
-if 1==0
+if 1==1
     clear flag_BoundAStar_Folders_Initialized
     fcn_INTERNAL_clearUtilitiesFromPathAndFolders;
 
