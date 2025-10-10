@@ -115,6 +115,9 @@ function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]
 % 2025_07_25 - K. Hayes
 % -- updated function formatting and header info
 % -- added debug and input checking capabilities
+% 2025_10_10 - K. Hayes
+% -- fixed bug causing deletion of vgraph edges between adjacent
+%    non-obstacle vertices
 %
 % TO DO:
 % (none)
@@ -502,6 +505,11 @@ acc = 1e-10;
 % removing "exceptions" could allow for self-blocked points to be visible...
 % but if a distinction is necessary between self-blocked points and points...
 % visible through free space then "fcn_Visibility_selfBlockedPoints" is better
+
+% eliminate accidental exceptions due to independent points
+errInd = exceptions == -1;
+exceptions(errInd) = 0;
+
 D = ((di<1-acc).*(di>acc)).*((dj<=1).*(dj>=0))+exceptions+midpoints;
 % see page 8 of notes 10_04 here:
 % https://www.me.psu.edu/sommer/me581/
