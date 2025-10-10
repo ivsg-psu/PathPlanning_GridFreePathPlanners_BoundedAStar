@@ -1,11 +1,11 @@
-function fcn_Visibility_plotVGraph(vgraph, all_pts,  styleString, varargin)
+function h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts,  styleString, varargin)
 % fcn_Visibility_plotVGraph
 %
 % Plots a visibility graph given a generated vgraph and list of all points
 %
 % FORMAT:
 %
-% fcn_Visibility_plotVGraph(vgraph, all_pts,  styleString)
+% fcn_Visibility_plotVGraph(vgraph, all_pts,  styleString, , figNum)
 %
 % INPUTS:
 %
@@ -24,25 +24,43 @@ function fcn_Visibility_plotVGraph(vgraph, all_pts,  styleString, varargin)
 %    styleString: string of format '-g' indicating the line style to be
 %    used when plotting the visibility graph
 %
+% (OPTIONAL INPUTS)
+%
+%    selectedFromToIndices: default is [] (empty) which plots all to/from
+%    combinations. If user enters a 1x1 integer, the integer is taken to be
+%    the index number to plot the "from" index range. If entered as a 1x2
+%    vector, the first value is the "from" index, the second value is the
+%    "to" index.
+%
+%      fig_num: a figure number to plot results. If set to -1, skips any
+%      input checking or debugging, uses current figure for plotting, and
+%      sets up code to maximize speed.
 %
 % OUTPUTS:
 %
-% 
+%    h_plot: a handle to the plot handle
+%
 % DEPENDENCIES:
 %
 % fcn_DebugTools_checkInputsToFunctions
 %
 % EXAMPLES:
 %
-% See the script: script_test_3d_polytope_multiple
+% See the script: script_test_fcn_Visibility_plotVGraph
 % for a full test suite.
 %
 
 % REVISION HISTORY:
 %
+% 2025_10_06 - S. Brennan, sbrennan@psu.edu
+% -- first write of the function
 % 2025_10_08 - K. Hayes, kaeleahayes@psu.edu
 % -- added function header and standard formatting
-%
+% 2025_10_10 - S. Brennan, sbrennan@psu.edu
+% -- added options to include selectedFromToIndices, figNum
+% -- updated docstrings in header
+% -- added test script
+
 % TO DO:
 %
 
@@ -50,7 +68,7 @@ function fcn_Visibility_plotVGraph(vgraph, all_pts,  styleString, varargin)
 % Check if flag_max_speed set. This occurs if the fig_num variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 4; % The largest Number of argument inputs to the function
+MAX_NARGIN = 5; % The largest Number of argument inputs to the function
 flag_max_speed = 0;
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; %     % Flag to plot the results for debugging
@@ -96,23 +114,40 @@ if 0==flag_max_speed
         % Are there the right number of inputs?
         narginchk(3,MAX_NARGIN);
 
-        % Check the all_surfels input, make sure it has 5 columns
+        % Check the all_pts input, make sure it has 5 columns
         fcn_DebugTools_checkInputsToFunctions(...
             all_pts, '5column_of_numbers');
+
+        % Check that all_pts is same size as visibility
+        assert(length(all_pts(:,1))==length(vgraph(:,1)));
 
     end
 end
 
-% % Does user want to show the plots?
-% flag_do_plots = 0; % Default is to NOT show plots
-% if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
-%     temp = varargin{end};
-%     if ~isempty(temp) % Did the user NOT give an empty figure number?
-%         fig_num = temp;
-%         figure(fig_num);
-%         flag_do_plots = 1;
-%     end
-% end
+% Does user want to specify selectedFromToIndices?
+selectedFromToIndices = []; % initialize default values
+if 4 <= nargin
+    temp = varargin{1};
+    if ~isempty(temp)
+        selectedFromToIndices = temp;
+    end
+end
+
+% Does user want to show the plots?
+flag_do_plots = 1; % Default is to ALWAYS show plots
+figNum = []; % Default is empty - which is filled in later
+if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
+    temp = varargin{end};
+    if ~isempty(temp) % Did the user NOT give an empty figure number?
+        figNum = temp;
+        figure(figNum);
+        flag_do_plots = 1;
+    end
+end
+
+if isempty(figNum)
+    figNum = gcf;
+end
 
 %% Main code
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -125,36 +160,38 @@ end
 %
 %See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+
 Npoints = size(vgraph,1);
-for ith_fromIndex = 1:Npoints
-    pointsToPlot = [];
-    for jth_toIndex = 1:size(vgraph,1)
-        if vgraph(ith_fromIndex,jth_toIndex) == 1
-            % plot([all_pts(i,1),all_pts(j,1)],[all_pts(i,2),all_pts(j,2)],'-g')
-            % pause(0.01);
-            pointsToPlot = [pointsToPlot; [all_pts(ith_fromIndex,1:2); all_pts(jth_toIndex,1:2); nan(1,2)]]; %#ok<AGROW>
 
-        end
-    end
-    plot(pointsToPlot(:,1),pointsToPlot(:,2),styleString)
-    drawnow;
-
-    if 1==0 % To save movie
-        % Capture the current frame
-        frame = getframe(gcf);
-        im = frame2im(frame);
-        [imind, cm] = rgb2ind(im, 256); % Convert to indexed image
-
-        % Write the frame to the GIF
-        if ith_fromIndex == 1
-            % Create a new GIF file for the first frame
-            imwrite(imind, cm, filename, 'gif', 'LoopCount', loopCount, 'DelayTime', delayTime);
-        else
-            % Append subsequent frames
-            imwrite(imind, cm, filename, 'gif', 'WriteMode', 'append', 'DelayTime', delayTime);
-        end
+% Define fromRange and toRange
+if isempty(selectedFromToIndices)
+    fromRange = 1:Npoints;
+    toRange = 1:Npoints;
+else
+    fromRange = selectedFromToIndices(1):selectedFromToIndices(1);
+    if length(selectedFromToIndices)>1
+        toRange = selectedFromToIndices(2):selectedFromToIndices(2);
+    else
+        toRange = 1:Npoints;
     end
 end
+
+% Load up data arrays for plotting
+allPointsToPlot = [];
+allThisFromPointsToPlot = cell(1,1);
+for ith_fromIndex = fromRange
+    thisFromPointsToPlot = [];
+    for jth_toIndex = toRange
+        if vgraph(ith_fromIndex,jth_toIndex) == 1
+            thisFromPointsToPlot = [thisFromPointsToPlot; [all_pts(ith_fromIndex,1:2); all_pts(jth_toIndex,1:2); nan(1,2)]]; %#ok<AGROW>
+        end
+    end
+    allPointsToPlot = [allPointsToPlot; thisFromPointsToPlot]; %#ok<AGROW>
+    allThisFromPointsToPlot{ith_fromIndex,1} = thisFromPointsToPlot;
+    
+end
+
+
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -167,6 +204,58 @@ end
 %                            __/ |
 %                           |___/
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+if flag_do_plots
+
+    % check whether the figure already has data
+    temp_h = figure(figNum);
+    flag_rescale_axis = 0; 
+    if isempty(get(temp_h,'Children'))
+        flag_rescale_axis = 0; % Set to 1 to force rescaling
+    end        
+
+    hold on;
+    axis equal
+
+    h_plot = plot(allPointsToPlot(:,1),allPointsToPlot(:,2),styleString);
+
+    % Make axis slightly larger?
+    if flag_rescale_axis
+        temp = axis;
+        %     temp = [min(points(:,1)) max(points(:,1)) min(points(:,2)) max(points(:,2))];
+        axis_range_x = temp(2)-temp(1);
+        axis_range_y = temp(4)-temp(3);
+        percent_larger = 0.3;
+        axis([temp(1)-percent_larger*axis_range_x, temp(2)+percent_larger*axis_range_x,  temp(3)-percent_larger*axis_range_y, temp(4)+percent_larger*axis_range_y]);
+    end
+
+    if 1==0 % To save movie
+
+        for ith_fromIndex = fromRange
+            thisFromPointsToPlot = allThisFromPointsToPlot{ith_fromIndex,1}; 
+            plot(thisFromPointsToPlot(:,1),thisFromPointsToPlot(:,2),styleString)
+            drawnow;
+
+            % Capture the current frame
+            frame = getframe(gcf);
+            im = frame2im(frame);
+            [imind, cm] = rgb2ind(im, 256); % Convert to indexed image
+
+            % Write the frame to the GIF
+            if ith_fromIndex == 1
+                % Create a new GIF file for the first frame
+                imwrite(imind, cm, filename, 'gif', 'LoopCount', loopCount, 'DelayTime', delayTime);
+            else
+                % Append subsequent frames
+                imwrite(imind, cm, filename, 'gif', 'WriteMode', 'append', 'DelayTime', delayTime);
+            end
+        end % Ends for loop
+    end % Ends if making movie
+
+end % Ends if flag_do_plot
+
+if flag_do_debug
+    fprintf(1,'ENDING function: %s, in file: %s\n\n',st(1).name,st(1).file);
+end
 
 end % Ends the function
 
