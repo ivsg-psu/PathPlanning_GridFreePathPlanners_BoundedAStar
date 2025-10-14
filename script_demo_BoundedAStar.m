@@ -442,6 +442,14 @@ library_name{ith_library}    = 'PathClass_v2025_08_03';
 library_folders{ith_library} = {'Functions', 'Data'};                                
 library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_PathTools_PathClassLibrary/archive/refs/tags/PathClass_v2025_08_03.zip';
 
+ith_library = ith_library+1;
+library_name{ith_library}    = 'PlotRoad_v2025_07_16';
+library_folders{ith_library} = {'Functions', 'Data'};                                
+library_url{ith_library}     = 'https://github.com/ivsg-psu/FieldDataCollection_VisualizingFieldData_PlotRoad/archive/refs/tags/PlotRoad_v2025_07_16.zip';
+
+
+
+
 % ith_library = ith_library+1;
 % library_name{ith_library}    = 'GPSClass_v2023_04_21';
 % library_folders{ith_library} = {''};
