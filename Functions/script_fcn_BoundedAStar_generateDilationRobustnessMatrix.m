@@ -18,11 +18,6 @@
 
 close all;
 
-
-% addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
-% addpath(strcat(pwd,'\..\..\PathPlanning_MapTools_MapGenClassLibrary\Functions'));
-% addpath(strcat(pwd,'\..\..\Errata_Tutorials_DebugTools\Functions'));
-
 flag_do_plot = 1;
 flag_do_plot_slow = 1;
 
@@ -131,13 +126,16 @@ for test_case_idx = 1:2
     % end
     mode = '2d';
 
+    % fcn_Visibility_plotVGraph(vgraph, [all_pts; start; finish], 'g-');
+
     plottingOptions.axis = goodAxis;
+    plottingOptions.selectedFromToToPlot = [1 6];
     %%
     figure(figNum); clf;
     dilation_robustness_matrix = ...
         fcn_BoundedAStar_generateDilationRobustnessMatrix(...
         all_pts, start, finish, vgraph, mode, polytopes,...
-        (selectedFromToToPlot), (plottingOptions), (figNum));
+        (plottingOptions), (figNum));
     
     %% 
     % 
