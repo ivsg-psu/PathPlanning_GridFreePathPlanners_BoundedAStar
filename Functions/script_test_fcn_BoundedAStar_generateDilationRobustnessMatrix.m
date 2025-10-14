@@ -351,11 +351,8 @@ figure(figNum); clf;
 
 
 % URHERE
-% Bug is that, if edge is on poly, the minimum is zero and so edges are
-% always zero. In these cases, need to ignore the zero width. Also need to
-% see why the start-to-1 case gives non infinite values. Finally, for
-% plotting, need to make max (infinite) case have "cost" of some multiple,
-% say 1.1 higher than non-infinite maximum, for visualization purposes. 
+% Bug is that points that are not on polytopes are counted as "hits". Need
+% to check ONLY edges that end on polys.
 
 % Load some test data 
 %tempXYdata = fcn_INTERNAL_loadExampleData(dataSetNumber);
@@ -446,9 +443,9 @@ assert(isequal(get(gcf,'Number'),figNum));
 close all;
 fprintf(1,'Figure: 2XXXXXX: TEST mode cases\n');
 
-%% TEST case: Two polytopes with clear space right down middle, edge 5 to 8
+%% TEST case: Two polytopes with clear space right down middle, edge 5 to 8 on polytope
 figNum = 20001;
-titleString = sprintf('TEST case: Two polytopes with clear space right down middle, edge 5 to 8');
+titleString = sprintf('TEST case: Two polytopes with clear space right down middle, edge 5 to 8 on polytope');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 figure(figNum); clf;
 

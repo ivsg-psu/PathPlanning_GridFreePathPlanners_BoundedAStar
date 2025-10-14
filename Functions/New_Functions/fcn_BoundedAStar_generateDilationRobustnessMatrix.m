@@ -128,7 +128,7 @@ else
     end
 end
 
-flag_do_debug = 1;
+% flag_do_debug = 1;
 
 if flag_do_debug
     st = dbstack; %#ok<*UNRCH>
@@ -644,7 +644,8 @@ for ith_edge = loopingRange
     % the edge is the next in sequence on the polytope
     is_in_left = 0;
     is_in_right = 0;
-    if (thisPolyStart == thisPolyEnd)
+    flag_isPolyEdge = 0;
+    if (thisPolyStart == thisPolyEnd)        
         % If enter here, edge starts and ends on same polytope. The edge
         % may be a side, but it might also connect two vertices of a
         % non-convex polytope. Need to check if the start/end is in a
@@ -655,6 +656,8 @@ for ith_edge = loopingRange
             if (thisEdgeEndIndex == edgeNextInPolySequence(thisEdgeStartIndex)) || (thisEdgeEndIndex == edgePriorInPolySequence(thisEdgeStartIndex))
                 % If enter here, the edge is in a sequence, which means it is a
                 % side of the polytope
+                flag_isPolyEdge = 1; % This is a polytope edge
+
                 if polyOrientations(thisEdgeStartIndex,1)>0
                     if (thisEdgeEndIndex == edgeNextInPolySequence(thisEdgeStartIndex))
                         is_in_left = 1;
@@ -696,13 +699,26 @@ for ith_edge = loopingRange
         edgeMinRight_idx = ith_edge;
     end
     
+    % thisCorridorWidth = min(corridor_width_left, corridor_width_right);
+    thisCorridorWidth = max(corridor_width_left, corridor_width_right);
 
+    if 1==flag_isPolyEdge
+        if corridor_width_left == 0
+            thisCorridorWidth = corridor_width_right;
+        elseif corridor_width_right == 0
+            thisCorridorWidth = corridor_width_right;
+        else
+            error('Entered a situation where edge is on polytope but neither side has zero length. Unexpected situation - unable to continue.');
+        end
+    end
 
     dilation_robustness_matrix(thisEdgeStartIndex, thisEdgeEndIndex, 1) = corridor_width_left;
     dilation_robustness_matrix(thisEdgeStartIndex, thisEdgeEndIndex, 2) = corridor_width_right;
-    dilation_robustness_matrix_min(thisEdgeStartIndex, thisEdgeEndIndex) = min(corridor_width_left, corridor_width_right);
+    dilation_robustness_matrix_min(thisEdgeStartIndex, thisEdgeEndIndex) = thisCorridorWidth;
+
+
     allEdgeNumbersProcessed(thisEdgeStartIndex, thisEdgeEndIndex) = ith_edge;
-    edgeFinalMinWidths(ith_edge,1) = min(corridor_width_left, corridor_width_right);
+    edgeFinalMinWidths(ith_edge,1) = thisCorridorWidth;
 
     if 1==flag_do_debug
         figure(debug_fig_num);
@@ -974,8 +990,8 @@ if flag_do_plots
     % Plot the start and end points
     plot(start(1),start(2),'.','Color',[0 0.5 0],'MarkerSize',20);
     plot(finish(1),finish(2),'r.','MarkerSize',20);
-    text(start(:,1),start(:,2)+addNudge,'Start');
-    text(finish(:,1),finish(:,2)+addNudge,'Finish');
+    text(start(:,1),start(:,2)+addNudge,sprintf('%.0f, Start', Npoints-1));
+    text(finish(:,1),finish(:,2)+addNudge,sprintf('%.0f, Finish',Npoints));
 
     % label point ids for debugging. The last two points are start and
     % finish, so do not need to be plotted and labeled.
@@ -1048,10 +1064,22 @@ if flag_do_plots
     else
         % Grab all the edges processed so far
         allEdgesProcessedSoFar = allEdgeNumbersProcessed(~isnan(allEdgeNumbersProcessed));
+        flagInfiniteEdges = isinf(edgeFinalMinWidths);
         edgeFinalMinWidthsNotInf = edgeFinalMinWidths(~isinf(edgeFinalMinWidths));
-        disp([edgeFinalMinWidthsNotInf edge_start_idx edge_end_idx])
         maxedgeFinalMinWidthsNotInf = max(edgeFinalMinWidthsNotInf);
-        normalizedEdgeFinalMinWidths = min(edgeFinalMinWidths/maxedgeFinalMinWidthsNotInf,1);
+        adjustmentRatio = 1.0;
+        adjustedMax = maxedgeFinalMinWidthsNotInf*adjustmentRatio;
+
+        % Create an adjusted minimum width matrix. This is the original
+        % width matrix, but with the infinite values converted into the
+        % non-infinite max values, plus 10%
+        edgeFinalMinWidthsAdjusted = edgeFinalMinWidths;
+        edgeFinalMinWidthsAdjusted(flagInfiniteEdges) = adjustedMax;
+
+        % disp([edgeFinalMinWidthsNotInf edge_start_idx edge_end_idx])
+
+        % normalizedEdgeFinalMinWidths = min(edgeFinalMinWidths/maxedgeFinalMinWidthsNotInf,1);
+        normalizedEdgeFinalMinWidths = edgeFinalMinWidthsAdjusted/adjustedMax;
 
         NtoPlot = length(allEdgesProcessedSoFar);
         dataToPlot = [];
