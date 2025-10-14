@@ -411,6 +411,11 @@
 % -- added function, plotVgraph, to plot visibility graph
 % -- In script_fcn_BoundedAStar_generateDilationRobustnessMatrix
 %    % * Merged plotting to create "sequence" for MECC 2025 presentation
+%
+% 2025_10_10 - K. Hayes
+% -- In fcn_Visibility_clearAndBlockedPoints
+%    % * fixed bug causing deletion of vgraph edges between adjacent
+%    non-obstacle vertices
 
 % TO-DO:
 % 2025_07_28 - Sean Brennan
