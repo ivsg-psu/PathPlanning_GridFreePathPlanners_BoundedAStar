@@ -310,8 +310,8 @@ for ith_edge = loopingRange
         % Plot the start and end points
         plot(start(1),start(2),'.','Color',[0 0.5 0],'MarkerSize',20);
         plot(finish(1),finish(2),'r.','MarkerSize',20);
-        text(start(:,1),start(:,2)+addNudge,'Start');
-        text(finish(:,1),finish(:,2)+addNudge,'Finish');
+        text(start(:,1),start(:,2)+addNudge,sprintf('%.0f, Start', Npoints-1));
+        text(finish(:,1),finish(:,2)+addNudge,sprintf('%.0f, Finish',Npoints));
 
         % label point ids for debugging. The last two points are start and
         % finish, so do not need to be plotted and labeled.
@@ -427,9 +427,14 @@ for ith_edge = loopingRange
 
 
     %% discard irrelevant secondary edges
-    % we want to discard edges that either have no component in the direction of the original vector
-    % or that end at a point too far away to cut off the original vector
-
+    % we want to discard edges that either have no component in the
+    % direction of the original vector or that end at a point too far away
+    % to cut off the original vector. We also want to ignore secondary
+    % edges that are not connected to objects. These are usually points
+    % that are in space that are given by user as source/destinations but
+    % that do not affect width calculations. Finally, we want to avoid
+    % calculations of polytope edges with other points on the same polytope
+    % as the starting point - these do not affect width calculations.
 
     % dot the unit vector in the direction of the primary edge with the secondary edge
     % to get the component of the secondary vector in the direction of the primary vector
@@ -446,6 +451,7 @@ for ith_edge = loopingRange
     notStickOutSecondaryEdgeVectors = edgeVectors(notStickOutSecondaryEdge_idx,:);
     NnotStickOutSecondaryEdgeVectors = length(notStickOutSecondaryEdgeVectors(:,1));
 
+    % Show which edges stick out and do not stick out
     if 1==flag_do_debug
         figure(debug_fig_num);
         stickOut_idx = secondary_edge_ends_idx_not_this_edge(stickOutSecondaryEdges);
@@ -496,24 +502,44 @@ for ith_edge = loopingRange
         end
     end
 
-    % If edge is entirely on same poly, remove secondary edges that are on
-    % this same poly
+    %%%%%
+    % Now, check all cases where there are "point" edges or edges on same
+    % poly as start
+
+    % Initialize the flags for goodSecondaryEdges
+    flags_goodSecondaryEdges = false(size(notStickOutSecondaryEdge_idx));
+
+    % Grab all the indices of polytopes that do not stick out
+    endingPolys  = edgePolysEnd(notStickOutSecondaryEdge_idx);
+
+    % If this edge is entirely on same poly, remove secondary edges that
+    % are on this same poly. In other words, do not check a polytope's side
+    % distance with its own other sides.
     thisStartingPoly = edgePolysStart(ith_edge);
     thisEndingPoly = edgePolysEnd(ith_edge);
-    if thisStartingPoly==thisEndingPoly
-        endingPolys  = edgePolysEnd(notStickOutSecondaryEdge_idx);
-        flag_notSamePoly_idx = endingPolys~=thisStartingPoly;
-        goodSecondaryEdges_idx = notStickOutSecondaryEdge_idx(flag_notSamePoly_idx);
-        badSecondaryEdges_idx  = notStickOutSecondaryEdge_idx(~flag_notSamePoly_idx);
+
+    % Does this edge start/end on same poly, and is it a physical poly?
+    if thisStartingPoly==thisEndingPoly && (thisStartingPoly>0)
+        % Make the polys where ends are NOT this poly valid
+        flags_goodSecondaryEdges(endingPolys~=thisStartingPoly) = true;
     else
-        goodSecondaryEdges_idx = notStickOutSecondaryEdge_idx;
-        badSecondaryEdges_idx  = [];
+        % start and end are not on same poly, so all edges are valid
+        flags_goodSecondaryEdges(:,1) = true;
     end
 
-    badSecondaryEdgeVectors = edgeVectors(badSecondaryEdges_idx,:);
+    % Make all the edges whose ends are not actually polys invalid
+    flags_goodSecondaryEdges(endingPolys<1) = false;
+
+    goodSecondaryEdges_idx = notStickOutSecondaryEdge_idx(flags_goodSecondaryEdges);
     goodSecondaryEdgeVectors = edgeVectors(goodSecondaryEdges_idx,:);
 
+    % Plot the good and bad secondary edges?
     if 1==flag_do_debug
+        % Grab the bad indices. Useful for plotting
+        flags_badSecondaryEdges = ~flags_goodSecondaryEdges;
+        badSecondaryEdges_idx  = notStickOutSecondaryEdge_idx(flags_badSecondaryEdges);
+        badSecondaryEdgeVectors = edgeVectors(badSecondaryEdges_idx,:);
+
         figure(debug_fig_num);
         NbadSecondary = length(badSecondaryEdgeVectors(:,1));
         h_quiverBadEdges = quiver(thisStartPoint(1,1)*ones(NbadSecondary,1),thisStartPoint(1,2)*ones(NbadSecondary,1),...
@@ -523,7 +549,7 @@ for ith_edge = loopingRange
         if ~isempty(plottingOptions.axis)
             axis(plottingOptions.axis);
         end
-        title('Bad secondary edges that are on the same poly as start');
+        title('Bad secondary edges that are on the same poly as start or connect to points in space');
 
         drawnow;
 
@@ -616,8 +642,10 @@ for ith_edge = loopingRange
     end
 
     %% Find corridor widths to left and right
-    % dot the other edges with the unit normal to find the corridor width defined by each vgraph edge
-    % basically the projection of the secondary edge in the direction normal to the primary edge is what we want
+    % This section finds the dot product of the other edges with the unit
+    % normal to find the corridor width defined by each vgraph edge
+    % basically the projection of the secondary edge in the direction
+    % normal to the primary edge is what we want
     NgoodSecondary = length(goodSecondaryEdges_idx);
     dot_secondary_with_unit_normal = ...
         sum(ones(NgoodSecondary,1)*unitThisNormalVector.*goodSecondaryEdgeVectors,2);
@@ -628,11 +656,22 @@ for ith_edge = loopingRange
 
     % the min of projection from all secondary edges is the "closest" secondary edge to the primary, defining
     % the point that would cut off the primary edge
-    [corridor_width_left, edgeMinLeft_idx] = min(abs(dot_secondary_with_unit_normal_left));
-    edgeMinLeft_idx = leftSecondaryEdges_idx(edgeMinLeft_idx);
+    if ~isempty(dot_secondary_with_unit_normal_left)
+        [corridor_width_left, edgeMinLeft_idx] = min(abs(dot_secondary_with_unit_normal_left));
+        edgeMinLeft_idx = leftSecondaryEdges_idx(edgeMinLeft_idx);
+    else
+        corridor_width_left = inf;
+        edgeMinLeft_idx = ith_edge;
+    end
 
-    [corridor_width_right,edgeMinRight_idx] = min(abs(dot_secondary_with_unit_normal_right)); % these are negative so switch to positive before taking min
-    edgeMinRight_idx = rightSecondaryEdges_idx(edgeMinRight_idx);
+    if ~isempty(dot_secondary_with_unit_normal_right)
+        [corridor_width_right,edgeMinRight_idx] = min(abs(dot_secondary_with_unit_normal_right)); % these are negative so switch to positive before taking min
+        edgeMinRight_idx = rightSecondaryEdges_idx(edgeMinRight_idx);
+    else
+        corridor_width_right = inf;
+        edgeMinRight_idx = ith_edge;
+    end
+
 
     % check for polytope walls
     % OLD (VERY slow)
@@ -651,7 +690,9 @@ for ith_edge = loopingRange
         % non-convex polytope. Need to check if the start/end is in a
         % sequence on the polytope, either going up or down.
 
-        % Check if the edge end is in sequence
+        % Check if the edge end is in sequence on a polytope. An edge of
+        % a polytope will follow the polytope's indexing, e.g. will go from
+        % vertex 7 to 8 or from 4 to 3. This is what "in sequence" means.
         if ~isnan(thisEdgeStartIndex) && ~isnan(thisEdgeEndIndex)
             if (thisEdgeEndIndex == edgeNextInPolySequence(thisEdgeStartIndex)) || (thisEdgeEndIndex == edgePriorInPolySequence(thisEdgeStartIndex))
                 % If enter here, the edge is in a sequence, which means it is a
@@ -678,7 +719,9 @@ for ith_edge = loopingRange
     end
 
 
-
+    
+    % If the edge is part of the polytope, the width in the direction of
+    % the polytope is going to be zero.
     if is_in_left
         corridor_width_left = 0;
         % The current edge is its own closest one
@@ -867,94 +910,6 @@ for ith_edge = loopingRange
     %     normalizedDilationRobustnessMatrix = thisEdgeDilationRobustnessMatrix./max_dilation_robustness_excluding_inf;
     %
     %
-    %     for left_or_right = [1,2]
-    %
-    %         % plot corridor width approximation graph edges
-    %         % Plot the polytopes
-    %         % figNum = figNum + 1;
-    %         % fcn_INTERNAL_plotPolytopes(polytopes, figNum)
-    %         if left_or_right==1
-    %             title('dilation robustness, left');
-    %         else
-    %             title('dilation robustness, right');
-    %         end
-    %
-    %         % Plot this result
-    %         for j = 1:size(vgraphNoSelfInteractions,1)
-    %             if vgraphNoSelfInteractions(ith_edge,j) == 1
-    %                 % alpha = dilation_robustness_matrix(i,j,left_or_right)/max_dilation_robustness_excluding_inf;
-    %                 alpha = normalizedDilationRobustnessMatrix(ith_edge,j,left_or_right);
-    %                 if alpha == inf %| alpha == -inf
-    %                     continue % don't plot infinite values
-    %                 end
-    %                 plot([starts(ith_edge,1),starts(j,1)],[starts(ith_edge,2),starts(j,2)],'-','Color',[alpha 0 1-alpha],'LineWidth',3)
-    %             end
-    %         end
-    %
-    %         map = [(linspace(0,1,100))' zeros(100,1) (linspace(1,0,100))'];
-    %         colormap(map)
-    %         set(gca,'CLim',sort([0 1]*max_dilation_robustness_excluding_inf));
-    %         c = colorbar;
-    %         c.Label.String = 'dilation robustness';
-    %
-    %         % plot corridor width approximation values
-    %         if flag_do_plot
-    %             % figNum = figNum + 1;
-    %             figure(figNum); hold on; box on;
-    %             for j = 1:length(polytopes)
-    %                 fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-    %             end
-    %             hold on; box on;
-    %             xlabel('x [m]');
-    %             ylabel('y [m]');
-    %             l_or_r_string = {'left','right'};
-    %             title(strcat('dilation robustness: ',l_or_r_string{left_or_right}));
-    %             vgraphNoSelfInteractions = triu(vgraphNoSelfInteractions); % only want to plot upper triangle so bidirectional edges don't plot over each other.
-    %             for ith_edge = 1:size(vgraphNoSelfInteractions,1)
-    %                 for j = 1:size(vgraphNoSelfInteractions,1)
-    %                     % plot only start and finish for assymetry checking
-    %                     if ~(ith_edge == start(3) && j == finish(3)) && ~(ith_edge == 7 && j == 8) &&  ~(ith_edge == 15 && j == 16)
-    %                         continue
-    %                     end
-    %                     if vgraphNoSelfInteractions(ith_edge,j) == 1
-    %                         % plot a nice gray line
-    %                         quiver(starts(ith_edge,1),starts(ith_edge,2),starts(j,1)-starts(ith_edge,1),starts(j,2)-starts(ith_edge,2), 0, '-','Color',0.4*ones(1,3),'LineWidth',2);
-    %                         % label the dilation robustness
-    %                         text((starts(ith_edge,1)+starts(j,1))/2 ,(starts(ith_edge,2)+starts(j,2))/2, string(dilation_robustness_matrix(ith_edge,j,left_or_right)));
-    %                     end
-    %                 end % inner vgraph loop
-    %             end % outer vgraph loop
-    %         end % if do plot loop
-    %
-    %         % plot corridor width approximation values
-    %         if flag_do_plot
-    %             % figNum = figNum + 1;
-    %             figure(figNum); hold on; box on;
-    %             for j = 1:length(polytopes)
-    %                 fill(polytopes(j).vertices(:,1)',polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',0.3)
-    %             end
-    %             hold on; box on;
-    %             xlabel('x [m]');
-    %             ylabel('y [m]');
-    %             l_or_r_string = {'left','right'};
-    %             title(strcat('dilation robustness: ',l_or_r_string{left_or_right}));
-    %             vgraphNoSelfInteractions = triu(vgraphNoSelfInteractions); % only want to plot upper triangle so bidirectional edges don't plot over each other.
-    %             for ith_edge = 1:size(vgraphNoSelfInteractions,1)
-    %                 for j = 1:size(vgraphNoSelfInteractions,1)
-    %                     % skip start and finish for plotting clarity
-    %                     if (ith_edge == start(3) || j == finish(3) || ith_edge == finish(3) || j == start(3))
-    %                         continue
-    %                     end
-    %                     if vgraphNoSelfInteractions(ith_edge,j) == 1
-    %                         % plot a nice gray line
-    %                         quiver(starts(ith_edge,1),starts(ith_edge,2),starts(j,1)-starts(ith_edge,1),starts(j,2)-starts(ith_edge,2),0,'-','Color',0.4*ones(1,3),'LineWidth',2);
-    %                         % label the dilation robustness
-    %                         text((starts(ith_edge,1)+starts(j,1))/2 ,(starts(ith_edge,2)+starts(j,2))/2, string(dilation_robustness_matrix(ith_edge,j,left_or_right)));
-    %                     end
-    %                 end % inner vgraph loop
-    %             end % outer vgraph loop
-    %         end % if do plot loop
-    %     end % left or right loop
     % end % Ends if statement on debug plotting
 
 end % Ends looping through edges
@@ -987,17 +942,6 @@ if flag_do_plots
     % Plot the polytopes
     fcn_INTERNAL_plotPolytopes(polytopes, figNum)
 
-    % Plot the start and end points
-    plot(start(1),start(2),'.','Color',[0 0.5 0],'MarkerSize',20);
-    plot(finish(1),finish(2),'r.','MarkerSize',20);
-    text(start(:,1),start(:,2)+addNudge,sprintf('%.0f, Start', Npoints-1));
-    text(finish(:,1),finish(:,2)+addNudge,sprintf('%.0f, Finish',Npoints));
-
-    % label point ids for debugging. The last two points are start and
-    % finish, so do not need to be plotted and labeled.
-    plot(all_pts(1:end-2,1), all_pts(1:end-2,2),'LineStyle','none','Marker','o','MarkerFaceColor',[255,165,0]./255);
-    text(all_pts(1:end-2,1)+addNudge,all_pts(1:end-2,2)+addNudge,string(all_pts(1:end-2,3)));
-
     % Plot the visibiliity graph for all from and to lines
     fcn_Visibility_plotVGraph(vgraphNoSelfInteractions, all_pts, 'g-');
     % Set the axis
@@ -1005,6 +949,7 @@ if flag_do_plots
         axis(plottingOptions.axis);
     end
 
+    % Color the edges
     if ~isempty(plottingOptions.selectedFromToToPlot)
         % Plot the visibiliity graph for this from
         h_plotThisEdgeStartIndex = fcn_Visibility_plotVGraph(vgraphNoSelfInteractions, all_pts, '-',thisEdgeStartIndex);
@@ -1067,7 +1012,7 @@ if flag_do_plots
         flagInfiniteEdges = isinf(edgeFinalMinWidths);
         edgeFinalMinWidthsNotInf = edgeFinalMinWidths(~isinf(edgeFinalMinWidths));
         maxedgeFinalMinWidthsNotInf = max(edgeFinalMinWidthsNotInf);
-        adjustmentRatio = 1.0;
+        adjustmentRatio = 1.5;
         adjustedMax = maxedgeFinalMinWidthsNotInf*adjustmentRatio;
 
         % Create an adjusted minimum width matrix. This is the original
@@ -1092,26 +1037,6 @@ if flag_do_plots
                 nan(1,highestDimension+1)]; %#ok<AGROW>
         end
 
-        % % Grab the data for this "from"
-        % allEdgeNumbersRow = allEdgeNumbersProcessed(thisEdgeStartIndex,:);
-        % edgeIndicesToPlot = allEdgeNumbersRow(~isnan(allEdgeNumbersRow));
-        % endIndicesToPlot  = edge_end_idx(edgeIndicesToPlot);
-        %
-        % widthsToRaw = dilation_robustness_matrix_min(thisEdgeStartIndex,endIndicesToPlot);
-        % widthsToPlotNotInf = widthsToRaw(~isinf(widthsToRaw));
-        % widthsToPlot = widthsToRaw./max(widthsToPlotNotInf);
-        %
-        % NtoPlot = length(endIndicesToPlot);
-        % edgeStartsToPlot  = edgeStartPoints(edgeIndicesToPlot,:);
-        % edgeEndsToPlot    = edgeEndPoints(edgeIndicesToPlot,:);
-        % dataToPlot = [];
-        % for ith_plot = 1:NtoPlot
-        %     dataToPlot = [...
-        %         dataToPlot; ...
-        %         edgeStartsToPlot(ith_plot,:) widthsToPlot(ith_plot,1); ...
-        %         edgeEndsToPlot(ith_plot,:) widthsToPlot(ith_plot,1); ...
-        %         nan(1,highestDimension+1)]; %#ok<AGROW>
-        % end
 
         clear plotFormat
         plotFormat.LineStyle = '-';
@@ -1119,11 +1044,32 @@ if flag_do_plots
         plotFormat.Marker = '.';
         plotFormat.MarkerSize = 10;
 
-        colormap(gca,colorMapMatrixOrString);
+        colormap(gca,reducedRedToGreenColorMap);
         fcn_plotRoad_plotXYI([dataToPlot(:,1) dataToPlot(:,2) dataToPlot(:,3)], (plotFormat), (reducedRedToGreenColorMap), (figNum));
         title('');
 
+        Nticks = 5;
+        h_colorbar = colorbar;
+        h_colorbar.Ticks = linspace(0, 1, Nticks) ; %Create ticks from zero to 1
+        colorbarValues   = round(linspace(0, adjustedMax, Nticks),2);
+        h_colorbar.TickLabels = num2cell(colorbarValues) ;    % Replace the labels of ticks with numbers
+        h_colorbar.TickLabels{end} = 'inf'; % Top number is reserved for infinity
+        h_colorbar.Label.String = 'Width (m)';
+
+
     end
+
+    % Plot the start and end points
+    plot(start(1),start(2),'.','Color',[0 0.5 0],'MarkerSize',20);
+    plot(finish(1),finish(2),'r.','MarkerSize',20);
+    text(start(:,1),start(:,2)+addNudge,sprintf('%.0f, Start', Npoints-1));
+    text(finish(:,1),finish(:,2)+addNudge,sprintf('%.0f, Finish',Npoints));
+
+    % label point ids for debugging. The last two points are start and
+    % finish, so do not need to be plotted and labeled.
+    plot(all_pts(1:end-2,1), all_pts(1:end-2,2),'LineStyle','none','Marker','o','MarkerFaceColor',[255,165,0]./255);
+    text(all_pts(1:end-2,1)+addNudge,all_pts(1:end-2,2)+addNudge,string(all_pts(1:end-2,3)));
+
 
     % Set the axis
     if ~isempty(plottingOptions.axis)

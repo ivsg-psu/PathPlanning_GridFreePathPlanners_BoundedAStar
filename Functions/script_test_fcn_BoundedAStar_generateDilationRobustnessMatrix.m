@@ -349,11 +349,6 @@ titleString = sprintf('DEMO case: Two polytopes with clear space right down midd
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 figure(figNum); clf;
 
-
-% URHERE
-% Bug is that points that are not on polytopes are counted as "hits". Need
-% to check ONLY edges that end on polys.
-
 % Load some test data 
 %tempXYdata = fcn_INTERNAL_loadExampleData(dataSetNumber);
 
@@ -398,7 +393,84 @@ isConcave = 1;
 mode = '2d';
 
 plottingOptions.axis = goodAxis;
-plottingOptions.selectedFromToToPlot = [];
+plottingOptions.selectedFromToToPlot = []; %[3 7];
+plottingOptions.filename = []; % Specify the output file name
+
+% Call the function
+dilation_robustness_matrix = ...
+    fcn_BoundedAStar_generateDilationRobustnessMatrix(...
+    all_pts, start, finish, vgraph, mode, polytopes,...
+    (plottingOptions), (figNum));
+
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(dilation_robustness_matrix));
+
+% Check variable sizes
+Npoints = size(vgraph,1);
+assert(size(dilation_robustness_matrix,1)==Npoints); 
+assert(size(dilation_robustness_matrix,1)==Npoints); 
+
+% Check variable values
+% Nothing to check
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+%% DEMO case: Three polytopes with clear space right down middle, all edges
+figNum = 10003;
+titleString = sprintf('DEMO case: Two polytopes with clear space right down middle, all edges');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+% Load some test data 
+%tempXYdata = fcn_INTERNAL_loadExampleData(dataSetNumber);
+
+% Three polytopes with clear space right down middle
+clear polytopes
+polytopes(1).vertices = [0 0; 4,0; 4 1; 1 1; 0 0];
+polytopes(2).vertices = [1.5 1.5; 4 1.5; 4 2; 2 2.5; 1.5 1.5];
+polytopes(3).vertices = [0 -1; 4 -1; 5 -2; 3 -3; 0 -1];
+polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(polytopes);
+goodAxis = [-3 7 -4 4];
+start = [-2 1.25];
+finish = start;
+finish(1) = 6;
+
+% Make sure all have same cost
+for ith_poly = 1:length(polytopes)
+    polytopes(ith_poly).cost = 0.4;
+end
+
+point_tot = length([polytopes.xv]); % total number of vertices in the polytopes
+beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
+curpt = 0;
+for poly = 1:size(polytopes,2) % check each polytope
+    verts = length(polytopes(poly).xv);
+    polytopes(poly).obs_id = ones(1,verts)*poly; % obs_id is the same for every vertex on a single polytope
+    beg_end([curpt+1,curpt+verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
+    curpt = curpt+verts;
+end
+obs_id = [polytopes.obs_id];
+all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
+
+start = [start size(all_pts,1)+1 -1 1]; 
+finish = [finish size(all_pts,1)+2 -1 1]; 
+
+finishes = [all_pts; start; finish];
+starts = [all_pts; start; finish];
+isConcave = 1;
+[vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, starts, finishes, isConcave,-1);
+% fcn_Visibility_plotVGraph(vgraph, [all_pts; start; finish], 'g-');
+
+
+% end
+mode = '2d';
+
+plottingOptions.axis = goodAxis;
+plottingOptions.selectedFromToToPlot = []; %[3 7];
 plottingOptions.filename = []; % Specify the output file name
 
 % Call the function
