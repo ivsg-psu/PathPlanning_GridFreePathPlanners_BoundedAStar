@@ -74,6 +74,9 @@ function [path,cost,err] = fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes(p
 % 2025_07_29 - S. Brennan
 % -- added plotting as part of standard debug output
 % -- fixed incorrect argument list
+% 2025_10_22 - K. Hayes
+% -- changed all_pts generation to use
+%    fcn_BoundedAStar_polytopesGenerateAllPtsTable instead of manually
 
 % TO DO:
 % -- input checking and description in header for polytopes
@@ -201,27 +204,10 @@ if err == 0 % start and finish outside the polytopes
     point_tot = length([polytopes.xv]); % total number of vertices in the convex polytopes
 
     % information about each point
-    beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-    curpt = 0;
-    for poly = 1:size(polytopes,2) % check each polytope
-        verts = unique(polytopes(poly).vertices,'stable','rows');
-        num_verts = size(verts,1);
-        polytopes(poly).obs_id = ones(1,num_verts)*poly; % obs_id is the same for every vertex on a single polytope
-        polytopes(poly).xv = verts(:,1)';
-        polytopes(poly).yv = verts(:,2)';
-        polytopes(poly).vertices = [verts; verts(1,:)];
-        polytopes(poly).distances = sum((polytopes(poly).vertices(1:end-1,:) - polytopes(poly).vertices(2:end,:)).^2,2).^0.5;
-        beg_end([curpt+1,curpt+num_verts]) = 1; % the first and last vertices are marked with 1 and all others are 0
-        curpt = curpt+num_verts;
-        polytopes(poly).perimeter = sum(polytopes(poly).distances);
-    end
+    start_xy = [start.x start.y];
+    finish_xy = [finish.x finish.y];
 
-    obs_id = [polytopes.obs_id];
-    point_tot = length([polytopes.xv]); % need to recheck total points
-    beg_end = beg_end(1:point_tot); % remove any extra points
-    
-    % Create all_pts for future call to path planning function
-    all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all points [x y point_id obs_id beg_end]
+    all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes, start_xy, finish_xy);
 
     % give the same information to the starting and ending points
     if startPoly ~= -1 % on obstacle edge

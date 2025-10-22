@@ -70,6 +70,12 @@ function [cost,route] = fcn_BoundedAStar_AstarBounded(start,finish,polytopes,all
 % -- added input checking
 % 2025_07_29 - S. Brennan
 % -- added plotting as part of standard debug output
+% 2025_10_22 - K. Hayes
+% -- replaced reference to
+%    fcn_BoundedAStar_calculateBoundingEllipsePolytopeBoundingBox, which is
+%    now called fcn_BoundedAStar_calculateBoundingEllipsePolytope
+% -- fixed bug where cur_pt, finish inputs were passed to
+%    calculateBoundingEllipsePolytope with the wrong dimensions
 
 % TO DO:
 % (none)
@@ -282,7 +288,7 @@ else
 
             else % there is a non-zero offset
                 % find bounding box with bound points and polytopes
-                [bound_polytopes,bound_box,bound_pts,~] = fcn_BoundedAStar_calculateBoundingEllipsePolytopeBoundingBox(cur_pt(1:2),finish(1:2),polytopes,all_pts,bound_pts,perp_offset,para_offset);
+                [bound_polytopes,bound_box,bound_pts,~] = fcn_BoundedAStar_calculateBoundingEllipsePolytope(cur_pt,finish,polytopes,all_pts,bound_pts,perp_offset,para_offset);
                 bound_pts = bound_pts(bound_pts(:,3) ~= cur_pt(3),:); % remove current point if necessary
                 bound_store(cur_pt(3)).bound_pts = bound_pts;
                 % %% plot for troubleshooting

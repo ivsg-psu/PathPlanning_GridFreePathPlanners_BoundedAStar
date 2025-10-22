@@ -416,6 +416,23 @@
 % -- In fcn_Visibility_clearAndBlockedPoints
 %    % * fixed bug causing deletion of vgraph edges between adjacent
 %    non-obstacle vertices
+%
+% 2025_10_22 - K. Hayes
+% -- In script_test_fcn_BoundedAStar_AStarBounded
+%    % * fixed bug with start and finish points being incorrectly passed
+%    into fcn
+%    % * fixed bug causing length assertion failure in demo case 1
+% -- In fcn_BoundedAStar_AStarBounded
+%    % * replaced reference to
+%    fcn_BoundedAStar_calculateBoundingEllipsePolytopeBoundingBox, which is
+%    now called fcn_BoundedAStar_calculateBoundingEllipsePolytope
+%    % * fixed bug where cur_pt, finish inputs were passed to
+%    calculateBoundingEllipsePolytope with the wrong dimensions
+% -- In fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes
+%    % * added all_pts generation using
+%    fcn_BoundedAStar_polytopesGenerateAllPtsTable instead of manually
+% -- In script_test_fcn_BoundedAStar_calculatePointsOnLines
+%    % * fixed bug causing assertion failures for all demo cases
 
 % TO-DO:
 % 2025_07_28 - Sean Brennan

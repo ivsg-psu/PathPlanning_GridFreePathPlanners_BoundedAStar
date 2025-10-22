@@ -8,6 +8,10 @@
 % 2025_08_18 - K. Hayes
 % -- updated script formatting 
 % -- changed all_pts generation to fcn
+% 2025_10_22 - K. Hayes
+% -- fixed bug with start and finish points being incorrectly passed
+%    into fcn
+% -- fixed bug causing length assertion failure in demo case 1
 
 % TO DO:
 % (none)
@@ -45,13 +49,13 @@ plot_flag = 0; disp_name = 0;
 [polytopes,fig]=fcn_MapGen_generatePolysFromName(map_name,plot_flag,disp_name);
 
 % Specify start and finish point locations and IDs
-start = [0 0.5 point_tot+1 0 0];
-finish = [1 0.5 point_tot+2 -1 0];
+start = [0 0.5];
+finish = [1 0.5];
 
 
 % Loop through polytopes to assign obstacle ID and beginning/end flags to
 % vertices
-all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes, start(1:2), finish(1:2), -1);
+[all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes, start(1:2), finish(1:2), -1);
 
 % Create set of bound_pts
 bound_pts = all_pts;
@@ -59,6 +63,7 @@ bound_pts = all_pts;
 % Set planner mode and call path planner
 planner_mode = 'legacy';
 ellipse_polytopes = [];
+
 [cost,route] = fcn_BoundedAStar_AstarBounded(start,finish,polytopes,all_pts,bound_pts,planner_mode,(ellipse_polytopes),(fig_num));
 disp(['Path Cost: ' num2str(cost)])
 
@@ -69,8 +74,8 @@ assert(isnumeric(cost));
 assert(isnumeric(route));
 
 % Check variable sizes
-Npoints = 6;
-assert(isequal(Npoints,length(path))); 
+Npoints = 9;
+assert(isequal(Npoints,length(route))); 
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));

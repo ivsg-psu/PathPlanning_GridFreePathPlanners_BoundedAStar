@@ -3,8 +3,10 @@
 % Tests: script_test_fcn_BoundedAStar_calculatePointsOnLines
 
 % Revision history
-% 2025_08_19 - K. Hayes, kxh1031@psu.edu
+% 2025_08_19 - K. Hayes, kaeleahayes@psu.edu
 % -- first write of script
+% 2025_10_22 - K. Hayes
+% -- fixed bug causing assertion failures for all demo cases
 
 % TO DO:
 % -- set up fast mode tests
@@ -49,13 +51,11 @@ TF1 = fcn_BoundedAStar_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc, (fig_num))
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(isnumeric(is_reachable));
-assert(isnumeric(num_steps));
-assert(islogical(rgraph));
+assert(islogical(TF1));
 
 % Check variable sizes
-% Npolys = 100;
-% assert(isequal(Npolys,length(polytopes))); 
+Nsides = 8;
+assert(isequal(Nsides,length(TF1))); 
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -80,13 +80,11 @@ TF2 = fcn_BoundedAStar_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc,(fig_num))
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(isnumeric(is_reachable));
-assert(isnumeric(num_steps));
-assert(islogical(rgraph));
+assert(islogical(TF2));
 
 % Check variable sizes
-% Npolys = 100;
-% assert(isequal(Npolys,length(polytopes))); 
+Nsides = 8;
+assert(isequal(Nsides,length(TF2))); 
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -110,13 +108,11 @@ TF3 = fcn_BoundedAStar_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc,(fig_num))
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(isnumeric(is_reachable));
-assert(isnumeric(num_steps));
-assert(islogical(rgraph));
+assert(islogical(TF3));
 
 % Check variable sizes
-% Npolys = 100;
-% assert(isequal(Npolys,length(polytopes))); 
+Nsides = 8;
+assert(isequal(Nsides,length(TF3))); 
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -165,16 +161,17 @@ yi = -1;
 
 TF4 = fcn_BoundedAStar_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc,(fig_num))
 
-sgtitle(titleString, 'Interpreter','none');
+sgtitle(titleString, 'Interpreter', 'none')
 
 % Check variable types
-assert(isnumeric(is_reachable));
-assert(isnumeric(num_steps));
-assert(islogical(rgraph));
+assert(islogical(TF4));
 
 % Check variable sizes
-% Npolys = 100;
-% assert(isequal(Npolys,length(polytopes))); 
+Nsides = 8;
+assert(isequal(Nsides,length(TF4))); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));

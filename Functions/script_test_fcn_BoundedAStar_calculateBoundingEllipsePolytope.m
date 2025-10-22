@@ -26,9 +26,9 @@ close all
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
 
-%% DEMO case: check that converting vertices to facets is working
+%% DEMO case: find bounding box 
 fig_num = 10001;
-titleString = sprintf('DEMO case: check that converting vertices to facets is working');
+titleString = sprintf('DEMO case: find bounding box');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 

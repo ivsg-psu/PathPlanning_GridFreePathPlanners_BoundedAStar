@@ -2,9 +2,11 @@
 % a basic test of a Bounded A Star planner setup function
 
 % Revision history
-% 2025_07_25 - K. Hayes, kxh1031@psu.edu
+% 2025_07_25 - K. Hayes, kaeleahayes@psu.edu
 % -- first write of script, code taken from example originally in
 %    fcn_algorithm_setup_bound_Astar_for_tiled_polytopes
+% 2025_10_22 - K. Hayes
+
 
 % TO DO:
 % (none)
@@ -55,8 +57,21 @@ finish.x = 100; finish.y = 50;
 % Set up and find path
 planner_mode = 'legacy';
 bounds = [];
-[path,cost,err] = fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes(shrunk_polytopes, start, finish, planner_mode,(bounds),(fig_num));
+[route,cost,err] = fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes(shrunk_polytopes, start, finish, planner_mode,(bounds),(fig_num));
 disp(['Path Cost: ' num2str(cost)])
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(cost));
+assert(isnumeric(route));
+
+% Check variable sizes
+Npoints = 8;
+assert(isequal(Npoints,length(route))); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 %% Test cases start here. These are very simple, usually trivial
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
