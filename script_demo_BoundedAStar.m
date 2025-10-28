@@ -417,7 +417,6 @@
 %    % * fixed bug causing deletion of vgraph edges between adjacent
 %    non-obstacle vertices
 %
-
 % 2025_10_17 - S. Brennan
 % -- In fcn_BoundedAStar_generateDilationRobustnessMatrix
 %    % * added full plotting capability including plotting options that
@@ -427,7 +426,7 @@
 %    %   % widths
 %    % * added GeometryClass_v2025_10_20 to simplify 
 %    %   % fcn_BoundedAStar_generateDilationRobustnessMatrix
-
+%
 % 2025_10_22 - K. Hayes
 % -- In script_test_fcn_BoundedAStar_AStarBounded
 %    % * fixed bug with start and finish points being incorrectly passed
@@ -444,18 +443,18 @@
 %    fcn_BoundedAStar_polytopesGenerateAllPtsTable instead of manually
 % -- In script_test_fcn_BoundedAStar_calculatePointsOnLines
 %    % * fixed bug causing assertion failures for all demo cases
+%
+% 2025_10_28 - S. Brennan
+% -- In this demo script:
+%    % * Removed to-do items related to visibility calculations, these
+%    %   % copied now into newly created VisibilityGraph repo
 
 % TO-DO:
 % 2025_07_28 - Sean Brennan
 % -- need to de-spaghetti fcn_BoundedAStar_AStarBounded
-% 2025_08_01 - K. Hayes
-% -- need to add fast modes for visibility test scripts
 % 2025_08_18 - K. Hayes
 % -- add 3d formatted all_pts capabilities to
 %    fcn_BoundedAStar_polytopesGenerateAllPtsTable
-% 2025_10_03 - K. Hayes
-% -- fix bug with hardcoded expected vgraphs in
-%    script_test_fcn_Visibility_clearAndBlockedPointsGlobal
 
 clear library_name library_folders library_url
 
