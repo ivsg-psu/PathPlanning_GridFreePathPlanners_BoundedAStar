@@ -115,8 +115,8 @@ if 0==flag_max_speed
         narginchk(3,MAX_NARGIN);
 
         % Check the all_pts input, make sure it has 5 columns
-        fcn_DebugTools_checkInputsToFunctions(...
-            all_pts, '5column_of_numbers');
+        % fcn_DebugTools_checkInputsToFunctions(...
+        %     all_pts, '5column_of_numbers');
 
         % Check that all_pts is same size as visibility
         assert(length(all_pts(:,1))==length(vgraph(:,1)));

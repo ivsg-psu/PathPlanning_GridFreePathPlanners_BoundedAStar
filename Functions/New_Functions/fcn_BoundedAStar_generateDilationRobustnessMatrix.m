@@ -59,6 +59,7 @@ function [dilation_robustness_matrix] = fcn_BoundedAStar_generateDilationRobustn
 %      this function. These include:
 %          plottingOptions.axis
 %          plottingOptions.selectedFromToToPlot: the [from to] edge to plot
+%          plottingOptions.maxScalingValue: the normalization value
 %
 %      fig_num: a figure number to plot results. If set to -1, skips any
 %      input checking or debugging, no figures will be generated, and sets
@@ -177,7 +178,7 @@ if 7 <= nargin
 end
 
 % Does user want to show the plots?
-flag_do_plots = 1; % Default is to show plots
+flag_do_plots = 0; % Default is to NOT show plots
 figNum = []; % Empty by default
 if (0==flag_max_speed) && (MAX_NARGIN == nargin)
     temp = varargin{end};
@@ -204,18 +205,28 @@ addNudge = 0.25;
 if ~isempty(plottingOptions.filename)
     delayTime = 0.5; % Delay between frames in seconds
     loopCount = Inf; % Loop indefinitely (0 for no loop)
+    flag_do_debug = 1;
+
+    if flag_do_debug
+        st = dbstack; %#ok<*UNRCH>
+        fprintf(1,'STARTING function: %s, in file: %s\n',st(1).name,st(1).file);
+        debug_fig_num = 999978;
+    end
 end
 
-figure(383838)
-colorMapMatrixOrString = colormap('turbo');
-close(383838);
-greenToRedColormap = colorMapMatrixOrString(100:end,:);
-Ncolors = 32;
-reducedGreenToRedColorMap = fcn_plotRoad_reduceColorMap(greenToRedColormap, Ncolors, -1);
-reducedRedToGreenColorMap = flipud(reducedGreenToRedColorMap);
-%%%% Uncomment the following two lines to see the colormap
-% colormap(reducedRedToGreenColorMap);
-% colorbar;
+%% Grab a colormap for plotting options
+if flag_do_plots || flag_do_debug
+    figure(383838)
+    colorMapMatrixOrString = colormap('turbo');
+    close(383838);
+    greenToRedColormap = colorMapMatrixOrString(100:end,:);
+    Ncolors = 32;
+    reducedGreenToRedColorMap = fcn_plotRoad_reduceColorMap(greenToRedColormap, Ncolors, -1);
+    reducedRedToGreenColorMap = flipud(reducedGreenToRedColorMap);
+    %%%% Uncomment the following two lines to see the colormap
+    % colormap(reducedRedToGreenColorMap);
+    % colorbar;
+end
 
 %%  get the primary edge
 % get the physical location of the edge start and end
@@ -250,7 +261,9 @@ edgeEndPoints   = allPoints(edge_end_idx,:);
 edgePolysStart  = all_pts(edge_start_idx,highestDimension+2); % Which polytope the start point is on
 edgePolysEnd    = all_pts(edge_end_idx,highestDimension+2); % Which polytope the end point is on
 [edgeNextInPolySequence, edgePriorInPolySequence] = fcn_INTERNAL_findAdjacentInSequence(all_pts,highestDimension);
-polyOrientations = fcn_INTERNAL_findPolytopeOrientation(all_pts, highestDimension);
+
+polyOrientations = fcn_INTERNAL_findPolytopeOrientations(all_pts, highestDimension);
+
 edgeVectors     = edgeEndPoints - edgeStartPoints;
 edgeVectors_magnitude = sum(edgeVectors.^2,2).^0.5;
 unitEdgeVectors = edgeVectors./edgeVectors_magnitude;
@@ -354,7 +367,7 @@ for ith_edge = loopingRange
 
         % Plot this edge
         h_plotThisEdge = fcn_Visibility_plotVGraph(vgraphNoSelfInteractions, all_pts, '-',[thisEdgeStartIndex thisEdgeEndIndex]);
-        set(h_plotThisEdge,'Color',[0.5 0 0],'LineWidth',3);
+        set(h_plotThisEdge,'Color',[1 0 0],'LineWidth',3);
 
         % Plot the unit vector and unit normal
         h_xaxis = quiver(thisStartPoint(1,1),thisStartPoint(1,2),unitThisEdgeVector(1,1),unitThisEdgeVector(1,2), 0, '-','Color',0.7*ones(1,3),'LineWidth',2);
@@ -405,7 +418,7 @@ for ith_edge = loopingRange
         h_quiverAllSecondary = ...
             quiver(thisStartPoint(1,1)*ones(Nsecondary,1),thisStartPoint(1,2)*ones(Nsecondary,1),...
             edgeVectors(secondary_edge_ends_idx_not_this_edge,1),edgeVectors(secondary_edge_ends_idx_not_this_edge,2),...
-            0, '-','Color',0.4*[1 0 0],'LineWidth',1);
+            0, '-','Color',1/256*[128, 0, 128],'LineWidth',3);
         % Set the axis
         if ~isempty(plottingOptions.axis)
             axis(plottingOptions.axis);
@@ -445,6 +458,8 @@ for ith_edge = loopingRange
     % both cases are discarded
     stickOutSecondaryEdges = (secondary_component_in_dir_of_primary <= 0) | ...
         (secondary_component_in_dir_of_primary > thisEdgeVector_magnitude);
+    stickOutSecondaryEdgesRear = (secondary_component_in_dir_of_primary <= 0);
+    stickOutSecondaryEdgesFront = (secondary_component_in_dir_of_primary > thisEdgeVector_magnitude);
 
     notStickOutSecondaryEdge_idx = secondary_edge_ends_idx_not_this_edge(~stickOutSecondaryEdges);
 
@@ -454,11 +469,21 @@ for ith_edge = loopingRange
     % Show which edges stick out and do not stick out
     if 1==flag_do_debug
         figure(debug_fig_num);
-        stickOut_idx = secondary_edge_ends_idx_not_this_edge(stickOutSecondaryEdges);
+        
+        % Plot the rear stick-outs
+        stickOut_idx = secondary_edge_ends_idx_not_this_edge(stickOutSecondaryEdgesRear);
         NstickOut = length(stickOut_idx);
-        h_quiverBadEdges = quiver(thisStartPoint(1,1)*ones(NstickOut,1),thisStartPoint(1,2)*ones(NstickOut,1),...
+        h_quiverBadEdgesRear = quiver(thisStartPoint(1,1)*ones(NstickOut,1),thisStartPoint(1,2)*ones(NstickOut,1),...
             edgeVectors(stickOut_idx,1),edgeVectors(stickOut_idx,2),...
-            0, '-','Color',1*[1 0 0],'LineWidth',3);
+            0, '-','Color',1/256*[255, 165, 0],'LineWidth',3);
+
+        % Plot the front stick-outs
+        stickOut_idx = secondary_edge_ends_idx_not_this_edge(stickOutSecondaryEdgesFront);
+        NstickOut = length(stickOut_idx);
+        h_quiverBadEdgesFront = quiver(thisStartPoint(1,1)*ones(NstickOut,1),thisStartPoint(1,2)*ones(NstickOut,1),...
+            edgeVectors(stickOut_idx,1),edgeVectors(stickOut_idx,2),...
+            0, '-','Color',1/256*[50, 255, 50],'LineWidth',3);
+
         % Set the axis
         if ~isempty(plottingOptions.axis)
             axis(plottingOptions.axis);
@@ -478,7 +503,8 @@ for ith_edge = loopingRange
         % Shut off visibility of bad data
         set(h_plotThisEdgeStartIndex,'Visible','off')
         set(h_quiverAllSecondary,'Visible','off');
-        set(h_quiverBadEdges,'Visible','off')
+        set(h_quiverBadEdgesRear,'Visible','off')
+        set(h_quiverBadEdgesFront,'Visible','off')
 
         % Plot good secondary edges
         h_quiverNotStickOut = ...
@@ -544,7 +570,7 @@ for ith_edge = loopingRange
         NbadSecondary = length(badSecondaryEdgeVectors(:,1));
         h_quiverBadEdges = quiver(thisStartPoint(1,1)*ones(NbadSecondary,1),thisStartPoint(1,2)*ones(NbadSecondary,1),...
             edgeVectors(badSecondaryEdges_idx,1),edgeVectors(badSecondaryEdges_idx,2),...
-            0, '-','Color',1*[1 0 0],'LineWidth',3);
+            0, '-','Color',1*[1 0 0],'LineWidth',3); %#ok<NASGU>
         % Set the axis
         if ~isempty(plottingOptions.axis)
             axis(plottingOptions.axis);
@@ -563,7 +589,8 @@ for ith_edge = loopingRange
 
         % Shut off visibility of old plots
         set(h_quiverNotStickOut,'Visible','off')
-        set(h_quiverBadEdges,'Visible','off');
+        set(h_quiverBadEdgesRear,'Visible','off');
+        set(h_quiverBadEdgesFront,'Visible','off');
 
         % Plot good secondary edges
         NgoodSecondary = length(goodSecondaryEdgeVectors(:,1));
@@ -637,7 +664,7 @@ for ith_edge = loopingRange
             frame = getframe(gcf);
             im = frame2im(frame);
             [imind, cm] = rgb2ind(im, 256); % Convert to indexed image
-            imwrite(imind, cm, plottingOptions.filename, 'gif', 'LoopCount', loopCount, 'DelayTime', delayTime);
+            imwrite(imind, cm, plottingOptions.filename, 'gif', 'WriteMode', 'append', 'DelayTime', delayTime);
         end
     end
 
@@ -818,7 +845,7 @@ for ith_edge = loopingRange
             frame = getframe(gcf);
             im = frame2im(frame);
             [imind, cm] = rgb2ind(im, 256); % Convert to indexed image
-            imwrite(imind, cm, plottingOptions.filename, 'gif', 'LoopCount', loopCount, 'DelayTime', delayTime);
+            imwrite(imind, cm, plottingOptions.filename, 'gif', 'WriteMode', 'append', 'DelayTime', delayTime);
         end
     end
 
@@ -894,7 +921,7 @@ for ith_edge = loopingRange
         %     frame = getframe(gcf);
         %     im = frame2im(frame);
         %     [imind, cm] = rgb2ind(im, 256); % Convert to indexed image
-        %     imwrite(imind, cm, plottingOptions.filename, 'gif', 'LoopCount', loopCount, 'DelayTime', delayTime);
+        %     imwrite(imind, cm, plottingOptions.filename, 'gif', 'WriteMode', 'append', 'DelayTime', delayTime);
         % end
 
     end
@@ -1245,11 +1272,24 @@ end % ends fcn_INTERNAL_findAdjacentInSequence
 
 
 %% fcn_INTERNAL_findPolytopeOrientations
-function orientation = fcn_INTERNAL_findPolytopeOrientation(all_pts, dimension)
-% Finds if a polytope is clockwise or counterClockwise
-Npoints = length(all_pts(:,1));
+function [orientation, isconvex, Nencirclements] = fcn_INTERNAL_findPolytopeOrientations(vertex_pts, dimension) %#ok<STOUT>
+% Finds if a 2D polytope is clockwise or counterClockwise and if the
+% polytope is convex or non-convex. The number of encirclements is also
+% reported, with positive values being positive encirclements and negative
+% values being negative encirclements. 
+% 
+% The method used is to find the direction of the change of orientation of
+% each edge to the next, and the angle of change. The direction is
+% determined via the cross products of each edge of a polytope with the
+% next edge. The angle is determined via the dot product of each edge with
+% the next, then taking the arc cosine. The sum of angles is used to
+% determine the number of encirclements in the progression around the edges
+% of the polytope. The number of encirclements is determined by rounding
+% the sum of angle changes to the nearest multiple of 2*pi.
+
+Npoints = length(vertex_pts(:,1));
 orientation = nan(Npoints,1);
-polysThisPoint = all_pts(:,2+dimension);
+polysThisPoint = vertex_pts(:,2+dimension);
 polysToCheck = unique(polysThisPoint,'legacy');
 
 for ith_poly = 1:length(polysToCheck)
@@ -1262,29 +1302,16 @@ for ith_poly = 1:length(polysToCheck)
         end
 
         % Starting at first point, circle until reach last point
-        edgePoints = all_pts(thisPolyIndices,1:dimension);
+        edgePoints = vertex_pts(thisPolyIndices,1:dimension);
         fullCircleEdgePoints = [edgePoints; edgePoints(1,:)];
 
-        % Take row differences
-        edgeVectors = diff(fullCircleEdgePoints,1,1);
-        fullCircleEdgeVectors = [edgeVectors; edgeVectors(1,:)];
-        magFullCircleEdgeVectors = sum(fullCircleEdgeVectors.^2,2).^0.5;
-        unitFullCircleEdgeVectors = fullCircleEdgeVectors./magFullCircleEdgeVectors;
-
-        % Take dot products
-        dotProducts = sum(unitFullCircleEdgeVectors(1:end-1,:).*unitFullCircleEdgeVectors(2:end,:),2);
-        Ncross = length(unitFullCircleEdgeVectors(1:end-1,:));
-        crossProducts = cross([unitFullCircleEdgeVectors(1:end-1,:) zeros(Ncross,1)], [unitFullCircleEdgeVectors(2:end,:) zeros(Ncross,1)]);
-        crossSigns = sign(crossProducts(:,3));
-
-        angles = real(acos(dotProducts))*180/pi.*crossSigns;
-
-        angleSum = sum(angles);
-
-        encirclements = round(angleSum)/360;
-        if abs(encirclements)~=1
-            error('Non-unity encirclement found for a polytope. Unable to determine polytope direction of vertices as CW or CCW!');
+        % For debugging
+        if 1==0
+            figure(11881); clf;
+            plot(fullCircleEdgePoints(:,1),fullCircleEdgePoints(:,2),'r.-');
         end
+        
+        encirclements = fcn_geometry_findPolytopeOrientations(fullCircleEdgePoints,-1);
 
         orientation(thisPolyIndices,1) = encirclements;
 
@@ -1293,4 +1320,4 @@ for ith_poly = 1:length(polysToCheck)
 end
 
 
-end % ends fcn_INTERNAL_findNextInSequence
+end % ends fcn_INTERNAL_findPolytopeOrientations

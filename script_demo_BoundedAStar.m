@@ -417,6 +417,17 @@
 %    % * fixed bug causing deletion of vgraph edges between adjacent
 %    non-obstacle vertices
 %
+
+% 2025_10_17 - S. Brennan
+% -- In fcn_BoundedAStar_generateDilationRobustnessMatrix
+%    % * added full plotting capability including plotting options that
+%    %   % allow saving images to file
+%    % * fixed bug where edge widths were including stand-alone points
+%    % * fixed bug where infinite edge widths were counted as zero corridor
+%    %   % widths
+%    % * added GeometryClass_v2025_10_20 to simplify 
+%    %   % fcn_BoundedAStar_generateDilationRobustnessMatrix
+
 % 2025_10_22 - K. Hayes
 % -- In script_test_fcn_BoundedAStar_AStarBounded
 %    % * fixed bug with start and finish points being incorrectly passed
@@ -446,7 +457,6 @@
 % -- fix bug with hardcoded expected vgraphs in
 %    script_test_fcn_Visibility_clearAndBlockedPointsGlobal
 
-
 clear library_name library_folders library_url
 
 ith_library = 1;
@@ -469,6 +479,11 @@ library_name{ith_library}    = 'PlotRoad_v2025_07_16';
 library_folders{ith_library} = {'Functions', 'Data'};                                
 library_url{ith_library}     = 'https://github.com/ivsg-psu/FieldDataCollection_VisualizingFieldData_PlotRoad/archive/refs/tags/PlotRoad_v2025_07_16.zip';
 
+ith_library = ith_library+1;
+library_name{ith_library}    = 'GeometryClass_v2025_10_20';
+library_folders{ith_library} = {'Functions', 'Data'};                                
+library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_GeomTools_GeomClassLibrary/archive/refs/tags/GeometryClass_v2025_10_20.zip';
+
 
 
 
@@ -489,7 +504,7 @@ library_url{ith_library}     = 'https://github.com/ivsg-psu/FieldDataCollection_
 
 
 %% Clear paths and folders, if needed
-if 1==1
+if 1==0
     clear flag_BoundAStar_Folders_Initialized
     fcn_INTERNAL_clearUtilitiesFromPathAndFolders;
 
