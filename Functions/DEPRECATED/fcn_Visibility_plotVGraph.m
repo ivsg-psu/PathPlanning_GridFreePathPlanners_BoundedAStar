@@ -1,4 +1,7 @@
 function h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts,  styleString, varargin)
+    warning(['fcn_Visibility_plotVGraph is being deprecated within BoundedAStar.' ...
+    ' Use fcn_Visibility_plotVGraph from the Visibility Graph library instead.']);
+
 % fcn_Visibility_plotVGraph
 %
 % Plots a visibility graph given a generated vgraph and list of all points

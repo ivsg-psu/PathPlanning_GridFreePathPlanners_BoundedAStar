@@ -1,11 +1,13 @@
-function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = fcn_Visibility_clearAndBlockedPoints(polytopes,start,finish,varargin)
+function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = ...
+    fcn_Visibility_clearAndBlockedPoints(polytopes,start,finish,varargin)
 % fcn_Visibility_clearAndBlockedPoints 
 % 
-% determines whether the points in
-% finish are blocked by a polytope or not
+% determines whether the points in finish are blocked by a polytope for
+% straight-line paths drawn from start
 %
 % FORMAT: 
-% [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = fcn_Visibility_clearAndBlockedPoints(polytopes, start, finish, (isConcave), (fig_num))
+% [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = ...
+% fcn_Visibility_clearAndBlockedPoints(polytopes, start, finish, (isConcave), (figNum))
 %
 % INPUTS:
 %
@@ -30,18 +32,21 @@ function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]
 %           point and 0 otherwise)
 %       Ex: [x y point_id obs_id beg_end]
 %
-%   finish:  a m-by-5 vector of ending points information, including the same
-%   information as START
+%   finish:  a m-by-5 vector of ending points information, including the
+%   same information as START
 %
 %   (optional inputs)
 %
-%   isConcave: set a 1 to allow for concave (i.e. non-convex) obstacles.  If this is left
-%       blank or set to anyting other than 1, the function defaults to the convex behavior
-%       which is more conservative (i.e. setting the flag wrong incorrectly may result in
-%       suboptimal paths but not collisions). For background on what this flag does, see slides 9-14 here:
-%       https://pennstateoffice365.sharepoint.com/:p:/r/sites/IntelligentVehiclesandSystemsGroup-Active/Shared%20Documents/IVSG/Theses/2025_Harnett_PhD/Weekly%20Updates/HARNETT_WEEKLY_UPDATE_JAN08_2024.pptx?d=w4f5e75a3c5b343aab47b41d2b945075b&csf=1&web=1&e=5otpZ3
+%   isConcave: set a 1 to allow for concave (i.e. non-convex) obstacles. If
+%   this is left
+%       blank or set to anyting other than 1, the function defaults to the
+%       convex behavior which is more conservative (i.e. setting the flag
+%       wrong incorrectly may result in suboptimal paths but not
+%       collisions). For background on what this flag does, see slides 9-14
+%       here (for IVSG members):
+%       //IVSG/Theses/2025_Harnett_PhD/Weekly%20Updates/HARNETT_WEEKLY_UPDATE_JAN08_2024.pptx
 %
-%   fig_num: a figure number to plot results. If set to -1, skips any
+%   figNum: a figure number to plot results. If set to -1, skips any
 %       input checking or debugging, no figures will be generated, and sets
 %       up code to maximize speed. As well, if given, this forces the
 %       variable types to be displayed as output and as well makes the input
@@ -95,7 +100,7 @@ function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]
 %
 % DEPENDENCIES:
 %
-% fcn_DebugTools_checkInputsToFunctions
+%   fcn_DebugTools_checkInputsToFunctions
 %
 % EXAMPLES:
 %
@@ -104,8 +109,9 @@ function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]
 %
 % This function was written on 2018_11_17 by Seth Tau
 % Questions or comments? sat5340@psu.edu
-%
+
 % Revision History:
+% (In BoundedAStar)
 % 2025_07_08 - K. Hayes, kxh1031@psu.edu
 % -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
 %    with vector sum method in function usage examples
@@ -118,12 +124,19 @@ function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]
 % 2025_10_10 - K. Hayes
 % -- fixed bug causing deletion of vgraph edges between adjacent
 %    non-obstacle vertices
-%
+% (in VisibilityGraph)
+% 2025_10_29 - S. Brennan
+% -- Replaced figNum with figNum
+% -- Replaced _MAPGEN_ with _VGRAPH_ global variable designations
+
+
 % TO DO:
-% (none)
+% 2025_10_29 - S. Brennan
+% -- Need to simplify the output arguments to vector format. No need to
+% keep X and Y outputs separate since these are paired
 
 %% Debugging and Input checks
-% Check if flag_max_speed set. This occurs if the fig_num variable input
+% Check if flag_max_speed set. This occurs if the figNum variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
 MAX_NARGIN = 5; % The largest Number of argument inputs to the function
@@ -136,11 +149,11 @@ else
     % Check to see if we are externally setting debug mode to be "on"
     flag_do_debug = 0; %     % Flag to plot the results for debugging
     flag_check_inputs = 1; % Flag to perform input checking
-    MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS");
-    MATLABFLAG_MAPGEN_FLAG_DO_DEBUG = getenv("MATLABFLAG_MAPGEN_FLAG_DO_DEBUG");
-    if ~isempty(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG)
-        flag_do_debug = str2double(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG);
-        flag_check_inputs  = str2double(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS);
+    MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS");
+    MATLABFLAG_VGRAPH_FLAG_DO_DEBUG = getenv("MATLABFLAG_VGRAPH_FLAG_DO_DEBUG");
+    if ~isempty(MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_VGRAPH_FLAG_DO_DEBUG)
+        flag_do_debug = str2double(MATLABFLAG_VGRAPH_FLAG_DO_DEBUG);
+        flag_check_inputs  = str2double(MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS);
     end
 end
 
@@ -149,9 +162,9 @@ end
 if flag_do_debug
     st = dbstack; %#ok<*UNRCH>
     fprintf(1,'STARTING function: %s, in file: %s\n',st(1).name,st(1).file);
-    debug_fig_num = 999978; %#ok<NASGU>
+    debug_figNum = 999978; %#ok<NASGU>
 else
-    debug_fig_num = []; %#ok<NASGU>
+    debug_figNum = []; %#ok<NASGU>
 end
 
 %% check input arguments?
@@ -198,8 +211,8 @@ flag_do_plots = 0; % Default is to NOT show plots
 if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
     temp = varargin{end};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
-        fig_num = temp;
-        figure(fig_num);
+        figNum = temp;
+        figure(figNum);
         flag_do_plots = 1;
     end
 end
@@ -281,7 +294,7 @@ if flag_do_plots
     plotFormat.Color = [0 0 1];
     
     fillFormat = [1 0 0 0 0.5];
-    h_plot = fcn_MapGen_plotPolytopes(polytopes, (plotFormat),(fillFormat),(fig_num));
+    h_plot = fcn_MapGen_plotPolytopes(polytopes, (plotFormat),(fillFormat),(figNum));
     
     plot([start(1) finish(1,1)],[start(2) finish(1,2)],'kx','linewidth',1)
     plot(clear_pts(:,1),clear_pts(:,2),'go','linewidth',1)

@@ -1,11 +1,13 @@
 function [visibility_matrix, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, starts, finishes, varargin)
 % fcn_Visibility_clearAndBlockedPointsGlobal
 %
-% returns an intersection matrix for a single start point, showing what was 
+% This calls, over all points (global), the function
+% fcn_Visibility_clearAndBlockedPoints. That subfunction returns an
+% intersection matrix for a single start point, showing what was
 % intersected between that start point and numerous possible end points.
-% This function wraps that function to call it on every possible start and end
-% combination to provide global visibility truth tables rather than local
-% intersection truth tables.
+% This "global" function wraps that function to call it on every possible
+% start and end combination to provide global visibility truth tables
+% rather than local intersection truth tables.
 %
 % FORMAT:
 % [visibility_matrix, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, starts, finishes, (isConcave), (fig_num))
