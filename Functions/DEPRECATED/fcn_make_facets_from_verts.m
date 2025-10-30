@@ -1,4 +1,8 @@
 function time_space_polytopes_with_facets = fcn_make_facets_from_verts(time_space_polytopes)
+warning('on','backtrace');
+warning(['fcn_make_facets_from_verts is being deprecated. ' ...
+    'Use fcn_BoundedAStar_makeFacetsFromVerts instead.']);
+
 % fcn_make_facets_from_verts
 %
 % Takes a timespace or 3D polytope, defined by its vertices, and associates these vertices

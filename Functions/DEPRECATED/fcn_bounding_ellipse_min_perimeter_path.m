@@ -1,4 +1,8 @@
 function [max_dist] = fcn_bounding_ellipse_min_perimeter_path(int_polytopes,intersections,start,finish)
+warning('on','backtrace');
+warning(['fcn_bounding_ellipse_min_perimeter_path is being deprecated. ' ...
+    'Use fcn_BoundedAStar_calculateBoundingEllipseMinPerimPath instead.']);
+
 % FCN_BOUNDING_ELLIPSE_MIN_PERIMETER_PATH adds up all the distances
 % between intersections along the start and finish and adds in the shortest
 % perimeter distance around each intersected obstacle

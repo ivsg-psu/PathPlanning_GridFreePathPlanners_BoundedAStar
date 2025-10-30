@@ -1,6 +1,10 @@
 function [visibility_matrix_new, all_pts_new, start_new, finish_new, polytopes_after] = ...
     fcn_visibility_graph_remove_obstacle(...
     visibility_matrix, all_pts, start, finish, polytopes_before, idx_of_polytope_for_removal)
+warning('on','backtrace');
+warning(['fcn_visibility_graph_remove_obstacle is being deprecated. ' ...
+    'Use fcn_Visibility_removeObstacle from the Visibility Graph library instead.']);
+
     % fcn_visibility_graph_remove_obstacle
     %   this function recalculates the visibility graph after deleting a polytope without recalculating
     %   the entire visibility graph.  This is accomplished using an AABB check as a coarse check.

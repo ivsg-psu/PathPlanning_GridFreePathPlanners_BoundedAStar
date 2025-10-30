@@ -1,6 +1,10 @@
 function [visibility_matrix_new, all_pts_new, start_new, finish_new, polytopes_after] = ...
     fcn_visibility_graph_add_obstacle(...
     visibility_matrix, all_pts, start, finish, polytopes_before, polytope_to_add)
+warning('on','backtrace');
+warning(['fcn_visibility_graph_add_obstacle is being deprecated. ' ...
+    'Use fcn_Visibility_addObstacle from the Visibility Graph library instead.']);
+
     % fcn_visibility_graph_add_obstacle
     %   this function recalculates the visibility graph after adding a polytope without recalculating
     %   the entire visibility graph.  This is accomplished using an AABB check as a coarse check.

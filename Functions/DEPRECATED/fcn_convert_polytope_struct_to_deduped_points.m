@@ -1,4 +1,8 @@
 function unique_deduped_points_struct = fcn_convert_polytope_struct_to_deduped_points(all_pts)
+warning('on','backtrace');
+warning(['fcn_convert_polytope_struct_to_deduped_points is being deprecated. ' ...
+    'Use fcn_BoundedAStar_convertPolytopeToDedupedPoints instead.']);
+
 % this function takes in the table of all points, which in a fully tiled field contains repeated
 % points when a vertex belongs to multiple polytopes, and returns a points data structure
 % without duplicates, where each point has an associated list of polytopes it belongs to

@@ -1,4 +1,8 @@
 function new_vgraph = fcn_visibility_graph_3d_add_points(old_verts, start, finish, all_surfels, speed_limit, new_pts, old_vgraph)
+warning('on','backtrace');
+warning(['fcn_visibilty_graph_3d_add_points is being deprecated. ' ...
+    'Use fcn_Visibility_3dGraphAddPoints from the Visibility Graph library instead.']);
+
 % fcn_visibility_graph_3d_global
 %
 % Forms the 3D visibility graph, the edges of which connect nodes that are connected by straight,

@@ -1,4 +1,8 @@
 function [bound_polytopes,bound_box,bound_pts,all_bound]= fcn_bounding_ellipse_polytope_bounding_box(start,finish,polytopes,all_pts,bound_pts,offsetperp,offsetpara)
+
+warning('on','backtrace');
+warning(['fcn_boudning_ellipse_polytope_bounding_box is being deprecated. ' ...
+    'Use fcn_BoundedAStar_calculateBoundingEllipsePolytope instead.']);
 % FCN_BOUNDING_ELLIPSE_POLYTOPE_BOUNDING_BOX creates a bounding box around 
 % the straight line between A and B and then finds the points within the 
 % bounding box and their corresponding polytopes

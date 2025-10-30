@@ -1,4 +1,8 @@
 function all_surfels = fcn_make_triangular_surfels_from_facets(time_space_polytopes)
+warning('on','backtrace');
+warning(['fcn_make_triangular_surfels_from_facets is being deprecated. ' ...
+    'Use fcn_BoundedAStar_makeTriangularSurfelsFromFacets instead.']);
+
 % fcn_make_triangular_surfels_from_facets
 %
 % Decomposes timespace polytopes with facets into triangular surface elements (surfels) which are necessary for

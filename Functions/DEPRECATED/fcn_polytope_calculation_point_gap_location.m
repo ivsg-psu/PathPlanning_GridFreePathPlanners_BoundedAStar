@@ -1,4 +1,9 @@
 function [gap] = fcn_polytope_calculation_point_gap_location(point,vertices)
+
+warning('on','backtrace');
+warning(['fcn_polytope_calculation_point_gap_location is being deprecated. ' ...
+    'Use fcn_BoundedAStar_polytopePointGapLocation instead.']);
+
 % FCN_FIND_GAP_LOCATION find which gap the point is in
 %
 % [GAP]=FCN_FIND_GAP_LOCATION(CROSS,VERTICES)

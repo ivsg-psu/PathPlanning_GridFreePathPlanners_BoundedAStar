@@ -1,4 +1,8 @@
 function vgraph = fcn_visibility_graph_3d_global(verts, start, finish, all_surfels, speed_limit, time_space_polytopes, dt)
+warning('on','backtrace');
+warning(['fcn_visibility_graph_3d_global is being deprecated. ' ...
+    'Use fcn_Visibility_3dGraphGlobal from the Visibility Graph library instead.']);
+
 % fcn_visibility_graph_3d_global
 %
 % Forms the 3D visibility graph, the edges of which connect nodes that are connected by straight,

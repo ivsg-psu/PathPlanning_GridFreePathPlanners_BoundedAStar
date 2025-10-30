@@ -1,4 +1,8 @@
 function [vgraph, cgraph, hvec, finish, all_pts] = fcn_algorithm_create_phantom_goal(vgraph, cgraph, hvec, finish, all_pts)
+warning('on','backtrace');
+warning(['fcn_algorithm_create_phantom_goal is being deprecated. ' ...
+    'Use fcn_BoundedAStar_createPhantomGoal instead.']);
+
 % fcn_algorithm_create_phantom_goal
 %
 % this function creates a fictional "phantom goal" connected to all true goals

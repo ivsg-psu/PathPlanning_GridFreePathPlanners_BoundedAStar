@@ -1,4 +1,7 @@
 function [dense_verts, time_space_polytopes_with_dense_verts] = fcn_interpolate_polytopes_in_time(time_space_polytopes,dt)
+warning('on','backtrace');
+warning(['fcn_interpolate_polytopes_in_time is being deprecated. ' ...
+    'Use fcn_BoundedAStar_interpolatePolytopesInTime instead.']);
 % fcn_interpolate_polytopes_in_time
 % Adds nodes to the input polytopes to increase the density of nodes in the
 % time (z) dimension so that the planner has more options of where to route.

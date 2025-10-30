@@ -1,4 +1,8 @@
 function [dist_sq,cross_sign] = fcn_general_calculation_point_to_line_distances_squared(pt,vert1,vert2)
+warning('on','backtrace');
+warning(['fcn_general_calculation_point_to_line_distances_squared is being deprecated. ' ...
+    'Use fcn_BoundedAStar_calculatePointToLineDistSquared instead.']);
+
 % FCN_GENERAL_CALCULATION_POINT_TO_LINE_DISTANCES calculate distance to 
 % point from a line between vert1 and vert2
 %

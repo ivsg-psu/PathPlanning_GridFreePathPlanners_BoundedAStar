@@ -1,4 +1,7 @@
 function [perimeter1,perimeter2] = fcn_polytope_calculation_dual_perimeters(polytope,xing1,xing2) %,path1,path2]
+warning('on','backtrace');
+warning(['fcn_polytope_calculation_dual_perimeters is being deprecated. ' ...
+    'Use fcn_BoundedAStar_polytopeCalculateDualPerimeters instead.']);
 % FCN_POLYTOPE_CALCULATION_DUAL_PERIMETERS calculate perimeters in both 
 % directions around the polytope
 %

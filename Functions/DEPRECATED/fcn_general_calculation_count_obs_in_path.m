@@ -1,5 +1,9 @@
 function [obs_around, obs_through] = ...
     fcn_general_calculation_count_obs_in_path(path)
+
+warning('on','backtrace');
+warning(['fcn_general_calculation_count_obs_in_path is being deprecated. ' ...
+    'Use fcn_BoundedAStar_countObstaclesInPath instead.']);
     % fcn_general_calculation_count_obs_in_path
     % counts the number of unique obstacles encountered in a path
     % tallying obstacle routed through separately from obstacles routed around

@@ -1,4 +1,8 @@
 function [xings] = fcn_visibility_line_polytope_intersections(xiP,yiP,xiQ,yiQ,xjP,yjP,D,di,num_int,polytopes)
+warning('on','backtrace');
+warning(['fcn_visibility_line_polytope_intersections is being deprecated. ' ...
+    'Use fcn_Visibility_linePolytopeIntersections from the Visibility Graph library instead.']);
+
 % FCN_VISIBILITY_LINE_POLTYOPE_INTERSECTIONS finds polytope-path intersection 
 % information
 %

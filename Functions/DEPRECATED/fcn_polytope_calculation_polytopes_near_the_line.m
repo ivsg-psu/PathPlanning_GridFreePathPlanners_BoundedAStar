@@ -1,4 +1,8 @@
 function [close_polytopes] = fcn_polytope_calculation_polytopes_near_the_line(start,finish,polytopes)
+warning('on','backtrace');
+warning(['fcn_polytope_calculation_polytopes_near_the_line is being deprecated. ' ...
+    'Use fcn_BoundedAStar_polytopesNearLine instead.']);
+
 % FCN_POLYTOPE_CALCULATION_POLYTOPES_NEAR_THE_LINE find polytopes possibly 
 % within reach of the line of interest
 %

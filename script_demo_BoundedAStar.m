@@ -448,6 +448,10 @@
 % -- In this demo script:
 %    % * Removed to-do items related to visibility calculations, these
 %    %   % copied now into newly created VisibilityGraph repo
+%
+% 2025_10_30 - K. Hayes
+% -- In Functions/DEPRECATED
+%    % * added deprecation warning messages to all remaining functions
 
 % TO-DO:
 % 2025_07_28 - Sean Brennan

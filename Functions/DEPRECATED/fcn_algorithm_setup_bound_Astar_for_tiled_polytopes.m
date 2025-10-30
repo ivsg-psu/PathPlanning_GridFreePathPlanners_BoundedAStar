@@ -1,4 +1,8 @@
 function [path,cost,err] = fcn_algorithm_setup_bound_Astar_for_tiled_polytopes(polytopes,A,B,planner_mode,varargin)
+warning('on','backtrace');
+warning(['fcn_algorithm_setup_bound_Astar_for_tiled_polytopes is being deprecated. ' ...
+    'Use fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes instead.']);
+
 % FCN_DASTAR_FOR_VORONOI sets up the information needed to for the Dijkstra
 % Astar hybrid function and calls the function when the input polytopes are
 % generated from the voronoi diagram

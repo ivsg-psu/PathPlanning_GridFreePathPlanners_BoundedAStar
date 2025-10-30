@@ -1,4 +1,7 @@
 function [cost, route] = fcn_algorithm_greedy_planner(vgraph, all_pts, start, finish)
+warning('on','backtrace');
+warning(['fcn_algorithm_greedy_planner is being deprecated. ' ...
+    'Use fcn_BoundedAStar_greedyPlanner instead.']);
     vgraph = vgraph - eye(size(vgraph,1));
     % 1.  Initialize the open list
     %     put the starting node on the open

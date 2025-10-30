@@ -1,4 +1,8 @@
 function [err,Apoly,Bpoly] = fcn_polytope_calculation_points_in_polytopes(A,B,polytopes,throw_error,varargin)
+warning('on','backtrace');
+warning(['fcn_polytope_calculation_points_in_polytopes is being deprecated. ' ...
+    'Use fcn_BoundedAStar_polytopePointsInPolytopes instead.']);
+
 % FCN_POLYTOPE_CALCULATIONS_POINTS_IN_POLYTOPES see if point A or B is in one of the
 % polytopes
 %

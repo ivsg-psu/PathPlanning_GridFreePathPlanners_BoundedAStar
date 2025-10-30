@@ -1,5 +1,9 @@
 function [cost,distance_in_polys,distance_outside_polys,num_polys_traversed] = ...
     fcn_algorithm_straight_planner(start,finish,all_pts,polytopes)
+
+warning('on','backtrace');
+warning(['fcn_algorithm_straight_planner is being deprecated. ' ...
+    'Use fcn_BoundedAStar_straightPlanner instead.']);
     % fcn_algorithm_straight_planner
     % plans a path straight through the obstacle field, traversing all encountered obstacles
     %

@@ -1,5 +1,9 @@
 function [cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...
     fcn_visibility_self_blocked_pts(polytopes,cur_pt,all_pts)
+
+warning('on','backtrace');
+warning(['fcn_visibility_self_blocked_pts is being deprecated. ' ...
+    'Use fcn_Visibility_selfBlockedPoints from the Visibility Graph library instead.']);
     % fcn_visibility_self_blocked_pts
     % determines the points blocked by the obstacle that the planner is currently
     % at a vertex of

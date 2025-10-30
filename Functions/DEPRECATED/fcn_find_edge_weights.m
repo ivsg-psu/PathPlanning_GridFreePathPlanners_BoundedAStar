@@ -1,4 +1,7 @@
 function [cost_matrix, visibility_matrix_original] = fcn_find_edge_weights(polytopes, all_pts, gap_size)
+warning('on','backtrace');
+warning(['fcn_find_edge_weights is being deprecated. ' ...
+    'Use fcn_BoundedAStar_findEdgeWeights instead.']);
     % WARNING WORK IN PROGRESS FUNCTION
     % TODO if the visibility matrix is reduced, this should be modified to
     % find the min cost, of the two polytopes that are both members of pt 1

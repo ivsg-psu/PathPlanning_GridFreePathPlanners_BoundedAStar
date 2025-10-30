@@ -1,4 +1,8 @@
 function route_dense = fcn_interpolate_route_in_time(route,dt)
+warning('on','backtrace');
+warning(['fcn_interpolate_route_in_time is being deprecated. ' ...
+    'Use fcn_BoundedAStar_interpolateRouteInTime instead.']);
+
 % fcn_interpolate_route_in_time
 %
 % Adds waypoints to the input route to increase the density of points according to the input time

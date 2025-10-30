@@ -1,4 +1,8 @@
 function route_dense = fcn_interpolate_route_spatially(route, spacing)
+warning('on','backtrace');
+warning(['fcn_interpolate_route_spatially is being deprecated. ' ...
+    'Use fcn_BoundedAStar_interpolateRouteSpatially instead.']);
+
 % fcn_interpolate_route_spatially
 %
 % Adds waypoints to the input route to increase the density of points according to the number of

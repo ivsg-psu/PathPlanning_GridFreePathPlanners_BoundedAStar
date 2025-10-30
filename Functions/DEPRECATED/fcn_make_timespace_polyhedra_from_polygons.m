@@ -1,4 +1,7 @@
 function time_space_polytopes = fcn_make_timespace_polyhedra_from_polygons(shrunk_polytopes, max_translation_distance, final_time)
+warning('on','backtrace');
+warning(['fcn_make_timespace_polyhedra_from_polygons is being deprecated. ' ...
+    'Use fcn_BoundedAStar_makeTimespacePolyhedrafromPolygons instead.']);
 % fcn_make_timespace_polyhedra_from_polygons
 %
 % Takes an array of polytopes as an input and gives them random,
