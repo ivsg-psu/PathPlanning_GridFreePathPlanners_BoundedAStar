@@ -1,4 +1,9 @@
 function [cost, route] = fcn_algorithm_Astar3d(vgraph, cgraph, hvec, all_pts, start, finish)
+
+warning('on','backtrace');
+warning(['fcn_algorithm_Astar3d is being deprecated. ' ...
+    'Use fcn_BoundedAStar_Astar3d instead.']);
+
 % fcn_algorithm_Astar3d
 %
 % A minimal version of the A* algorithm for graph searching.  Designed to contain minimal subproceses e.g. visibility graph

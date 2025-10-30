@@ -1,4 +1,11 @@
 function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = fcn_visibility_clear_and_blocked_points(polytopes,start,finish,varargin)
+
+
+warning('on','backtrace');
+warning(['fcn_visibility_clear_and_blocked_points is being deprecated. ' ...
+    'Use fcn_Visibility_clearAndBlockedPoints within the Visibility Graph library instead.']);
+
+
 % FCN_VISIBILITY_CLEAR_AND_BLOCKED_POINTS determines whether the points in
 % finish are blocked by a poltyope or not
 %
