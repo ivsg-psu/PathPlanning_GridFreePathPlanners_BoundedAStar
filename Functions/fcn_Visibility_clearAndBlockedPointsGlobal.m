@@ -26,7 +26,6 @@ function [visibility_matrix, visibility_results] = fcn_Visibility_clearAndBlocke
 %       area: area of the polytope
 %       max_radius: distance from the mean to the furthest vertex
 %
-%%%%%%%%%% delete
 %     starts: p-by-5 matrix of all the possible start points
 %       the information in the 5 columns is as follows:
 %         x-coordinate
@@ -46,10 +45,6 @@ function [visibility_matrix, visibility_results] = fcn_Visibility_clearAndBlocke
 %         beginning/ending indication (1 if the point is a beginning or ending
 %         point and 0 otherwise)
 %         Ex: [x y point_id obs_id beg_end]
-%
-%      gap_size: if zero, the special fully tiled case will be handled.
-%         This involves assuming that visibility is only down sides and through polytopes
-%%%%%%%%%%
 %
 %     (optional inputs)
 %
