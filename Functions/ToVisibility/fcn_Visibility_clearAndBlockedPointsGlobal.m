@@ -48,9 +48,6 @@ function [visibilityMatrix, visibilityDetailsEachFromPoint] = ...
 %         point and 0 otherwise)
 %         Ex: [x y point_id obs_id beg_end]
 %
-%      gap_size: if zero, the special fully tiled case will be handled.
-%         This involves assuming that visibility is only down sides and through polytopes
-%
 %     (optional inputs)
 %
 %      isConcave: set a 1 to allow for concave (i.e. non-convex) obstacles.  If this is left
