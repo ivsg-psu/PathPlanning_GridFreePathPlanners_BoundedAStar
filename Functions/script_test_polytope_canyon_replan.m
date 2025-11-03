@@ -1,4 +1,5 @@
-% script_test__polytope_canyon_replan
+% script_test_polytope_canyon_replan
+
 % this script plans two paths: (1) a distance reducing path and (2) a path that visits more connected
 % nodes. Then random edges are deleted from the vgraph and replanning is triggered from midway down the
 % initial path. The final paths are then compared to show that replanning from the more connected path
@@ -16,6 +17,13 @@
 %    % replaced with fcn_BoundedAStar_checkReachability
 % -- removed calls to fcn_algorithm_generate_cost_graph,
 %    % replaced with fcn_BoundedAStar_generateCostGraph
+% 2025_11_01 - S. Brennan
+% -- removed calls to fcn_BoundedAStar_loadTestMap, replaced with fcn_MapGen_loadTestMap
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -32,7 +40,7 @@ navigated_portion = 0.5; % portion of initial path to be completed prior to trig
 random_delete = 0; % toggle on random edge deletion vs length based deletion where long edges are deleted first (assumed to be more likely to be blocked as they cover more ground)
 num_repeats = 1; % since there is random edge deletion, the user may want to run each trial multiple times
 w = 10000; % relative weighting of heuristic cost function, heuristic_cost = dist_to_goal + w*num_visible_nodes + w*num_reachable_nodes
-[shrunk_polytopes, start_inits, finish_inits] = fcn_BoundedAStar_loadTestMap(map_idx);
+[shrunk_polytopes, start_inits, finish_inits] = fcn_MapGen_loadTestMap(map_idx);
 
 % map_ID nominal_or_reachable edge_deletion(edge_deletion_idx) pct_edges_removed init_route_length navigated_distance replan_route_length
 data = []; % initialize array for storing results
@@ -40,7 +48,14 @@ for mission_idx = 1:size(start_inits,1)
     start_init = start_inits(mission_idx,:);
     finish_init = finish_inits(mission_idx,:);
     % all_pts array creation
-    [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_init, finish_init);
+    if 1==1
+        warning('The function fcn_Visibility_polytopesGenerateAllPtsTable is not a direct replacement for the BoundedAStar version. The function needs to be updated from this point onward.')
+        [all_pts, start, finish] = fcn_Visibility_polytopesGenerateAllPtsTable(shrunk_polytopes, start_init, finish_init);
+    else
+        % % OLD:
+        %     [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_init, finish_init);
+    end
+
 
     % loop over multiple trials as there is randomness in edge deletion so we may wish to repeat the experiment
     for repeats = 1:num_repeats

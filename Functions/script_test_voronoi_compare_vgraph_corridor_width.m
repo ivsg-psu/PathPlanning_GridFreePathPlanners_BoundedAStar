@@ -15,6 +15,9 @@
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 % -- removed calls to fcn_algorithm_generate_dilation_robustness_matrix,
 %    % replaced with fcn_BoundedAStar_generateDilationRobustnessMatrix
+% 2025_11_01 - S. Brennan
+% -- replaced fcn_BoundedAStar_generateDilationRobustnessMatrix, 
+%    % with fcn_Visibility_generateDilationRobustnessMatrix
 
 
 % clear; close all; clc
@@ -114,7 +117,7 @@ all_pts = [[polytopes.xv];[polytopes.yv];1:point_tot;obs_id;beg_end]'; % all poi
 start = [start_init size(all_pts,1)+1 -1 1];
 finish = [finish_init size(all_pts,1)+2 -1 1];
 mode = '2d';
-dilation_robustness_matrix = fcn_BoundedAStar_generateDilationRobustnessMatrix(all_pts, start, finish, vgraph, mode, polytopes);
+dilation_robustness_matrix = fcn_Visibility_generateDilationRobustnessMatrix(all_pts, start, finish, vgraph, mode, polytopes);
 finishes = [all_pts; start; finish];
 starts = [all_pts; start; finish];
 

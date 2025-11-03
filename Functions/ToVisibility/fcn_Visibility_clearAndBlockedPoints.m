@@ -1,11 +1,5 @@
 function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = ...
     fcn_Visibility_clearAndBlockedPoints(polytopes,start,finish,varargin)
-
-warning('on','backtrace');
-warning(['fcn_Visibility_clearAndBlockedPoints is being deprecated. ' ...
-    'Use fcn_Visibility_clearAndBlockedPoints within the Visibility Graph library instead.']);
-
-
 % fcn_Visibility_clearAndBlockedPoints 
 % 
 % determines whether the points in finish are blocked by a polytope for
@@ -134,12 +128,20 @@ warning(['fcn_Visibility_clearAndBlockedPoints is being deprecated. ' ...
 % 2025_10_29 - S. Brennan
 % -- Replaced figNum with figNum
 % -- Replaced _MAPGEN_ with _VGRAPH_ global variable designations
-
+% (In Visibility Graph)
+% 2025_10_30 - S. Brennan
+% -- fcn_convert_to_vector_points changed to fcn_INTERNAL_convertToVectorPoints
+% -- fcn_calculate_intersection_matrices changed to fcn_INTERNAL_calculateIntersectionMatrices
+% -- updated plotting for better clarity
 
 % TO DO:
 % 2025_10_29 - S. Brennan
 % -- Need to simplify the output arguments to vector format. No need to
-% keep X and Y outputs separate since these are paired
+% keep X and Y outputs separate since these are paired.
+% -- Need to redo the functional dependence. The core function to check
+% intersections is exactly the same as the intersection testing in Path
+% library, but with fewer error checks and no means to include tolerance.
+% Should convert this to the Path library format.
 
 %% Debugging and Input checks
 % Check if flag_max_speed set. This occurs if the figNum variable input
@@ -262,10 +264,10 @@ end
 
 
 %% convert to vector points
-[xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = fcn_convert_to_vector_points(polytopes,start,finish);
+[xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = fcn_INTERNAL_convertToVectorPoints(polytopes,start,finish);
 
 %% calculate intersection check matrices
-[D,di,dj] = fcn_calculate_intersection_matrices(xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ,start,finish,isConcave);
+[D,di,dj] = fcn_INTERNAL_calculateIntersectionMatrices(xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ,start,finish,isConcave);
 
 %% find indices of clear and blocked paths
 num_int = sum(D,2); % 0s should corespond with a clear path to a vertex
@@ -293,20 +295,41 @@ blocked_pts = finish(num_int~=0,:);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
 if flag_do_plots
-% Plot results
+
+    % Plot connecting lines
+    % Arrange the data into start/end/nan format for X and Y data
+    xPolys = [polytopes.xv]';
+    yPolys = [polytopes.yv]';
+    Npoints = length(xPolys);
+    xStartPoints = start(1)*ones(Npoints,1);
+    yStartPoints = start(2)*ones(Npoints,1);
+    xDataToReshape = [xStartPoints xPolys nan(Npoints,1)];
+    xDataToPlot = reshape(xDataToReshape',[],1);
+    yDataToReshape = [yStartPoints yPolys nan(Npoints,1)];
+    yDataToPlot = reshape(yDataToReshape',[],1);
+    plot(xDataToPlot, yDataToPlot,'-','Color',0.8*[1 1 1],'LineWidth',1);
+
+    % Plot polytopes
     plotFormat.LineWidth = 3;
     plotFormat.MarkerSize = 10;
     plotFormat.LineStyle = '-';
     plotFormat.Color = [0 0 1];
-    
     fillFormat = [1 0 0 0 0.5];
-    h_plot = fcn_MapGen_plotPolytopes(polytopes, (plotFormat),(fillFormat),(figNum));
-    
+    h_plot = fcn_MapGen_plotPolytopes(polytopes, (plotFormat),(fillFormat),(figNum)); %#ok<NASGU>
+
+    % Plot start and end points
     plot([start(1) finish(1,1)],[start(2) finish(1,2)],'kx','linewidth',1)
+
+    % Plot results
     plot(clear_pts(:,1),clear_pts(:,2),'go','linewidth',1)
     plot(blocked_pts(:,1),blocked_pts(:,2),'rx','linewidth',1)
+end % Ends plotting
+
+if flag_do_debug
+    fprintf(1,'ENDING function: %s, in file: %s\n\n',st(1).name,st(1).file);
 end
-end
+
+end % Ends the function
 
 
 
@@ -322,7 +345,8 @@ end
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
-function [xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = fcn_convert_to_vector_points(polytopes,start,finish)
+%% fcn_INTERNAL_convertToVectorPoints
+function [xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = fcn_INTERNAL_convertToVectorPoints(polytopes,start,finish)
 % FCN_CONVERT_TO_VECTOR_POINTS takes in polytope structures and converts
 % them to vectors of starting and ending points of lines along the
 % perimeter of the polytopes
@@ -385,7 +409,7 @@ function [xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = fcn_convert_to_vector_points(polyto
 %      point_tot = length(xv);
 %      start = [0 0 point_tot+1 -1 0];
 %      finish = [8 8 point_tot+2 0 0];
-%      [xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]=fcn_convert_to_vector_points(polytopes,start,finish);
+%      [xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]=fcn_INTERNAL_convertToVectorPoints(polytopes,start,finish);
 %      fcn_BoundedAStar_plotPolytopes(polytopes,[],'b-',1,[0 8 0 8],'square')
 %      plot([start(1) finish(1)],[start(2) finish(2)],'kx','linewidth',1)
 %
@@ -416,9 +440,10 @@ yiQ = finish(:,2);
 lenQ = length(xiQ);
 xiP = ones(lenQ,1)*start(1); % one starting point
 yiP = ones(lenQ,1)*start(2);
-end
+end % Ends fcn_INTERNAL_convertToVectorPoints
 
-function [D,di,dj] = fcn_calculate_intersection_matrices(xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ,start,finish,is_concave)
+%% fcn_INTERNAL_calculateIntersectionMatrices
+function [D,di,dj] = fcn_INTERNAL_calculateIntersectionMatrices(xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ,start,finish,is_concave)
 % FCN_CALCULATE_INTERSECTION_MATRICES calculates matrices of values
 % indicating whether two lines intersect. Intersections occur when the
 % value of di and corresponding value of dj are both in the interval [0,1]
@@ -467,8 +492,8 @@ function [D,di,dj] = fcn_calculate_intersection_matrices(xiP,yiP,xiQ,yiQ,xjP,yjP
 %      point_tot = length(xv);
 %      start = [0 0 point_tot+1 -1 0];
 %      finish = [8 8 point_tot+2 0 0];
-%      [xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]=fcn_convert_to_vector_points(polytopes,start,finish);
-%      [D,di,dj]=fcn_calculate_intersection_matrices(xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ);
+%      [xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]=fcn_INTERNAL_convertToVectorPoints(polytopes,start,finish);
+%      [D,di,dj]=fcn_INTERNAL_calculateIntersectionMatrices(xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ);
 %      num_int = D;
 %      fcn_BoundedAStar_plotPolytopes(polytopes,[],'b-',2,[],'square')
 %      for ints = 1:length(num_int)
@@ -540,5 +565,5 @@ D = ((di<1-acc).*(di>acc)).*((dj<=1).*(dj>=0))+exceptions+midpoints;
 % that are on the same obstacle.
 % The midpoints part is where I tried to handle situations where the starting
 % point is on the line between two points.
-end
+end % Ends fcn_INTERNAL_calculateIntersectionMatrices
 

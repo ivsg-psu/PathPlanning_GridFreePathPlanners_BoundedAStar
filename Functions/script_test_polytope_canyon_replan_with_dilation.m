@@ -1,4 +1,4 @@
-% script_test__polytope_canyon_replan_with_dilation
+% script_test_polytope_canyon_replan_with_dilation
 % This script is very similar to the scrip_test_polytope_canyon_replan but it evaluates a corridor width cost function instead of
 % a connectivity cost function. This script plans two paths: (1) a distance reducing path and (2) a
 % path that routes down edges with more free space around them. Then obstacles are dilated to close
@@ -21,6 +21,15 @@
 %    % replaced with fcn_BoundedAStar_generateCostGraph
 % -- removed calls to fcn_algorithm_generate_dilation_robustness_matrix,
 %    % replaced with fcn_BoundedAStar_generateDilationRobustnessMatrix
+% 2025_11_01 - S. Brennan
+% -- removed calls to fcn_BoundedAStar_loadTestMap, replaced with fcn_MapGen_loadTestMap
+% -- replaced fcn_BoundedAStar_generateDilationRobustnessMatrix,
+%    % with fcn_Visibility_generateDilationRobustnessMatrix
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
 
 
 % clear; close all; clc
@@ -38,8 +47,9 @@ flag_save_plots = 1;
 data = []; % initialize array for storing results
 %% mission options
 for map_idx = [7, 8, 9] % Halton maps
-% for map_idx = [3, 5, 6] % flood plain maps
-    [shrunk_polytopes, start_inits, finish_inits,~, length_cost_weights, navigated_portions] = fcn_BoundedAStar_loadTestMap(map_idx); % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
+    % for map_idx = [3, 5, 6] % flood plain maps
+    [shrunk_polytopes, start_inits, finish_inits,~, length_cost_weights, navigated_portions] = ...
+        fcn_MapGen_loadTestMap(map_idx); % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
 
     %% get stats for this map to find gap size
     poly_map_stats = fcn_MapGen_statsPolytopes(shrunk_polytopes);
@@ -72,7 +82,14 @@ for map_idx = [7, 8, 9] % Halton maps
                 trial_identifier = sprintf('map idx: %i, nominal or corridor-width-based: %i,\npolytope size increase [km]: %.2f',str2num(strcat(num2str(map_idx),num2str(mission_idx))), nominal_or_width_based,polytope_size_increases)
                 %% plan the initial path
                 % all_pts array creation
-                [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_init, finish_init);
+                if 1==1
+                    warning('The function fcn_Visibility_polytopesGenerateAllPtsTable is not a direct replacement for the BoundedAStar version. The function needs to be updated from this point onward.')
+                    [all_pts, start, finish] = fcn_Visibility_polytopesGenerateAllPtsTable(shrunk_polytopes, start_init, finish_init);
+                else
+                    % % OLD:
+                    % [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_init, finish_init);
+                end
+                
                 % find vgraph
                 finishes = [all_pts; start; finish];
                 starts = [all_pts; start; finish];
@@ -92,7 +109,7 @@ for map_idx = [7, 8, 9] % Halton maps
 
                 % make dilation robustness matrix
                 mode = '2d';
-                dilation_robustness_tensor = fcn_BoundedAStar_generateDilationRobustnessMatrix(all_pts, start, finish, vgraph, mode, shrunk_polytopes);
+                dilation_robustness_tensor = fcn_Visibility_generateDilationRobustnessMatrix(all_pts, start, finish, vgraph, mode, shrunk_polytopes);
                 dilation_robustness_matrix = min(dilation_robustness_tensor(:,:,1), dilation_robustness_tensor(:,:,2)); % combine the left and right sides as a max
                 dilation_robustness_matrix_for_variance = dilation_robustness_matrix(:)'; % extract vector of all values
                 dilation_robustness_matrix_for_variance(dilation_robustness_matrix_for_variance == 0) = []; % remove 0s
@@ -178,7 +195,16 @@ for map_idx = [7, 8, 9] % Halton maps
 
                 %% plan the new path
                 % generate updated all_pts array
-                [all_pts_new, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(enlarged_polytopes, start_midway, finish_init);
+                if 1==1
+                    warning('The function fcn_Visibility_polytopesGenerateAllPtsTable is not a direct replacement for the BoundedAStar version. The function needs to be updated from this point onward.')
+                    % all_pts array creation
+                    [all_pts_new, start, finish] = fcn_Visibility_polytopesGenerateAllPtsTable(enlarged_polytopes, start_midway, finish_init);
+                else
+                    % % OLD:
+                    % % all_pts array creation
+                    % [all_pts_new, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(enlarged_polytopes, start_midway, finish_init);
+                end
+
 
                 % make vgraph again
                 finishes = [all_pts_new; start; finish];
@@ -230,10 +256,10 @@ for map_idx = [7, 8, 9] % Halton maps
                     plot(start_midway(1),start_midway(2),'dm','MarkerSize',6,'MarkerFaceColor','m')
                     plot(replan_route(:,1),replan_route(:,2),'--g','LineWidth',2);
                     for j = 1:length(enlarged_polytopes)
-                         fill(enlarged_polytopes(j).vertices(:,1)',enlarged_polytopes(j).vertices(:,2),[0 0 1],'FaceColor','r','FaceAlpha',0.3)
+                        fill(enlarged_polytopes(j).vertices(:,1)',enlarged_polytopes(j).vertices(:,2),[0 0 1],'FaceColor','r','FaceAlpha',0.3)
                     end
                     for j = 1:length(shrunk_polytopes)
-                         fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
+                        fill(shrunk_polytopes(j).vertices(:,1)',shrunk_polytopes(j).vertices(:,2),[0 0 1],'FaceAlpha',1)
                     end
                     title_string = sprintf('map idx: %i, nominal or corridor-width-based: %i,\npolytope size increase [km]: %.2f',str2num(strcat(num2str(map_idx),num2str(mission_idx))), nominal_or_width_based,polytope_size_increases);
                     title(title_string);
@@ -642,37 +668,37 @@ if flag_save_plots
     FigList = findobj(allchild(0), 'flat', 'Type', 'figure');
     cd(FolderName)
     for iFig = 1:length(FigList)
-      FigHandle = FigList(iFig);
-      FigName   = get(FigHandle, 'Number');
-      savefig(FigHandle, strcat(num2str(FigName), '.fig'));
-      saveas(FigHandle, strcat(num2str(FigName), '.png'));
+        FigHandle = FigList(iFig);
+        FigName   = get(FigHandle, 'Number');
+        savefig(FigHandle, strcat(num2str(FigName), '.fig'));
+        saveas(FigHandle, strcat(num2str(FigName), '.png'));
     end
     save('data.mat','data');
     cd ..
 end
 
 function INTERNAL_fcn_format_timespace_plot()
-    box on
-    % define figure properties
-    opts.width      = 8;
-    opts.height     = 6;
-    opts.fontType   = 'Times';
-    opts.fontSize   = 9;
-    fig = gcf;
-    % scaling
-    fig.Units               = 'centimeters';
-    fig.Position(3)         = opts.width;
-    fig.Position(4)         = opts.height;
+box on
+% define figure properties
+opts.width      = 8;
+opts.height     = 6;
+opts.fontType   = 'Times';
+opts.fontSize   = 9;
+fig = gcf;
+% scaling
+fig.Units               = 'centimeters';
+fig.Position(3)         = opts.width;
+fig.Position(4)         = opts.height;
 
-    % set text properties
-    set(fig.Children, ...
-        'FontName',     'Times', ...
-        'FontSize',     9);
+% set text properties
+set(fig.Children, ...
+    'FontName',     'Times', ...
+    'FontSize',     9);
 
-    % remove unnecessary white space
-    set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
-    xlabel('x [m]')
-    ylabel('y [m]')
-    zlabel('t [s]')
-    view([36 30])
+% remove unnecessary white space
+set(gca,'LooseInset',max(get(gca,'TightInset'), 0.02))
+xlabel('x [m]')
+ylabel('y [m]')
+zlabel('t [s]')
+view([36 30])
 end

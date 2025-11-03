@@ -1,3 +1,6 @@
+% script_animate_dilation_replan.m
+
+
 % REVISION HISTORY:
 % 2025_10_06 - S. Brennan
 % -- removed addpath calls
@@ -12,6 +15,15 @@
 %    % replaced with fcn_BoundedAStar_generateCostGraph
 % -- removed calls to fcn_algorithm_generate_dilation_robustness_matrix,
 %    % replaced with fcn_BoundedAStar_generateDilationRobustnessMatrix
+% 2025_11_01 - S. Brennan
+% -- removed calls to fcn_BoundedAStar_loadTestMap, replaced with fcn_MapGen_loadTestMap
+% -- replaced fcn_BoundedAStar_generateDilationRobustnessMatrix, 
+%    % with fcn_Visibility_generateDilationRobustnessMatrix
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
 
 
 % clear; close all; clc
@@ -29,27 +41,44 @@ flag_do_threadpulling = 1;
 flag_save_plots = 1;
 navigated_portion = 0.4; % portion of initial path to be completed prior to triggering replanning
 
-map_idx = 6 %
-[shrunk_polytopes, start_inits, finish_inits,~, length_cost_weights] = fcn_BoundedAStar_loadTestMap(map_idx); % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
+map_idx = 6; %
+[shrunk_polytopes, start_inits, finish_inits,~, length_cost_weights] = ...
+    fcn_MapGen_loadTestMap(map_idx); % relative weighting of cost function, cost = w*length_cost + (1-w)*dilation_robustness_cost
 
 mission_idx = 4;
 
 w = length_cost_weights(mission_idx);
-start_init = start_inits(mission_idx,:);
-finish_init = finish_inits(mission_idx,:);
+startXY_init = start_inits(mission_idx,:);
+finishXY_init = finish_inits(mission_idx,:);
 x_shift = -995;
 y_shift = 4722;
 polytope_size_increases = 0.2;
 for nominal_or_width_based = [1, 2]
-    trial_identifier = sprintf('map idx: %i, nominal or corridor-width-based: %i,\npolytope size increase [km]: %.2f',str2num(strcat(num2str(map_idx),num2str(mission_idx))), nominal_or_width_based,polytope_size_increases)
-    %% plan the initial path
-    % all_pts array creation
-    [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_init, finish_init);
-    % find vgraph
-    finishes = [all_pts; start; finish];
-    starts = [all_pts; start; finish];
-    [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, starts, finishes,1);
-    orig_vgraph = vgraph; % note the original to compare it to the reduced vgraph
+    trial_identifier = sprintf('map idx: %i, nominal or corridor-width-based: %i,\npolytope size increase [km]: %.2f',str2num(strcat(num2str(map_idx),num2str(mission_idx))), nominal_or_width_based,polytope_size_increases);
+   
+    
+    %%%%%
+    % plan the initial path
+
+    if 1==1
+        % NEW:
+        % pointsWithData array creation
+        [pointsWithData, start, finish] = fcn_Visibility_polytopesGenerateAllPtsTable(shrunk_polytopes, startXY_init, finishXY_init);
+
+        % find vgraph
+        [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, pointsWithData, pointsWithData,1);
+        orig_vgraph = vgraph; % note the original to compare it to the reduced vgraph
+        polyPointsWithData = pointsWithData(1:end-2,:);
+    else
+        % % OLD:
+        % [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, startXY_init, finishXY_init);
+        % % find vgraph
+        % finishes = [all_pts; start; finish];
+        % starts = [all_pts; start; finish];
+        % [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, starts, finishes,1);
+        % orig_vgraph = vgraph; % note the original to compare it to the reduced vgraph
+        % polyPointsWithData = all_pts;
+    end
 
     % find rgraph
     [is_reachable, num_steps, rgraph] = fcn_BoundedAStar_checkReachability(vgraph,start(3),finish(3));
@@ -59,11 +88,11 @@ for nominal_or_width_based = [1, 2]
 
     % make cgraph
     mode = "xy spatial only";
-    [cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts, start, finish, mode);
+    [cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(polyPointsWithData, start, finish, mode);
 
     % make dilation robustness matrix
     mode = '2d';
-    dilation_robustness_tensor = fcn_BoundedAStar_generateDilationRobustnessMatrix(all_pts, start, finish, vgraph, mode, shrunk_polytopes);
+    dilation_robustness_tensor = fcn_Visibility_generateDilationRobustnessMatrix(polyPointsWithData, start, finish, vgraph, mode, shrunk_polytopes);
     dilation_robustness_matrix = min(dilation_robustness_tensor(:,:,1), dilation_robustness_tensor(:,:,2)); % combine the left and right sides as a max
     dilation_robustness_matrix_for_variance = dilation_robustness_matrix(:)'; % extract vector of all values
     dilation_robustness_matrix_for_variance(dilation_robustness_matrix_for_variance == 0) = []; % remove 0s
@@ -77,7 +106,7 @@ for nominal_or_width_based = [1, 2]
         cgraph = w*cgraph + (1-w)*inv_corridor_width;
     end
     % plan initial route
-    [init_cost, init_route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, all_pts, start, finish);
+    [init_cost, init_route] = fcn_algorithm_Astar(vgraph, cgraph, hvec, polyPointsWithData, start, finish);
 
     if nominal_or_width_based==2
         % backup initial route for comparison
@@ -141,19 +170,31 @@ for nominal_or_width_based = [1, 2]
 
     % enlarging polytopes may have put the midway start inside a polytope
     % for each polytope, check if this point is inside the polytope and snap to a nearby vertex if so
-    pts_to_test = [start_midway; finish_init];
+    pts_to_test = [start_midway; finishXY_init];
     output_pts = fcn_MapGen_snapInteriorPointToVertex(enlarged_polytopes, pts_to_test);
     start_midway = output_pts(1,:);
-    finish_init = output_pts(2,:);
+    finishXY_init = output_pts(2,:);
 
     %% plan the new path
-    % generate updated all_pts array
-    [all_pts_new, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(enlarged_polytopes, start_midway, finish_init);
+    if 1==1
+        % pointsWithData array creation
+        [pointsWithData, start, finish] = fcn_Visibility_polytopesGenerateAllPtsTable(enlarged_polytopes, start_midway, finishXY_init);
 
-    % make vgraph again
-    finishes = [all_pts_new; start; finish];
-    starts = [all_pts_new; start; finish];
-    [new_vgraph, visibility_results_all_pts_new] = fcn_Visibility_clearAndBlockedPointsGlobal(enlarged_polytopes, starts, finishes,1);
+        % find vgraph
+        [new_vgraph, visibility_results_all_pts_new] = fcn_Visibility_clearAndBlockedPointsGlobal(enlarged_polytopes, pointsWithData, pointsWithData,1);
+        polyPointsWithData_new = pointsWithData(1:end-2,:);
+    else
+        % OLD: 
+        % % generate updated all_pts array
+        % [all_pts_new, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(enlarged_polytopes, start_midway, finishXY_init);
+        % 
+        % % make vgraph again
+        % finishes = [all_pts_new; start; finish];
+        % starts = [all_pts_new; start; finish];
+        % [new_vgraph, visibility_results_all_pts_new] = fcn_Visibility_clearAndBlockedPointsGlobal(enlarged_polytopes, starts, finishes,1);
+        % polyPointsWithData_new = all_pts_new;
+    end
+
     reduced_vgraph = new_vgraph;
     % get vgraph stats
     num_edges_initially = sum(sum(vgraph));
@@ -169,9 +210,9 @@ for nominal_or_width_based = [1, 2]
 
     % make cgraph again
     mode = "xy spatial only";
-    [cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts_new, start, finish, mode);
+    [cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(polyPointsWithData_new, start, finish, mode);
     % replan path
-    [replan_cost, replan_route] = fcn_algorithm_Astar(new_vgraph, cgraph, hvec, all_pts_new, start, finish);
+    [replan_cost, replan_route] = fcn_algorithm_Astar(new_vgraph, cgraph, hvec, polyPointsWithData_new, start, finish);
 
     % find replan route length
     route_x = replan_route(:,1);
@@ -185,7 +226,7 @@ for nominal_or_width_based = [1, 2]
         figure; hold on; box on;
         xlabel('x [km]');
         ylabel('y [km]');
-        plot(start_init(1)+x_shift,start_init(2)+y_shift,'xg','MarkerSize',6);
+        plot(startXY_init(1)+x_shift,startXY_init(2)+y_shift,'xg','MarkerSize',6);
         plot(finish(1)+x_shift,finish(2)+y_shift,'xr','MarkerSize',6);
         plot(init_route(:,1)+x_shift,init_route(:,2)+y_shift,'k','LineWidth',2);
         if flag_do_threadpulling && nominal_or_width_based==2
@@ -194,10 +235,10 @@ for nominal_or_width_based = [1, 2]
         plot(start_midway(1)+x_shift,start_midway(2)+y_shift,'dm','MarkerSize',6,'MarkerFaceColor','m')
         plot(replan_route(:,1)+x_shift,replan_route(:,2)+y_shift,'--g','LineWidth',2);
         for j = 1:length(enlarged_polytopes)
-             fill(enlarged_polytopes(j).vertices(:,1)'+x_shift,enlarged_polytopes(j).vertices(:,2)+y_shift,[0 0 1],'FaceColor','r','FaceAlpha',0.3)
+            fill(enlarged_polytopes(j).vertices(:,1)'+x_shift,enlarged_polytopes(j).vertices(:,2)+y_shift,[0 0 1],'FaceColor','r','FaceAlpha',0.3)
         end
         for j = 1:length(shrunk_polytopes)
-             fill(shrunk_polytopes(j).vertices(:,1)'+x_shift,shrunk_polytopes(j).vertices(:,2)+y_shift,[137 207 240]./255,'FaceAlpha',1)
+            fill(shrunk_polytopes(j).vertices(:,1)'+x_shift,shrunk_polytopes(j).vertices(:,2)+y_shift,[137 207 240]./255,'FaceAlpha',1)
         end
         title_string = sprintf('map idx: %i, nominal or corridor-width-based: %i,\npolytope size increase [km]: %.2f',str2num(strcat(num2str(map_idx),num2str(mission_idx))), nominal_or_width_based,polytope_size_increases);
         title(title_string);
@@ -216,10 +257,10 @@ for nominal_or_width_based = [1, 2]
         legend(leg_str,'Location','northeast');
         FigList = findobj(allchild(0), 'flat', 'Type', 'figure');
         for iFig = 1:length(FigList)
-          FigHandle = FigList(iFig);
-          FigName   = get(FigHandle, 'Number');
-          savefig(FigHandle, strcat(num2str(FigName), '.fig'));
-          saveas(FigHandle, strcat(num2str(FigName), '.png'));
+            FigHandle = FigList(iFig);
+            FigName   = get(FigHandle, 'Number');
+            savefig(FigHandle, strcat(num2str(FigName), '.fig'));
+            saveas(FigHandle, strcat(num2str(FigName), '.png'));
         end
     end % end flag_do_plot condition
 
@@ -300,7 +341,7 @@ for nominal_or_width_based = [1, 2]
         % xlim([min(all_pts(:,1))*0.95 max(all_pts(:,1))*1.05]);
         % ylim([min(all_pts(:,2))*0.95 max(all_pts(:,2))*1.05]);
         % always show start and goal
-        p_start = plot(start_init(1)+x_shift,start_init(2)+y_shift,'xg','MarkerSize',6);
+        p_start = plot(startXY_init(1)+x_shift,startXY_init(2)+y_shift,'xg','MarkerSize',6);
         p_finish = plot(finish(1)+x_shift,finish(2)+y_shift,'xr','MarkerSize',6);
         leg_str = {'start','finish'};
         % for each polytope,
@@ -317,7 +358,7 @@ for nominal_or_width_based = [1, 2]
         end
         j = 1;
         p_poly = fill(shrunk_polytopes(j).vertices(:,1)'+x_shift,shrunk_polytopes(j).vertices(:,2)+y_shift,[137 207 240]./255,'FaceAlpha',1);
-            leg_str{end+1} = 'obstacles';
+        leg_str{end+1} = 'obstacles';
         for j = 2:length(shrunk_polytopes)
             p_poly = fill(shrunk_polytopes(j).vertices(:,1)'+x_shift,shrunk_polytopes(j).vertices(:,2)+y_shift,[137 207 240]./255,'FaceAlpha',1);
             leg_str{end+1} = '';
@@ -335,7 +376,7 @@ for nominal_or_width_based = [1, 2]
             leg_str{end+1} = '';
 
         else
-        % if the midpoint has been hit, plot the midpoint as a pink diamond
+            % if the midpoint has been hit, plot the midpoint as a pink diamond
             % plot the initial route as a grey dotted line
             delete(p_plan)
             p_plan = plot(replan_route_dense(:,1)+x_shift, replan_route_dense(:,2)+y_shift,'g--','LineWidth',2);
@@ -380,7 +421,7 @@ for nominal_or_width_based = [1, 2]
     % xlim([min(all_pts(:,1))*0.95 max(all_pts(:,1))*1.05]);
     % ylim([min(all_pts(:,2))*0.95 max(all_pts(:,2))*1.05]);
     % always show start and goal
-    p_start = plot(start_init(1)+x_shift,start_init(2)+y_shift,'xg','MarkerSize',6);
+    p_start = plot(startXY_init(1)+x_shift,startXY_init(2)+y_shift,'xg','MarkerSize',6);
     p_finish = plot(finish(1)+x_shift,finish(2)+y_shift,'xr','MarkerSize',6);
     leg_str = {'start','finish'};
     % for each polytope,
@@ -397,7 +438,7 @@ for nominal_or_width_based = [1, 2]
     end
     j = 1;
     p_poly = fill(shrunk_polytopes(j).vertices(:,1)'+x_shift,shrunk_polytopes(j).vertices(:,2)+y_shift,[137 207 240]./255,'FaceAlpha',1);
-        leg_str{end+1} = 'obstacles';
+    leg_str{end+1} = 'obstacles';
     for j = 2:length(shrunk_polytopes)
         p_poly = fill(shrunk_polytopes(j).vertices(:,1)'+x_shift,shrunk_polytopes(j).vertices(:,2)+y_shift,[137 207 240]./255,'FaceAlpha',1);
         leg_str{end+1} = '';
@@ -415,7 +456,7 @@ for nominal_or_width_based = [1, 2]
         leg_str{end+1} = '';
 
     else
-    % if the midpoint has been hit, plot the midpoint as a pink diamond
+        % if the midpoint has been hit, plot the midpoint as a pink diamond
         % plot the initial route as a grey dotted line
         p_plan_old = plot(init_route_dense(:,1)+x_shift, init_route_dense(:,2)+y_shift,'--','Color','r','LineWidth',2);
         leg_str{end+1} = 'outdated path plan';
@@ -434,10 +475,10 @@ for nominal_or_width_based = [1, 2]
     FigList = findobj(allchild(0), 'flat', 'Type', 'figure');
     cd(FolderName)
     for iFig = 1:length(FigList)
-      FigHandle = FigList(iFig);
-      FigName   = get(FigHandle, 'Number');
-      savefig(FigHandle, strcat(num2str(FigName), '.fig'));
-      saveas(FigHandle, strcat(num2str(FigName), '.png'));
+        FigHandle = FigList(iFig);
+        FigName   = get(FigHandle, 'Number');
+        savefig(FigHandle, strcat(num2str(FigName), '.fig'));
+        saveas(FigHandle, strcat(num2str(FigName), '.png'));
     end
     cd ..
 

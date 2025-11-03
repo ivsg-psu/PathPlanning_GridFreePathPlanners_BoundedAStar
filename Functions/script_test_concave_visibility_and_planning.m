@@ -1,3 +1,4 @@
+% script_test_concave_visibility_and_planning.m
 
 % REVISION HISTORY:
 %
@@ -18,6 +19,12 @@
 % -- removed calls to fcn_plot_polytopes
 %    % replaced with fcn_MapGen_plotPolytopes
 % -- added call to fcn_BoundedAStar_polytopesGenerateAllPtsTable
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
+
 
 % TO DO:
 % - replace deprecated version of Bounded A Star setup function when new
@@ -55,7 +62,15 @@ if flag_do_plot
 end
 %% plot visibility and path for convex map
 % generate all_pts table
-[all_pts, ~, ~] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes, [0 0], [0 0], (-1))
+
+% all_pts array creation
+if 1==1
+    warning('The function fcn_Visibility_polytopesGenerateAllPtsTable is not a direct replacement for the BoundedAStar version. The function needs to be updated from this point onward.')
+    [all_pts, ~, ~] = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, [0 0], [0 0], (-1));
+else
+    % % OLD:
+    % [all_pts, ~, ~] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes, [0 0], [0 0], (-1));
+end
 
 
 % calculate vibility graph

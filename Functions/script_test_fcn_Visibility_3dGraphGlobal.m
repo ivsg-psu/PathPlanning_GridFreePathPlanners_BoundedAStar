@@ -5,7 +5,7 @@
 % Revision history
 % 2025_08_04 - K. Hayes, kxh1031@psu.edu
 % -- first write of script, using
-% script_test_fcn_Visibility_addObstacle as a starter
+%    % script_test_fcn_Visibility_addObstacle as a starter
 % 2025_10_03 - K. Hayes
 % -- fixed bug causing assertion failure in DEMO case 1
 

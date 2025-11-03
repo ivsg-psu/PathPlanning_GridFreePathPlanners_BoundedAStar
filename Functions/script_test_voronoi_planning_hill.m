@@ -8,6 +8,8 @@
 % -- removed calls to fcn_util_load_test_map, replaced with fcn_BoundedAStar_loadTestMap
 % -- removed calls to fcn_check_reachability,
 %    % replaced with fcn_BoundedAStar_checkReachability
+% 2025_11_01 - S. Brennan
+% -- removed calls to fcn_BoundedAStar_loadTestMap, replaced with fcn_MapGen_loadTestMap
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -18,7 +20,7 @@ map_idx = 7;
 flag_do_plot = 1;
 flag_do_animation = 0;
 flag_do_plot_slow = 0;
-[shrunk_polytopes, start_init, finish_init, resolution_scale] = fcn_BoundedAStar_loadTestMap(map_idx, 1);
+[shrunk_polytopes, start_init, finish_init, resolution_scale] = fcn_MapGen_loadTestMap(map_idx, 1);
 
 %% interpolate polytope vertices
 distances = diff([[shrunk_polytopes.xv]',[shrunk_polytopes.yv]']); % find side lengths in whole field

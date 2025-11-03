@@ -7,6 +7,11 @@
 %    % script_test_fcn_Laps_breakDataIntoLapIndices as starter
 % 2025_08_18 - K. Hayes, kxh1031@psu.edu
 % -- updated demo cases
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+% -- then confirmed this script still works
+
 
 %% Set up the workspace
 close all
@@ -72,34 +77,57 @@ shrunk_polytopes = fcn_MapGen_polytopesShrinkToRadius(trim_polytopes,des_radius,
 
 des_cost = 0.1;
 shrunk_polytopes = fcn_MapGen_polytopesSetCosts(shrunk_polytopes, des_cost, (-1));
+if 1==1
+    % NEW: 
+    % create all_pts matrix
+    all_pts = fcn_Visibility_polytopesGenerateAllPtsTable(shrunk_polytopes, startPoint, endPoint, -1);
 
-% create all_pts matrix
-all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, startPoint, endPoint, -1);
-Npts = size(all_pts,1);
+    % Calculate the visibility graph
+    % TO-DO - put into a visibility library later?
+    [vgraph, visibility_results_all_pts] = ...
+        fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, all_pts, all_pts, [], 8383);
 
-% plan path
-% Add the start and finish points to the all_pts list. Give these the
-% index of Npts plus 1 or 2, so that they are indexed as the last 2
-% points. They have a special obstacle ID of -1 (because they aren't
-% obstacles), and they are both flagged as start/end points.
-start = [startPoint Npts+1 -1 1];
-finish = [endPoint Npts+2 -1 1];
+    % Generate the cost graph. Flag the cost type (using a string) to
+    % calculate cost based on XY spatial distance only (not energy)
+    mode = 'xy spatial only';
+    [cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts(1:end-2,:), all_pts(end-1,:), all_pts(end,:), mode, -1);
 
-% Why are these repeated?
-finishes = [all_pts; start; finish];
-starts   = [all_pts; start; finish];
+    % Call the A-star algorithm to do the path plan
+    [cost, path] = fcn_BoundedAStar_Astar(...
+        vgraph, cgraph, hvec, all_pts(1:end-2,:), all_pts(end-1,:), all_pts(end,:), shrunk_polytopes, (fig_num));
 
-% Calculate the visibility graph
-% TO-DO - put into a visibility library later?
-[vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, starts, finishes, [], -1);
+else
+    % % OLD
+    % % create all_pts matrix
+    % all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, startPoint, endPoint, -1);
+    % Npts = size(all_pts,1);
+    % 
+    % % plan path
+    % % Add the start and finish points to the all_pts list. Give these the
+    % % index of Npts plus 1 or 2, so that they are indexed as the last 2
+    % % points. They have a special obstacle ID of -1 (because they aren't
+    % % obstacles), and they are both flagged as start/end points.
+    % start = [startPoint Npts+1 -1 1];
+    % finish = [endPoint Npts+2 -1 1];
+    % 
+    % % Why are these repeated?
+    % finishes = [all_pts; start; finish];
+    % starts   = [all_pts; start; finish];
+    % 
+    % % Calculate the visibility graph
+    % % TO-DO - put into a visibility library later?
+    % [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, starts, finishes, [], -1);
+    % 
+    % % Generate the cost graph. Flag the cost type (using a string) to
+    % % calculate cost based on XY spatial distance only (not energy)
+    % mode = 'xy spatial only';
+    % [cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts, start, finish, mode, -1);
+    % 
+    % % Call the A-star algorithm to do the path plan
+    % [cost, path] = fcn_BoundedAStar_Astar(vgraph, cgraph, hvec, all_pts, start, finish, shrunk_polytopes, (fig_num));
 
-% Generate the cost graph. Flag the cost type (using a string) to
-% calculate cost based on XY spatial distance only (not energy)
-mode = 'xy spatial only';
-[cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts, start, finish, mode, -1);
+end
 
-% Call the A-star algorithm to do the path plan
-[cost, path] = fcn_BoundedAStar_Astar(vgraph, cgraph, hvec, all_pts, start, finish, shrunk_polytopes, (fig_num));
 
 sgtitle(titleString, 'Interpreter','none');
 

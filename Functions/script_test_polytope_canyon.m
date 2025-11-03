@@ -1,4 +1,5 @@
 % script_test_3d_polytope_canyon
+
 % example of routing through a field of polytopes with a large chokepoint in the middle
 % reachability and visibilty incentive cost functions can be used to route around the choke point
 
@@ -11,6 +12,12 @@
 %    % replaced with fcn_BoundedAStar_checkReachability
 % -- removed calls to fcn_algorithm_generate_cost_graph,
 %    % replaced with fcn_BoundedAStar_generateCostGraph
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
+
 
 % addpath 'C:\Users\sjhar\OneDrive\Desktop\TriangleRayIntersection'
 % addpath 'C:\Users\sjhar\OneDrive\Desktop\gif\gif'
@@ -77,7 +84,14 @@ finish = [2 1.25];
 
 
 %% all_pts array creation
-all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start, finish,-1);
+if 1==1
+    warning('The function fcn_Visibility_polytopesGenerateAllPtsTable is not a direct replacement for the BoundedAStar version. The function needs to be updated from this point onward.')
+    all_pts = fcn_Visibility_polytopesGenerateAllPtsTable(shrunk_polytopes, start, finish,-1);
+else
+    % % OLD:
+    % all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start, finish,-1);
+end
+
 
 %% plan path
 start = [start size(all_pts,1)+1 -1 1]

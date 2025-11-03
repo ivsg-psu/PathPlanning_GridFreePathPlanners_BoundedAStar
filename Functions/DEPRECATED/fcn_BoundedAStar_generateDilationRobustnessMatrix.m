@@ -1,5 +1,10 @@
 function [dilation_robustness_matrix] = fcn_BoundedAStar_generateDilationRobustnessMatrix(...
     all_pts, start, finish, vgraph, mode, polytopes, varargin)
+
+warning('on','backtrace');
+warning(['fcn_BoundedAStar_generateDilationRobustnessMatrix is being deprecated. ' ...
+    'Use fcn_Visibility_generateDilationRobustnessMatrix within the Visibility Graph library instead.']);
+
 % fcn_BoundedAStar_generateDilationRobustnessMatrix
 % estimates edge clearances around each edge in a visibility matrix
 %

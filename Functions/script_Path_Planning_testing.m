@@ -26,6 +26,12 @@
 %    fcn_BoundedAStar_calculateBoundingEllipseMinPerimPath
 % -- replaced calls to fcn_visibility_line_polytope_intersections
 %    with fcn_Visibility_linePolytopeIntersections
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
+
 
 %% Prep the workspace
 close all
@@ -66,7 +72,9 @@ yvert = [shrunk_polytopes.yv];
 % [x-vertices, y-vertices, vertex id, obstacle id, beginning or end indicator]
 start_xy = [0 50];
 finish_xy = [100 50];
-[all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_xy, finish_xy, -1);
+[all_pts, start, finish] = fcn_Visibility_polytopesGenerateAllPtsTable(shrunk_polytopes, start_xy, finish_xy, -1);
+warning('Outputs on fcn_Visibility_polytopesGenerateAllPtsTable need to be checked on this function')
+
 
 % The bound points indicates which points are considered at each step of
 % the path planning process. Here we chose all the points within the map,
@@ -78,7 +86,8 @@ bound_pts = all_pts;
 % Note this function also returns intersection information
 % (D,di,dj,num_int) and potentially intersecting line information
 % (xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ) for use in later functions.
-[clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]=fcn_Visibility_clearAndBlockedPoints(shrunk_polytopes,start,finish, -1);
+[clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = ...
+    fcn_Visibility_clearAndBlockedPoints(shrunk_polytopes,start,finish, -1);
 % plot the results showing which points are clear (green circles) and which
 % points are not (red x's) from the starting point (black x)
 fig = 9999;

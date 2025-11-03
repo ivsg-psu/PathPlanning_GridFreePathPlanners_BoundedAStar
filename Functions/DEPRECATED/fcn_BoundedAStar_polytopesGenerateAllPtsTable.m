@@ -1,10 +1,17 @@
 function [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes, start_xy, finish_xy, varargin)
+
+warning('on','backtrace');
+warning(['fcn_BoundedAStar_polytopesGenerateAllPtsTable is being deprecated. ' ...
+    'Use fcn_Visibility_polytopesGenerateAllPtsTable within the Visibility Graph library instead.']);
+
+
 % fcn_BoundedAStar_polytopesGenerateAllPtsTable
 %
-% A short function to turn polytope vertices into an nx5 table of points of the form used by:
-%  - fcn_BoundedAStar_AstarBounded
-%  - fcn_Visibility_clearAndBlockedPointsGlobal
-%  - fcn_Visibility_clearAndBlockedPoints
+% A short function to turn polytope vertices into an nx5 table of points of
+% the form used by:
+%   % -fcn_BoundedAStar_AstarBounded 
+%   % -fcn_Visibility_clearAndBlockedPointsGlobal
+%   % -fcn_Visibility_clearAndBlockedPoints
 %
 %
 % FORMAT:
@@ -60,7 +67,7 @@ function [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTabl
 
 %
 % REVISION HISTORY:
-%
+% As: fcn_BoundedAStar_polytopesGenerateAllPtsTable
 % 2024_05_08, by Steve Harnett
 % -- first write of function
 % 2025_07_07 S. Brennan and K. Hayes
@@ -72,10 +79,13 @@ function [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTabl
 %    follow library convention
 % 2025_08_05 - K. Hayes
 % -- updated function formatting and header
+%
+% As: fcn_Visibility_polytopesGenerateAllPtsTable
+% 2025_11_01 - S. Brennan
+% -- renamed function to fcn_Visibility_polytopesGenerateAllPtsTable
 
 %
 % TO DO:
-%
 % -- fill in to-do items here.
 
 %% Debugging and Input checks

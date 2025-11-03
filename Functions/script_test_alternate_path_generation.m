@@ -16,6 +16,15 @@
 %    % replaced with fcn_BoundedAStar_generateCostGraph
 % -- removed calls to fcn_algorithm_generate_dilation_robustness_matrix,
 %    % replaced with fcn_BoundedAStar_generateDilationRobustnessMatrix
+% 2025_11_01 - S. Brennan
+% -- removed calls to fcn_BoundedAStar_loadTestMap, replaced with fcn_MapGen_loadTestMap
+% -- replaced fcn_BoundedAStar_generateDilationRobustnessMatrix, 
+%    % with fcn_Visibility_generateDilationRobustnessMatrix
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
 
 
 % clear; close all; clc
@@ -31,14 +40,20 @@ flag_do_plot_slow = 0;
 map_idx = 7;
 num_paths = 10; % number of alternate paths to generate
 corridor_width_buffer = 1.1; % how much larger should the smallest corridor in route n+1 be relative to the smallest corridor in route n?
-[shrunk_polytopes, start_inits, finish_inits] = fcn_BoundedAStar_loadTestMap(map_idx);
+[shrunk_polytopes, start_inits, finish_inits] = fcn_MapGen_loadTestMap(map_idx);
 
 for mission_idx = 1:size(start_inits,1)
     start_init = start_inits(mission_idx,:);
     finish_init = finish_inits(mission_idx,:);
 
     % all_pts array creation
-    [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_init, finish_init);
+    if 1==1
+        warning('The function fcn_Visibility_polytopesGenerateAllPtsTable is not a direct replacement for the BoundedAStar version. The function needs to be updated from this point onward.')
+        [all_pts, start, finish] = fcn_Visibility_polytopesGenerateAllPtsTable(shrunk_polytopes, start_init, finish_init);
+    else
+        % % OLD:
+        % [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_init, finish_init);
+    end
 
     %% plan the initial path
     % make vgraph
@@ -57,7 +72,7 @@ for mission_idx = 1:size(start_inits,1)
 
     % make dilation robustness matrix
     mode = '2d';
-    dilation_robustness_tensor = fcn_BoundedAStar_generateDilationRobustnessMatrix(all_pts, start, finish, vgraph, mode, shrunk_polytopes);
+    dilation_robustness_tensor = fcn_Visibility_generateDilationRobustnessMatrix(all_pts, start, finish, vgraph, mode, shrunk_polytopes);
     dilation_robustness_matrix = max(dilation_robustness_tensor(:,:,1) , dilation_robustness_tensor(:,:,2)); % combine the left and right sides as a max
     dilation_robustness_matrix_for_variance = dilation_robustness_matrix(:)'; % extract vector of all values
     dilation_robustness_matrix_for_variance(dilation_robustness_matrix_for_variance == 0) = []; % remove 0s
@@ -157,8 +172,19 @@ end % end mission (i.e., start goal pair) loop
 for enlarge_idx = 1:(num_paths)
     % enlarge polytopes by the distance, below which corridors were filtered out, halved (because you dilate polytopes on both side of the corridor)
     enlarged_polytopes = fcn_MapGen_polytopesExpandEvenlyForConcave(shrunk_polytopes,(smallest_corridors(enlarge_idx))/2);
+
     % generate all_pts array for enlarged polytopes
-    [all_pts_new, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(enlarged_polytopes, start_init, finish_init);
+    if 1==1
+        warning('The function fcn_Visibility_polytopesGenerateAllPtsTable is not a direct replacement for the BoundedAStar version. The function needs to be updated from this point onward.')
+        % all_pts array creation
+        [all_pts_new, start, finish] = fcn_Visibility_polytopesGenerateAllPtsTable(enlarged_polytopes, start_init, finish_init);
+    else
+        % % OLD:
+        % % all_pts array creation
+        % [all_pts_new, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(enlarged_polytopes, start_init, finish_init);
+    end
+
+    
     % make vgraph for enlarged map
     finishes = [all_pts_new; start; finish];
     starts = [all_pts_new; start; finish];

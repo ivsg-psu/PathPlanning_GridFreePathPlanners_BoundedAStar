@@ -10,6 +10,12 @@
 % 2025_10_07 - S. Brennan
 % -- removed calls to fcn_algorithm_generate_cost_graph,
 %    % replaced with fcn_BoundedAStar_generateCostGraph
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
+
 
 % TO DO:
 % -- set up fast mode tests
@@ -59,7 +65,13 @@ start_xy = [0 50];
 finish_xy = [100 50];
 mode = 'xy spatial only';
 
-[all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_xy, finish_xy, -1);
+if 1==1
+    warning('The function fcn_Visibility_polytopesGenerateAllPtsTable is not a direct replacement for the BoundedAStar version. The function needs to be updated from this point onward.')
+    [all_pts, start, finish] = fcn_Visibility_polytopesGenerateAllPtsTable(shrunk_polytopes, start_xy, finish_xy, -1);
+else
+    % % OLD:
+    % [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_xy, finish_xy, -1);
+end
 
 % Find cost graph
 [cgraph, hvec] = fcn_BoundedAStar_generateCostGraph(all_pts, start, finish, mode);

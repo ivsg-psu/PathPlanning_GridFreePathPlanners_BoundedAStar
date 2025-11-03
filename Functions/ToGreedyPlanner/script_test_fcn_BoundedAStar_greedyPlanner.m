@@ -1,16 +1,20 @@
-% script_test_fcn_Visibility_addObstacle
+% script_test_fcn_BoundedAStar_greedyPlanner
 
-% a basic test of adding obstacles to existing visibility graphs
+% a basic test of the greedy planner algorithm implementation
 
-% Revision history
-% 2025_08_01 - K. Hayes, kxh1031@psu.edu
-% -- first write of script, using
-% script_test_fcn_Visibility_clearAndBlockedPoints as a starter
-% 2025_08_04 - K. Hayes
-% -- moved plotting into fcn_Visibility_addObstacle debug
+% Revision History:
+% 2025_07_08 - K. Hayes, kxh1031@psu.edu
+% -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
+%    with vector sum method 
+% 2025_08_07 - K. Hayes
+% -- copied script_test_fcn_algorithm_greedy_planner into new script file
+%    to follow library naming conventions
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
 
-% TO DO:
-% -- set up fast mode tests
 
 %% Set up the workspace
 close all
@@ -32,70 +36,110 @@ close all
 
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
-%% DEMO case: add a polytope to the map
+%% DEMO case: plan path through field with greedy planner
 fig_num = 10001;
-titleString = sprintf('DEMO case: add a polytope to the map');
+titleString = sprintf('DEMO case: plan path through field with greedy planner');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
-% Create polytope field
-polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 25],[], ([100 100]), (-1));
 
-% Trim polytopes on edge of boundary
-trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0.1 0.1 99.9 99.9], (-1));
+repetitions = 1;
+rep = 1;
+% final information can be stored in one variable (not suggested to save
+% variables of the structure type, as it will take a lot of memory)
+final_info(repetitions) = struct('polytopes',[],'start',[],'finish',[],'path_x',[],'path_y',[],'appex1_x',[],'appex1_y',[],'appex2_x',[],'appex2_y',[]);
 
-% Shrink polytopes to form obstacle field
-shrunk_polytopes = fcn_MapGen_polytopesShrinkEvenly(trim_polytopes, 2.5, (-1));
+% generate Voronoi tiling from Halton points
+pt_density = 100; % point density used for generation
+low_pts = 1:pt_density:(pt_density*(repetitions-1)+1); % lower bound of Halton set range
+high_pts = pt_density:pt_density:pt_density*repetitions; % upper bound of Halton set range
+% remove the edge polytope that extend past the high and low points
+xlow = 0; xhigh = 1; ylow = 0; yhigh = 1;
 
-% Get x and y coordinates of each polytope
-xvert = [shrunk_polytopes.xv]';
-yvert = [shrunk_polytopes.yv]';
-point_tot = length(xvert);
+% shink the polytopes so that they are no longer tiled
+des_radius = 0.05; % desired average maximum radius
+sigma_radius = 0.002; % desired standard deviation in maximum radii
+min_rad = 0.0001; % minimum possible maximum radius for any obstacle
+shrink_seed = 1111; % seed used for randomizing the shrinking process
+des_cost = 0; % polytope traversal cost
 
-% Get polytope ids
-beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
-curpt = 0;
-for poly = 1:size(shrunk_polytopes,2)
-    polyVerts = unique(shrunk_polytopes(poly).vertices,'stable','rows');
-    num_verts = size(polyVerts,1);
-    shrunk_polytopes(poly).obs_id = ones(1,num_verts)*poly;
-    beg_end([curpt+1,curpt+num_verts]) = 1;
-    curpt = curpt+num_verts;
+% start and finish (x,y) coordinates
+start_xy = [0.0, 0.5];
+finish_xy = [1, 0.5];
+
+%%%% plotting control
+flag_do_plot = 1; % 1 if you would like to see plots, anything else if not
+
+% generate map
+% generate Voronoi tiling from Halton points
+low_pt = low_pts(rep); high_pt = high_pts(rep)-50; % range of Halton points to use to generate the tiling
+tiled_polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [low_pt,high_pt],[],[],-1);
+% remove the edge polytope that extend past the high and low points    
+trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( tiled_polytopes, [xlow ylow xhigh yhigh], (-1));
+
+% shink the polytopes so that they are no longer tiled
+rng(shrink_seed) % set the random number generator with the shrink seed    
+shrunk_polytopes = fcn_MapGen_polytopesShrinkToRadius(trim_polytopes,des_radius,sigma_radius,min_rad, -1);
+shrunk_polytopes = fcn_MapGen_polytopesSetCosts(shrunk_polytopes, des_cost, (-1));
+
+% info needed for further work
+% gather data on all the points
+
+if 1==1
+    warning('The function fcn_Visibility_polytopesGenerateAllPtsTable is not a direct replacement for the BoundedAStar version. The function needs to be updated from this point onward.')
+    [all_pts,start,finish] = fcn_Visibility_polytopesGenerateAllPtsTable(shrunk_polytopes,start_xy,finish_xy,-1);
+else
+    % % OLD:
+    % [all_pts,start,finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes,start_xy,finish_xy,-1);
 end
-totalObsId = [shrunk_polytopes.obs_id]';
 
-% Create all_pts matrix
-all_pts = [xvert, yvert, [1:point_tot]', totalObsId, beg_end'];
 
-% Create visibility graph
-isConcave = [];
-[vgraph,visibility_results]=fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes,all_pts,all_pts,(isConcave),(-1));
+% Generate visibility graph
+finishes = [all_pts; start; finish];
+starts = [all_pts; start; finish];
+[vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(shrunk_polytopes, starts, finishes);
 
-% add a polytope
-addPolytope = shrunk_polytopes(1);
-addPolytope.xv = 0.5*addPolytope.xv + 55;
-addPolytope.yv = 0.5*addPolytope.yv - 10;
-addPolytope.vertices = [addPolytope.xv' addPolytope.yv'];
+% Plan path through field using greedy planner
+[cost,route] = fcn_BoundedAStar_greedyPlanner(vgraph, all_pts, start, finish, (shrunk_polytopes), (fig_num));
 
-% Update vgraph with new polytope added
-[vgraphNew, all_ptsNew, startNew, finishNew, polytopesNew] = fcn_Visibility_addObstacle(...
-    vgraph, all_pts, [], [], shrunk_polytopes, addPolytope, (fig_num));
+% appex_x = [appex_x1 closer_x1 farther_x1; appex_x2 closer_x2 farther_x2; .... appex_xn closer_xn farther_xn]
+% appex_y = [appex_y1 closer_y1 farther_y1; appex_y2 closer_y2 farther_y2; .... appex_yn closer_yn farther_yn]
+% 
+% if flag_do_plot
+%     plot(appex_x,appex_y,'o','linewidth',2)
+%     my_title = sprintf('Path length [m]: %.4f',cost)
+%     title(my_title)
+%     box on
+%     return
+%     pause(2)
+%     close 99
+% end
+
+% Final Info
+% A, B, appex_x, appex_y
+final_info(rep).polytopes = shrunk_polytopes;
+final_info(rep).start = start_xy;
+final_info(rep).finish = finish_xy;
+% final_info(rep).path_x = appex_x(:,1);
+% final_info(rep).path_y = appex_y(:,1);
+% final_info(rep).appex1_x = appex_x(:,2);
+% final_info(rep).appex1_y = appex_y(:,2);
+% final_info(rep).appex2_x = appex_x(:,3);
+% final_info(rep).appex2_y = appex_y(:,3);
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(isnumeric(vgraphNew));
-assert(isnumeric(all_ptsNew));
-assert(isnumeric(startNew));
-assert(isnumeric(finishNew));
-assert(isstruct(polytopesNew));
+assert(isnumeric(cost));
+assert(isnumeric(route));
 
 % Check variable sizes
-Npolys = length(shrunk_polytopes)+1;
-assert(isequal(Npolys,length(polytopesNew))); 
+Nsteps = 12;
+assert(isequal(Nsteps,length(route))); 
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
+
 
 
 %% Test cases start here. These are very simple, usually trivial
@@ -122,7 +166,6 @@ fig_num = 20001;
 titleString = sprintf('TEST case: zero gap between polytopes');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
-
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

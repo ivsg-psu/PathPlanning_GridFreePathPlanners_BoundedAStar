@@ -12,6 +12,9 @@
 %    % replaced with fcn_Visibility_clearAndBlockedPointsGlobal
 % -- removed calls to fcn_check_reachability,
 %    % replaced with fcn_BoundedAStar_checkReachability
+% 2025_11_01 - S. Brennan
+% -- removed calls to fcn_BoundedAStar_loadTestMap, replaced with fcn_MapGen_loadTestMap
+
 
 % clear; close all; clc
 % addpath(strcat(pwd,'\..\..\PathPlanning_PathTools_PathClassLibrary\Functions'));
@@ -24,7 +27,7 @@ flag_do_plot = 1;
 flag_do_animation = 0;
 flag_do_plot_slow = 0;
 num_time_trials = 1; % repeat iterations of map creation to get timing data
-[shrunk_polytopes, start_init, finish_init, resolution_scale] = fcn_BoundedAStar_loadTestMap(map_idx, 1);
+[shrunk_polytopes, start_init, finish_init, resolution_scale] = fcn_MapGen_loadTestMap(map_idx, 1);
 start_init = start_init(2,:);
 finish_init = finish_init(2,:);
 %% for sake of comparisons, do this with a visibility graph as well

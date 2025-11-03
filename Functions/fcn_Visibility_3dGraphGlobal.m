@@ -1,11 +1,13 @@
 function vgraph = fcn_Visibility_3dGraphGlobal(verts, start, finish, all_surfels, speed_limit, time_space_polytopes, dt, varargin)
 % fcn_Visibility_3dGraphGlobal
 %
-% Forms the 3D visibility graph, the edges of which connect nodes that are connected by straight,
-% collision-free path segments. This leverages the Moller-Trumbore algorithm to check potential
-% graph edges for intersections with the 3D obstacles. The visibility graph can also take in a speed
-% limit, which in the case of XYT rather than XYZ is useful for pruning edges that would go backwards
-% in time or traverse too much distance in too short of a time
+% Forms the 3D visibility graph, the edges of which connect nodes that are
+% connected by straight, collision-free path segments. This leverages the
+% Moller-Trumbore algorithm to check potential graph edges for
+% intersections with the 3D obstacles. The visibility graph can also take
+% in a speed limit, which in the case of XYT rather than XYZ is useful for
+% pruning edges that would go backwards in time or traverse too much
+% distance in too short of a time
 %
 %
 %

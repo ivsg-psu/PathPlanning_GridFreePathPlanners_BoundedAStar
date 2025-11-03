@@ -5,6 +5,12 @@
 % Revision history
 % 2025_08_05 - K. Hayes, kxh1031@psu.edu
 % -- first write of script
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
+
 
 % TO DO:
 % -- set up fast mode tests
@@ -53,7 +59,13 @@ point_tot = length(xvert);
 start_xy = [0 50];
 finish_xy = [100 50];
 
-[all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_xy, finish_xy, (fig_num));
+if 1==1
+    warning('The function fcn_Visibility_polytopesGenerateAllPtsTable is not a direct replacement for the BoundedAStar version. The function needs to be updated from this point onward.')
+    [all_pts, start, finish] = fcn_Visibility_polytopesGenerateAllPtsTable(shrunk_polytopes, start_xy, finish_xy, (fig_num));
+else
+    % % OLD:
+    % [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_xy, finish_xy, (fig_num));
+end
 
 % Call function to plan a straight line path
 [cost,distance_in_polys,distance_outside_polys,num_polys_traversed] = ...

@@ -1,13 +1,19 @@
-% script_test_fcn_Visibility_selfBlockedPoints
+% script_test_fcn_Visibility_convertPolytopetoDedupedPoints.m
 
-% a basic test of calculation of points blocked by a 
+% a basic test of cost graph and heuristic vector generation
 
 % Revision history
-% 2025_08_05 - K. Hayes, kaeleahayes@psu.edu
-% -- first write of script using
-%    script_test_fcn_Visibility_clearAndBlockedPoints
-% 2025_10_03 - K. Hayes
-% -- fixed bug with missing variables in DEMO case 1
+% As: fcn_BoundedAStar_convertPolytopetoDedupedPoints
+% 2025_08_06 - K. Hayes, kxh1031@psu.edu
+% -- first write of script
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
+%
+% As: fcn_Visibility_convertPolytopetoDedupedPoints
+
 
 % TO DO:
 % -- set up fast mode tests
@@ -32,14 +38,15 @@ close all
 
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
-%% DEMO case: find clear and blocked edges of polytopes in a map
+
+%% DEMO case: generate a cost graph and heuristic vector 
 fig_num = 10001;
-titleString = sprintf('DEMO case: find clear and blocked edges of polytopes in a map');
+titleString = sprintf('DEMO case: plan a straight line path through a map');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
 % Create polytope field
-polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 25],[], ([100 100]), (-1));
+polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 100],[], ([100 100]), (-1));
 
 % Trim polytopes on edge of boundary
 trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0.1 0.1 99.9 99.9], (-1));
@@ -47,25 +54,35 @@ trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( polytopes, [0.1 0.1 99.9 99.9
 % Shrink polytopes to form obstacle field
 shrunk_polytopes = fcn_MapGen_polytopesShrinkEvenly(trim_polytopes, 2.5, (-1));
 
-% Create all_pts matrix
-start = [-2.5, 1];
-finish = start + [4 0];
-all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start, finish,-1);
+% Get x and y coordinates of each polytope
+xvert = [shrunk_polytopes.xv];
+yvert = [shrunk_polytopes.yv];
+point_tot = length(xvert);
 
-cur_pt = all_pts(6,:);
-[cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...
-    fcn_Visibility_selfBlockedPoints(shrunk_polytopes,cur_pt,all_pts,(fig_num));
+% Create start and finish points
+start_xy = [0 50];
+finish_xy = [100 50];
+mode = 'xy spatial only';
+
+if 1==1
+    warning('The function fcn_Visibility_polytopesGenerateAllPtsTable is not a direct replacement for the BoundedAStar version. The function needs to be updated from this point onward.')
+    [all_pts, start, finish] = fcn_Visibility_polytopesGenerateAllPtsTable(shrunk_polytopes, start_xy, finish_xy, -1);
+else
+    % % OLD:
+    % [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_xy, finish_xy, -1);
+end
+
+
+deduped_points_struct = fcn_Visibility_convertPolytopetoDedupedPoints(all_pts, []);
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(isnumeric(cur_obs_id));
-assert(isnumeric(self_blocked_cost));
-assert(isnumeric(pts_blocked_by_self));
+assert(isstruct(deduped_points_struct));
 
 % Check variable sizes
-Npolys = 10;
-assert(isequal(Npolys,length(shrunk_polytopes))); 
+Npts = 329;
+assert(isequal(Npts,length(deduped_points_struct))); 
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -96,6 +113,29 @@ titleString = sprintf('TEST case: zero gap between polytopes');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
+% convex polytope with no gaps
+convex_polytope(1).vertices = [0 0; 1 0; 1 1; 0 1; 0 0];
+convex_polytope(2).vertices = convex_polytope(1).vertices + ones(5,1)*[1 0];
+polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(convex_polytope);
+
+% generate pointsWithData table
+startXY = [-1, 0.5];
+finishXY = [2.5 0.5];
+
+pointsWithData = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
+deduped_points_struct = fcn_Visibility_convertPolytopetoDedupedPoints(pointsWithData, []);
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isstruct(deduped_points_struct));
+
+% Check variable sizes
+Npts = 329;
+assert(isequal(Npts,length(deduped_points_struct))); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

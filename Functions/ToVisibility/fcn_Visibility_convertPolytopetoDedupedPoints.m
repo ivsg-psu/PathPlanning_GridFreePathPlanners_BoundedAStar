@@ -1,28 +1,29 @@
-function unique_deduped_points_struct = fcn_BoundedAStar_convertPolytopetoDedupedPoints(all_pts, varargin)
-% this function takes in the table of all points, which in a fully tiled field contains repeated
-% points when a vertex belongs to multiple polytopes, and returns a points data structure
-% without duplicates, where each point has an associated list of polytopes it belongs to
+function unique_deduped_points_struct = fcn_Visibility_convertPolytopetoDedupedPoints(pointsWithData, varargin)
+% this function takes in the table of all points, which in a fully tiled
+% field contains repeated points when a vertex belongs to multiple
+% polytopes, and returns a points data structure without duplicates, where
+% each point has an associated list of polytopes it belongs to
 %
-% FORMAT: 
+% FORMAT:
 %
-% unique_deduped_points_struct = fcn_BoundedAStar_convertPolytopetoDedupedPoints(all_pts, (fig_num))
+% unique_deduped_points_struct = fcn_BoundedAStar_convertPolytopetoDedupedPoints(pointsWithData, (fig_num))
 %
-% INPUTS: 
-% ALL_PTS: a-by-5 matrix of all map points, where a = number of map points
-%   note that a>=L the columns in all_pts are as follows: 
-%   [x y point_id obs_id beg_end] see fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes for more
+% INPUTS:
+% pointsWithData: a-by-5 matrix of all map points, where a = number of map
+% points. Note that a>=L.
+% the columns in pointsWithData are as follows:
+%
+%   [x y point_id obs_id beg_end]
+%
+% see fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes for more
 %
 % OUTPUTS:
 %
-% unique_deduped_points_struct: an L-dimensional struct where L is the number of unique points in
-%   the field with fields .x and .y for the x and y coordintes of the point, respectively
-%   and .polys containing a list of all the polytope ids this point is a vertex of
-%
-% with inputs:
-% ALL_PTS: a-by-5 matrix of all map points, where a = number of map points
-%   note that a>=L the columns in all_pts are as follows: 
-%   [x y point_id obs_id beg_end] see 
-%   fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes for more
+% unique_deduped_points_struct: an L-dimensional struct where L is the
+% number of unique points in
+%   the field with fields .x and .y for the x and y coordintes of the
+%   point, respectively and .polys containing a list of all the polytope
+%   ids this point is a vertex of
 %
 % Examples:
 %      see script_test_fcn_BoundedAStar_convertPolytopetoDedupedPoints
@@ -31,12 +32,21 @@ function unique_deduped_points_struct = fcn_BoundedAStar_convertPolytopetoDedupe
 % Questions or comments? sjharnett@psu.edu
 %
 % Revision History:
+% As: fcn_convert_polytope_struct_to_deduped_points
+% 2022_05_01 - S. Harnett
+% -- first write of code
+%
+% As: fcn_BoundedAStar_convertPolytopetoDedupedPoints
 % 2025_07_17 - K. Hayes, kxh1031@psu.edu
 % -- copied function from fcn_convert_polytope_struct_to_deduped_points.m
 %    to follow library conventions
 % 2025_08_11 - K. Hayes
 % -- updated fcn header and formatting
 % -- added input checking
+%
+% As: fcn_Visibility_convertPolytopetoDedupedPoints
+% -- Changed all_pts to pointsWithData
+
 
 %% Debugging and Input checks
 % Check if flag_max_speed set. This occurs if the fig_num variable input
@@ -88,16 +98,16 @@ if 0==flag_max_speed
         % Are there the right number of inputs?
         narginchk(1,MAX_NARGIN);
 
-        % Check the all_pts input, make sure it has 5 columns
+        % Check the pointsWithData input, make sure it has 5 columns
         fcn_DebugTools_checkInputsToFunctions(...
-            all_pts, '5column_of_numbers');        
+            pointsWithData, '5column_of_numbers');
     end
 end
 
 
 % Does user want to show the plots?
 flag_do_plots = 0; % Default is to NOT show plots
-if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
+if (0==flag_max_speed) && (MAX_NARGIN == nargin)
     temp = varargin{end};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
         fig_num = temp;
@@ -120,25 +130,27 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
 
-    deduped_points_struct = [];
-    for i = 1:size(all_pts,1)
-        deduped_points_struct(i).x = all_pts(i,1);
-        deduped_points_struct(i).y = all_pts(i,2);
-        same_x_idx = find(round(all_pts(:,1),5)==round(all_pts(i,1),5));
-        same_y_idx = find(round(all_pts(:,2),5)==round(all_pts(i,2),5));
-        % find ids that have both same x and y
-        same_point_idx = intersect(same_x_idx,same_y_idx);
-        % make a list of obstacles with the same point
-        % find indecies of rows for same_point_idx and column 4
-        idx = sub2ind(size(all_pts), same_point_idx, 4.*ones(size(same_point_idx,1),size(same_point_idx,2)));
-        % go to these ids and store in obstalce list
-        obs_on_cur_pt = all_pts(idx);
-        deduped_points_struct(i).polys = obs_on_cur_pt;
-    end
-    x_y_pairs = [round(extractfield(deduped_points_struct,'x'),5);round(extractfield(deduped_points_struct,'y'),5)]';
-    [C,unique_pair_idxs,ic] = unique(x_y_pairs,'rows');
-    unique_pairs = x_y_pairs(unique_pair_idxs,:);
-    unique_deduped_points_struct = deduped_points_struct(unique_pair_idxs);
+deduped_points_struct = [];
+for i = 1:size(pointsWithData,1)
+    deduped_points_struct(i).x = pointsWithData(i,1);
+    deduped_points_struct(i).y = pointsWithData(i,2);
+    same_x_idx = find(round(pointsWithData(:,1),5)==round(pointsWithData(i,1),5));
+    same_y_idx = find(round(pointsWithData(:,2),5)==round(pointsWithData(i,2),5));
+    
+    % find ids that have both same x and y
+    same_point_idx = intersect(same_x_idx,same_y_idx);
+
+    % make a list of obstacles with the same point
+    % find indecies of rows for same_point_idx and column 4
+    idx = sub2ind(size(pointsWithData), same_point_idx, 4.*ones(size(same_point_idx,1),size(same_point_idx,2)));
+    % go to these ids and store in obstalce list
+    obs_on_cur_pt = pointsWithData(idx);
+    deduped_points_struct(i).polys = obs_on_cur_pt;
+end
+x_y_pairs = [round(extractfield(deduped_points_struct,'x'),5);round(extractfield(deduped_points_struct,'y'),5)]';
+[C,unique_pair_idxs,ic] = unique(x_y_pairs,'rows');
+unique_pairs = x_y_pairs(unique_pair_idxs,:);
+unique_deduped_points_struct = deduped_points_struct(unique_pair_idxs);
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   _____       _
@@ -149,13 +161,13 @@ end
 %  |_____/ \___|_.__/ \__,_|\__, |
 %                            __/ |
 %                           |___/
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_do_plots
 
 end
 
-        
+
 end
 %% Functions follow
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

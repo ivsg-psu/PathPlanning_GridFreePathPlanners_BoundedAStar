@@ -2,10 +2,15 @@
 % Tests: fcn_Visibility_plotVGraph
 
 % REVISION HISTORY:
-%
+% (in BoundedAStar)
 % 2025_10_06 - S. Brennan, sbrennan@psu.edu
 % * In script_test_fcn_Visibility_plotVGraph
 % -- first write of the script
+% 2025_10_28 - S. Brennan, sbrennan@psu.edu
+% * In script_test_fcn_Visibility_plotVGraph
+% -- Moved function into VGraph library
+% -- fixed addNudge bug
+% -- changed inputs to allow saveFile input
 
 % TO DO:
 % -- set up fast mode tests
@@ -40,7 +45,7 @@ figure(figNum); clf;
 
 % load data
 test_case_idx = 1;
-[vgraph, all_pts, goodAxis, polytopes, start, finish] = fcn_INTERNAL_loadExampleData(test_case_idx);
+[vgraph, all_pts, goodAxis, polytopes, start, finish, addNudge] = fcn_INTERNAL_loadExampleData_fcn_Visibility_plotVGraph(test_case_idx);
 
 % Plot the polytopes
 fcn_INTERNAL_plotPolytopes(polytopes, figNum)
@@ -64,7 +69,7 @@ axis(goodAxis);
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(ishandle(h_plot));
+assert(all(ishandle(h_plot)));
 
 % Check variable sizes
 assert(isequal(1,length(h_plot))); 
@@ -85,7 +90,7 @@ figure(figNum); clf;
 
 % load data
 test_case_idx = 1;
-[vgraph, all_pts, goodAxis, polytopes, start, finish] = fcn_INTERNAL_loadExampleData(test_case_idx);
+[vgraph, all_pts, goodAxis, polytopes, start, finish, addNudge] = fcn_INTERNAL_loadExampleData_fcn_Visibility_plotVGraph(test_case_idx);
 
 
 % Plot the polytopes
@@ -105,13 +110,14 @@ text(all_pts(1:end-2,1)+addNudge,all_pts(1:end-2,2)+addNudge,string(all_pts(1:en
 
 % Call plotting function
 selectedFromToIndices = [];
-h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-', (selectedFromToIndices), (figNum));
+saveFile = [];
+h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-', (selectedFromToIndices), (saveFile), (figNum));
 axis(goodAxis);
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(ishandle(h_plot));
+assert(all(ishandle(h_plot)));
 
 % Check variable sizes
 assert(isequal(1,length(h_plot))); 
@@ -133,7 +139,7 @@ figure(figNum); clf;
 
 % load data
 test_case_idx = 1;
-[vgraph, all_pts, goodAxis, polytopes, start, finish] = fcn_INTERNAL_loadExampleData(test_case_idx);
+[vgraph, all_pts, goodAxis, polytopes, start, finish, addNudge] = fcn_INTERNAL_loadExampleData_fcn_Visibility_plotVGraph(test_case_idx);
 
 
 % Plot the polytopes
@@ -153,13 +159,14 @@ text(all_pts(1:end-2,1)+addNudge,all_pts(1:end-2,2)+addNudge,string(all_pts(1:en
 
 % Call plotting function
 selectedFromToIndices = 1;
-h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-', (selectedFromToIndices), (figNum));
+saveFile = [];
+h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-', (selectedFromToIndices), (saveFile), (figNum));
 axis(goodAxis);
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(ishandle(h_plot));
+assert(all(ishandle(h_plot)));
 
 % Check variable sizes
 assert(isequal(1,length(h_plot))); 
@@ -181,7 +188,7 @@ figure(figNum); clf;
 
 % load data
 test_case_idx = 1;
-[vgraph, all_pts, goodAxis, polytopes, start, finish] = fcn_INTERNAL_loadExampleData(test_case_idx);
+[vgraph, all_pts, goodAxis, polytopes, start, finish, addNudge] = fcn_INTERNAL_loadExampleData_fcn_Visibility_plotVGraph(test_case_idx);
 
 
 % Plot the polytopes
@@ -201,13 +208,14 @@ text(all_pts(1:end-2,1)+addNudge,all_pts(1:end-2,2)+addNudge,string(all_pts(1:en
 
 % Call plotting function
 selectedFromToIndices = [1 6];
-h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-', (selectedFromToIndices), (figNum));
+saveFile = [];
+h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-', (selectedFromToIndices), (saveFile), (figNum));
 axis(goodAxis);
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(ishandle(h_plot));
+assert(all(ishandle(h_plot)));
 
 % Check variable sizes
 assert(isequal(1,length(h_plot))); 
@@ -216,6 +224,57 @@ assert(isequal(1,length(h_plot)));
 assert(isequal(h_plot.Parent,gca)); % The parent of the plot is the axes
 assert(isequal(h_plot.Parent.Parent,gcf)); % The parent of the axes is the current figure
 assert(isequal(h_plot.Parent.Parent.Number,figNum)); % The current figure is this figure
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+
+
+%% DEMO case: plotting entire visibility graph with saveFile specified
+figNum = 10005;
+titleString = sprintf('DEMO case: plotting entire visibility graph with saveFile specified');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+% load data
+test_case_idx = 1;
+[vgraph, all_pts, goodAxis, polytopes, start, finish, addNudge] = fcn_INTERNAL_loadExampleData_fcn_Visibility_plotVGraph(test_case_idx);
+
+
+% Plot the polytopes
+fcn_INTERNAL_plotPolytopes(polytopes, figNum)
+axis(goodAxis);
+
+% Plot the start and end points
+plot(start(1),start(2),'.','Color',[0 0.5 0],'MarkerSize',20);
+plot(finish(1),finish(2),'r.','MarkerSize',20);
+text(start(:,1),start(:,2)+addNudge,'Start');
+text(finish(:,1),finish(:,2)+addNudge,'Finish');
+
+% label point ids for debugging. The last two points are start and
+% finish, so do not need to be plotted and labeled.
+plot(all_pts(1:end-2,1), all_pts(1:end-2,2),'LineStyle','none','Marker','o','MarkerFaceColor',[255,165,0]./255);
+text(all_pts(1:end-2,1)+addNudge,all_pts(1:end-2,2)+addNudge,string(all_pts(1:end-2,3)));
+
+% Call plotting function
+selectedFromToIndices = [];
+saveFile = fullfile(pwd,'Images','fcn_Visibility_plotVGraph.gif');
+h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-', (selectedFromToIndices), (saveFile), (figNum));
+axis(goodAxis);
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(all(ishandle(h_plot)));
+
+% Check variable sizes
+assert(isequal(length(all_pts(:,1)),length(h_plot))); 
+
+% Check variable values
+currentHandle = get(h_plot(1));
+assert(isequal(currentHandle.Parent,gca)); % The parent of the plot is the axes
+assert(isequal(currentHandle.Parent.Parent,gcf)); % The parent of the axes is the current figure
+assert(isequal(currentHandle.Parent.Parent.Number,figNum)); % The current figure is this figure
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
@@ -273,7 +332,7 @@ figure(figNum); clf;
 
 % load data
 test_case_idx = 1;
-[vgraph, all_pts, goodAxis, polytopes, start, finish] = fcn_INTERNAL_loadExampleData(test_case_idx);
+[vgraph, all_pts, goodAxis, polytopes, start, finish, addNudge] = fcn_INTERNAL_loadExampleData_fcn_Visibility_plotVGraph(test_case_idx);
 
 
 % Plot the polytopes
@@ -293,13 +352,15 @@ text(all_pts(1:end-2,1)+addNudge,all_pts(1:end-2,2)+addNudge,string(all_pts(1:en
 
 % Call plotting function
 selectedFromToIndices = [];
-h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-', (selectedFromToIndices), ([]));
+saveFile = [];
+
+h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-', (selectedFromToIndices), (saveFile), ([]));
 axis(goodAxis);
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(ishandle(h_plot));
+assert(all(ishandle(h_plot)));
 
 % Check variable sizes
 assert(isequal(1,length(h_plot))); 
@@ -320,7 +381,7 @@ figure(figNum); close(figNum);
 
 % load data
 test_case_idx = 1;
-[vgraph, all_pts, goodAxis, polytopes, start, finish] = fcn_INTERNAL_loadExampleData(test_case_idx);
+[vgraph, all_pts, goodAxis, polytopes, start, finish, addNudge] = fcn_INTERNAL_loadExampleData_fcn_Visibility_plotVGraph(test_case_idx);
 
 
 % Plot the polytopes
@@ -340,13 +401,15 @@ text(all_pts(1:end-2,1)+addNudge,all_pts(1:end-2,2)+addNudge,string(all_pts(1:en
 
 % Call plotting function
 selectedFromToIndices = [];
-h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-', (selectedFromToIndices), (-1));
+saveFile = [];
+
+h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-', (selectedFromToIndices), (saveFile), (-1));
 axis(goodAxis);
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(ishandle(h_plot));
+assert(all(ishandle(h_plot)));
 
 % Check variable sizes
 assert(isequal(1,length(h_plot))); 
@@ -368,7 +431,7 @@ close(figNum);
 
 % load data
 test_case_idx = 1;
-[vgraph, all_pts, goodAxis, polytopes, start, finish] = fcn_INTERNAL_loadExampleData(test_case_idx);
+[vgraph, all_pts, goodAxis, polytopes, start, finish, addNudge] = fcn_INTERNAL_loadExampleData_fcn_Visibility_plotVGraph(test_case_idx);
 
 
 % Plot the polytopes
@@ -387,6 +450,7 @@ plot(all_pts(1:end-2,1), all_pts(1:end-2,2),'LineStyle','none','Marker','o','Mar
 text(all_pts(1:end-2,1)+addNudge,all_pts(1:end-2,2)+addNudge,string(all_pts(1:end-2,3)));
 
 selectedFromToIndices = [];
+saveFile = [];
 
 Niterations = 1;
 
@@ -394,15 +458,41 @@ Niterations = 1;
 tic;
 for ith_test = 1:Niterations
     % Call the function
-    h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-', (selectedFromToIndices), ([]));
+    h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-', (selectedFromToIndices), (saveFile), ([]));
 end
 slow_method = toc;
+
+figure(figNum);
+close(figNum);
+
+% load data
+test_case_idx = 1;
+[vgraph, all_pts, goodAxis, polytopes, start, finish, addNudge] = fcn_INTERNAL_loadExampleData_fcn_Visibility_plotVGraph(test_case_idx);
+
+
+% Plot the polytopes
+fcn_INTERNAL_plotPolytopes(polytopes, figNum)
+axis(goodAxis);
+
+% Plot the start and end points
+plot(start(1),start(2),'.','Color',[0 0.5 0],'MarkerSize',20);
+plot(finish(1),finish(2),'r.','MarkerSize',20);
+text(start(:,1),start(:,2)+addNudge,'Start');
+text(finish(:,1),finish(:,2)+addNudge,'Finish');
+
+% label point ids for debugging. The last two points are start and
+% finish, so do not need to be plotted and labeled.
+plot(all_pts(1:end-2,1), all_pts(1:end-2,2),'LineStyle','none','Marker','o','MarkerFaceColor',[255,165,0]./255);
+text(all_pts(1:end-2,1)+addNudge,all_pts(1:end-2,2)+addNudge,string(all_pts(1:end-2,3)));
+
+selectedFromToIndices = [];
+saveFile = [];
 
 % Do calculation with pre-calculation, FAST_MODE on
 tic;
 for ith_test = 1:Niterations
     % Call the function
-    h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-', (selectedFromToIndices), (-1));
+    h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts, 'g-', (selectedFromToIndices), (saveFile), (-1));
 end
 fast_method = toc;
 
@@ -483,8 +573,10 @@ xlabel('x [m]');
 ylabel('y [m]');
 end % Ends fcn_INTERNAL_plotPolytopes
 
-%% fcn_INTERNAL_loadExampleData
-function [vgraph, all_pts_with_startfinish, goodAxis, polytopes, start, finish] = fcn_INTERNAL_loadExampleData(test_case_idx)
+%% fcn_INTERNAL_loadExampleData_fcn_Visibility_plotVGraph
+function [vgraph, all_pts_with_startfinish, goodAxis, polytopes, start, finish, addNudge] = ...
+    fcn_INTERNAL_loadExampleData_fcn_Visibility_plotVGraph(test_case_idx)
+addNudge = 0.35;
 if test_case_idx == 1
     % test case 1
     % Two polytopes with clear space right down middle
@@ -536,6 +628,6 @@ all_pts_with_startfinish = [all_pts; start; finish];
 [vgraph, ~] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, all_pts_with_startfinish, all_pts_with_startfinish,1);
 
 
-end % Ends fcn_INTERNAL_loadExampleData
+end % Ends fcn_INTERNAL_loadExampleData_fcn_Visibility_plotVGraph
 
 

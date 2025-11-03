@@ -7,6 +7,12 @@
 % 2025_08_25 by K. Hayes
 % -- first write of script using script_test_fcn_BoundedAStar_greedyPlanner
 %    as starter
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
+
 
 %% Set up the workspace
 close all
@@ -73,7 +79,14 @@ shrunk_polytopes = fcn_MapGen_polytopesSetCosts(shrunk_polytopes, des_cost, (-1)
 % info needed for further work
 % gather data on all the points
 
-[all_pts,start,finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes,start_xy,finish_xy,-1);
+if 1==1
+    warning('The function fcn_Visibility_polytopesGenerateAllPtsTable is not a direct replacement for the BoundedAStar version. The function needs to be updated from this point onward.')
+    [all_pts,start,finish] = fcn_Visibility_polytopesGenerateAllPtsTable(shrunk_polytopes,start_xy,finish_xy,-1);
+else
+    % % OLD:
+    % [all_pts,start,finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes,start_xy,finish_xy,-1);
+end
+
 
 % Generate visibility graph
 finishes = [all_pts; start; finish];

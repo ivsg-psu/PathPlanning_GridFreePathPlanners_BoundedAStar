@@ -452,6 +452,92 @@
 % 2025_10_30 - K. Hayes
 % -- In Functions/DEPRECATED
 %    % * added deprecation warning messages to all remaining functions
+%
+% 2025_11_02 by S. Brennan
+% - DEPRECATED: fcn_BoundedAStar_loadTestMap
+%   % * now fcn_MapGen_loadTestMap 
+%   %   % NOTE: this function also deprecated many of data loading files
+%   % * function kept in ToMapGen subfolder until move and edits complete
+%   % * rewrote function and test script for clarity (prior version was
+%   %   % spaghetti coded)
+%   % * removed calls to fcn_BoundedAStar_loadTestMap, replaced with
+%   %   % fcn_MapGen_loadTestMap in following functions:
+%   %   % -- script_animate_dilation_replan
+%   %   % -- script_animate_dilation_replan
+%   %   % -- script_test_alternate_path_generation
+%   %   % -- script_test_polytope_canyon_corridor_width_incentive_weighting
+%   %   % -- script_test_polytope_canyon_replan
+%   %   % -- script_test_polytope_canyon_replan_with_dilation
+%   %   % -- script_test_voronoi_planning
+%   %   % -- script_test_voronoi_planning_alt_paths
+%   %   % -- script_test_voronoi_planning_alt_paths_from_node
+%   %   % -- script_test_voronoi_planning_alt_paths_local
+%   %   % -- script_test_voronoi_planning_hill
+% - DEPRECATED: fcn_BoundedAStar_generateDilationRobustnessMatrix
+%   % * now fcn_Visibility_generateDilationRobustnessMatrix 
+%   % * function kept in ToVisibility subfolder until move complete
+%   % * replaced fcn_BoundedAStar_generateDilationRobustnessMatrix, 
+%   %   % with fcn_Visibility_generateDilationRobustnessMatrix
+%   %   % in following functions:
+%   %   % -- script_animate_dilation_replan
+%   %   % -- script_test_alternate_path_generation
+%   %   % -- script_test_polytope_canyon_corridor_width_incentive_weighting
+%   %   % -- script_test_polytope_canyon_replan_with_dilation
+%   %   % -- script_test_voronoi_compare_vgraph_corridor_width
+% - DEPRECATED: fcn_BoundedAStar_polytopesGenerateAllPtsTable
+%   % * now fcn_Visibility_polytopesGenerateAllPtsTable 
+%   % * function kept in ToVisibility subfolder until move complete
+%   % * changed function inputs to have start/finish as optional inputs
+%   % * changed function outputs 
+%   %   % -- to include start/finish in point listing, 
+%   %   % -- label start/end points as 1 and 2 (rather than both 1) 
+%   % * replaced fcn_BoundedAStar_polytopesGenerateAllPtsTable, 
+%   %   % with fcn_Visibility_polytopesGenerateAllPtsTable
+%   %   % in following functions:
+%   %   % -- fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes (untested)
+%   %   % -- script_test_fcn_BoundedAStar_Astar (works) <-- Astar code
+%   %   % -- script_Path_Planning_testing (untested) <-- core BoundedAStar
+%   %   % -- script_animate_dilation_replan (half tested) <-- MECC
+%   %   % -- script_test_polytope_canyon_replan_with_dilation (untested)
+%   %   % -- script_test_alternate_path_generation (untested)
+%   %   % -- script_test_concave_visibility_and_planning (untested)
+%   %   % -- script_test_fcn_BoundedAStar_AstarBounded (untested)
+%   %   % -- script_test_fcn_BoundedAStar_calculateBoundingEllipsePolytope (untested)
+%   %   % -- script_test_fcn_BoundedAStar_convertPolytopetoDedupedPoints.m (untested)
+%   %   % -- script_test_fcn_BoundedAStar_countObstaclesInPath (untested)
+%   %   % -- script_test_fcn_find_edge_weights (untested)
+%   %   % -- script_test_fcn_BoundedAStar_generateCostGraph (untested)
+%   %   % -- script_test_fcn_BoundedAStar_greedyPlanner (untested)
+%   %   % -- script_test_fcn_BoundedAStar_straightPlanner (untested)
+%   %   % -- script_test_fcn_Visibility_removeObstacle (untested)
+%   %   % -- script_test_fcn_Visibility_selfBlockedPoints (untested)
+%   %   % -- script_test_3d_polytope_canyon (untested)
+%   %   % -- script_test_polytope_canyon_replan (untested)
+%   %   % -- script_test_fcn_Visibility_clearAndBlockedPointsGlobal (tested)
+% - DEPRECATED: fcn_BoundedAStar_clearAndBlockedPoints
+%   % * now fcn_Visibility_clearAndBlockedPoints
+%   % * function kept in ToVisibility subfolder until move complete
+% - DEPRECATED: fcn_BoundedAStar_clearAndBlockedPointsGlobal
+%   % * now fcn_Visibility_clearAndBlockedPointsGlobal 
+%   % * function kept in ToVisibility subfolder until move complete
+% - DEPRECATED: fcn_BoundedAStar_convertPolytopetoDedupedPoints
+%   % * now fcn_Visibility_convertPolytopetoDedupedPoints 
+%   % * function kept in ToVisibility subfolder until move complete
+%   % * NOTE: no idea what this function does!
+% - script_test_visibility_graph_modification
+%   % * moved to ToVisibility subfolder until move is complete
+%   % * renamed to script_demo_visibilityGraphAddRemoveObstacles
+% - fcn_Visibility_removeObstacle
+%   % * moved to ToVisibility subfolder until move is complete
+%   % * updated internal variable naming
+% - fcn_Visibility_addObstacle
+%   % * moved to ToVisibility subfolder until move is complete
+%   % * updated internal variable naming
+
+
+% Not sure what to do with these:
+% fcn_BoundedAStar_polytopePointsInPolytopes
+% fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes
 
 % TO-DO:
 % 2025_07_28 - Sean Brennan
@@ -459,6 +545,13 @@
 % 2025_08_18 - K. Hayes
 % -- add 3d formatted all_pts capabilities to
 %    fcn_BoundedAStar_polytopesGenerateAllPtsTable
+% 2025_11_01 - Sean Brennan
+% -- Need to move following into MECC2025 scripts:
+%    % * script_animate_dilation_replan (core function)
+%    % * script_test_alternate_path_generation
+%    % * script_test_polytope_canyon_corridor_width_incentive_weighting
+%    % * script_test_polytope_canyon_replan
+%    % * script_test_polytope_canyon_replan_with_dilation
 
 clear library_name library_folders library_url
 
@@ -517,6 +610,7 @@ end
 if ~exist('flag_BoundAStar_Folders_Initialized','var')
     this_project_folders = {...
         'Functions',...
+        'Data',...
         'Functions_CostCalculation',...
         'Test_Fixtures',...
         'Utilities_gif',...

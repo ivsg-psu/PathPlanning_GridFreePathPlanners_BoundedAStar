@@ -77,6 +77,11 @@ function [path,cost,err] = fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes(p
 % 2025_10_22 - K. Hayes
 % -- changed all_pts generation to use
 %    fcn_BoundedAStar_polytopesGenerateAllPtsTable instead of manually
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
 
 % TO DO:
 % -- input checking and description in header for polytopes
@@ -177,7 +182,7 @@ end
 % check if the start or end are now within combined polytopes
 throw_error = 0; % only gives soft errors errors that don't stop the code
 check_edge = 1; % checks for start or finish on polytope edges
-[err startPoly, finishPoly] = fcn_BoundedAStar_polytopePointsInPolytopes(start,finish,polytopes,throw_error,check_edge); err = 0; %#ok<NCOMMA,ASGLU> % check that start and end are outside of obstacles
+[err, startPoly, finishPoly] = fcn_BoundedAStar_polytopePointsInPolytopes(start,finish,polytopes,throw_error,check_edge); err = 0; %#ok<NCOMMA,ASGLU> % check that start and end are outside of obstacles
 
 if err == 0 % start and finish outside the polytopes
     % add points for start and finish if on an edge
@@ -204,10 +209,11 @@ if err == 0 % start and finish outside the polytopes
     point_tot = length([polytopes.xv]); % total number of vertices in the convex polytopes
 
     % information about each point
-    start_xy = [start.x start.y];
-    finish_xy = [finish.x finish.y];
+    startXY = [start.x start.y];
+    finishXY = [finish.x finish.y];
 
-    all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes, start_xy, finish_xy);
+    all_pts = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY);
+    warning('Outputs on fcn_Visibility_polytopesGenerateAllPtsTable need to be checked on this function')
 
     % give the same information to the starting and ending points
     if startPoly ~= -1 % on obstacle edge

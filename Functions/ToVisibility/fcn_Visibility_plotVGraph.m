@@ -1,14 +1,13 @@
 function h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts,  styleString, varargin)
-    warning(['fcn_Visibility_plotVGraph is being deprecated within BoundedAStar.' ...
-    ' Use fcn_Visibility_plotVGraph from the Visibility Graph library instead.']);
-
 % fcn_Visibility_plotVGraph
 %
-% Plots a visibility graph given a generated vgraph and list of all points
+% Plots a visibility graph given a generated vgraph and list of all points.
+% Allows user to specify the plot styleString and optional from/to indices
+% of the vertices to plot.
 %
 % FORMAT:
 %
-% fcn_Visibility_plotVGraph(vgraph, all_pts,  styleString, , figNum)
+% fcn_Visibility_plotVGraph(vgraph, all_pts,  styleString, (selectedFromToIndices), (figNum))
 %
 % INPUTS:
 %
@@ -35,9 +34,11 @@ function h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts,  styleString, varar
 %    vector, the first value is the "from" index, the second value is the
 %    "to" index.
 %
-%      fig_num: a figure number to plot results. If set to -1, skips any
-%      input checking or debugging, uses current figure for plotting, and
-%      sets up code to maximize speed.
+%    saveFile: a string specifying the file where an animated GIF is saved.
+%
+%    figNum: a figure number to plot results. If set to -1, skips any
+%    input checking or debugging, uses current figure for plotting, and
+%    sets up code to maximize speed.
 %
 % OUTPUTS:
 %
@@ -63,15 +64,19 @@ function h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts,  styleString, varar
 % -- added options to include selectedFromToIndices, figNum
 % -- updated docstrings in header
 % -- added test script
+% 2025_10_28 - S. Brennan, sbrennan@psu.edu
+% -- updated docstrings in header
+% -- fixed fig_num to figNum
+% -- added options to include saveFile for animated GIF
 
 % TO DO:
 %
 
 %% Debugging and Input checks
-% Check if flag_max_speed set. This occurs if the fig_num variable input
+% Check if flag_max_speed set. This occurs if the figNum variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 5; % The largest Number of argument inputs to the function
+MAX_NARGIN = 6; % The largest Number of argument inputs to the function
 flag_max_speed = 0;
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; %     % Flag to plot the results for debugging
@@ -81,11 +86,11 @@ else
     % Check to see if we are externally setting debug mode to be "on"
     flag_do_debug = 0; %     % Flag to plot the results for debugging
     flag_check_inputs = 1; % Flag to perform input checking
-    MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS");
-    MATLABFLAG_MAPGEN_FLAG_DO_DEBUG = getenv("MATLABFLAG_MAPGEN_FLAG_DO_DEBUG");
-    if ~isempty(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG)
-        flag_do_debug = str2double(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG);
-        flag_check_inputs  = str2double(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS);
+    MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS");
+    MATLABFLAG_VGRAPH_FLAG_DO_DEBUG = getenv("MATLABFLAG_VGRAPH_FLAG_DO_DEBUG");
+    if ~isempty(MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_VGRAPH_FLAG_DO_DEBUG)
+        flag_do_debug = str2double(MATLABFLAG_VGRAPH_FLAG_DO_DEBUG);
+        flag_check_inputs  = str2double(MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS);
     end
 end
 
@@ -133,6 +138,17 @@ if 4 <= nargin
     temp = varargin{1};
     if ~isempty(temp)
         selectedFromToIndices = temp;
+    end
+end
+
+% Does user want to specify saveFile?
+flag_saveMovie = 0;
+saveFile = [];
+if 5 <= nargin
+    temp = varargin{2};
+    if ~isempty(temp)
+        saveFile = temp;
+        flag_saveMovie = 1;
     end
 end
 
@@ -213,29 +229,32 @@ if flag_do_plots
     temp_h = figure(figNum);
     flag_rescale_axis = 0; 
     if isempty(get(temp_h,'Children'))
-        flag_rescale_axis = 0; % Set to 1 to force rescaling
+        flag_rescale_axis = 1; % Set to 1 to force rescaling
+        axis equal
     end        
 
     hold on;
-    axis equal
 
-    h_plot = plot(allPointsToPlot(:,1),allPointsToPlot(:,2),styleString);
 
     % Make axis slightly larger?
     if flag_rescale_axis
-        temp = axis;
-        %     temp = [min(points(:,1)) max(points(:,1)) min(points(:,2)) max(points(:,2))];
-        axis_range_x = temp(2)-temp(1);
-        axis_range_y = temp(4)-temp(3);
-        percent_larger = 0.3;
-        axis([temp(1)-percent_larger*axis_range_x, temp(2)+percent_larger*axis_range_x,  temp(3)-percent_larger*axis_range_y, temp(4)+percent_larger*axis_range_y]);
+        fcn_INTERNAL_rescaleAxis;
     end
 
-    if 1==0 % To save movie
+    if 1~=flag_saveMovie % To save movie
+        h_plot = plot(allPointsToPlot(:,1),allPointsToPlot(:,2),styleString);
+    else
+        delayTime = 0.5; % Delay between frames in seconds
+        loopCount = Inf; % Loop indefinitely (0 for no loop)
 
+        h_plot = zeros(length(fromRange),1);
         for ith_fromIndex = fromRange
-            thisFromPointsToPlot = allThisFromPointsToPlot{ith_fromIndex,1}; 
-            plot(thisFromPointsToPlot(:,1),thisFromPointsToPlot(:,2),styleString)
+            % Grab the index we should plot
+            thisIndex = fromRange(ith_fromIndex);
+
+            % Grab the data for this plotting index
+            thisFromPointsToPlot = allThisFromPointsToPlot{thisIndex,1}; 
+            h_plot(ith_fromIndex) = plot(thisFromPointsToPlot(:,1),thisFromPointsToPlot(:,2),styleString);
             drawnow;
 
             % Capture the current frame
@@ -246,10 +265,10 @@ if flag_do_plots
             % Write the frame to the GIF
             if ith_fromIndex == 1
                 % Create a new GIF file for the first frame
-                imwrite(imind, cm, filename, 'gif', 'LoopCount', loopCount, 'DelayTime', delayTime);
+                imwrite(imind, cm, saveFile, 'gif', 'LoopCount', loopCount, 'DelayTime', delayTime);
             else
                 % Append subsequent frames
-                imwrite(imind, cm, filename, 'gif', 'WriteMode', 'append', 'DelayTime', delayTime);
+                imwrite(imind, cm, saveFile, 'gif', 'WriteMode', 'append', 'DelayTime', delayTime);
             end
         end % Ends for loop
     end % Ends if making movie
@@ -273,3 +292,14 @@ end % Ends the function
 %
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+
+%% fcn_INTERNAL_rescaleAxis
+function fcn_INTERNAL_rescaleAxis
+temp = axis;
+%     temp = [min(points(:,1)) max(points(:,1)) min(points(:,2)) max(points(:,2))];
+axis_range_x = temp(2)-temp(1);
+axis_range_y = temp(4)-temp(3);
+percent_larger = 0.3;
+axis([temp(1)-percent_larger*axis_range_x, temp(2)+percent_larger*axis_range_x,  temp(3)-percent_larger*axis_range_y, temp(4)+percent_larger*axis_range_y]);
+
+end % Ends fcn_INTERNAL_rescaleAxis

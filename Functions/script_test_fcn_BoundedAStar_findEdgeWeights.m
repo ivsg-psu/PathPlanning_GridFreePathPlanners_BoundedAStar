@@ -15,6 +15,13 @@
 % -- moved plotting to function debug 
 % 2025_10_03 - K. Hayes
 % -- fixed bug causing assertion failure in DEMO case 1
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
+
+
 %%%%%%%%%%%%%%§
 
 %% Set up the workspace
@@ -54,7 +61,14 @@ polytopes = fcn_MapGen_polytopesShrinkEvenly(trim_polytopes,gap_size);
 % Generate all points table
 start_xy = [0 0];
 finish_xy = [0 0];
-all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes,start_xy,finish_xy,-1);
+if 1==1
+    warning('The function fcn_Visibility_polytopesGenerateAllPtsTable is not a direct replacement for the BoundedAStar version. The function needs to be updated from this point onward.')
+    all_pts = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes,start_xy,finish_xy,-1);
+else
+    % % OLD:
+    % all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes,start_xy,finish_xy,-1);
+end
+
 
 % Calculate weighted visibility graph (cost graph)
 [cgraph, vgraph] = fcn_BoundedAStar_findEdgeWeights(polytopes, all_pts, gap_size, fig_num);

@@ -12,6 +12,11 @@
 % -- fixed bug with start and finish points being incorrectly passed
 %    into fcn
 % -- fixed bug causing length assertion failure in demo case 1
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
 
 % TO DO:
 % (none)
@@ -55,7 +60,15 @@ finish = [1 0.5];
 
 % Loop through polytopes to assign obstacle ID and beginning/end flags to
 % vertices
-[all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes, start(1:2), finish(1:2), -1);
+if 1==1
+    warning('The function fcn_Visibility_polytopesGenerateAllPtsTable is not a direct replacement for the BoundedAStar version. The function needs to be updated from this point onward.')
+    [all_pts, start, finish] = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, start(1:2), finish(1:2), -1);
+else
+    % % OLD:
+    % [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes, start(1:2), finish(1:2), -1);
+
+end
+
 
 % Create set of bound_pts
 bound_pts = all_pts;

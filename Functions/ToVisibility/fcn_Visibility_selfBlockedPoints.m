@@ -1,5 +1,5 @@
-function [cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...
-    fcn_Visibility_selfBlockedPoints(polytopes,cur_pt,all_pts,varargin)
+function [currentObstacleID, selfBlockedCost, pointsWithDataBlockedBySelf] = ...
+    fcn_Visibility_selfBlockedPoints(polytopes, testPointData, pointsWithData, varargin)
 % fcn_Visibility_selfBlockedPoints
 %
 % determines the points blocked by the obstacle that the planner is currently
@@ -7,8 +7,8 @@ function [cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...
 %
 % FORMAT:
 %
-% [cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...
-% fcn_Visibility_selfBlockedPoints(polytopes,cur_pt,all_pts,(fig_num))
+% [currentObstacleID, selfBlockedCost, pointsWithDataBlockedBySelf] = ...
+% fcn_Visibility_selfBlockedPoints(polytopes, testPointData, pointsWithData, (figNum))
 %
 % INPUTS:
 %
@@ -23,13 +23,13 @@ function [cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...
 %           mean: centroid xy coordinate of the polytope
 %           area: area of the polytope
 %   
-%   cur_pt: the 1x5 array representing the current point, expected to be a vertex of a polytope
+%   testPointData: the 1x5 array representing the current point, expected to be a vertex of a polytope
 % 
-%   all_pts: p-by-5 matrix of all the points except start and finish
+%   pointsWithData: p-by-5 matrix of all the points except start and finish
 %
 %   (optional inputs)
 %
-%   fig_num: a figure number to plot results. If set to -1, skips any
+%   figNum: a figure number to plot results. If set to -1, skips any
 %       input checking or debugging, no figures will be generated, and sets
 %       up code to maximize speed. As well, if given, this forces the
 %       variable types to be displayed as output and as well makes the input
@@ -37,12 +37,12 @@ function [cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...
 %
 % OUTPUTS:
 %
-%   cur_obs_id: obstacle ID of the polytope that cur_pt is a vertex of
+%   currentObstacleID: obstacle ID of the polytope that testPointData is a vertex of
 %
-%   self_blocked_cost: polytope traversal scaling of the polytope the cur_pt is a vertex of
+%   selfBlockedCost: polytope traversal scaling of the polytope the testPointData is a vertex of
 % 
-%   pts_blocked_by_self: the other vertices on the polytope that cur_pt is a vertex of
-%       that cannot be seen from cur_pt (i.e. neither neighboring vertex which would be visible
+%   pointsWithDataBlockedBySelf: the other vertices on the polytope that testPointData is a vertex of
+%       that cannot be seen from testPointData (i.e. neither neighboring vertex which would be visible
 %       by looking down the side of a convex polytope)
 %
 % DEPENDENCIES:
@@ -67,12 +67,29 @@ function [cur_obs_id, self_blocked_cost, pts_blocked_by_self] = ...
 % -- added input and debug capabilities
 % 2025_08_05 - K. Hayes
 % -- added plotting capabilities to fcn debug section
+% 2025_11_03 - S. Brennan
+% -- cleaned up variable naming:
+%    % * all_pts to pointsWithData
+%    % * cur_pt to testPointData
+%    % * cur_obs_id to currentObstacleID
+%    % * fig_num to figNum
+%    % * self_blocked_cost to selfBlockedCost
+%    % pts_blocked_by_self to pointsWithDataBlockedBySelf
 
 % TO DO
-% -- implement contingency for concave polytopes
+% 2025_11_03 - S. Brennan
+% -- clean up the before/after if/then logic. This can easily be replaced
+% by using a mod operation on the query point +/- 1 with the length of the
+% points.
+% -- make sure first/last point in poly is not repeated
+% -- implement contingency for concave polytopes. An easy way to do this is
+% to find the polytope related to the test point, project outward slightly,
+% then check visibility of the projected point to the other vertices in the
+% polytope.
+
 
 %% Debugging and Input checks
-% Check if flag_max_speed set. This occurs if the fig_num variable input
+% Check if flag_max_speed set. This occurs if the figNum variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
 MAX_NARGIN = 4; % The largest Number of argument inputs to the function
@@ -98,9 +115,9 @@ end
 if flag_do_debug
     st = dbstack; %#ok<*UNRCH>
     fprintf(1,'STARTING function: %s, in file: %s\n',st(1).name,st(1).file);
-    debug_fig_num = 999978; %#ok<NASGU>
+    debug_figNum = 999978; %#ok<NASGU>
 else
-    debug_fig_num = []; %#ok<NASGU>
+    debug_figNum = []; %#ok<NASGU>
 end
 
 %% check input arguments?
@@ -121,13 +138,13 @@ if 0==flag_max_speed
         % Are there the right number of inputs?
         narginchk(3,MAX_NARGIN);
 
-        % Check the cur_pt input, make sure it has 5 columns
+        % Check the testPointData input, make sure it has 5 columns
         fcn_DebugTools_checkInputsToFunctions(...
-            cur_pt, '5column_of_numbers');
+            testPointData, '5column_of_numbers');
 
-        % Check the all_pts input, make sure it has 5 columns
+        % Check the pointsWithData input, make sure it has 5 columns
         fcn_DebugTools_checkInputsToFunctions(...
-            all_pts, '5column_of_numbers');
+            pointsWithData, '5column_of_numbers');
 
     end
 end
@@ -137,8 +154,8 @@ flag_do_plots = 0; % Default is to NOT show plots
 if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
     temp = varargin{end};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
-        fig_num = temp;
-        figure(fig_num);
+        figNum = temp;
+        figure(figNum);
         flag_do_plots = 1;
     end
 end
@@ -156,51 +173,52 @@ end
 %See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
-cur_obs_id = cur_pt(4);
-if cur_obs_id == -1
+currentObstacleID = testPointData(4);
+if currentObstacleID == -1
     % this isn't on any polytope
-    pts_blocked_by_self = [];
-    self_blocked_cost = 0;
+    pointsWithDataBlockedBySelf = [];
+    selfBlockedCost = 0;
     return
 end
+
 % find points with current point's obstacle id
-[row, col] = find(all_pts(:,4)==cur_obs_id);
-pts_on_cur_poly = all_pts(row(1):row(end),:);
+[row, ~] = find(pointsWithData(:,4)==currentObstacleID);
+pts_on_cur_poly = pointsWithData(row(1):row(end),:);
 
 % find polytope that current point is on
-cur_poly = polytopes(cur_obs_id);
+cur_poly = polytopes(currentObstacleID);
 
-% check that the cur_pt is indeed a vertex of cur_poly
-assert(ismember(cur_pt(1),cur_poly.xv))
-assert(ismember(cur_pt(2),cur_poly.yv))
+% check that the testPointData is indeed a vertex of cur_poly
+assert(ismember(testPointData(1),cur_poly.xv))
+assert(ismember(testPointData(2),cur_poly.yv))
 
 
-% find cur_pt's position in vertices
-[~,cur_pt_indx]=ismember(cur_pt,pts_on_cur_poly,'rows');
+% find testPointData's position in vertices
+[~,testPointData_indx]=ismember(testPointData,pts_on_cur_poly,'rows');
 
 % initialize array of self blocked pts
 pts_blocked_by_cur_poly = pts_on_cur_poly;
 
-% remove cur_pt
-pts_blocked_by_cur_poly(cur_pt_indx,:) = NaN(1,5);
+% remove testPointData
+pts_blocked_by_cur_poly(testPointData_indx,:) = NaN(1,5);
 
 % remove neighbor before and neighbor after
-if cur_pt_indx-1 == 0
-    % remove the end if cur_pt is the first point
+if testPointData_indx-1 == 0
+    % remove the end if testPointData is the first point
     pts_blocked_by_cur_poly(end,:) = NaN(1,5);
 else
-    % or just remove whatever is before cur_pt
-    pts_blocked_by_cur_poly(cur_pt_indx-1,:) = NaN(1,5);
+    % or just remove whatever is before testPointData
+    pts_blocked_by_cur_poly(testPointData_indx-1,:) = NaN(1,5);
 end
-if cur_pt_indx  == size(pts_blocked_by_cur_poly,1)
-    % remove the beginning if cur_pt is the last point
+if testPointData_indx  == size(pts_blocked_by_cur_poly,1)
+    % remove the beginning if testPointData is the last point
     pts_blocked_by_cur_poly(1,:) = [];
 else
-    % or just remove whatever is after cur_pt
-    pts_blocked_by_cur_poly(cur_pt_indx+1,:) = NaN(1,5);
+    % or just remove whatever is after testPointData
+    pts_blocked_by_cur_poly(testPointData_indx+1,:) = NaN(1,5);
 end
-pts_blocked_by_self = rmmissing(pts_blocked_by_cur_poly);
-self_blocked_cost = cur_poly.cost;
+pointsWithDataBlockedBySelf = rmmissing(pts_blocked_by_cur_poly);
+selfBlockedCost = cur_poly.cost;
 
 %% Plot the results (for debugging)?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -215,20 +233,20 @@ self_blocked_cost = cur_poly.cost;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
 if flag_do_plots
-    figure(fig_num)
+    figure(figNum)
     hold on
     
     % Plot current polytope
     plotFormat.Color = 'blue';
     plotFormat.LineWidth = 2;
     plotFormat.DisplayName = 'Current Polytope';
-    f = fcn_MapGen_plotPolytopes(polytopes(cur_obs_id),plotFormat,[1 0 0 0 0.5],(fig_num));
+    fcn_MapGen_plotPolytopes(polytopes(currentObstacleID),plotFormat,[1 0 0 1 0.5],(figNum));
     
     % Plot current point
-    plot(cur_pt(1),cur_pt(2),'gx','MarkerSize',15,'LineWidth',2,'DisplayName','Current point')
+    plot(testPointData(1),testPointData(2),'gx','MarkerSize',15,'LineWidth',2,'DisplayName','Current point')
 
     % Plot blocked points
-    plot(pts_blocked_by_self(:,1),pts_blocked_by_self(:,2),'rx','MarkerSize',15,'LineWidth',2,'DisplayName','Self-blocked points');
+    plot(pointsWithDataBlockedBySelf(:,1),pointsWithDataBlockedBySelf(:,2),'rx','MarkerSize',15,'LineWidth',2,'DisplayName','Self-blocked points');
 
     legend
 end

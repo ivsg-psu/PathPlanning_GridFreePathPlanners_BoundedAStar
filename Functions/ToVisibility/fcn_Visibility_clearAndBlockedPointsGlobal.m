@@ -1,4 +1,5 @@
-function [visibility_matrix, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, starts, finishes, varargin)
+function [visibilityMatrix, visibilityDetailsEachFromPoint] = ...
+    fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, starts, finishes, varargin)
 % fcn_Visibility_clearAndBlockedPointsGlobal
 %
 % This calls, over all points (global), the function
@@ -10,7 +11,8 @@ function [visibility_matrix, visibility_results] = fcn_Visibility_clearAndBlocke
 % rather than local intersection truth tables.
 %
 % FORMAT:
-% [visibility_matrix, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, starts, finishes, (isConcave), (fig_num))
+% [visibilityMatrix, visibilityDetailsEachFromPoint] = ...
+% fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, starts, finishes, (isConcave), (figNum))
 %
 % INPUTS:
 %
@@ -26,7 +28,6 @@ function [visibility_matrix, visibility_results] = fcn_Visibility_clearAndBlocke
 %       area: area of the polytope
 %       max_radius: distance from the mean to the furthest vertex
 %
-%%%%%%%%%% delete
 %     starts: p-by-5 matrix of all the possible start points
 %       the information in the 5 columns is as follows:
 %         x-coordinate
@@ -49,7 +50,6 @@ function [visibility_matrix, visibility_results] = fcn_Visibility_clearAndBlocke
 %
 %      gap_size: if zero, the special fully tiled case will be handled.
 %         This involves assuming that visibility is only down sides and through polytopes
-%%%%%%%%%%
 %
 %     (optional inputs)
 %
@@ -59,25 +59,28 @@ function [visibility_matrix, visibility_results] = fcn_Visibility_clearAndBlocke
 %         suboptimal paths but not collisions). For background on what this flag does, see slides
 %         in `concave_vgraph` section of Documentation/bounded_astar_documentation.pptx
 %
-%      fig_num: a figure number to plot results. If set to -1, skips any
+%      figNum: a figure number to plot results. If set to -1, skips any
 %         input checking or debugging, no figures will be generated, and sets
 %         up code to maximize speed. As well, if given, this forces the
 %         variable types to be displayed as output and as well makes the input
 %         check process verbose
 %
-%
 % OUTPUTS:
 %
-%     visibility_matrix: nxn matrix, where n is the number of points in all_pts
+%     visibilityMatrix: nxn matrix, where n is the number of points in all_pts
 %       a 1 in column i and row j indicates that all_pts(i,:) is visible from
 %       all_pts(j,:).  This matrix is therefore symmetric
 %
-%     visibility_results: 
+%     visibilityDetailsEachFromPoint: an array of structures containing
+%     visibilty information for each "from" point. The structure passes out
+%     all output arguments for the function
+%     fcn_Visibility_clearAndBlockedPoints per each "from" point call.
 %
 % DEPENDENCIES:
-% 
+%
 % fcn_DebugTools_checkInputsToFunctions
 % fcn_Visibility_clearAndBlockedPoints
+% fcn_MapGen_plotPolytopes
 %
 % EXAMPLES:
 %
@@ -97,6 +100,12 @@ function [visibility_matrix, visibility_results] = fcn_Visibility_clearAndBlocke
 % 2025_07_31 - K. Hayes
 % -- reformatted function
 % -- added input checking and debug
+% 2025_11_01 - S. Brennan
+% -- updated docstrings in header
+% -- staged code for Visibility library
+% -- replaced _MAPGEN_ with _VGRAPH_ in global variable naming
+% -- cleaned up variable naming for clarity (removed variables i and j)
+% -- preallocated visibilityDetailsEachFromPoint variable for speed-up
 
 % TO DO:
 % (copied from Steve's notes)
@@ -110,7 +119,7 @@ function [visibility_matrix, visibility_results] = fcn_Visibility_clearAndBlocke
 % -- fix isConcave flag input checking
 
 %% Debugging and Input checks
-% Check if flag_max_speed set. This occurs if the fig_num variable input
+% Check if flag_max_speed set. This occurs if the figNum variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
 MAX_NARGIN = 5; % The largest Number of argument inputs to the function
@@ -123,11 +132,11 @@ else
     % Check to see if we are externally setting debug mode to be "on"
     flag_do_debug = 0; %     % Flag to plot the results for debugging
     flag_check_inputs = 1; % Flag to perform input checking
-    MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS");
-    MATLABFLAG_MAPGEN_FLAG_DO_DEBUG = getenv("MATLABFLAG_MAPGEN_FLAG_DO_DEBUG");
-    if ~isempty(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG)
-        flag_do_debug = str2double(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG);
-        flag_check_inputs  = str2double(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS);
+    MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS");
+    MATLABFLAG_VGRAPH_FLAG_DO_DEBUG = getenv("MATLABFLAG_VGRAPH_FLAG_DO_DEBUG");
+    if ~isempty(MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_VGRAPH_FLAG_DO_DEBUG)
+        flag_do_debug = str2double(MATLABFLAG_VGRAPH_FLAG_DO_DEBUG);
+        flag_check_inputs  = str2double(MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS);
     end
 end
 
@@ -136,9 +145,9 @@ end
 if flag_do_debug
     st = dbstack; %#ok<*UNRCH>
     fprintf(1,'STARTING function: %s, in file: %s\n',st(1).name,st(1).file);
-    debug_fig_num = 999978; %#ok<NASGU>
+    debug_figNum = 999978; %#ok<NASGU>
 else
-    debug_fig_num = []; %#ok<NASGU>
+    debug_figNum = []; %#ok<NASGU>
 end
 
 
@@ -171,7 +180,6 @@ if 0==flag_max_speed
     end
 end
 
-
 % Does user want to specify the isConcave input?
 isConcave = 0; % Default is 0
 if 4 <= nargin
@@ -183,11 +191,11 @@ end
 
 % Does user want to show the plots?
 flag_do_plots = 0; % Default is to NOT show plots
-if (0==flag_max_speed) && (MAX_NARGIN == nargin) 
+if (0==flag_max_speed) && (MAX_NARGIN == nargin)
     temp = varargin{end};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
-        fig_num = temp;
-        figure(fig_num);
+        figNum = temp;
+        figure(figNum);
         flag_do_plots = 1;
     end
 end
@@ -206,44 +214,67 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
 
-num_points = size(starts,1);
+numPoints = size(starts,1);
 % for non-zero gap size, we can repeatedly call the legacy visibility functions
 
 % if gap_size ~= 0
-    visibility_matrix = NaN(num_points);
-    %% loop through all points
-    for j = 1:num_points
-        i = starts(j,3);
-        % legacy visibility function returns visibility vector for this point
-        [visibility_results(i).clear_pts,visibility_results(i).blocked_pts,visibility_results(i).D,visibility_results(i).di,visibility_results(i).dj,visibility_results(i).num_int,visibility_results(i).xiP,visibility_results(i).yiP,visibility_results(i).xiQ,visibility_results(i).yiQ,visibility_results(i).xjP,visibility_results(i).yjP,visibility_results(i).xjQ,visibility_results(i).yjQ] = ...
-            fcn_Visibility_clearAndBlockedPoints(polytopes,starts(j,:),finishes,isConcave,-1);
-        % D is finish points on the rows and polytope sides on the columns
-        % transpose this so we have column for each point
-        % sum each column into a row vector so each element is the sum of number
-        % of sides hit
-        % if sum>0, this implies there is no visibility
-        visibility_matrix(i,:) = sum(visibility_results(i).D')==0;
-        % sometimes the diagonal does not contain only 1's (it always should
-        % since every point is visible to itself so we overwrite this)
-        visibility_matrix(i,i) = 1;
+visibilityMatrix = NaN(numPoints);
 
-        % %% add self-blocked points
-        % % points across the polytope are also visible so find self blocked pts
-        % % find obs_id for cur_pt
-        % cur_obs_id = all_pts(i,4);
-        % % find pt ids of every point on this obstacle
-        % pt_idx = find(all_pts(:,4)==cur_obs_id);
-        % % at row i, and columns with values in pt_idx...
-        % idx = sub2ind(size(visibility_matrix), i.*ones(size(pt_idx,1),size(pt_idx,2)), pt_idx);
-        % % set a 1, indicating the self-blocked points are visible
-        % visibility_matrix(idx) = 1;
-    end
+%% loop through all points
+visibilityDetailsEachFromPoint(numPoints) = struct;
+for jth_point = 1:numPoints
+    fromIndex = starts(jth_point,3);
+    %% Check visibility from this point to all others
+    % legacy visibility function returns visibility vector for this point
+     [...
+        visibilityDetailsEachFromPoint(fromIndex).clear_pts,...
+        visibilityDetailsEachFromPoint(fromIndex).blocked_pts, ...
+        visibilityDetailsEachFromPoint(fromIndex).D, ...
+        visibilityDetailsEachFromPoint(fromIndex).di, ...
+        visibilityDetailsEachFromPoint(fromIndex).dj, ...
+        visibilityDetailsEachFromPoint(fromIndex).num_int, ...
+        visibilityDetailsEachFromPoint(fromIndex).xiP, ...
+        visibilityDetailsEachFromPoint(fromIndex).yiP, ...
+        visibilityDetailsEachFromPoint(fromIndex).xiQ, ...
+        visibilityDetailsEachFromPoint(fromIndex).yiQ, ...
+        visibilityDetailsEachFromPoint(fromIndex).xjP, ...
+        visibilityDetailsEachFromPoint(fromIndex).yjP, ...
+        visibilityDetailsEachFromPoint(fromIndex).xjQ, ...
+        visibilityDetailsEachFromPoint(fromIndex).yjQ] = ...
+        fcn_Visibility_clearAndBlockedPoints(polytopes,starts(jth_point,:),finishes,isConcave,-1);
+
+    %% Fill in the visibility matrix using results for this point
+    % D is finish points on the rows and polytope sides on the columns
+    % transpose this so we have column for each point
+    % sum each column into a row vector so each element is the sum of number
+    % of sides hit
+    % if sum>0, this implies there is no visibility
+    % OLD FORMAT: (slow)
+    visibilityMatrix(fromIndex,:) = sum(visibilityDetailsEachFromPoint(fromIndex).D')==0;
+    % NEW FORMAT:
+    % visibilityMatrix(fromIndex,:) = sum(visibilityDetailsEachFromPoint(fromIndex).D, 2)';
+
+    % sometimes the diagonal does not contain only 1's (it always should
+    % since every point is visible to itself so we overwrite this)
+    visibilityMatrix(fromIndex,fromIndex) = 1;
+
+    % %% add self-blocked points
+    % % points across the polytope are also visible so find self blocked pts
+    % % find obs_id for cur_pt
+    % cur_obs_id = all_pts(i,4);
+    % % find pt ids of every point on this obstacle
+    % pt_idx = find(all_pts(:,4)==cur_obs_id);
+    % % at row i, and columns with values in pt_idx...
+    % idx = sub2ind(size(visibilityMatrix), i.*ones(size(pt_idx,1),size(pt_idx,2)), pt_idx);
+    % % set a 1, indicating the self-blocked points are visible
+    % visibilityMatrix(idx) = 1;
+end
 % elseif gap_size == 0
 %     % for the zero gap size case, we can do an optimization: all points on the same polytope
 %     % are visible, either along the side or across the polytope
 %     % other points are not visible since there are no gaps and angles of 180 deg
 %     % are not possible in a Voronoi diagram where all vertices have 3 Voronoi sides
-%     deduped_pts = fcn_BoundedAStar_convertPolytopetoDedupedPoints(all_pts);
+%     deduped_pts = fcn_Visibility_convertPolytopetoDedupedPoints(all_pts);
 %     num_unique_pts = length(deduped_pts);
 %     all_polys = NaN(num_unique_pts,3);
 %     for i = 1:num_unique_pts
@@ -251,7 +282,7 @@ num_points = size(starts,1);
 %             all_polys(i,j) = deduped_pts(i).polys(j);
 %         end
 %     end
-%     visibility_matrix = zeros(num_unique_pts);
+%     visibilityMatrix = zeros(num_unique_pts);
 %     for i = 1:num_unique_pts
 %         for j = 1:3
 %             poly_of_interest = all_polys(i,j);
@@ -260,7 +291,7 @@ num_points = size(starts,1);
 %             end
 %             [r,c] = find(all_polys == poly_of_interest);
 %             for k = 1:length(r)
-%                 visibility_matrix(i,r(k)) = 1;
+%                 visibilityMatrix(i,r(k)) = 1;
 %             end
 %         end
 %    end
@@ -268,10 +299,10 @@ num_points = size(starts,1);
 if isConcave
     %% check for edges entirely contained by polytopes
     % don't need to check self visible points as this will not change
-    visibility_matrix_without_self_visible = visibility_matrix - eye(size(visibility_matrix,1));
+    visibilityMatrix_without_self_visible = visibilityMatrix - eye(size(visibilityMatrix,1));
     % find indeces of every other '1' or allowed edge...
-    linear_idx = find(visibility_matrix_without_self_visible); % find 1s in visibility_matrix
-    [rows_of_1s, cols_of_1s] = ind2sub(size(visibility_matrix_without_self_visible),linear_idx); % convert linear idx to r,c
+    linear_idx = find(visibilityMatrix_without_self_visible); % find 1s in visibilityMatrix
+    [rows_of_1s, cols_of_1s] = ind2sub(size(visibilityMatrix_without_self_visible),linear_idx); % convert linear idx to r,c
     num_1s = length(rows_of_1s);
     for e = 1:num_1s
         start_pt = starts(rows_of_1s(e),1:2);
@@ -305,7 +336,7 @@ if isConcave
             [is_in,is_on] = isinterior(polyshape_p,mid_pt(1:2));
             % if so, remove the edge, and stop trying polytopes
             if is_in && ~ is_on
-                visibility_matrix(rows_of_1s(e),cols_of_1s(e)) = 0;
+                visibilityMatrix(rows_of_1s(e),cols_of_1s(e)) = 0;
                 % if it is in one polytope, we needn't check any others
                 p = num_polys+1;
             end
@@ -325,18 +356,37 @@ end
 %  |_____/ \___|_.__/ \__,_|\__, |
 %                            __/ |
 %                           |___/
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_do_plots
-    figure(fig_num)
+    % check whether the figure already has data
+    temp_h = figure(figNum);
+    flag_rescale_axis = 0;
+    if isempty(get(temp_h,'Children'))
+        flag_rescale_axis = 1; % Set to 1 to force rescaling
+        axis equal
+    end
+
+    hold on;
+
+    allPoints = [[[polytopes.xv]' [polytopes.yv]']; starts(:,1:2); finishes(:,1:2)];
+    [newAxis, ~] = fcn_INTERNAL_rescaleAxis(allPoints);
     
+    % Make axis slightly larger?
+    if flag_rescale_axis
+        axis(newAxis);
+    end
+
+    %%%%%%%%%%%%%
+    % Plot the inputs
+
     % Set up valid edges subplot
     subplot(3,1,1)
-    plotFormat.Color = 'Blue'; % edge line plotting
-    plotFormat.LineStyle = '-';
-    plotFormat.LineWidth = 2; % linewidth of the edge
-    fillFormat = [];
-    fcn_MapGen_plotPolytopes(polytopes, (plotFormat), (fillFormat), (fig_num));
+    
+    % Plot the polytopes
+    fcn_INTERNAL_plotPolytopes(polytopes, figNum)
+    axis(newAxis);
+
     hold on
     box on
     xlabel('x [km]')
@@ -345,10 +395,9 @@ if flag_do_plots
 
     % Set up blocked edges subplot
     subplot(3,1,2)
-    plotFormat.Color = 'Blue'; % edge line plotting
-    plotFormat.LineStyle = '-';
-    plotFormat.LineWidth = 2; % linewidth of the edge
-    fcn_MapGen_plotPolytopes(polytopes, (plotFormat), (fillFormat), (fig_num));
+    fcn_INTERNAL_plotPolytopes(polytopes, figNum)
+    axis(newAxis);
+
     hold on
     box on
     xlabel('x [km]')
@@ -357,10 +406,9 @@ if flag_do_plots
 
     % Set up all edges subplot
     subplot(3,1,3)
-    plotFormat.Color = 'Blue'; % edge line plotting
-    plotFormat.LineStyle = '-';
-    plotFormat.LineWidth = 2; % linewidth of the edge
-    fcn_MapGen_plotPolytopes(polytopes, (plotFormat), (fillFormat), (fig_num));
+    fcn_INTERNAL_plotPolytopes(polytopes, figNum)
+    axis(newAxis);
+    
     hold on
     box on
     xlabel('x [km]')
@@ -368,22 +416,32 @@ if flag_do_plots
     title('all edges')
 
     % Plot visibility graph edges
-    for i = 1:size(visibility_matrix,1)
-        for j = 1:size(visibility_matrix,1)
-            if visibility_matrix(i,j) == 1
-                subplot(3,1,1)
-                plot([starts(i,1),finishes(j,1)],[starts(i,2),finishes(j,2)],'--g','LineWidth',2)
-                subplot(3,1,3)
-                plot([starts(i,1),finishes(j,1)],[starts(i,2),finishes(j,2)],'--g','LineWidth',2)
+    visibleConnections = [];
+    notVisibileConnections = [];
+    for fromIndex = 1:size(visibilityMatrix,1)
+        for jth_point = 1:size(visibilityMatrix,1)
+            if visibilityMatrix(fromIndex,jth_point) == 1
+                visibleConnections = [visibleConnections; ...
+                    starts(fromIndex,1:2);
+                    finishes(jth_point,1:2);
+                    nan(1,2)]; %#ok<AGROW>
             end
-            if visibility_matrix(i,j) == 0
-                subplot(3,1,2)
-                plot([starts(i,1),finishes(j,1)],[starts(i,2),finishes(j,2)],'--r','LineWidth',2)
-                subplot(3,1,3)
-                plot([starts(i,1),finishes(j,1)],[starts(i,2),finishes(j,2)],'--r','LineWidth',2)
+            if visibilityMatrix(fromIndex,jth_point) == 0
+                notVisibileConnections = [notVisibileConnections; ...
+                    starts(fromIndex,1:2);
+                    finishes(jth_point,1:2);
+                    nan(1,2)]; %#ok<AGROW>
             end
         end
     end
+
+    subplot(3,1,1)
+    plot(visibleConnections(:,1),visibleConnections(:,2),'g-','LineWidth',1)
+    subplot(3,1,2)
+    plot(notVisibileConnections(:,1),notVisibileConnections(:,2),'r-','LineWidth',1)
+    subplot(3,1,3)
+    plot(notVisibileConnections(:,1),notVisibileConnections(:,2),'r-','LineWidth',1)
+    plot(visibleConnections(:,1),visibleConnections(:,2),'g-','LineWidth',1)
 
 end
 
@@ -403,3 +461,37 @@ end
 %
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+%% fcn_INTERNAL_rescaleAxis
+function [newAxis, addNudgeX] = fcn_INTERNAL_rescaleAxis(points)
+% temp = axis;
+temp = [min(points(:,1)) max(points(:,1)) min(points(:,2)) max(points(:,2))];
+axis_range_x = temp(2)-temp(1);
+axis_range_y = temp(4)-temp(3);
+
+addNudgeX = axis_range_x*0.03;
+
+percent_larger = 0.3;
+newAxis = [temp(1)-percent_larger*axis_range_x, temp(2)+percent_larger*axis_range_x,  temp(3)-percent_larger*axis_range_y, temp(4)+percent_larger*axis_range_y];
+
+end % Ends fcn_INTERNAL_rescaleAxis
+
+
+%% fcn_INTERNAL_plotPolytopes
+function fcn_INTERNAL_plotPolytopes(polytopes, figNum)
+% A wrapper function for plotPolytopes, to plot the polytopes with same
+% format
+
+% axes_limits = [0 1 0 1]; % x and y axes limits
+% axis_style = 'square'; % plot axes style
+plotFormat.Color = 'Blue'; % edge line plotting
+plotFormat.LineStyle = '-';
+plotFormat.LineWidth = 2; % linewidth of the edge
+fillFormat = [1 0 0 1 0.4];
+% FORMAT: fcn_MapGen_plotPolytopes(polytopes,figNum,line_spec,line_width,axes_limits,axis_style);
+fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(figNum));
+hold on
+box on
+% axis([-0.1 1.1 -0.1 1.1]);
+xlabel('x [m]');
+ylabel('y [m]');
+end % Ends fcn_INTERNAL_plotPolytopes

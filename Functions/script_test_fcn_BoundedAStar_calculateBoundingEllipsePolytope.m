@@ -4,6 +4,12 @@
 % Revision history
 % 2025_09_04 - K. Hayes, kxh1031@psu.edu
 % -- initial write of script
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
+
 
 %% Set up the workspace
 close all
@@ -44,7 +50,14 @@ figure(fig_num); clf;
  start = [0 50 point_tot+1 0 0];
  finish = [100 50 point_tot+2 -1 0];
 
- all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start(1:2), finish(1:2), -1);
+ if 1==1
+     warning('The function fcn_Visibility_polytopesGenerateAllPtsTable is not a direct replacement for the BoundedAStar version. The function needs to be updated from this point onward.')
+     all_pts = fcn_Visibility_polytopesGenerateAllPtsTable(shrunk_polytopes, start(1:2), finish(1:2), -1);
+ else
+     % % OLD:
+     %  all_pts = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start(1:2), finish(1:2), -1);
+ end
+
 
  % Create bounded region
  bound_pts = all_pts;
