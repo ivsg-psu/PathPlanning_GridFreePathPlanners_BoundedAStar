@@ -533,6 +533,10 @@
 % - fcn_Visibility_addObstacle
 %   % * moved to ToVisibility subfolder until move is complete
 %   % * updated internal variable naming
+%
+% 2025_11_04 - K. Hayes
+% - In this demo script:
+%   % * updated DebugTools release dependency to new version
 
 
 % Not sure what to do with these:
@@ -556,9 +560,9 @@
 clear library_name library_folders library_url
 
 ith_library = 1;
-library_name{ith_library}    = 'DebugTools_v2025_09_26b';
+library_name{ith_library}    = 'DebugTools_v2025_11_04b';
 library_folders{ith_library} = {'Functions','Data'};
-library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/DebugTools_v2025_09_26b.zip';
+library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/DebugTools_v2025_11_04b.zip';
 
 ith_library = ith_library+1;
 library_name{ith_library}    = 'MapGenClass_v2025_10_07';
