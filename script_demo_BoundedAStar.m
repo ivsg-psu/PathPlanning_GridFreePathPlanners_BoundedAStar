@@ -546,6 +546,8 @@
 % - Moved MapGen files/data out and into MapGen
 % - Merged this with repo
 % - Updated MapGenClass_v2025_11_06
+% - Updated DebugTools_v2025_11_06
+
 
 % TO-DO:
 % 2025_07_28 - Sean Brennan
@@ -567,9 +569,9 @@
 clear library_name library_folders library_url
 
 ith_library = 1;
-library_name{ith_library}    = 'DebugTools_v2025_11_04c';
+library_name{ith_library}    = 'DebugTools_v2025_11_06';
 library_folders{ith_library} = {'Functions','Data'};
-library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/DebugTools_v2025_11_04c.zip';
+library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/DebugTools_v2025_11_06.zip';
 
 ith_library = ith_library+1;
 library_name{ith_library}    = 'MapGenClass_v2025_11_06';
