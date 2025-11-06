@@ -541,12 +541,11 @@
 % 2025_11_04 - S. Brennan
 % - In this demo script:
 %   % * updated DebugTools dependency to Debug_Tools_v2025_11_04c
-
-% Can deprecate fcn_BoundedAStar_calculatePointsOnLines with Path library?
-
-% Not sure what to do with these:
-% fcn_BoundedAStar_polytopePointsInPolytopes
-% fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes
+%
+% 2025_11_06 - S. Brennan
+% - Moved MapGen files/data out and into MapGen
+% - Merged this with repo
+% - Updated MapGenClass_v2025_11_06
 
 % TO-DO:
 % 2025_07_28 - Sean Brennan
@@ -561,6 +560,9 @@
 %    % * script_test_polytope_canyon_corridor_width_incentive_weighting
 %    % * script_test_polytope_canyon_replan
 %    % * script_test_polytope_canyon_replan_with_dilation
+% - Can deprecate fcn_BoundedAStar_calculatePointsOnLines with Path library?
+% - Need to rewrite fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes
+
 
 clear library_name library_folders library_url
 
@@ -570,9 +572,9 @@ library_folders{ith_library} = {'Functions','Data'};
 library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/DebugTools_v2025_11_04c.zip';
 
 ith_library = ith_library+1;
-library_name{ith_library}    = 'MapGenClass_v2025_10_07';
+library_name{ith_library}    = 'MapGenClass_v2025_11_06';
 library_folders{ith_library} = {'Functions','testFixtures','GridMapGen'};
-library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTools_MapGenClassLibrary/archive/refs/tags/MapGenClass_v2025_10_07.zip';
+library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_MapTools_MapGenClassLibrary/archive/refs/tags/MapGenClass_v2025_11_06.zip';
 
 ith_library = ith_library+1;
 library_name{ith_library}    = 'PathClass_v2025_08_03';
