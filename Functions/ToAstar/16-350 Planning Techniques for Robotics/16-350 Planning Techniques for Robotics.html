@@ -1,0 +1,477 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<!-- saved from url=(0052)https://www.cs.cmu.edu/~maxim/classes/robotplanning/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+
+
+<title>16-350 Planning Techniques for Robotics</title>
+
+</head>
+
+<body>
+
+<h1>16-350 Planning Techniques for Robotics</h1>
+
+
+Planning is one of the core components that enable robots to be autonomous. Robot planning is responsible for deciding in real-time what the robot should do next, how to do it, where the robot should move next and how to move there. This class does an in-depth study of popular planning techniques in robotics and examines their use in ground and aerial robots, humanoids, mobile manipulation platforms and multi-robot systems. The students learn the theory of these methods and also implement them in a series of programming-based projects. <br>
+<br>
+
+To take the class students should have a good knowledge of programming and data structures.
+
+<hr>
+
+<h2>Spring 2025 Course Information</h2>
+
+<h3>Announcements</h3>
+
+<p></p><ul>
+
+<!-- <li><b>2/25: Homework 2 due date moved to March 18th, 11:59PM </b><br></li> -->
+
+</ul><p></p>
+
+
+<h3>Dates/times</h3>
+
+<table border="0">
+
+<tbody><tr valign="top">
+
+  <td>Class meetings:</td>
+
+  <td>Mondays, Wednesdays, 2:00-3:20PM, NSH 3002</td>
+
+</tr>
+
+</tbody></table>
+
+
+<h3>Instructor</h3>
+
+<table border="0" cellpadding="5">
+
+<tbody><tr>
+
+  <td><b>Who</b></td>
+
+  <td><b>Email</b></td>
+
+</tr>
+
+<tr>
+
+  <td><a href="http://www.cs.cmu.edu/~maxim/">Maxim Likhachev</a></td>
+
+  <td><script language="JavaScript">
+
+
+    var domain   = "cs.cmu.edu";
+
+    var username = "maxim";
+
+    var email    = username + "@" + domain;
+
+    document.write("<a href=" + "mail" + "to:" + email + ">"
+
+                   + email + "</a>")
+
+  </script><a href="mailto:maxim@cs.cmu.edu">maxim@cs.cmu.edu</a></td>
+
+</tr>
+
+</tbody></table>
+
+
+<h3>Teaching Assistants</h3>
+
+<table border="0" cellpadding="5">
+
+<tbody><tr>
+
+  <td><b>Who</b></td>
+
+  <td><b>Email</b></td>
+
+</tr>
+
+<tr>
+
+  <td>Saudamini Ghatge</td>
+
+  <td><script language="JavaScript">
+
+    var domain   = "andrew.cmu.edu";
+
+    var username = "sghatge";
+
+    var email    = username + "@" + domain;
+
+    document.write("<a href=" + "mail" + "to:" + email + ">"
+
+                   + email + "</a>")
+
+
+
+  </script><a href="mailto:sghatge@andrew.cmu.edu">sghatge@andrew.cmu.edu</a></td>
+
+</tr>
+
+
+</tbody></table>
+
+
+<h3>Office Hours</h3>
+
+<table border="0" cellpadding="5">
+
+<tbody><tr>
+
+  <td><b>Who</b></td>
+
+  <td><b>Location</b></td>
+
+  <td><b>Hours</b></td>
+
+</tr>
+
+<tr>
+
+  <td>Saudamini</td>
+
+  <td>NSH 4222</td>
+
+  <td>Tue 11:00-12:00PM</td>
+
+</tr>
+
+<tr>
+
+  <td>Saudamini</td>
+
+  <td>NSH 4222</td>
+
+  <td>Thu 3:00-4:00PM</td>
+
+</tr>
+
+
+
+
+<tr>
+
+  <td>Maxim</td>
+
+  <td>NSH 3211</td>
+
+  <td>By appointment</td>
+
+</tr>
+
+
+
+
+</tbody></table>
+
+<h3>Grading</h3>
+
+The criteria used to compute the final grade will consist of a combination of scores obtained on the exam, three programming assignments (homeworks), pop quizzes, final project and class participation:
+<br>
+<br>
+
+<table border="1" cellpadding="5">
+  <tbody><tr><td align="left">Three homeworks</td> <td>33%</td></tr>
+  <tr><td align="left">Exam</td>            <td>20%</td></tr>
+  <tr><td align="left">In-class pop quizzes</td>            <td>10%</td></tr>
+  <tr><td align="left">Final project</td>           <td>32%</td></tr>
+  <tr><td align="left">Participation</td>           <td>5%</td></tr>
+</tbody></table>
+<p></p>
+
+Each student has a total of <b>3 free late days</b> that may be used
+as needed for homeworks.  <i>No late days may be used for the final project!</i>
+<br>
+
+<i>Additional details:</i> A late day is defined as a 24-hour period after the
+deadline.  After the free late days are used up, each
+additional late day will incur a 10% penalty on the maximum achievable
+score with an upper limit on the penalty of 50%.  For example, if the assignment is worth 100 points and your score is 80, then
+your actual score will be 72 if you have 1 additional late day, 64 if you have 2 additional late days, etc.
+<br>
+
+<h3>Class lectures/notes:</h3>
+
+<i><font color="FF0000"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/robotplanning_spring25_schedule_draft.pdf"> Tentative schedule for the class (PDF)</a></font></i>
+
+<p>
+
+
+
+</p><table border="1" cellpadding="10">
+
+<thead>
+
+<tr>
+
+  <td><b>Date</b></td>
+
+  <td><b>Topic</b></td>
+
+  <td><b>Slides</b></td>
+
+  <td><b>Homeworks</b></td>
+
+  <td><b>Additional Info</b></td>
+
+</tr>
+
+</thead>
+
+<tbody><tr class="row1">
+<td align="left">1/12 (Mon)</td>
+<td align="left"><b>Introduction, What is Robot Planning?</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/intro_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">1/14 (Wed)</td>
+<td align="left"><b>Planning Representations: Skeleton-, Grid- and Lattice-based Graphs, Explicit vs. Implicit Graphs</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/skelgridlatticebasedgraphs_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">1/22 (Wed)</td>
+<td align="left"><b>Search Algorithms: Uninformed A* Search</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/uninformedsearch_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/hw/16350_sp25_hw1_v1.zip">Robot Chasing Target Planning HW1</a></div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">1/27 (Mon)</td>
+<td align="left"><b>Search Algorithms: A* Search, Multi-goal A*</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/informedastar_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">1/29 (Wed)</td>
+<td align="left"><b>Search Algorithms: Heuristics, Backward A*, Weighted A* Search</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/heuristicsweightedsearch_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">2/3 (Mon)</td>
+<td align="left"><b>Interleaving Planning and Execution: Anytime Heuristic Search</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/anytimesearch_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">2/5 (Wed)</td>
+<td align="left"><b>Interleaving Planning and Execution: Incremental Heuristic Search</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/incrementalsearch_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">2/10 (Mon)</td>
+<td align="left"><b>Interleaving Planning and Execution: Real-time Heuristic Search</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/realtimesearch_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">2/12 (Wed)</td>
+<td align="left"><b>Case Study: Planning for Autonomous Driving</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/casestudyautodriving_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">2/17 (Mon)</td>
+<td align="left"><b>Planning Representations: Probabilistic Roadmaps for Continuous Spaces</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/probroadmap_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">2/19 (Wed)</td>
+<td align="left"><b>Planning Representations/Search Algorithms: RRT, RRT-Connect, RRT*</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/RRT_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/hw/16350_sp25_hw2_v1.zip">N-DoF Planar Arm Planning HW2</a></div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+  <td align="left">2/24 (Mon)</td>
+  <td align="left"><b>Planning Representations/Search Algorithms: RRT, RRT-Connect, RRT* (cont'd)</b></td>
+  <td align="left">-</td>
+  <td align="left"><div class="homeworks">-</div></td>
+  <td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">2/26 (Wed)</td>
+<td align="left"><b>Case Study: Planning for Mobile Manipulators and Articulated Robots</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/casemanipandarticrobots_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">3/3 (Mon)</td>
+<td align="left"><b>SPRING BREAK: NO CLASSES</b></td>
+<td align="left">-</td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">3/5 (Wed)</td>
+<td align="left"><b>SPRING BREAK: NO CLASSES</b></td>
+<td align="left">-</td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">3/10 (Mon)</td>
+<td align="left"><b>Search Algorithms: Markov property, independent vs. dependent variables</b></td>
+<td align="left"><div class="notes"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/dependentvars_16350_sp25.pdf">slides</a></div></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">3/12 (Wed)</td>
+<td align="left"><b>Case Study: Planning for Coverage, Mapping and Surveyal</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/casemappingcoveragesurvey_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">3/17 (Mon)</td>
+<td align="left"><b>Planning Representations: Symbolic Representation for Task Planning</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/symbolicrep_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">3/19 (Wed)</td>
+<td align="left"><b>Presentation of Final Project Proposals</b></td>
+<td align="left">-</td>
+<td align="left"><div class="homeworks"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/hw/16350_sp25_hw3_v1.zip">Symbolic Planning HW3</a></div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">3/24 (Mon)</td>
+<td align="left"><b>Search Algorithms: Planning on Symbolic Representations</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/symbolicplan_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">3/26 (Wed)</td>
+<td align="left"><b>Planning under Uncertainty: Minimax Formulation</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/minimax_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">3/31 (Mon)</td>
+<td align="left"><b>Planning under Uncertainty: Expected Value Formulation</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/expcostformulation_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">4/2 (Wed)</td>
+<td align="left"><b>Planning under Uncertainty: Solving Markov Decision Processes</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/mdpsolvers_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+  <td align="left">4/7 (Mon)</td>
+  <td align="left"><b>Planning under Uncertainty: Partially-Observable Markov Decision Processes (POMDPs)</b></td>
+  <td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/pomdps_16350_sp25.pdf">slides</a></td>
+  <td align="left"><div class="homeworks">-</div></td>
+  <td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">4/9 (Wed)</td>
+<td align="left"><b>Exam</b></td>
+<td align="left">-</td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+<td align="left">4/14 (Mon)</td>
+<td align="left"><b>Multi-Robot Planning</b></td>
+<td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/multirobot_16350_sp25.pdf">slides</a></td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+  <td align="left">4/16 (Wed)</td>
+  <td align="left"><b>Multi-Robot Planning (cont'd)</b></td>
+  <td align="left">-</td>
+  <td align="left"><div class="homeworks">-</div></td>
+  <td align="left"><div class="notes">-</div></td>
+</tr>
+
+<tr class="row1">
+  <td align="left">4/21 (Mon)</td>
+  <td align="left"><b>Learning in Planning</b></td>
+  <td align="left"><a href="https://www.cs.cmu.edu/~maxim/classes/robotplanning/lectures/learninginplanning_16350_sp25.pdf">slides</a></td>
+  <td align="left"><div class="homeworks">-</div></td>
+  <td align="left"><div class="notes">-</div></td>
+</tr>
+
+
+<!--
+<tr class="row1">
+<td align="left">5/24 (Wed)</td>
+<td align="left"><b>Final Project Presentations</b></td>
+<td align="left">-</td>
+<td align="left"><div class="homeworks">-</div></td>
+<td align="left"><div class="notes">-</div></td>
+</tr>
+
+-->
+
+</tbody></table>
+
+
+
+<p>
+
+</p><hr>
+
+
+
+
+
+
+</body></html>

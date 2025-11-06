@@ -537,7 +537,12 @@
 % 2025_11_04 - K. Hayes
 % - In this demo script:
 %   % * updated DebugTools dependency to Debug_Tools_v2025_11_04c
+%
+% 2025_11_04 - S. Brennan
+% - In this demo script:
+%   % * updated DebugTools dependency to Debug_Tools_v2025_11_04c
 
+% Can deprecate fcn_BoundedAStar_calculatePointsOnLines with Path library?
 
 % Not sure what to do with these:
 % fcn_BoundedAStar_polytopePointsInPolytopes
