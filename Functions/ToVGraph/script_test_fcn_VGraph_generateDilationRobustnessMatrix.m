@@ -1,11 +1,12 @@
-% script_test_fcn_Visibility_generateDilationRobustnessMatrix
-% Tests: fcn_Visibility_generateDilationRobustnessMatrix
+% script_test_fcn_VGraph_generateDilationRobustnessMatrix
+% Tests: fcn_VGraph_generateDilationRobustnessMatrix
 
 %
 % REVISION HISTORY:
 % As: script_test_fcn_algorithm_generate_dilation_robustness_matrix
 % 2024_02_01 by S. Harnett
 % -- first write of script
+%
 % As: script_test_fcn_BoundedAStar_generateDilationRobustnessMatrix
 % 2025_10_06 - S. Brennan
 % -- removed addpath calls
@@ -17,10 +18,15 @@
 %    % replaced with fcn_MapGen_polytopesFillFieldsFromVertices
 % 2025_10_20 - S. Brennan
 % -- refactored script to make test cases more clear, do fast mode, etc.
+%
 % As: script_test_fcn_Visibility_generateDilationRobustnessMatrix
 % 2025_10_31 by Sean Brennan
 % -- moved function to Visibility Graph library
 % -- cleaned up test cases near header that are now in demo sections
+%
+% As: script_test_fcn_VGraph_generateDilationRobustnessMatrix
+% 2025_11_07 - S. Brennan
+% -- Renamed script_test_fcn_Visibility_generateDilationRobustnessMatrix to script_test_fcn_VGraph_generateDilationRobustnessMatrix
 
 %% Set up the workspace
 close all
@@ -61,7 +67,7 @@ plottingOptions.filename = 'dilationAnimation.gif'; % Specify the output file na
 
 % Call the function
 dilation_robustness_matrix = ...
-    fcn_Visibility_generateDilationRobustnessMatrix(...
+    fcn_VGraph_generateDilationRobustnessMatrix(...
     all_pts, start, finish, vgraph, mode, polytopes,...
     (plottingOptions), (figNum));
 
@@ -106,7 +112,7 @@ plottingOptions.filename = []; % Specify the output file name
 
 % Call the function
 dilation_robustness_matrix = ...
-    fcn_Visibility_generateDilationRobustnessMatrix(...
+    fcn_VGraph_generateDilationRobustnessMatrix(...
     all_pts, start, finish, vgraph, mode, polytopes,...
     (plottingOptions), (figNum));
 
@@ -145,7 +151,7 @@ plottingOptions.filename = []; % Specify the output file name
 
 % Call the function
 dilation_robustness_matrix = ...
-    fcn_Visibility_generateDilationRobustnessMatrix(...
+    fcn_VGraph_generateDilationRobustnessMatrix(...
     all_pts, start, finish, vgraph, mode, polytopes,...
     (plottingOptions), (figNum));
 
@@ -184,7 +190,7 @@ plottingOptions.filename = 'ThreePolytopesMECC.gif'; % Specify the output file n
 
 % Call the function
 dilation_robustness_matrix = ...
-    fcn_Visibility_generateDilationRobustnessMatrix(...
+    fcn_VGraph_generateDilationRobustnessMatrix(...
     all_pts, start, finish, vgraph, mode, polytopes,...
     (plottingOptions), (figNum));
 
@@ -228,7 +234,7 @@ plottingOptions.filename = []; % Specify the output file name
 
 % Call the function
 dilation_robustness_matrix = ...
-    fcn_Visibility_generateDilationRobustnessMatrix(...
+    fcn_VGraph_generateDilationRobustnessMatrix(...
     all_pts, start, finish, vgraph, mode, polytopes,...
     (plottingOptions), (figNum));
 
@@ -294,7 +300,7 @@ plottingOptions.filename = 'dilationAnimation.gif'; % Specify the output file na
 
 % Call the function
 dilation_robustness_matrix = ...
-    fcn_Visibility_generateDilationRobustnessMatrix(...
+    fcn_VGraph_generateDilationRobustnessMatrix(...
     all_pts, start, finish, vgraph, mode, polytopes,...
     (plottingOptions), (figNum));
 
@@ -356,7 +362,7 @@ plottingOptions.filename = 'dilationAnimation.gif'; % Specify the output file na
 
 % Call the function
 dilation_robustness_matrix = ...
-    fcn_Visibility_generateDilationRobustnessMatrix(...
+    fcn_VGraph_generateDilationRobustnessMatrix(...
     all_pts, start, finish, vgraph, mode, polytopes,...
     (plottingOptions), ([]));
 
@@ -398,7 +404,7 @@ plottingOptions.filename = 'dilationAnimation.gif'; % Specify the output file na
 
 % Call the function
 dilation_robustness_matrix = ...
-    fcn_Visibility_generateDilationRobustnessMatrix(...
+    fcn_VGraph_generateDilationRobustnessMatrix(...
     all_pts, start, finish, vgraph, mode, polytopes,...
     (plottingOptions), (-1));
 
@@ -448,7 +454,7 @@ tic;
 for ith_test = 1:Niterations
     % Call the function
     dilation_robustness_matrix = ...
-        fcn_Visibility_generateDilationRobustnessMatrix(...
+        fcn_VGraph_generateDilationRobustnessMatrix(...
         all_pts, start, finish, vgraph, mode, polytopes,...
         (plottingOptions), ([]));
 end
@@ -459,7 +465,7 @@ tic;
 for ith_test = 1:Niterations
     % Call the function
     dilation_robustness_matrix = ...
-        fcn_Visibility_generateDilationRobustnessMatrix(...
+        fcn_VGraph_generateDilationRobustnessMatrix(...
         all_pts, start, finish, vgraph, mode, polytopes,...
         (plottingOptions), (-1));
 end
@@ -690,8 +696,8 @@ switch dataSetNumber
         finishes = [all_pts; start; finish];
         starts = [all_pts; start; finish];
         isConcave = 1;
-        [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, starts, finishes, isConcave,-1);
-        % fcn_Visibility_plotVGraph(vgraph, [all_pts; start; finish], 'g-');
+        [vgraph, visibility_results_all_pts] = fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, starts, finishes, isConcave,-1);
+        % fcn_VGraph_plotVGraph(vgraph, [all_pts; start; finish], 'g-');
     case 2
         % Three polytopes with clear space right down middle
         clear polytopes
@@ -729,8 +735,8 @@ switch dataSetNumber
         finishes = [all_pts; start; finish];
         starts = [all_pts; start; finish];
         isConcave = 1;
-        [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, starts, finishes, isConcave,-1);
-        % fcn_Visibility_plotVGraph(vgraph, [all_pts; start; finish], 'g-');
+        [vgraph, visibility_results_all_pts] = fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, starts, finishes, isConcave,-1);
+        % fcn_VGraph_plotVGraph(vgraph, [all_pts; start; finish], 'g-');
     case 3 % Three polytopes for MECC paper
         clear polytopes
         polytopes(1).vertices = [-10 5; 2 2; -5 -5; -10 5];
@@ -765,8 +771,8 @@ switch dataSetNumber
         finishes = [all_pts; start; finish];
         starts = [all_pts; start; finish];
         isConcave = 1;
-        [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, starts, finishes, isConcave,-1);
-        fcn_Visibility_plotVGraph(vgraph, [all_pts; start; finish], 'g-');
+        [vgraph, visibility_results_all_pts] = fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, starts, finishes, isConcave,-1);
+        fcn_VGraph_plotVGraph(vgraph, [all_pts; start; finish], 'g-');
         % Plot the polytopes
         figNum = gcf().Number;
         fcn_INTERNAL_plotPolytopes(polytopes, figNum)
@@ -808,8 +814,8 @@ switch dataSetNumber
         finishes = [all_pts; start; finish];
         starts = [all_pts; start; finish];
         isConcave = 1;
-        [vgraph, visibility_results_all_pts] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, starts, finishes, isConcave,-1);
-        fcn_Visibility_plotVGraph(vgraph, [all_pts; start; finish], 'g-');
+        [vgraph, visibility_results_all_pts] = fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, starts, finishes, isConcave,-1);
+        fcn_VGraph_plotVGraph(vgraph, [all_pts; start; finish], 'g-');
         % Plot the polytopes
         figNum = gcf().Number;
         fcn_INTERNAL_plotPolytopes(polytopes, figNum)

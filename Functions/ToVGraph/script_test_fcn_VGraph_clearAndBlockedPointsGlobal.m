@@ -1,8 +1,8 @@
-% script_test_fcn_Visibility_clearAndBlockedPointsGlobal
-% Tests: fcn_Visibility_clearAndBlockedPointsGlobal
+% script_test_fcn_VGraph_clearAndBlockedPointsGlobal
+% Tests: fcn_VGraph_clearAndBlockedPointsGlobal
 
 % REVISION HISTORY:
-% As: script_test_fcn_Visibility_clearAndBlockedPointsGlobal
+% As: ????
 % 2022_10_28 by S. Harnett
 % -- first write of script
 % 2025_07_08 - K. Hayes, kaeleahayes@psu.edu
@@ -23,9 +23,15 @@
 % -- staged script to move out of BoundedAStar and into Visibility Graph
 % -- matched script's variable names to those inside the function, for
 %    % clarity
+%
+% As: script_test_fcn_Visibility_clearAndBlockedPointsGlobal
 % 2025_11_02 - S. Brennan
 % -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
 %    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%
+% As: script_test_fcn_VGraph_clearAndBlockedPointsGlobal
+% 2025_11_07 - S. Brennan
+% -- Renamed script_test_fcn_Visibility_clearAndBlockedPointsGlobal to script_test_fcn_VGraph_clearAndBlockedPointsGlobal
 
 % TO DO:
 % -- set up fast mode tests
@@ -66,11 +72,11 @@ polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(convex_polytope);
 startXY = [-2.5, 1];
 finishXY = startXY + [4 0];
 
-pointsWithData = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
+pointsWithData = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
 
 % Calculate visibility graph
 isConcave = [];
-[visibilityMatrix, visibilityDetailsEachFromPoint] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,pointsWithData,pointsWithData,(isConcave),(figNum));
+[visibilityMatrix, visibilityDetailsEachFromPoint] = fcn_VGraph_clearAndBlockedPointsGlobal(polytopes,pointsWithData,pointsWithData,(isConcave),(figNum));
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
@@ -104,11 +110,11 @@ polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(convex_polytope);
 startXY = [-2.5, 1];
 finishXY = [4 1];
 
-pointsWithData = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
+pointsWithData = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
 
 % Calculate visibility graph
 isConcave = [];
-[visibilityMatrix, visibilityDetailsEachFromPoint] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,pointsWithData,pointsWithData,(isConcave),(figNum));
+[visibilityMatrix, visibilityDetailsEachFromPoint] = fcn_VGraph_clearAndBlockedPointsGlobal(polytopes,pointsWithData,pointsWithData,(isConcave),(figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -141,12 +147,12 @@ polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(concave_polytope,1);
 % generate pointsWithData table
 startXY = [-2.5, 1];
 finishXY = startXY + [4 0];
-pointsWithData = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
+pointsWithData = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
 
 % calculate visibility graph
 isConcave = 1;
 [visibilityMatrix, visibilityDetailsEachFromPoint] = ...
-    fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,pointsWithData,pointsWithData,(isConcave),(figNum));
+    fcn_VGraph_clearAndBlockedPointsGlobal(polytopes,pointsWithData,pointsWithData,(isConcave),(figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -190,7 +196,7 @@ plotFormat.LineStyle = '-';
 plotFormat.LineWidth = 2; % linewidth of the edge
 fillFormat = [1 0 0 1 0.4];
 %fcn_MapGen_plotPolytopes(polytopes,figNum,line_spec,line_width,axes_limits,axis_style);
-fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(figNum))
+fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(figNum));
 hold on
 box on
 axis([-0.1 1.1 -0.1 1.1]);
@@ -201,14 +207,13 @@ ylabel('y [km]')
 % generate pointsWithData table
 startXY = [0 0.5];
 finishXY = [1 0.5];
-pointsWithData = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
+pointsWithData = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
 
 
 % calculate visibility graph
 isConcave = [];
-tic
-[visibilityMatrix, visibilityDetailsEachFromPoint] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,pointsWithData,pointsWithData,(isConcave),(-1));
-toc
+[visibilityMatrix, visibilityDetailsEachFromPoint] = fcn_VGraph_clearAndBlockedPointsGlobal(polytopes,pointsWithData,pointsWithData,(isConcave),(-1));
+
 
 filename = 'vGraphAnimation.gif'; % Specify the output file name
 delayTime = 0.1; % Delay between frames in seconds
@@ -217,7 +222,7 @@ loopCount = Inf; % Loop indefinitely (0 for no loop)
 % plot visibility graph edges
 if 1==1
 
-    fcn_Visibility_plotVGraph(visibilityMatrix, pointsWithData, 'g-', [])
+    fcn_VGraph_plotVGraph(visibilityMatrix, pointsWithData, 'g-', []);
 
     % Npoints = size(visibilityMatrix,1);
     % for ith_fromIndex = 1:Npoints
@@ -335,12 +340,12 @@ polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(convex_polytope);
 startXY = [-1, 0.5];
 finishXY = [2.5 0.5];
 
-pointsWithData = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
+pointsWithData = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
 
 % Calculate visibility graph
 isConcave = [];
 visibilityMatrixNoGaps = ...
-    fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave),(figNum));
+    fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave),(figNum*100));
 
 % convex polytope with gaps
 coreSquare = [0 0; 1 0; 1 1; 0 1; 0 0];
@@ -352,12 +357,12 @@ polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(convex_polytope);
 startXY = [-1, 0.5];
 finishXY = [2.5 0.5];
 
-pointsWithData = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
+pointsWithData = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
 
 % Calculate visibility graph
 isConcave = [];
 visibilityMatrixWithGaps = ...
-    fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave), (figNum*100));
+    fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave), (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -396,7 +401,7 @@ if flag_do_plot
     plotFormat.LineStyle = '-';
     plotFormat.LineWidth = 2; % linewidth of the edge
     fillFormat = [];
-    fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(figNum))
+    fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(figNum));
 
     hold on
     box on
@@ -409,23 +414,23 @@ if flag_do_plot
     plotFormat.LineStyle = '-';
     plotFormat.LineWidth = 1; % linewidth of the edge
     fillFormat = [];
-    fcn_MapGen_plotPolytopes(polytopesWithGap,(plotFormat),(fillFormat),(figNum))
+    fcn_MapGen_plotPolytopes(polytopesWithGap,(plotFormat),(fillFormat),(figNum));
 
 end
 
 % generate pointsWithData table for both cases
 startXY = [-2.5, 1];
 finishXY = startXY + [4 0];
-pointsWithDataNoGaps   = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
-pointsWithDataWithGaps = fcn_Visibility_polytopesGenerateAllPtsTable(polytopesWithGap, startXY, finishXY,-1);
+pointsWithDataNoGaps   = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
+pointsWithDataWithGaps = fcn_VGraph_polytopesGenerateAllPtsTable(polytopesWithGap, startXY, finishXY,-1);
 
 % calculate visibility graphs
 visibilityMatrixNoGaps = ...
-    fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,pointsWithDataNoGaps,pointsWithDataNoGaps);
+    fcn_VGraph_clearAndBlockedPointsGlobal(polytopes,pointsWithDataNoGaps,pointsWithDataNoGaps);
 visibilityMatrixWithGaps = ...
-    fcn_Visibility_clearAndBlockedPointsGlobal(polytopesWithGap,pointsWithDataWithGaps,pointsWithDataWithGaps);
+    fcn_VGraph_clearAndBlockedPointsGlobal(polytopesWithGap,pointsWithDataWithGaps,pointsWithDataWithGaps);
 
-deduped_pts = fcn_Visibility_convertPolytopetoDedupedPoints(pointsWithDataNoGaps);
+deduped_pts = fcn_VGraph_convertPolytopetoDedupedPoints(pointsWithDataNoGaps);
 
 
 % deduped_pts = fcn_convert_polytope_struct_to_deduped_points(pointsWithDataNoGaps);
@@ -492,12 +497,12 @@ polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(convex_polytope);
 startXY = [-2.5, 1];
 finishXY = [4 1];
 
-pointsWithData = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
+pointsWithData = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
 
 % Calculate visibility graph
 isConcave = [];
 [visibilityMatrix, visibilityDetailsEachFromPoint] = ...
-    fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave),([]));
+    fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave),([]));
 
 % Check variable types
 assert(isnumeric(visibilityMatrix));
@@ -531,12 +536,12 @@ polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(convex_polytope);
 startXY = [-2.5, 1];
 finishXY = [4 1];
 
-pointsWithData = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
+pointsWithData = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
 
 % Calculate visibility graph
 isConcave = [];
 [visibilityMatrix, visibilityDetailsEachFromPoint] = ...
-    fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave),(-1));
+    fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave),(-1));
 
 % Check variable types
 assert(isnumeric(visibilityMatrix));
@@ -572,7 +577,7 @@ startXY = [-2.5, 1];
 finishXY = [4 1];
 isConcave = [];
 
-pointsWithData = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
+pointsWithData = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
 
 Niterations = 10;
 
@@ -581,7 +586,7 @@ tic;
 for ith_test = 1:Niterations
     % Call the function
     [visibilityMatrix, visibilityDetailsEachFromPoint] = ...
-        fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave),([]));
+        fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave),([]));
 end
 slow_method = toc;
 
@@ -590,7 +595,7 @@ tic;
 for ith_test = 1:Niterations
     % Call the function
     [visibilityMatrix, visibilityDetailsEachFromPoint] = ...
-        fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave),(-1));
+        fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave),(-1));
 end
 fast_method = toc;
 
@@ -661,12 +666,12 @@ if 1==0
     end
 
     % generate pointsWithData table
-    pointsWithData = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
+    pointsWithData = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
 
     % calculate vibility graph
-    tic
-    visibilityMatrix = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes,pointsWithData,pointsWithData);
-    toc
+    tic;
+    visibilityMatrix = fcn_VGraph_clearAndBlockedPointsGlobal(polytopes,pointsWithData,pointsWithData);
+    toc;
     deduped_pts = fcn_convert_polytope_struct_to_deduped_points(pointsWithData);
     % plot visibility graph edges
     if flag_do_plot && gap_size ==0

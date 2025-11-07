@@ -1,5 +1,5 @@
-% script_test_fcn_Visibility_polytopesGenerateAllPtsTable.m
-% tests fcn_Visibility_polytopesGenerateAllPtsTable.m
+% script_test_fcn_VGraph_polytopesGenerateAllPtsTable.m
+% tests fcn_VGraph_polytopesGenerateAllPtsTable.m
 
 % Revision history
 % As: script_test_fcn_BoundedAStar_polytopesGenerateAllPtsTable
@@ -13,6 +13,10 @@
 %    % from: fcn_BoundedAStar_polytopesGenerateAllPtsTable
 %    % to: fcn_Visibility_polytopesGenerateAllPtsTable
 % -- redid nearly all the test cases
+%
+% As: fcn_VGraph_addObstacle
+% 2025_11_07 - S. Brennan
+% -- Renamed fcn_Visibility_polytopesGenerateAllPtsTable to fcn_VGraph_polytopesGenerateAllPtsTable
 
 %% Set up the workspace
 close all
@@ -56,7 +60,7 @@ finishXY = [80 50];
 
 % Generate pointsWithData table
 [pointsWithData, startPointData, finishPointData] = ...
-    fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, ...
+    fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, ...
     (startXY), (finishXY), (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
@@ -108,12 +112,12 @@ for ith_poly = 1:length(polytopes)
 end
 
 startXY = [-2 -0.5];
-finishXY = start;
+finishXY = startXY;
 finishXY(1) = 6;
 
 % Generate pointsWithData table
 [pointsWithData, startPointData, finishPointData] = ...
-    fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, ...
+    fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, ...
     (startXY), (finishXY), (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
@@ -153,12 +157,12 @@ for ith_poly = 1:length(polytopes)
 end
 
 startXY = [-2 -0.5];
-finishXY = start;
+finishXY = startXY;
 finishXY(1) = 6;
 
 % Generate pointsWithData table
 [pointsWithData, startPointData, finishPointData] = ...
-    fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, ...
+    fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, ...
     (startXY), (finishXY), (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
@@ -215,12 +219,12 @@ for ith_poly = 1:length(polytopes)
 end
 
 startXY = [-2 -0.5];
-finishXY = start;
+finishXY = startXY;
 finishXY(1) = 6;
 
 % Generate pointsWithData table
 [pointsWithData, startPointData, finishPointData] = ...
-    fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, ...
+    fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, ...
     (startXY), (finishXY), ([]));
 
 % Check variable types
@@ -259,12 +263,12 @@ for ith_poly = 1:length(polytopes)
 end
 
 startXY = [-2 -0.5];
-finishXY = start;
+finishXY = startXY;
 finishXY(1) = 6;
 
 % Generate pointsWithData table
 [pointsWithData, startPointData, finishPointData] = ...
-    fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, ...
+    fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, ...
     (startXY), (finishXY), (-1));
 
 % Check variable types
@@ -304,7 +308,7 @@ for ith_poly = 1:length(polytopes)
 end
 
 startXY = [-2 -0.5];
-finishXY = start;
+finishXY = startXY;
 finishXY(1) = 6;
 
 Niterations = 50;
@@ -314,7 +318,7 @@ tic;
 for ith_test = 1:Niterations
     % Call the function
     [pointsWithData, startPointData, finishPointData] = ...
-        fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, ...
+        fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, ...
         (startXY), (finishXY), ([]));
 end
 slow_method = toc;
@@ -324,7 +328,7 @@ tic;
 for ith_test = 1:Niterations
     % Call the function
     [pointsWithData, startPointData, finishPointData] = ...
-        fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, ...
+        fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, ...
         (startXY), (finishXY), ([]));
 end
 fast_method = toc;

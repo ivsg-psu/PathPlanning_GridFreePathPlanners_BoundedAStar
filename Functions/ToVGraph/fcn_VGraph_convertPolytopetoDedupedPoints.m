@@ -1,4 +1,4 @@
-function unique_deduped_points_struct = fcn_Visibility_convertPolytopetoDedupedPoints(pointsWithData, varargin)
+function unique_deduped_points_struct = fcn_VGraph_convertPolytopetoDedupedPoints(pointsWithData, varargin)
 % this function takes in the table of all points, which in a fully tiled
 % field contains repeated points when a vertex belongs to multiple
 % polytopes, and returns a points data structure without duplicates, where
@@ -46,6 +46,13 @@ function unique_deduped_points_struct = fcn_Visibility_convertPolytopetoDedupedP
 %
 % As: fcn_Visibility_convertPolytopetoDedupedPoints
 % -- Changed all_pts to pointsWithData
+% % 2025_11_07 - S. Brennan, sbrennan@psu.edu
+% -- Changed global flags from _MAPGEN_ to _VGRAPH_
+%
+% As: fcn_VGraph_convertPolytopetoDedupedPoints
+% 2025_11_07 - S. Brennan
+% -- Renamed fcn_Visibility_convertPolytopetoDedupedPoints to fcn_VGraph_convertPolytopetoDedupedPoints
+% -- Cleared extra figure command out of Inputs section
 
 
 %% Debugging and Input checks
@@ -62,11 +69,11 @@ else
     % Check to see if we are externally setting debug mode to be "on"
     flag_do_debug = 0; %     % Flag to plot the results for debugging
     flag_check_inputs = 1; % Flag to perform input checking
-    MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS");
-    MATLABFLAG_MAPGEN_FLAG_DO_DEBUG = getenv("MATLABFLAG_MAPGEN_FLAG_DO_DEBUG");
-    if ~isempty(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG)
-        flag_do_debug = str2double(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG);
-        flag_check_inputs  = str2double(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS);
+    MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS");
+    MATLABFLAG_VGRAPH_FLAG_DO_DEBUG = getenv("MATLABFLAG_VGRAPH_FLAG_DO_DEBUG");
+    if ~isempty(MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_VGRAPH_FLAG_DO_DEBUG)
+        flag_do_debug = str2double(MATLABFLAG_VGRAPH_FLAG_DO_DEBUG);
+        flag_check_inputs  = str2double(MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS);
     end
 end
 
@@ -111,7 +118,6 @@ if (0==flag_max_speed) && (MAX_NARGIN == nargin)
     temp = varargin{end};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
         fig_num = temp;
-        figure(fig_num);
         flag_do_plots = 1;
     end
 end

@@ -1,6 +1,6 @@
 function [pointsWithData, startPointData, finishPointData] = ...
-    fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, varargin)
-% fcn_Visibility_polytopesGenerateAllPtsTable
+    fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, varargin)
+% fcn_VGraph_polytopesGenerateAllPtsTable
 %
 % A short function to turn polytope verticies, as well as user-defined
 % start and finish vertices, into an Nx5 table of pointsWithData of the
@@ -33,7 +33,7 @@ function [pointsWithData, startPointData, finishPointData] = ...
 %
 % FORMAT:
 % [pointsWithData, startPointData, finishPointData] = ...
-%     fcn_Visibility_polytopesGenerateAllPtsTable( ...
+%     fcn_VGraph_polytopesGenerateAllPtsTable( ...
 %     polytopes, ....
 %     (startXY), (finishXY), (figNum))
 %
@@ -87,7 +87,7 @@ function [pointsWithData, startPointData, finishPointData] = ...
 % EXAMPLES:
 %
 % See the script: script_demo_fcn_BoundedAStar_Astar and
-% script_test_fcn_Visibility_polytopesGenerateAllPtsTable
+% script_test_fcn_VGraph_polytopesGenerateAllPtsTable
 % for demonstration of this function in use.
 %
 % This function was written on 2024_05_08 by Steve Harnett
@@ -125,8 +125,12 @@ function [pointsWithData, startPointData, finishPointData] = ...
 % -- refactored the function for clarity and to avoid changing the polytope
 %    % input variable as an internal data source. Too easy to create a bug if
 %    % inputs are changed within the function
-
 %
+% As: fcn_VGraph_addObstacle
+% 2025_11_07 - S. Brennan
+% -- Renamed fcn_Visibility_polytopesGenerateAllPtsTable to fcn_VGraph_polytopesGenerateAllPtsTable
+
+
 % TO DO:
 % -- fill in to-do items here.
 

@@ -1,10 +1,11 @@
-% script_test_fcn_Visibility_clearAndBlockedPoints
+% script_test_fcn_VGraph_clearAndBlockedPoints
 
 % a basic test of calculation of clear and blocked points for visibility
 % graph creation
 
 % Revision history
 % (In BoundedAStar)
+% As: script_test_fcn_Visibility_clearAndBlockedPoints
 % 2025_07_25 - K. Hayes, kxh1031@psu.edu
 % -- first write of script, code taken from example originally in
 %    fcn_visibility_clear_and_blocked_points
@@ -15,6 +16,12 @@
 % 2025_10_30 - S. Brennan
 % -- set up fast mode tests
 % -- improved figure captions a bit
+%
+% As: script_test_fcn_VGraph_clearAndBlockedPoints
+% 2025_11_07 - S. Brennan
+% -- Renamed script_test_fcn_Visibility_clearAndBlockedPoints to script_test_fcn_VGraph_clearAndBlockedPoints
+% -- Cleared extra figure command out of Inputs section
+
 
 % TO DO:
 % -- set up fast mode tests
@@ -66,7 +73,7 @@ finish = [[100; xvert'] [50; yvert'] [point_tot+2; (1:point_tot)'] [0; ones(poin
 
 % Call function to determine clear and blocked points
 isConcave = [];
-[clear_pts,blocked_pts]=fcn_Visibility_clearAndBlockedPoints(shrunk_polytopes,start,finish,(isConcave),(figNum));
+[clear_pts,blocked_pts]=fcn_VGraph_clearAndBlockedPoints(shrunk_polytopes,start,finish,(isConcave),(figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -151,7 +158,7 @@ finish = [[100; xvert'] [50; yvert'] [point_tot+2; (1:point_tot)'] [0; ones(poin
 
 % Call function to determine clear and blocked points
 isConcave = [];
-[clear_pts,blocked_pts]=fcn_Visibility_clearAndBlockedPoints(shrunk_polytopes,start,finish,(isConcave),([]));
+[clear_pts,blocked_pts]=fcn_VGraph_clearAndBlockedPoints(shrunk_polytopes,start,finish,(isConcave),([]));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -194,7 +201,7 @@ finish = [[100; xvert'] [50; yvert'] [point_tot+2; (1:point_tot)'] [0; ones(poin
 
 % Call function to determine clear and blocked points
 isConcave = [];
-[clear_pts,blocked_pts]=fcn_Visibility_clearAndBlockedPoints(shrunk_polytopes,start,finish,(isConcave),(-1));
+[clear_pts,blocked_pts]=fcn_VGraph_clearAndBlockedPoints(shrunk_polytopes,start,finish,(isConcave),(-1));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -246,7 +253,7 @@ Niterations = 50;
 tic;
 for ith_test = 1:Niterations
     % Call the function
-    [clear_pts,blocked_pts]=fcn_Visibility_clearAndBlockedPoints(shrunk_polytopes,start,finish,(isConcave),([]));
+    [clear_pts,blocked_pts]=fcn_VGraph_clearAndBlockedPoints(shrunk_polytopes,start,finish,(isConcave),([]));
 
 
 end
@@ -256,7 +263,7 @@ slow_method = toc;
 tic;
 for ith_test = 1:Niterations
     % Call the function
-    [clear_pts,blocked_pts]=fcn_Visibility_clearAndBlockedPoints(shrunk_polytopes,start,finish,(isConcave),(-1));
+    [clear_pts,blocked_pts]=fcn_VGraph_clearAndBlockedPoints(shrunk_polytopes,start,finish,(isConcave),(-1));
 
 
 end

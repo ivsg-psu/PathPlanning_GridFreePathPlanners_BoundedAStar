@@ -1,13 +1,13 @@
 function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = ...
-    fcn_Visibility_clearAndBlockedPoints(polytopes,start,finish,varargin)
-% fcn_Visibility_clearAndBlockedPoints 
+    fcn_VGraph_clearAndBlockedPoints(polytopes,start,finish,varargin)
+% fcn_VGraph_clearAndBlockedPoints 
 % 
 % determines whether the points in finish are blocked by a polytope for
 % straight-line paths drawn from start
 %
 % FORMAT: 
 % [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ] = ...
-% fcn_Visibility_clearAndBlockedPoints(polytopes, start, finish, (isConcave), (figNum))
+% fcn_VGraph_clearAndBlockedPoints(polytopes, start, finish, (isConcave), (figNum))
 %
 % INPUTS:
 %
@@ -104,7 +104,7 @@ function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]
 %
 % EXAMPLES:
 %
-% See the script: script_test_fcn_Visibility_clearAndBlockedPoints
+% See the script: script_test_fcn_VGraph_clearAndBlockedPoints
 % for a full test suite.
 %
 % This function was written on 2018_11_17 by Seth Tau
@@ -133,6 +133,11 @@ function [clear_pts,blocked_pts,D,di,dj,num_int,xiP,yiP,xiQ,yiQ,xjP,yjP,xjQ,yjQ]
 % -- fcn_convert_to_vector_points changed to fcn_INTERNAL_convertToVectorPoints
 % -- fcn_calculate_intersection_matrices changed to fcn_INTERNAL_calculateIntersectionMatrices
 % -- updated plotting for better clarity
+%
+% As: fcn_VGraph_clearAndBlockedPoints
+% 2025_11_07 - S. Brennan
+% -- Renamed fcn_Visibility_clearAndBlockedPoints to fcn_VGraph_clearAndBlockedPoints
+% -- Cleared extra figure command out of Inputs section
 
 % TO DO:
 % 2025_10_29 - S. Brennan
@@ -220,7 +225,6 @@ if (0==flag_max_speed) && (MAX_NARGIN == nargin)
     temp = varargin{end};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
         figNum = temp;
-        figure(figNum);
         flag_do_plots = 1;
     end
 end
@@ -548,7 +552,7 @@ end
 acc = 1e-10;
 % removing "exceptions" could allow for self-blocked points to be visible...
 % but if a distinction is necessary between self-blocked points and points...
-% visible through free space then "fcn_Visibility_selfBlockedPoints" is better
+% visible through free space then "fcn_VGraph_selfBlockedPoints" is better
 
 % eliminate accidental exceptions due to independent points
 errInd = exceptions == -1;

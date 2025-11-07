@@ -1,7 +1,9 @@
 function [cgraph, hvec] = fcn_algorithm_generate_cost_graph(all_pts, start, finish, mode)
 
 warning(['fcn_algorithm_generate_cost_graph is being deprecated.' ...
-    ' Use fcn_BoundedAStar_generateCostGraph instead.']);
+    ' Use fcn_VGraph_findEdgeWeights instead.']);
+
+% NOTE: was fcn_BoundedAStar_findEdgeWeights for about 6 months
 
 % fcn_algorithm_generate_cost_graph
 %

@@ -1,7 +1,7 @@
-% script_demo_visibilityGraphAddRemoveObstacles
+% script_demo_VGraph_AddRemoveObstacles
 % Tests: 
-%        fcn_Visibility_addObstacle
-%        fcn_visibility_graph_remove_obstacle
+%        fcn_VGraph_addObstacle
+%        fcn_VGraph_removeObstacle
 %
 % REVISION HISTORY:
 %
@@ -24,6 +24,11 @@
 % -- Prepared the script for Visibility library
 % -- renamed script for clarity to script_demo_visibilityGraphAddRemoveObstacles
 % -- updated functions to be compatible with new MapGen
+%
+% As: script_demo_VGraph_AddRemoveObstacles
+% 2025_11_07 - S. Brennan
+% -- Renamed script_demo_visibilityGraphAddRemoveObstacles to script_demo_VGraph_AddRemoveObstacles
+
 
 % TO DO:
 % (none)
@@ -71,7 +76,7 @@ end
 
 %% generate all_pts table
 if 1==1
-    pointsWithData = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, [], [], -1);
+    pointsWithData = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, [], [], -1);
 else
     point_tot = length([polytopes.xv]); % total number of vertices in the convex polytopes
     beg_end = zeros(1,point_tot); % is the point the start/end of an obstacle
@@ -97,7 +102,7 @@ end
 
 %% calculate original visibility graph
 create_vgraph_timer = tic;
-[vgraph, visibility_results] = fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData);
+[vgraph, visibility_results] = fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData);
 toc(create_vgraph_timer)
 % plot visibility graph edges
 if flag_do_plot
@@ -156,7 +161,7 @@ polytope_to_add.xv = polytope_to_add.xv + polytope_shift; % apply translation to
 polytope_to_add.vertices(:,1) = polytope_to_add.vertices(:,1) + polytope_shift;
 add_obs_timer = tic;
 [vgraph_new2, all_pts_new2, start_new2, finish_new2, new_polytopes2] = ...
-    fcn_Visibility_addObstacle(...
+    fcn_VGraph_addObstacle(...
     vgraph_new, all_pts_new, start_new, finish_new, new_polytopes, polytope_to_add);
 toc(add_obs_timer)
 
@@ -202,7 +207,7 @@ polytope_to_add2 = fcn_MapGen_polytopesFillFieldsFromVertices(polytope_to_add2);
 
 add_obs_timer = tic;
 [vgraph_new3, all_pts_new3, start_new3, finish_new3, new_polytopes3] = ...
-    fcn_Visibility_addObstacle(...
+    fcn_VGraph_addObstacle(...
     vgraph_new2, all_pts_new2, start_new2, finish_new2, new_polytopes2, polytope_to_add2);
 toc(add_obs_timer)
 

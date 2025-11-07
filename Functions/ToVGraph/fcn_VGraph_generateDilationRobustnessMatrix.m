@@ -1,6 +1,6 @@
-function [dilation_robustness_matrix] = fcn_Visibility_generateDilationRobustnessMatrix(...
+function [dilation_robustness_matrix] = fcn_VGraph_generateDilationRobustnessMatrix(...
     all_pts, start, finish, vgraph, mode, polytopes, varargin)
-% fcn_Visibility_generateDilationRobustnessMatrix
+% fcn_VGraph_generateDilationRobustnessMatrix
 % estimates edge clearances around each edge in a visibility matrix
 %
 % This function operates on a visibility graph formed from a polytope map
@@ -19,7 +19,7 @@ function [dilation_robustness_matrix] = fcn_Visibility_generateDilationRobustnes
 % FORMAT:
 %
 %      dilation_robustness_matrix = ...
-%      fcn_Visibility_generateDilationRobustnessMatrix(...
+%      fcn_VGraph_generateDilationRobustnessMatrix(...
 %      all_pts, start, finish, vgraph, mode, polytopes,...
 %      (plottingOptions), (figNum))
 %
@@ -80,7 +80,7 @@ function [dilation_robustness_matrix] = fcn_Visibility_generateDilationRobustnes
 %
 % EXAMPLES:
 %
-% See the script: script_fcn_Visibility_generateDilationRobustnessMatrix
+% See the script: script_fcn_VGraph_generateDilationRobustnessMatrix
 % for a full test suite.
 %
 % This function was written in January 2024 by Steve Harnett
@@ -100,10 +100,15 @@ function [dilation_robustness_matrix] = fcn_Visibility_generateDilationRobustnes
 %    conventions
 % 2025_10_07 by Sean Brennan
 % -- fixed heading strings and function formatting
+%
 % As: fcn_Visibility_generateDilationRobustnessMatrix
 % 2025_10_31 by Sean Brennan
 % -- moved function to Visibility Graph library
 % -- replaced _MAPGEN_ with _VGRAPH_ in global variable naming
+%
+% As: fcn_VGraph_generateDilationRobustnessMatrix
+% 2025_11_07 - S. Brennan
+% -- Renamed fcn_Visibility_generateDilationRobustnessMatrix to fcn_VGraph_generateDilationRobustnessMatrix
 
 % TO DO:
 % -- fill in to-do items here.
@@ -204,21 +209,16 @@ addNudge = 0.25;
 %  |_|  |_|\__,_|_|_| |_|
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+flag_do_movie = 0;
 if ~isempty(plottingOptions.filename)
     delayTime = 0.5; % Delay between frames in seconds
     loopCount = Inf; % Loop indefinitely (0 for no loop)
-    flag_do_debug = 1;
-
-    if flag_do_debug
-        st = dbstack; %#ok<*UNRCH>
-        fprintf(1,'STARTING function: %s, in file: %s\n',st(1).name,st(1).file);
-        debug_fig_num = 999978;
-    end
+    flag_do_movie = 1;
+    debug_fig_num = 123456;
 end
 
 %% Grab a colormap for plotting options
-if flag_do_plots || flag_do_debug
+if flag_do_plots || flag_do_debug || flag_do_movie
     figure(383838)
     colorMapMatrixOrString = colormap('turbo');
     close(383838);
@@ -300,7 +300,7 @@ for ith_edge = loopingRange
     unitThisEdgeVector = unitEdgeVectors(ith_edge,:);
     unitThisNormalVector = unitEdgeNormalVectors(ith_edge,:);
 
-    if 1==flag_do_debug
+    if 1==flag_do_debug || flag_do_movie
         figure(debug_fig_num);
         clf;
 
@@ -346,7 +346,7 @@ for ith_edge = loopingRange
         end
 
         % Plot the visibiliity graph for all from and to lines
-        fcn_Visibility_plotVGraph(vgraphNoSelfInteractions, all_pts, 'g-');
+        fcn_VGraph_plotVGraph(vgraphNoSelfInteractions, all_pts, 'g-');
         % Set the axis
         if ~isempty(plottingOptions.axis)
             axis(plottingOptions.axis);
@@ -365,11 +365,11 @@ for ith_edge = loopingRange
         end
 
         % Plot the visibiliity graph for this from
-        h_plotThisEdgeStartIndex = fcn_Visibility_plotVGraph(vgraphNoSelfInteractions, all_pts, '-',thisEdgeStartIndex);
+        h_plotThisEdgeStartIndex = fcn_VGraph_plotVGraph(vgraphNoSelfInteractions, all_pts, '-',thisEdgeStartIndex);
         set(h_plotThisEdgeStartIndex,'Color',[0 0.5 0],'LineWidth',3);
 
         % Plot this edge
-        h_plotThisEdge = fcn_Visibility_plotVGraph(vgraphNoSelfInteractions, all_pts, '-',[thisEdgeStartIndex thisEdgeEndIndex]);
+        h_plotThisEdge = fcn_VGraph_plotVGraph(vgraphNoSelfInteractions, all_pts, '-',[thisEdgeStartIndex thisEdgeEndIndex]);
         set(h_plotThisEdge,'Color',[1 0 0],'LineWidth',3);
 
         % Plot the unit vector and unit normal
@@ -416,7 +416,7 @@ for ith_edge = loopingRange
     % find the secondary edge direction vectors
     secondary_edge_vectors = edgeVectors(secondary_edge_ends_idx_not_this_edge,:);
     Nsecondary = length(secondary_edge_ends_idx_not_this_edge(:,1));
-    if 1==flag_do_debug
+    if 1==flag_do_debug || 1==flag_do_movie
         figure(debug_fig_num);
         h_quiverAllSecondary = ...
             quiver(thisStartPoint(1,1)*ones(Nsecondary,1),thisStartPoint(1,2)*ones(Nsecondary,1),...
@@ -470,7 +470,7 @@ for ith_edge = loopingRange
     NnotStickOutSecondaryEdgeVectors = length(notStickOutSecondaryEdgeVectors(:,1));
 
     % Show which edges stick out and do not stick out
-    if 1==flag_do_debug
+    if 1==flag_do_debug || 1==flag_do_movie
         figure(debug_fig_num);
         
         % Plot the rear stick-outs
@@ -563,7 +563,7 @@ for ith_edge = loopingRange
     goodSecondaryEdgeVectors = edgeVectors(goodSecondaryEdges_idx,:);
 
     % Plot the good and bad secondary edges?
-    if 1==flag_do_debug
+    if 1==flag_do_debug || 1==flag_do_movie
         % Grab the bad indices. Useful for plotting
         flags_badSecondaryEdges = ~flags_goodSecondaryEdges;
         badSecondaryEdges_idx  = notStickOutSecondaryEdge_idx(flags_badSecondaryEdges);
@@ -633,7 +633,7 @@ for ith_edge = loopingRange
     leftSecondaryEdges_idx = goodSecondaryEdges_idx(flagIsLeft);
     rightSecondaryEdges_idx = goodSecondaryEdges_idx(flagIsRight);
 
-    if 1==flag_do_debug
+    if 1==flag_do_debug || 1==flag_do_movie
         figure(debug_fig_num);
 
         % Shut off visibility of old data
@@ -793,7 +793,7 @@ for ith_edge = loopingRange
     allEdgeNumbersProcessed(thisEdgeStartIndex, thisEdgeEndIndex) = ith_edge;
     edgeFinalMinWidths(ith_edge,1) = thisCorridorWidth;
 
-    if 1==flag_do_debug
+    if 1==flag_do_debug || 1==flag_do_movie
         figure(debug_fig_num);
 
         % Shut off visibility of old data
@@ -853,7 +853,7 @@ for ith_edge = loopingRange
     end
 
 
-    if 1==flag_do_debug
+    if 1==flag_do_debug || 1==flag_do_movie
         figure(debug_fig_num);
 
         % Grab all the edges processed so far
@@ -973,7 +973,7 @@ if flag_do_plots
     fcn_INTERNAL_plotPolytopes(polytopes, figNum)
 
     % Plot the visibiliity graph for all from and to lines
-    fcn_Visibility_plotVGraph(vgraphNoSelfInteractions, all_pts, 'g-');
+    fcn_VGraph_plotVGraph(vgraphNoSelfInteractions, all_pts, 'g-');
     % Set the axis
     if ~isempty(plottingOptions.axis)
         axis(plottingOptions.axis);
@@ -982,11 +982,11 @@ if flag_do_plots
     % Color the edges
     if ~isempty(plottingOptions.selectedFromToToPlot)
         % Plot the visibiliity graph for this from
-        h_plotThisEdgeStartIndex = fcn_Visibility_plotVGraph(vgraphNoSelfInteractions, all_pts, '-',thisEdgeStartIndex);
+        h_plotThisEdgeStartIndex = fcn_VGraph_plotVGraph(vgraphNoSelfInteractions, all_pts, '-',thisEdgeStartIndex);
         set(h_plotThisEdgeStartIndex,'Color',[0 0.5 0],'LineWidth',3);
 
         % Plot this edge
-        h_plotThisEdge = fcn_Visibility_plotVGraph(vgraphNoSelfInteractions, all_pts, '-',[thisEdgeStartIndex thisEdgeEndIndex]);
+        h_plotThisEdge = fcn_VGraph_plotVGraph(vgraphNoSelfInteractions, all_pts, '-',[thisEdgeStartIndex thisEdgeEndIndex]);
         set(h_plotThisEdge,'Color',[0.5 0 0],'LineWidth',3);
 
         % Plot left edges in BLUE

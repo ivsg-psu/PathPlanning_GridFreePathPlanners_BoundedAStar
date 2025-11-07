@@ -36,6 +36,10 @@ function [gap] = fcn_BoundedAStar_polytopePointGapLocation(point,vertices,vararg
 % 2025_08_25 - K. Hayes
 % -- updated fcn header and formatting
 % -- moved debug plotting into fcn
+% 2025_11_06 - S. Brennan, sbrennan@psu.edu
+% -- Deprecated fcn_BoundedAStar_calculatePointsOnLines
+%    % Changed to: fcn_VGraph_calculatePointsOnLines
+
 
 %% Debugging and Input checks
 % Check if flag_max_speed set. This occurs if the fig_num variable input
@@ -127,13 +131,13 @@ yi = point(2);
 
 % check if the point is on the line between two points
 acc = 1e-8;
-TF = fcn_BoundedAStar_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc); % row vector of 1 or 0 if on lines between (x1,y1) and (x2,y2)
+TF = fcn_VGraph_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc); % row vector of 1 or 0 if on lines between (x1,y1) and (x2,y2)
 gap = find(TF,1);
 
 % ensure gap is defined
 while isempty(gap)
     acc = acc*10; % decrease accuracy to account for changes in variable types
-    TF = fcn_BoundedAStar_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc); % row vector of 1 or 0 if on lines between (x1,y1) and (x2,y2)
+    TF = fcn_VGraph_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc); % row vector of 1 or 0 if on lines between (x1,y1) and (x2,y2)
     gap = find(TF,1);
     if acc > 100 % if point too far stop searching
         error('Intersecting point does not appear to be on the line')

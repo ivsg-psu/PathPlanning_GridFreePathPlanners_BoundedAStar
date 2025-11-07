@@ -1,5 +1,5 @@
-function h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts,  styleString, varargin)
-% fcn_Visibility_plotVGraph
+function h_plot = fcn_VGraph_plotVGraph(vgraph, all_pts,  styleString, varargin)
+% fcn_VGraph_plotVGraph
 %
 % Plots a visibility graph given a generated vgraph and list of all points.
 % Allows user to specify the plot styleString and optional from/to indices
@@ -7,7 +7,7 @@ function h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts,  styleString, varar
 %
 % FORMAT:
 %
-% fcn_Visibility_plotVGraph(vgraph, all_pts,  styleString, (selectedFromToIndices), (figNum))
+% fcn_VGraph_plotVGraph(vgraph, all_pts,  styleString, (selectedFromToIndices), (figNum))
 %
 % INPUTS:
 %
@@ -50,7 +50,7 @@ function h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts,  styleString, varar
 %
 % EXAMPLES:
 %
-% See the script: script_test_fcn_Visibility_plotVGraph
+% See the script: script_test_fcn_VGraph_plotVGraph
 % for a full test suite.
 %
 
@@ -68,6 +68,11 @@ function h_plot = fcn_Visibility_plotVGraph(vgraph, all_pts,  styleString, varar
 % -- updated docstrings in header
 % -- fixed fig_num to figNum
 % -- added options to include saveFile for animated GIF
+%
+% As: fcn_VGraph_plotVGraph
+% 2025_11_07 - S. Brennan
+% -- Renamed fcn_Visibility_plotVGraph to fcn_VGraph_plotVGraph
+% -- Cleared extra figure command out of Inputs section
 
 % TO DO:
 %
@@ -159,7 +164,6 @@ if (0==flag_max_speed) && (MAX_NARGIN == nargin)
     temp = varargin{end};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
         figNum = temp;
-        figure(figNum);
         flag_do_plots = 1;
     end
 end

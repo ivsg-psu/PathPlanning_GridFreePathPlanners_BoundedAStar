@@ -1,34 +1,18 @@
-% script_test_fcn_Visibility_removeObstacle
-% Tests: fcn_Visibility_removeObstacle
+% script_test_fcn_VGraph_addObstacle
 
 % a basic test of adding obstacles to existing visibility graphs
 
 % Revision history
-% 2025_08_04 - K. Hayes, kxh1031@psu.edu
+% As: fcn_Visibility_addObstacle
+% 2025_08_01 - K. Hayes, kxh1031@psu.edu
 % -- first write of script, using
-% script_test_fcn_Visibility_addObstacle as a starter
-% 2025_10_03 - K. Hayes
-% -- fixed bug with missing variables in DEMO case 1
-% 2025_11_02 - S. Brennan
-% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
-%    % to fcn_Visibility_polytopesGenerateAllPtsTable
-% 2025_11_03 - S. Brennan
-% -- updated variable naming:
-%    % * fig_num to figNum
-%    % * visibility_matrix to visibilityMatrix
-%    % * all_pts to pointsWithData
-%    % * start_new to newStartPointData
-%    % * finish_new to newFinishPointData
-%    % * newPolytopes to newPolytopes
-%    % * visibilityMatrix_new to newVisibilityMatrix
-%    % * pointsWithData_new to newPointsWithData
-%    % * polytopes to polytopes
-%    % * start to startPointData
-%    % * finish to finishPointData
-%    % * idx_of_polytope_for_removal to indexOfPolytopeForRemoval
-% -- added fast mode tests
-% -- added data file loading to avoid constant errors with polytope maps
-
+% script_test_fcn_Visibility_clearAndBlockedPoints as a starter
+% 2025_08_04 - K. Hayes
+% -- moved plotting into fcn_Visibility_addObstacle debug
+%
+% As: fcn_VGraph_addObstacle
+% 2025_11_07 - S. Brennan
+% -- Renamed fcn_Visibility_addObstacle to fcn_VGraph_addObstacle
 
 % TO DO:
 % -- set up fast mode tests
@@ -54,13 +38,13 @@ close all
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
 
-%% DEMO case: remove a polytope from the map
+%% DEMO case: add a polytope to the map
 figNum = 10001;
-titleString = sprintf('DEMO case: remove a polytope from the map');
+titleString = sprintf('DEMO case: add a polytope to the map');
 fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
 figure(figNum); clf;
 
-dataFileName = 'DATA_fcn_Visibility_removeObstacle_polytopeMapForTesting.mat';
+dataFileName = 'DATA_fcn_VGraph_addObstacle_polytopeMapForTesting.mat';
 fullDataFileWithPath = fullfile(pwd,'Data',dataFileName);
 if exist(fullDataFileWithPath, 'file')
     load(fullDataFileWithPath,'polytopes');
@@ -87,21 +71,25 @@ end
 startXY = [0, 50];
 finishXY = [100, 50];
 
-pointsWithData = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY, -1);
+pointsWithData = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY, -1);
+
+startPointData = pointsWithData(end-1,:);
+finishPointData = pointsWithData(end,:);
 
 % Create visibility graph
 isConcave = [];
+visibilityMatrix =fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave),(-1));
 
-visibilityMatrix = ...
-    fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave), (-1));
-
-% remove a polytope
-indexOfPolytopeForRemoval = 1;
+% add a polytope
+polytopeToAdd = polytopes(1);
+polytopeToAdd.xv = 0.5*polytopeToAdd.xv + 55;
+polytopeToAdd.yv = 0.5*polytopeToAdd.yv - 10;
+polytopeToAdd.vertices = [polytopeToAdd.xv' polytopeToAdd.yv'];
 
 % Update visibilityMatrix with new polytope added
 [newVisibilityMatrix, newPointsWithData, newStartPointData, newFinishPointData, newPolytopes] = ...
-    fcn_Visibility_removeObstacle(...
-    visibilityMatrix, pointsWithData, pointsWithData(end-1,:), pointsWithData(end,:), polytopes, indexOfPolytopeForRemoval, (figNum));
+    fcn_VGraph_addObstacle(...
+    visibilityMatrix, pointsWithData, startPointData, finishPointData, polytopes, polytopeToAdd, (figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -114,8 +102,8 @@ assert(isstruct(newPolytopes));
 
 % Check variable sizes
 NpointsOriginal= length(pointsWithData(:,1));
-NpointsRemoved = length(find(pointsWithData(:,4)==indexOfPolytopeForRemoval));
-NpointsNew = NpointsOriginal - NpointsRemoved;
+NpointsAdded = length(polytopeToAdd.vertices(:,1));
+NpointsNew = NpointsOriginal + NpointsAdded;
 assert(size(newVisibilityMatrix,1)==NpointsNew); 
 assert(size(newVisibilityMatrix,2)==NpointsNew); 
 assert(size(newPointsWithData,1)==NpointsNew); 
@@ -125,7 +113,7 @@ assert(size(newStartPointData,2)==5);
 assert(size(newFinishPointData,1)==1); 
 assert(size(newFinishPointData,2)==5); 
 assert(size(newPolytopes,1)==1); 
-assert(size(newPolytopes,2)==length(polytopes)-1); 
+assert(size(newPolytopes,2)==size(polytopes,2)+1); 
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
@@ -180,8 +168,7 @@ figNum = 80001;
 fprintf(1,'Figure: %.0f: FAST mode, empty figNum\n',figNum);
 figure(figNum); close(figNum);
 
-
-dataFileName = 'DATA_fcn_Visibility_removeObstacle_polytopeMapForTesting.mat';
+dataFileName = 'DATA_fcn_VGraph_addObstacle_polytopeMapForTesting.mat';
 fullDataFileWithPath = fullfile(pwd,'Data',dataFileName);
 if exist(fullDataFileWithPath, 'file')
     load(fullDataFileWithPath,'polytopes');
@@ -208,22 +195,25 @@ end
 startXY = [0, 50];
 finishXY = [100, 50];
 
-pointsWithData = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY, -1);
+pointsWithData = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY, -1);
+
+startPointData = pointsWithData(end-1,:);
+finishPointData = pointsWithData(end,:);
 
 % Create visibility graph
 isConcave = [];
+visibilityMatrix =fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave),(-1));
 
-visibilityMatrix = ...
-    fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave), (-1));
-
-% remove a polytope
-indexOfPolytopeForRemoval = 1;
+% add a polytope
+polytopeToAdd = polytopes(1);
+polytopeToAdd.xv = 0.5*polytopeToAdd.xv + 55;
+polytopeToAdd.yv = 0.5*polytopeToAdd.yv - 10;
+polytopeToAdd.vertices = [polytopeToAdd.xv' polytopeToAdd.yv'];
 
 % Update visibilityMatrix with new polytope added
 [newVisibilityMatrix, newPointsWithData, newStartPointData, newFinishPointData, newPolytopes] = ...
-    fcn_Visibility_removeObstacle(...
-    visibilityMatrix, pointsWithData, pointsWithData(end-1,:), pointsWithData(end,:),...
-    polytopes, indexOfPolytopeForRemoval, ([]));
+    fcn_VGraph_addObstacle(...
+    visibilityMatrix, pointsWithData, startPointData, finishPointData, polytopes, polytopeToAdd, ([]));
 
 % Check variable types
 assert(isnumeric(newVisibilityMatrix));
@@ -234,8 +224,8 @@ assert(isstruct(newPolytopes));
 
 % Check variable sizes
 NpointsOriginal= length(pointsWithData(:,1));
-NpointsRemoved = length(find(pointsWithData(:,4)==indexOfPolytopeForRemoval));
-NpointsNew = NpointsOriginal - NpointsRemoved;
+NpointsAdded = length(polytopeToAdd.vertices(:,1));
+NpointsNew = NpointsOriginal + NpointsAdded;
 assert(size(newVisibilityMatrix,1)==NpointsNew); 
 assert(size(newVisibilityMatrix,2)==NpointsNew); 
 assert(size(newPointsWithData,1)==NpointsNew); 
@@ -245,7 +235,7 @@ assert(size(newStartPointData,2)==5);
 assert(size(newFinishPointData,1)==1); 
 assert(size(newFinishPointData,2)==5); 
 assert(size(newPolytopes,1)==1); 
-assert(size(newPolytopes,2)==length(polytopes)-1); 
+assert(size(newPolytopes,2)==size(polytopes,2)+1); 
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -258,7 +248,7 @@ fprintf(1,'Figure: %.0f: FAST mode, figNum=-1\n',figNum);
 figure(figNum); close(figNum);
 
 
-dataFileName = 'DATA_fcn_Visibility_removeObstacle_polytopeMapForTesting.mat';
+dataFileName = 'DATA_fcn_VGraph_addObstacle_polytopeMapForTesting.mat';
 fullDataFileWithPath = fullfile(pwd,'Data',dataFileName);
 if exist(fullDataFileWithPath, 'file')
     load(fullDataFileWithPath,'polytopes');
@@ -285,22 +275,25 @@ end
 startXY = [0, 50];
 finishXY = [100, 50];
 
-pointsWithData = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY, -1);
+pointsWithData = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY, -1);
+
+startPointData = pointsWithData(end-1,:);
+finishPointData = pointsWithData(end,:);
 
 % Create visibility graph
 isConcave = [];
+visibilityMatrix =fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave),(-1));
 
-visibilityMatrix = ...
-    fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave), (-1));
-
-% remove a polytope
-indexOfPolytopeForRemoval = 1;
+% add a polytope
+polytopeToAdd = polytopes(1);
+polytopeToAdd.xv = 0.5*polytopeToAdd.xv + 55;
+polytopeToAdd.yv = 0.5*polytopeToAdd.yv - 10;
+polytopeToAdd.vertices = [polytopeToAdd.xv' polytopeToAdd.yv'];
 
 % Update visibilityMatrix with new polytope added
 [newVisibilityMatrix, newPointsWithData, newStartPointData, newFinishPointData, newPolytopes] = ...
-    fcn_Visibility_removeObstacle(...
-    visibilityMatrix, pointsWithData, pointsWithData(end-1,:), pointsWithData(end,:),...
-    polytopes, indexOfPolytopeForRemoval, (-1));
+    fcn_VGraph_addObstacle(...
+    visibilityMatrix, pointsWithData, startPointData, finishPointData, polytopes, polytopeToAdd, (-1));
 
 % Check variable types
 assert(isnumeric(newVisibilityMatrix));
@@ -311,8 +304,8 @@ assert(isstruct(newPolytopes));
 
 % Check variable sizes
 NpointsOriginal= length(pointsWithData(:,1));
-NpointsRemoved = length(find(pointsWithData(:,4)==indexOfPolytopeForRemoval));
-NpointsNew = NpointsOriginal - NpointsRemoved;
+NpointsAdded = length(polytopeToAdd.vertices(:,1));
+NpointsNew = NpointsOriginal + NpointsAdded;
 assert(size(newVisibilityMatrix,1)==NpointsNew); 
 assert(size(newVisibilityMatrix,2)==NpointsNew); 
 assert(size(newPointsWithData,1)==NpointsNew); 
@@ -322,7 +315,7 @@ assert(size(newStartPointData,2)==5);
 assert(size(newFinishPointData,1)==1); 
 assert(size(newFinishPointData,2)==5); 
 assert(size(newPolytopes,1)==1); 
-assert(size(newPolytopes,2)==length(polytopes)-1); 
+assert(size(newPolytopes,2)==size(polytopes,2)+1); 
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -336,7 +329,7 @@ figure(figNum);
 close(figNum);
 
 
-dataFileName = 'DATA_fcn_Visibility_removeObstacle_polytopeMapForTesting.mat';
+dataFileName = 'DATA_fcn_VGraph_addObstacle_polytopeMapForTesting.mat';
 fullDataFileWithPath = fullfile(pwd,'Data',dataFileName);
 if exist(fullDataFileWithPath, 'file')
     load(fullDataFileWithPath,'polytopes');
@@ -363,27 +356,30 @@ end
 startXY = [0, 50];
 finishXY = [100, 50];
 
-pointsWithData = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY, -1);
+pointsWithData = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY, -1);
+
+startPointData = pointsWithData(end-1,:);
+finishPointData = pointsWithData(end,:);
 
 % Create visibility graph
 isConcave = [];
+visibilityMatrix =fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave),(-1));
 
-visibilityMatrix = ...
-    fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, (isConcave), (-1));
+% add a polytope
+polytopeToAdd = polytopes(1);
+polytopeToAdd.xv = 0.5*polytopeToAdd.xv + 55;
+polytopeToAdd.yv = 0.5*polytopeToAdd.yv - 10;
+polytopeToAdd.vertices = [polytopeToAdd.xv' polytopeToAdd.yv'];
 
-% remove a polytope
-indexOfPolytopeForRemoval = 1;
-
-Niterations = 10;
+Niterations = 3;
 
 % Do calculation without pre-calculation
 tic;
 for ith_test = 1:Niterations
     % Update visibilityMatrix with new polytope added
     [newVisibilityMatrix, newPointsWithData, newStartPointData, newFinishPointData, newPolytopes] = ...
-        fcn_Visibility_removeObstacle(...
-        visibilityMatrix, pointsWithData, pointsWithData(end-1,:), pointsWithData(end,:),...
-        polytopes, indexOfPolytopeForRemoval, ([]));
+        fcn_VGraph_addObstacle(...
+        visibilityMatrix, pointsWithData, startPointData, finishPointData, polytopes, polytopeToAdd, ([]));
 end
 slow_method = toc;
 
@@ -392,9 +388,8 @@ tic;
 for ith_test = 1:Niterations
     % Update visibilityMatrix with new polytope added
     [newVisibilityMatrix, newPointsWithData, newStartPointData, newFinishPointData, newPolytopes] = ...
-        fcn_Visibility_removeObstacle(...
-        visibilityMatrix, pointsWithData, pointsWithData(end-1,:), pointsWithData(end,:),...
-        polytopes, indexOfPolytopeForRemoval, (-1));
+        fcn_VGraph_addObstacle(...
+        visibilityMatrix, pointsWithData, startPointData, finishPointData, polytopes, polytopeToAdd, (-1));
 end
 fast_method = toc;
 
@@ -417,6 +412,7 @@ ylabel('Execution time (Milliseconds)')
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
 assert(~any(figHandles==figNum));
+
 
 
 %% BUG cases

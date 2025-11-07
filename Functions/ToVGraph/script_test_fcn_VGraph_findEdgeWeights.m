@@ -1,13 +1,44 @@
-% script_test_fcn_BoundedAStar_checkReachability
+% script_test_fcn_VGraph_findEdgeWeights
+% Tests: fcn_VGraph_findEdgeWeights
 
-% Tests: script_test_fcn_BoundedAStar_checkReachability
-
-% Revision history
-% 2025_08_12 - K. Hayes, kxh1031@psu.edu
+% REVISION HISTORY:
+% As: fcn_general_calculation_euclidean_point_to_point_distance
+% 2022_11_01 by S. Harnett
 % -- first write of script
+%
+% As: fcn_BoundedAStar_findEdgeWeights
+% 2025_07_08 - K. Hayes, kxh1031@psu.edu
+% -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
+%    with vector sum method 
+% 2025_08_07 - K. Hayes 
+% -- moved test to new script 
+% -- fixed script formatting
+% -- moved plotting to function debug 
+% 2025_10_03 - K. Hayes
+% -- fixed bug causing assertion failure in DEMO case 1
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
+%
+% As: fcn_VGraph_findEdgeWeights
+% 2025_11_06 - S. Brennan
+% -- Renamed function
+%    % * from fcn_BoundedAStar_findEdgeWeights
+%    % * to fcn_VGraph_findEdgeWeights
+% -- Cleaned up variable naming:
+%    % * From fig_num to figNum
+%    % * From all_pts to pointsWithData
+%    % * From gap_size to gapSize
+%    % * From cgraph to costGraph
 
-% TO DO:
-% -- set up fast mode tests
+% TO-DO:
+% -- Need to finish function
+% -- Need to add fastmode testing once function is working
+
+
+%%%%%%%%%%%%%%§
 
 %% Set up the workspace
 close all
@@ -29,81 +60,80 @@ close all
 
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
-%% DEMO case: check reachability of points
+
+%% DEMO case: find edge weights
 fig_num = 10001;
-titleString = sprintf('DEMO case: check reachability of points');
+titleString = sprintf('DEMO case: find edge weights');
 fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
 figure(fig_num); clf;
 
-tiled_polytopes = fcn_MapGen_haltonVoronoiTiling([1,20],[1 1]);
-% remove the edge polytope that extend past the high and low points
-% shink the polytopes so that they are no longer tiled
-des_radius = 0.05; % desired average maximum radius
-sigma_radius = 0.002; % desired standard deviation in maximum radii
-min_rad = 0.0001; % minimum possible maximum radius for any obstacle
-[shrunk_polytopes,mu_final,sigma_final] = fcn_MapGen_polytopesShrinkToRadius(tiled_polytopes,des_radius,sigma_radius,min_rad);
+fileName = 'DATA_testing_fcn_VGraph_findEdgeWeights.mat';
+fullPath = fullfile(pwd,'Data',fileName);
+if (1==0) && exist(fullPath, 'file')
+    load(fullPath,'polytopes','pointsWithData','gapSize');
+else
 
-max_translation_distance = 0.15;
-final_time = 20;
-time_space_polytopes = fcn_make_timespace_polyhedra_from_polygons(shrunk_polytopes, max_translation_distance, final_time);
+    %%%%%%%%%%
+    mapStretch = [1 1];
+    set_range = [11 15];
 
-time_space_polytopes = fcn_make_facets_from_verts(time_space_polytopes);
+    rng(1234);
 
-all_surfels = fcn_make_triangular_surfels_from_facets(time_space_polytopes);
+    Nsets = 1;
+    seedGeneratorNames  = cell(Nsets,1);
+    seedGeneratorRanges = cell(Nsets,1);
+    AABBs               = cell(Nsets,1);
+    mapStretchs        = cell(Nsets,1);
 
+    ith_set = 0;
 
-% define start and finish
-start = [0 0.5 0];
-finish = [1 0.5 0; 0.7 0.2 20]; % moving finish
-dt = 5;
-finish = fcn_interpolate_route_in_time(finish,dt);
-num_finish_pts = size(finish,1);
-starts = [start(1)*ones(num_finish_pts,1) start(2)*ones(num_finish_pts,1) start(3)*ones(num_finish_pts,1)];
+    ith_set = ith_set+1;
+    seedGeneratorNames{ith_set,1} = 'haltonset';
+    seedGeneratorRanges{ith_set,1} = set_range;
+    AABBs{ith_set,1} = [0 0 1 1];
+    mapStretchs{ith_set,1} = mapStretch;
 
-% interpolate vertices in time and form all_pts matrix
-[verts, time_space_polytopes] = fcn_BoundedAStar_interpolatePolytopesInTime(time_space_polytopes,dt);
+    [tiled_polytopes] = fcn_MapGen_generatePolysFromSeedGeneratorNames(...
+        seedGeneratorNames,...  % string or cellArrayOf_strings with the name of the seed generator to use
+        seedGeneratorRanges,... % vector or cellArrayOf_vectors with the range of points from generator to use
+        (AABBs),...             % vector or cellArrayOf_vectors with the axis-aligned bounding box for each generator to use
+        (mapStretchs),...       % vector or cellArrayOf_vectors to specify how to stretch X and Y axis for each set
+        (figNum));
 
-verts = verts(:,1:3);
-all_pts = [verts; start; finish];
+    % shink the polytopes so that they are no longer tiled
+    gapSize = 0.05; % desired cut distance
+    polytopes = fcn_MapGen_polytopesShrinkEvenly(tiled_polytopes,gapSize, figNum);
 
-num_verts = size(verts,1);
+    % Generate all points table
+    start_xy = [0 0];
+    finish_xy = [0 0];
+    if 1==1
+        pointsWithDataRaw = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes,start_xy,finish_xy,-1);
+        % Remove start and end
+        pointsWithData = pointsWithDataRaw(1:end-2,:);
+    else
+        % % OLD:
+        % pointsWithData = fcn_BoundedAStar_polytopesGenerateAllPtsTable(polytopes,start_xy,finish_xy,-1);
+    end
+    
+    %%%%%
 
-num_pts = size(all_pts,1);
-all_pts_idx = 1:1:num_pts; % array of all possible pt idx
-all_pts = [all_pts all_pts_idx']; % add pt ID column to all_pts
+    save(fullPath,'polytopes','pointsWithData','gapSize');
 
-% if flag_do_plot
-%     figure; hold on; box on; title('all vertices and start and finish')
-%     INTERNAL_fcn_format_timespace_plot();
-%     plot3(start(1),start(2),start(3),'gx');
-%     plot3(finish(:,1),finish(:,2),finish(:,3),'rx');
-%     plot3(verts(:,1),verts(:,2),verts(:,3),'cx')
-% end
+end
 
-% set speed limit and form visibility graph
-speed_limit = 0.12;
-vgraph = fcn_Visibility_3dGraphGlobal(verts, start, finish, all_surfels, speed_limit, time_space_polytopes, dt);
-
-num_starts = size(start,1);
-num_finishes = size(finish,1);
-
-start_with_ids = all_pts(num_verts+1:num_verts+num_starts,:);
-finish_with_ids = all_pts(num_verts+num_starts+1:num_verts+num_starts+num_finishes,:);
-all_pts_with_ids_no_start_and_fin = all_pts(1:num_verts,:);
-
-% form reachability graph
-[is_reachable, num_steps, rgraph] = fcn_BoundedAStar_checkReachability(vgraph, start_with_ids(:,4), finish_with_ids(:,4), all_pts, fig_num);
+% Calculate weighted visibility graph (cost graph)
+[costGraph, vgraph] = fcn_VGraph_findEdgeWeights(polytopes, pointsWithData, gapSize, fig_num);
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(isnumeric(is_reachable));
-assert(isnumeric(num_steps));
-assert(islogical(rgraph));
+assert(isnumeric(costGraph));
+assert(isnumeric(vgraph));
 
 % Check variable sizes
-% Npolys = 100;
-% assert(isequal(Npolys,length(polytopes))); 
+Npoly = 5;
+assert(isequal(Npoly,length(polytopes))); 
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));

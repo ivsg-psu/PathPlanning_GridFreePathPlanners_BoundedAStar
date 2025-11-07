@@ -1,6 +1,6 @@
 function [currentObstacleID, selfBlockedCost, pointsWithDataBlockedBySelf] = ...
-    fcn_Visibility_selfBlockedPoints(polytopes, testPointData, pointsWithData, varargin)
-% fcn_Visibility_selfBlockedPoints
+    fcn_VGraph_selfBlockedPoints(polytopes, testPointData, pointsWithData, varargin)
+% fcn_VGraph_selfBlockedPoints
 %
 % determines the points blocked by the obstacle that the planner is currently
 % at a vertex of
@@ -8,7 +8,7 @@ function [currentObstacleID, selfBlockedCost, pointsWithDataBlockedBySelf] = ...
 % FORMAT:
 %
 % [currentObstacleID, selfBlockedCost, pointsWithDataBlockedBySelf] = ...
-% fcn_Visibility_selfBlockedPoints(polytopes, testPointData, pointsWithData, (figNum))
+% fcn_VGraph_selfBlockedPoints(polytopes, testPointData, pointsWithData, (figNum))
 %
 % INPUTS:
 %
@@ -75,6 +75,13 @@ function [currentObstacleID, selfBlockedCost, pointsWithDataBlockedBySelf] = ...
 %    % * fig_num to figNum
 %    % * self_blocked_cost to selfBlockedCost
 %    % pts_blocked_by_self to pointsWithDataBlockedBySelf
+% 2025_11_07 - S. Brennan, sbrennan@psu.edu
+% -- Changed global flags from _MAPGEN_ to _VGRAPH_
+%
+% As: fcn_VGraph_selfBlockedPoints
+% 2025_11_07 - S. Brennan
+% -- Renamed fcn_Visibility_selfBlockedPoints to fcn_VGraph_selfBlockedPoints
+% -- Cleared extra figure command out of Inputs section
 
 % TO DO
 % 2025_11_03 - S. Brennan
@@ -102,11 +109,11 @@ else
     % Check to see if we are externally setting debug mode to be "on"
     flag_do_debug = 0; %     % Flag to plot the results for debugging
     flag_check_inputs = 1; % Flag to perform input checking
-    MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS");
-    MATLABFLAG_MAPGEN_FLAG_DO_DEBUG = getenv("MATLABFLAG_MAPGEN_FLAG_DO_DEBUG");
-    if ~isempty(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG)
-        flag_do_debug = str2double(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG);
-        flag_check_inputs  = str2double(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS);
+    MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS");
+    MATLABFLAG_VGRAPH_FLAG_DO_DEBUG = getenv("MATLABFLAG_VGRAPH_FLAG_DO_DEBUG");
+    if ~isempty(MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_VGRAPH_FLAG_DO_DEBUG)
+        flag_do_debug = str2double(MATLABFLAG_VGRAPH_FLAG_DO_DEBUG);
+        flag_check_inputs  = str2double(MATLABFLAG_VGRAPH_FLAG_CHECK_INPUTS);
     end
 end
 
@@ -155,7 +162,6 @@ if (0==flag_max_speed) && (MAX_NARGIN == nargin)
     temp = varargin{end};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
         figNum = temp;
-        figure(figNum);
         flag_do_plots = 1;
     end
 end

@@ -1,12 +1,22 @@
-% script_test_fcn_BoundedAStar_calculatePointsOnLines
+% script_test_fcn_VGraph_selfBlockedPoints
 
-% Tests: script_test_fcn_BoundedAStar_calculatePointsOnLines
+% a basic test of calculation of points blocked by a 
 
 % Revision history
-% 2025_08_19 - K. Hayes, kaeleahayes@psu.edu
-% -- first write of script
-% 2025_10_22 - K. Hayes
-% -- fixed bug causing assertion failures for all demo cases
+% As: script_test_fcn_Visibility_selfBlockedPoints
+% 2025_08_05 - K. Hayes, kaeleahayes@psu.edu
+% -- first write of script using
+%    script_test_fcn_Visibility_clearAndBlockedPoints
+% 2025_10_03 - K. Hayes
+% -- fixed bug with missing variables in DEMO case 1
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%
+% As: script_test_fcn_VGraph_selfBlockedPoints
+% 2025_11_07 - S. Brennan
+% -- Renamed script_test_fcn_Visibility_selfBlockedPoints to script_test_fcn_VGraph_selfBlockedPoints
+% -- Cleared extra figure command out of Inputs section
 
 % TO DO:
 % -- set up fast mode tests
@@ -31,98 +41,50 @@ close all
 
 close all;
 fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
-%% DEMO case: check if points are on a line
-fig_num = 10001;
-titleString = sprintf('DEMO case: check if points are on a line');
-fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
-figure(fig_num); clf;
+%% DEMO case: find clear and blocked edges of polytopes in a map
+figNum = 10001;
+titleString = sprintf('DEMO case: find clear and blocked edges of polytopes in a map');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
 
-x1 = [-2 -1 1 2 2 1 -1 -2];
-y1 = [-1 -2 -2 -1 1 2 2 1];
-x2 = [-1 1 2 2 1 -1 -2 -2];
-y2 = [-2 -2 -1 1 2 2 1 -1];
-acc = 1e-8;
+% Create polytope field
+raw_polytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [1 25],[], ([100 100]), (-1));
 
-xi = 2;
-yi = 0;
+% Trim polytopes on edge of boundary
+trim_polytopes = fcn_MapGen_polytopesDeleteByAABB( raw_polytopes, [0.1 0.1 99.9 99.9], (-1));
 
-TF1 = fcn_BoundedAStar_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc, (fig_num))
+% Shrink polytopes to form obstacle field
+polytopes = fcn_MapGen_polytopesShrinkEvenly(trim_polytopes, 2.5, (-1));
 
-sgtitle(titleString, 'Interpreter','none');
+% Create pointsWithData matrix
+startXY = [-2.5, 1];
+finishXY = startXY + [4 0];
 
-% Check variable types
-assert(islogical(TF1));
+if 1==1
+    % Note: this includes start/finish points now
+    pointsWithData = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
+else
+    % % OLD:
+    % pointsWithData = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start, finish,-1);
+end
 
-% Check variable sizes
-Nsides = 8;
-assert(isequal(Nsides,length(TF1))); 
-
-% Make sure plot opened up
-assert(isequal(get(gcf,'Number'),fig_num));
-
-%% DEMO case: check if points are on a line within a tolerance
-fig_num = 10002;
-titleString = sprintf('DEMO case: check if points are on a line');
-fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
-figure(fig_num); clf;
-
-x1 = [-2 -1 1 2 2 1 -1 -2];
-y1 = [-1 -2 -2 -1 1 2 2 1];
-x2 = [-1 1 2 2 1 -1 -2 -2];
-y2 = [-2 -2 -1 1 2 2 1 -1];
-acc = 1e-8;
-
-xi = 2+1e-8;
-yi = 0;
-
-TF2 = fcn_BoundedAStar_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc,(fig_num))
+testPointData = pointsWithData(6,:);
+[currentObstacleID, selfBlockedCost, pointsWithDataBlockedBySelf] = ...
+    fcn_VGraph_selfBlockedPoints(polytopes,testPointData,pointsWithData,(figNum));
 
 sgtitle(titleString, 'Interpreter','none');
 
 % Check variable types
-assert(islogical(TF2));
+assert(isnumeric(currentObstacleID));
+assert(isnumeric(selfBlockedCost));
+assert(isnumeric(pointsWithDataBlockedBySelf));
 
 % Check variable sizes
-Nsides = 8;
-assert(isequal(Nsides,length(TF2))); 
+Npolys = 10;
+assert(isequal(Npolys,length(polytopes))); 
 
 % Make sure plot opened up
-assert(isequal(get(gcf,'Number'),fig_num));
-
-%% DEMO case: check if points are on a line within a tolerance
-fig_num = 10003;
-titleString = sprintf('DEMO case: check if points are on a line');
-fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
-figure(fig_num); clf;
-
-x1 = [-2 -1 1 2 2 1 -1 -2];
-y1 = [-1 -2 -2 -1 1 2 2 1];
-x2 = [-1 1 2 2 1 -1 -2 -2];
-y2 = [-2 -2 -1 1 2 2 1 -1];
-acc = 1e-8;
-
-xi = 2+2e-8;
-yi = 0;
-TF3 = fcn_BoundedAStar_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc,(fig_num))
-
-sgtitle(titleString, 'Interpreter','none');
-
-% Check variable types
-assert(islogical(TF3));
-
-% Check variable sizes
-Nsides = 8;
-assert(isequal(Nsides,length(TF3))); 
-
-% Make sure plot opened up
-assert(isequal(get(gcf,'Number'),fig_num));
-
-%% DEMO case: check if points are on a line within a tolerance
-fig_num = 10004;
-titleString = sprintf('DEMO case: check if points are on a line');
-fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
-figure(fig_num); clf;
-
+assert(isequal(get(gcf,'Number'),figNum));
 
 
 %% Test cases start here. These are very simple, usually trivial
@@ -144,37 +106,12 @@ figure(fig_num); clf;
 close all;
 fprintf(1,'Figure: 2XXXXXX: TEST mode cases\n');
 
-%% TEST case: no intersection due to tolerance too small
-fig_num = 20001;
-titleString = sprintf('TEST case: no intersection due to tolerance too small');
-fprintf(1,'Figure %.0f: %s\n',fig_num, titleString);
-figure(fig_num); clf;
+%% TEST case: zero gap between polytopes
+figNum = 20001;
+titleString = sprintf('TEST case: zero gap between polytopes');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
 
-x1 = [-2 -1 1 2 2 1 -1 -2];
-y1 = [-1 -2 -2 -1 1 2 2 1];
-x2 = [-1 1 2 2 1 -1 -2 -2];
-y2 = [-2 -2 -1 1 2 2 1 -1];
-acc = 1e-8;
-
-xi = -2;
-yi = -1;
-
-TF4 = fcn_BoundedAStar_calculatePointsOnLines(x1,y1,x2,y2,xi,yi,acc,(fig_num))
-
-sgtitle(titleString, 'Interpreter', 'none')
-
-% Check variable types
-assert(islogical(TF4));
-
-% Check variable sizes
-Nsides = 8;
-assert(isequal(Nsides,length(TF4))); 
-
-% Make sure plot opened up
-assert(isequal(get(gcf,'Number'),fig_num));
-
-% Make sure plot opened up
-assert(isequal(get(gcf,'Number'),fig_num));
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -195,15 +132,15 @@ close all;
 fprintf(1,'Figure: 8XXXXXX: FAST mode cases\n');
 
 %% Basic example - NO FIGURE
-fig_num = 80001;
-fprintf(1,'Figure: %.0f: FAST mode, empty fig_num\n',fig_num);
-figure(fig_num); close(fig_num);
+figNum = 80001;
+fprintf(1,'Figure: %.0f: FAST mode, empty figNum\n',figNum);
+figure(figNum); close(figNum);
 
 %% Compare speeds of pre-calculation versus post-calculation versus a fast variant
-fig_num = 80003;
-fprintf(1,'Figure: %.0f: FAST mode comparisons\n',fig_num);
-figure(fig_num);
-close(fig_num);
+figNum = 80003;
+fprintf(1,'Figure: %.0f: FAST mode comparisons\n',figNum);
+figure(figNum);
+close(figNum);
 
 % map_name = "HST 1 100 SQT 0 1 0 1 SMV 0.01 0.001 1e-6 1111";
 % plot_flag = 1; 
@@ -232,7 +169,7 @@ close(fig_num);
 % 
 % % Make sure plot did NOT open up
 % figHandles = get(groot, 'Children');
-% assert(~any(figHandles==fig_num));
+% assert(~any(figHandles==figNum));
 % 
 % % Plot results as bar chart
 % figure(373737);
@@ -248,7 +185,7 @@ close(fig_num);
 % 
 % % Make sure plot did NOT open up
 % figHandles = get(groot, 'Children');
-% assert(~any(figHandles==fig_num));
+% assert(~any(figHandles==figNum));
 
 %% BUG cases
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

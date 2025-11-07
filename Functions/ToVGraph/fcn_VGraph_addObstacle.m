@@ -1,7 +1,7 @@
 function [newVisibilityMatrix, newPointsWithData, newStartPointData, newFinishPointData, newPolytopes] = ...
-fcn_Visibility_addObstacle(...
+fcn_VGraph_addObstacle(...
 visibilityMatrix, pointsWithData, startPointData, finishPointData, polytopes, polytopeToAdd, varargin)
-% fcn_Visibility_addObstacle
+% fcn_VGraph_addObstacle
 %
 %   Recalculates the visibility graph after adding a polytope without
 %   recalculating the entire visibility graph.  This is accomplished using
@@ -14,7 +14,7 @@ visibilityMatrix, pointsWithData, startPointData, finishPointData, polytopes, po
 %
 % FORMAT:
 %     [newVisibilityMatrix, newPointsWithData, newStartPointData, newFinishPointData, newPolytopes] = ...
-%     fcn_Visibility_addObstacle(...
+%     fcn_VGraph_addObstacle(...
 %     visibilityMatrix, pointsWithData, startPointData, finishPointData, polytopes, polytopeToAdd, (figNum))
 %
 % INPUTS:
@@ -68,14 +68,14 @@ visibilityMatrix, pointsWithData, startPointData, finishPointData, polytopes, po
 % DEPENDENCIES:
 %
 %     fcn_MapGen_isCrossingAABB from the MapGen repo
-%     fcn_Visibility_clearAndBlockedPoints
+%     fcn_VGraph_clearAndBlockedPoints
 %     fcn_DebugTools_checkInputsToFunctions
 %
 % EXAMPLES:
 %
 % See the scripts: 
 %
-%     script_test_fcn_Visibility_addObstacle
+%     script_test_fcn_VGraph_addObstacle
 %     script_demo_visibilityGraphAddRemoveObstacles
 %
 % for a full test suite.
@@ -113,6 +113,12 @@ visibilityMatrix, pointsWithData, startPointData, finishPointData, polytopes, po
 % - staged function to move into Visibility library
 %    % * _MAPGEN_ changed to _VGRAPH_
 % - fixed bug where start and finish data points not filled correctly
+%
+% As: fcn_VGraph_addObstacle
+% 2025_11_07 - S. Brennan
+% -- Renamed fcn_Visibility_addObstacle to fcn_VGraph_addObstacle
+% -- Cleared extra figure command out of Inputs section
+
 
 % TO DO:
 % -- make sure input checking is working correctly
@@ -187,7 +193,6 @@ if (0==flag_max_speed) && (MAX_NARGIN == nargin)
     temp = varargin{end};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
         figNum = temp;
-        figure(figNum);
         flag_do_plots = 1;
     end
 end
@@ -314,7 +319,7 @@ c = [c;array_of_combos_of_idx_of_new_obs(:,2)];
 %% check only  specific edges method
 % TODO @sjharnett use global function and check from each start to all finishes for that start
 for i = 1:length(r)
-    [~,~,D] = fcn_Visibility_clearAndBlockedPoints(newPolytopes, newPointsWithData(r(i),:), newPointsWithData(c(i),:));
+    [~,~,D] = fcn_VGraph_clearAndBlockedPoints(newPolytopes, newPointsWithData(r(i),:), newPointsWithData(c(i),:));
     visibility_scalar = sum(D);
     assert(isequal(size(visibility_scalar),[1 1]))
     if ~visibility_scalar

@@ -1,9 +1,9 @@
-% script_test_fcn_Visibility_convertPolytopetoDedupedPoints.m
+% script_test_fcn_VGraph_convertPolytopetoDedupedPoints.m
 
 % a basic test of cost graph and heuristic vector generation
 
 % Revision history
-% As: fcn_BoundedAStar_convertPolytopetoDedupedPoints
+% As: script_test_fcn_BoundedAStar_convertPolytopetoDedupedPoints
 % 2025_08_06 - K. Hayes, kxh1031@psu.edu
 % -- first write of script
 % 2025_11_02 - S. Brennan
@@ -12,7 +12,13 @@
 %    % WARNING: inputs/outputs to this changed slightly. Function needs to 
 %    % be rechecked
 %
-% As: fcn_Visibility_convertPolytopetoDedupedPoints
+% As: script_test_fcn_Visibility_convertPolytopetoDedupedPoints
+%
+% As: script_test_fcn_VGraph_convertPolytopetoDedupedPoints
+% 2025_11_07 - S. Brennan
+% -- Renamed script_test_fcn_Visibility_convertPolytopetoDedupedPoints to script_test_fcn_VGraph_convertPolytopetoDedupedPoints
+% -- Cleared extra figure command out of Inputs section
+
 
 
 % TO DO:
@@ -65,15 +71,14 @@ finish_xy = [100 50];
 mode = 'xy spatial only';
 
 if 1==1
-    warning('The function fcn_Visibility_polytopesGenerateAllPtsTable is not a direct replacement for the BoundedAStar version. The function needs to be updated from this point onward.')
-    [all_pts, start, finish] = fcn_Visibility_polytopesGenerateAllPtsTable(shrunk_polytopes, start_xy, finish_xy, -1);
+    [all_pts, start, finish] = fcn_VGraph_polytopesGenerateAllPtsTable(shrunk_polytopes, start_xy, finish_xy, -1);
 else
     % % OLD:
     % [all_pts, start, finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes, start_xy, finish_xy, -1);
 end
 
 
-deduped_points_struct = fcn_Visibility_convertPolytopetoDedupedPoints(all_pts, []);
+deduped_points_struct = fcn_VGraph_convertPolytopetoDedupedPoints(all_pts(1:end-2,:), []);
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -122,8 +127,8 @@ polytopes = fcn_MapGen_polytopesFillFieldsFromVertices(convex_polytope);
 startXY = [-1, 0.5];
 finishXY = [2.5 0.5];
 
-pointsWithData = fcn_Visibility_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
-deduped_points_struct = fcn_Visibility_convertPolytopetoDedupedPoints(pointsWithData, []);
+pointsWithData = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes, startXY, finishXY,-1);
+deduped_points_struct = fcn_VGraph_convertPolytopetoDedupedPoints(pointsWithData, []);
 
 sgtitle(titleString, 'Interpreter','none');
 
@@ -131,7 +136,7 @@ sgtitle(titleString, 'Interpreter','none');
 assert(isstruct(deduped_points_struct));
 
 % Check variable sizes
-Npts = 329;
+Npts = 8;
 assert(isequal(Npts,length(deduped_points_struct))); 
 
 % Make sure plot opened up

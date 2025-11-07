@@ -1,9 +1,9 @@
 function [visibilityMatrix, visibilityDetailsEachFromPoint] = ...
-    fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, starts, finishes, varargin)
-% fcn_Visibility_clearAndBlockedPointsGlobal
+    fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, starts, finishes, varargin)
+% fcn_VGraph_clearAndBlockedPointsGlobal
 %
 % This calls, over all points (global), the function
-% fcn_Visibility_clearAndBlockedPoints. That subfunction returns an
+% fcn_VGraph_clearAndBlockedPoints. That subfunction returns an
 % intersection matrix for a single start point, showing what was
 % intersected between that start point and numerous possible end points.
 % This "global" function wraps that function to call it on every possible
@@ -12,7 +12,7 @@ function [visibilityMatrix, visibilityDetailsEachFromPoint] = ...
 %
 % FORMAT:
 % [visibilityMatrix, visibilityDetailsEachFromPoint] = ...
-% fcn_Visibility_clearAndBlockedPointsGlobal(polytopes, starts, finishes, (isConcave), (figNum))
+% fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, starts, finishes, (isConcave), (figNum))
 %
 % INPUTS:
 %
@@ -71,17 +71,17 @@ function [visibilityMatrix, visibilityDetailsEachFromPoint] = ...
 %     visibilityDetailsEachFromPoint: an array of structures containing
 %     visibilty information for each "from" point. The structure passes out
 %     all output arguments for the function
-%     fcn_Visibility_clearAndBlockedPoints per each "from" point call.
+%     fcn_VGraph_clearAndBlockedPoints per each "from" point call.
 %
 % DEPENDENCIES:
 %
 % fcn_DebugTools_checkInputsToFunctions
-% fcn_Visibility_clearAndBlockedPoints
+% fcn_VGraph_clearAndBlockedPoints
 % fcn_MapGen_plotPolytopes
 %
 % EXAMPLES:
 %
-% See the script: script_test_fcn_Visibility_clearAndBlockedPointsGlobal.m
+% See the script: script_test_fcn_VGraph_clearAndBlockedPointsGlobal.m
 % for a full test suite.
 %
 % Questions or comments? contact sjh6473@psu.edu
@@ -103,6 +103,11 @@ function [visibilityMatrix, visibilityDetailsEachFromPoint] = ...
 % -- replaced _MAPGEN_ with _VGRAPH_ in global variable naming
 % -- cleaned up variable naming for clarity (removed variables i and j)
 % -- preallocated visibilityDetailsEachFromPoint variable for speed-up
+%
+% As: fcn_VGraph_clearAndBlockedPointsGlobal
+% 2025_11_07 - S. Brennan
+% -- Renamed fcn_Visibility_clearAndBlockedPointsGlobal to fcn_VGraph_clearAndBlockedPointsGlobal
+% -- Cleared extra figure command out of Inputs section
 
 % TO DO:
 % (copied from Steve's notes)
@@ -192,7 +197,6 @@ if (0==flag_max_speed) && (MAX_NARGIN == nargin)
     temp = varargin{end};
     if ~isempty(temp) % Did the user NOT give an empty figure number?
         figNum = temp;
-        figure(figNum);
         flag_do_plots = 1;
     end
 end
@@ -238,7 +242,7 @@ for jth_point = 1:numPoints
         visibilityDetailsEachFromPoint(fromIndex).yjP, ...
         visibilityDetailsEachFromPoint(fromIndex).xjQ, ...
         visibilityDetailsEachFromPoint(fromIndex).yjQ] = ...
-        fcn_Visibility_clearAndBlockedPoints(polytopes,starts(jth_point,:),finishes,isConcave,-1);
+        fcn_VGraph_clearAndBlockedPoints(polytopes,starts(jth_point,:),finishes,isConcave,-1);
 
     %% Fill in the visibility matrix using results for this point
     % D is finish points on the rows and polytope sides on the columns
@@ -271,7 +275,7 @@ end
 %     % are visible, either along the side or across the polytope
 %     % other points are not visible since there are no gaps and angles of 180 deg
 %     % are not possible in a Voronoi diagram where all vertices have 3 Voronoi sides
-%     deduped_pts = fcn_Visibility_convertPolytopetoDedupedPoints(all_pts);
+%     deduped_pts = fcn_VGraph_convertPolytopetoDedupedPoints(all_pts);
 %     num_unique_pts = length(deduped_pts);
 %     all_polys = NaN(num_unique_pts,3);
 %     for i = 1:num_unique_pts

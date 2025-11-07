@@ -1,7 +1,7 @@
 function [newVisibilityMatrix, newPointsWithData, newStartPointData, newFinishPointData, newPolytopes] = ...
-fcn_Visibility_removeObstacle(...
+fcn_VGraph_removeObstacle(...
 visibilityMatrix, pointsWithData, startPointData, finishPointData, polytopes, indexOfPolytopeForRemoval, varargin)
-% fcn_Visibility_removeObstacle
+% fcn_VGraph_removeObstacle
 %   this function recalculates the visibility graph after deleting a
 %   polytope without recalculating the entire visibility graph.  This is
 %   accomplished using an AABB check as a coarse check. This function also
@@ -15,7 +15,7 @@ visibilityMatrix, pointsWithData, startPointData, finishPointData, polytopes, in
 % FORMAT:
 %
 % [newVisibilityMatrix, newPointsWithData, newStartPointData, newFinishPointData, newPolytopes] = ...
-%     fcn_Visibility_removeObstacle(...
+%     fcn_VGraph_removeObstacle(...
 %     visibilityMatrix, pointsWithData, startPointData, finishPointData, polytopes, indexOfPolytopeForRemoval, (figNum))
 %
 % INPUTS:
@@ -67,13 +67,13 @@ visibilityMatrix, pointsWithData, startPointData, finishPointData, polytopes, in
 %
 % DEPENDENCIES:
 %     fcn_MapGen_isCrossingAABB from the MapGen repo
-%     fcn_Visibility_clearAndBlockedPoints
+%     fcn_VGraph_clearAndBlockedPoints
 %
 % EXAMPLES:
 %
 % See the scripts: 
 %
-%     script_test_fcn_Visibility_removeObstacle and 
+%     script_test_fcn_VGraph_removeObstacle and 
 %     script_demo_visibilityGraphAddRemoveObstacles
 %
 % for a full test suite.
@@ -110,6 +110,10 @@ visibilityMatrix, pointsWithData, startPointData, finishPointData, polytopes, in
 %    % * idx_of_polytope_for_removal to indexOfPolytopeForRemoval
 % - staged function to move into Visibility library
 %    % * _MAPGEN_ changed to _VGRAPH_
+%
+% As: fcn_VGraph_removeObstacle
+% 2025_11_07 - S. Brennan
+% -- Renamed fcn_Visibility_removeObstacle to fcn_VGraph_removeObstacle
 
 % TO DO:
 % - uncomment the AABB test and get this to work without using deprecated
@@ -252,7 +256,7 @@ isInside = true(length(newPointsWithData(:,1)),1);
 [r,c] = find(isInside & ~newVisibilityMatrix);
 %% check only specific edges method
 for i = 1:length(r)
-    [~,~,D] = fcn_Visibility_clearAndBlockedPoints(newPolytopes, newPointsWithData(r(i),:), newPointsWithData(c(i),:));
+    [~,~,D] = fcn_VGraph_clearAndBlockedPoints(newPolytopes, newPointsWithData(r(i),:), newPointsWithData(c(i),:));
     visibility_scalar = sum(D);
     assert(isequal(size(visibility_scalar),[1 1]))
     if ~visibility_scalar

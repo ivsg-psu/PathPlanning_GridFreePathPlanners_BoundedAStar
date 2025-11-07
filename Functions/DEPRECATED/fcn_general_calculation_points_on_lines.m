@@ -1,7 +1,11 @@
 function [TF] = fcn_general_calculation_points_on_lines(x1,y1,x2,y2,xi,yi,acc)
 warning('on','backtrace');
 warning(['fcn_general_calculation_points_on_lines is being deprecated. ' ...
-    'Use fcn_BoundedAStar_calculatePointsOnLines instead.']);
+    'Use fcn_VGraph_calculatePointsOnLines instead.']);
+
+% 2025_11_06 - S. Brennan, sbrennan@psu.edu
+% -- Deprecated fcn_BoundedAStar_calculatePointsOnLines
+%    % Changed to: fcn_VGraph_calculatePointsOnLines
 
 % FCN_GENERAL_CALCULATION_POINTS_ON_LINES determines whether the points are
 % on lines between point set 1 and point set 2
