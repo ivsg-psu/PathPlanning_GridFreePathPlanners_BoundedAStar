@@ -50,6 +50,8 @@ function [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_
 %          behaves with a discrete wind field. However, the set is usually
 %          non-smooth.
 %
+%     keepOutZones:
+%
 %     figNum: a figure number to plot results. If set to -1, skips any
 %     input checking or debugging, no figures will be generated, and sets
 %     up code to maximize speed. As well, if given, this forces the
@@ -148,7 +150,7 @@ function [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_
 % Check if flag_max_speed set. This occurs if the figNum variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 8; % The largest Number of argument inputs to the function
+MAX_NARGIN = 9; % The largest Number of argument inputs to the function
 flag_max_speed = 0;
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; %     % Flag to plot the results for debugging
@@ -217,6 +219,16 @@ if 2 <= nargin
         flagWindRoundingType = temp; %#ok<NASGU>
     end
 end
+
+% Does user want to specify keepOutZones input?
+keepOutZones = []; % Default is none
+if 3 <= nargin
+    temp = varargin{3};
+    if ~isempty(temp)
+        keepOutZones = temp;
+    end
+end
+
 
 % Does user want to show the plots?
 flag_do_plots = 0; % Default is to NOT show plots

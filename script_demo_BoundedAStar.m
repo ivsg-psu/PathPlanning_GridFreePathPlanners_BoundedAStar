@@ -547,6 +547,10 @@
 % - Merged this with repo
 % - Updated MapGenClass_v2025_11_06
 % - Updated DebugTools_v2025_11_06
+%
+% 2025_11_18 - K. Hayes
+% - In fcn_BoundedAStar_expandReachabilityWithWind
+%   % * functionalized map boundary checking
 
 
 % TO-DO:
