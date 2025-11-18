@@ -91,7 +91,8 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo, varargout] = ..
 %     varying. In this case, the windFieldU and windFieldV should be cell
 %     arrays containing the wind field at each time step.
 %
-%     keepOutZones:
+%     keepOutZones: nx1 cell array of the [x, y] vertices describing each
+%     of the n keep out zones
 %
 %     figNum: a figure number to plot results. If set to -1, skips any
 %     input checking or debugging, no figures will be generated, and sets
@@ -414,6 +415,19 @@ end
 regionBoundaryPoints = [minX minY; maxX minY; maxX maxY; minX maxY; minX minY];
 boundingRegion = fcn_INTERNAL_makeRegion(regionBoundaryPoints);
 
+% Define keep-out zones as regions, if they are specified
+if ~isempty(keepOutZones)
+    nZones = numel(keepOutZones);
+    keepOutRegions = cell(nZones, 1);
+    for ith_zone = 1:nZones
+        theseVertices = keepOutZones{ith_zone};
+        thisKeepOut = fcn_INTERNAL_makeRegion(theseVertices);
+        keepOutRegions{ith_zone} = thisKeepOut;
+    end
+else
+    keepOutRegions = [];
+end
+
 ith_step = 0;
 flagContinueExpansion = 1;
 while 1==flagContinueExpansion
@@ -512,7 +526,7 @@ while 1==flagContinueExpansion
         drawnow
     end
 
-    [newStartPoints] = fcn_INTERNAL_checkBoundaries(startPointsSparse, boundingRegion);
+    [newStartPoints] = fcn_INTERNAL_checkBoundaries(startPointsSparse, boundingRegion, keepOutRegions);
 
 
     % Save results for next loop
@@ -756,6 +770,13 @@ if flag_do_plots
     if ~isempty(allGoalPointsList)
         plot(allGoalPointsList(:,1),allGoalPointsList(:,2),'.','Color',[1 0 1],...
             'MarkerSize',40,'LineWidth', 2, 'DisplayName','Input: allGoalPointsList');
+    end
+
+    % Plot keep out zones, if specified
+    if ~isempty(keepOutRegions)
+        for i = 1:numel(keepOutRegions)
+            plot(keepOutRegions{i}, 'FaceColor', 'black', 'FaceAlpha', 0.5, 'HandleVisibility', 'off');
+        end
     end
 
     % Plot the expansion sets
@@ -1006,11 +1027,21 @@ fractionalSteps = -t_point_before./totalTransverseDistance;
 end % Ends fcn_INTERNAL_findStepFraction
 
 %% fcn_INTERNAL_checkBoundaries
-function [newStartPoints] = fcn_INTERNAL_checkBoundaries(startPointsSparse, boundingRegion)
+function [newStartPoints] = fcn_INTERNAL_checkBoundaries(startPointsSparse, boundingRegion, keepOutRegions)
 
     % TO DO - functionalize this below
     % NEW way
+    % Create region representing map
     unboundedRegion = fcn_INTERNAL_makeRegion(startPointsSparse);
+    
+    % If keep out zones exist, 
+    if ~isempty(keepOutRegions)
+        nRegions = numel(keepOutRegions);
+        for ith_region = 1:nRegions
+            boundingRegion = subtract(boundingRegion, keepOutRegions{ith_region});
+        end
+    end
+
     insideRegion = intersect(boundingRegion, unboundedRegion);
     boundedVertices = flipud(insideRegion.Vertices);
     newStartPoints = [boundedVertices; boundedVertices(1,:)];        
@@ -1019,7 +1050,7 @@ function [newStartPoints] = fcn_INTERNAL_checkBoundaries(startPointsSparse, boun
     % If region breaks apart into different areas, need to reconnect
     % them. Do this by converting nan values "between" regions into
     % slivers that are near boundaries.
-    if any(isnan(newStartPoints),'all')
+    if any(isnan(newStartPoints),'all')  
         unboundedVertices = flipud(unboundedRegion.Vertices);
         unboundedPoints = [unboundedVertices; unboundedVertices(1,:)];
         nanIndices = find(isnan(newStartPoints(:,1)));
