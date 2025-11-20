@@ -168,7 +168,7 @@ else
     end
 end
 
-% flag_do_debug = 1;
+%flag_do_debug = 1;
 
 if flag_do_debug
     st = dbstack; %#ok<*UNRCH>

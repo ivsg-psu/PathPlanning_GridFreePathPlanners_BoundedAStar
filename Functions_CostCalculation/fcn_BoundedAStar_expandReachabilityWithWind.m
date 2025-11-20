@@ -214,7 +214,7 @@ else
     end
 end
 
-% flag_do_debug = 1;
+flag_do_debug = 1;
 
 if flag_do_debug
     st = dbstack; %#ok<*UNRCH>
@@ -526,7 +526,7 @@ while 1==flagContinueExpansion
         drawnow
     end
 
-    [newStartPoints] = fcn_INTERNAL_checkBoundaries(startPointsSparse, boundingRegion, keepOutRegions);
+    [newStartPoints] = fcn_INTERNAL_checkBoundaries(startPointsSparse, boundingRegion, keepOutRegions, axisRange);
 
 
     % Save results for next loop
@@ -1027,30 +1027,58 @@ fractionalSteps = -t_point_before./totalTransverseDistance;
 end % Ends fcn_INTERNAL_findStepFraction
 
 %% fcn_INTERNAL_checkBoundaries
-function [newStartPoints] = fcn_INTERNAL_checkBoundaries(startPointsSparse, boundingRegion, keepOutRegions)
+function [newStartPoints] = fcn_INTERNAL_checkBoundaries(startPointsSparse, boundingRegion, keepOutRegions, axisRange)
 
     % TO DO - functionalize this below
     % NEW way
     % Create region representing map
     unboundedRegion = fcn_INTERNAL_makeRegion(startPointsSparse);
-    
-    % If keep out zones exist, 
+
     if ~isempty(keepOutRegions)
         nRegions = numel(keepOutRegions);
         for ith_region = 1:nRegions
-            boundingRegion = subtract(boundingRegion, keepOutRegions{ith_region});
+            unboundedRegion = subtract(unboundedRegion, keepOutRegions{ith_region});
         end
+
     end
 
     insideRegion = intersect(boundingRegion, unboundedRegion);
+
+
+    % Check for NaN values due to enclosed region
+    if any(isnan(insideRegion.Vertices))
+        keepRow = find(~isnan(insideRegion.Vertices(:,1)));
+        badRow = find(isnan(insideRegion.Vertices(:,1)));
+        insideRegion.Vertices(badRow,:) = insideRegion.Vertices(1,:);
+        %insideRegion.Vertices = insideRegion.Vertices(keepRow,:);
+    end
+
+%     % If keep out zones exist, 
+%     if ~isempty(keepOutRegions)
+%         nRegions = numel(keepOutRegions);
+%         for ith_region = 1:nRegions
+%             boundingRegion = subtract(boundingRegion, keepOutRegions{ith_region});
+%         end
+%     end
     boundedVertices = flipud(insideRegion.Vertices);
     newStartPoints = [boundedVertices; boundedVertices(1,:)];        
+
+    if 1==1
+        figure(13231)
+        hold on
+        plot(boundingRegion)
+        plot(unboundedRegion)
+        plot(insideRegion)
+        plot(newStartPoints(:,1), newStartPoints(:,2), '.-', 'LineWidth', 2, 'MarkerSize', 10)
+        axis equal
+    end
+    clf(13231)
 
 
     % If region breaks apart into different areas, need to reconnect
     % them. Do this by converting nan values "between" regions into
     % slivers that are near boundaries.
-    if any(isnan(newStartPoints),'all')  
+    if any(isnan(newStartPoints),'all')
         unboundedVertices = flipud(unboundedRegion.Vertices);
         unboundedPoints = [unboundedVertices; unboundedVertices(1,:)];
         nanIndices = find(isnan(newStartPoints(:,1)));
@@ -1064,6 +1092,12 @@ function [newStartPoints] = fcn_INTERNAL_checkBoundaries(startPointsSparse, boun
                 error('Not all wals are equal');
             end
             
+            % axisRange = [minX minY maxX maxY];
+            minX = axisRange(1);
+            minY = axisRange(2);
+            maxX = axisRange(3);
+            maxY = axisRange(4);
+
             % Find max/min points in region
             minXallRegions = min(minX,min(unboundedVertices(:,1)));
             maxXallRegions = max(maxX,max(unboundedVertices(:,1)));
@@ -1136,7 +1170,7 @@ function [newStartPoints] = fcn_INTERNAL_checkBoundaries(startPointsSparse, boun
             boundedVertices = flipud(insideRegionMergedBounded.Vertices);
             newStartPoints = [boundedVertices; boundedVertices(1,:)];
 
-            if 1==0
+            if 1==1
                 figure(775757)
                 clf;
                 hold on;

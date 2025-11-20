@@ -445,8 +445,15 @@ windFieldU = normalizedEastWind*maxWindSpeed;
 windFieldV = normalizedNorthWind*maxWindSpeed;
 startPoints = [0 0];
 flagWindRoundingType = 1;
+% cellArrayOfWindExitConditions = cell(5,1);
+% cellArrayOfWindExitConditions{1} = 10;
+% cellArrayOfWindExitConditions{2} = 1;
+% cellArrayOfWindExitConditions{3} = 1;
+% cellArrayOfWindExitConditions{4} = [];
+% cellArrayOfWindExitConditions{5} = 0;
 cellArrayOfWindExitConditions = [];
-keepOutZones = {[10 10; 10 5; 5 5; 5 10]};
+
+keepOutZones = {[6 6; 6 5; 5 5; 5 6]};
 
 % Call function
 [reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
