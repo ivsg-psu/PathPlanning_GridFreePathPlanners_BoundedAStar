@@ -453,7 +453,110 @@ flagWindRoundingType = 1;
 % cellArrayOfWindExitConditions{5} = 0;
 cellArrayOfWindExitConditions = [];
 
-keepOutZones = {[6 6; 6 5; 5 5; 5 6]};
+keepOutZones = {[10 10; 10 5; 5 5; 5 10]};
+
+% Call function
+[reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), 0, (keepOutZones), (figNum));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(reachableSet));
+assert(isnumeric(exitCondition));
+assert(iscell(cellArrayOfExitInfo));
+
+% Check variable sizes
+assert(size(reachableSet,1)>=3); 
+assert(size(reachableSet,2)==2);
+assert(size(exitCondition,1)==1); 
+assert(size(exitCondition,2)==1);
+assert(isequal(size(cellArrayOfExitInfo),[2 1]));
+
+% Check variable values
+% (too difficult - randomly generated)
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+%% DEMO case: get reachable envelope in wind field (starting point at origin, light wind, keep out zone internal)
+figNum = 10010;
+titleString = sprintf('DEMO case: get reachable envelope in wind field (starting point at origin, light wind, internal keep out)');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+% Load starting data
+[normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData;
+
+% Call graph generation function
+radius = 1;
+maxWindSpeed = 0.5;
+
+windFieldU = normalizedEastWind*maxWindSpeed;
+windFieldV = normalizedNorthWind*maxWindSpeed;
+startPoints = [0 0];
+flagWindRoundingType = 1;
+% cellArrayOfWindExitConditions = cell(5,1);
+% cellArrayOfWindExitConditions{1} = 10;
+% cellArrayOfWindExitConditions{2} = 1;
+% cellArrayOfWindExitConditions{3} = 1;
+% cellArrayOfWindExitConditions{4} = [];
+% cellArrayOfWindExitConditions{5} = 0;
+cellArrayOfWindExitConditions = [];
+
+keepOutZones = {[6 6; 6 5; 5 5]};
+
+% Call function
+[reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...
+    radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (cellArrayOfWindExitConditions), 0, (keepOutZones), (figNum));
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(reachableSet));
+assert(isnumeric(exitCondition));
+assert(iscell(cellArrayOfExitInfo));
+
+% Check variable sizes
+assert(size(reachableSet,1)>=3); 
+assert(size(reachableSet,2)==2);
+assert(size(exitCondition,1)==1); 
+assert(size(exitCondition,2)==1);
+assert(isequal(size(cellArrayOfExitInfo),[2 1]));
+
+% Check variable values
+% (too difficult - randomly generated)
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+
+%% DEMO case: get reachable envelope in wind field (multiple keep out zones)
+figNum = 10010;
+titleString = sprintf('DEMO case: get reachable envelope in wind field (starting point at origin, light wind, internal keep out)');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+% Load starting data
+[normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData;
+
+% Call graph generation function
+radius = 1;
+maxWindSpeed = 0.5;
+
+windFieldU = normalizedEastWind*maxWindSpeed;
+windFieldV = normalizedNorthWind*maxWindSpeed;
+startPoints = [0 0];
+flagWindRoundingType = 1;
+% cellArrayOfWindExitConditions = cell(5,1);
+% cellArrayOfWindExitConditions{1} = 10;
+% cellArrayOfWindExitConditions{2} = 1;
+% cellArrayOfWindExitConditions{3} = 1;
+% cellArrayOfWindExitConditions{4} = [];
+% cellArrayOfWindExitConditions{5} = 0;
+cellArrayOfWindExitConditions = [];
+
+keepOutZones = {[6 6; 6 5; 5 5; 5 6], [-5, -8; 0, -7; -2, -4; -5 -6]};
 
 % Call function
 [reachableSet, exitCondition, cellArrayOfExitInfo] = fcn_BoundedAStar_expandReachabilityWithWind(...

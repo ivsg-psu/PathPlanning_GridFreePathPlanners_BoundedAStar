@@ -1044,13 +1044,19 @@ function [newStartPoints] = fcn_INTERNAL_checkBoundaries(startPointsSparse, boun
 
     insideRegion = intersect(boundingRegion, unboundedRegion);
 
-
+    indicatorRow = nan;
     % Check for NaN values due to enclosed region
-    if any(isnan(insideRegion.Vertices))
+    if any(isnan(insideRegion.Vertices)) 
         keepRow = find(~isnan(insideRegion.Vertices(:,1)));
-        badRow = find(isnan(insideRegion.Vertices(:,1)));
-        insideRegion.Vertices(badRow,:) = insideRegion.Vertices(1,:);
-        %insideRegion.Vertices = insideRegion.Vertices(keepRow,:);
+        indicatorRow = find(isnan(insideRegion.Vertices(:,1)));
+        intShape = [insideRegion.Vertices(1:indicatorRow-1,:); insideRegion.Vertices(1,:)];
+        % Fix edge case where outer boundaries get flipped into the first
+        % 'boundary' because they are equal size in the final expansion
+        if intShape(1,:) == boundingRegion.Vertices(1,:)
+            insideRegion.Vertices = intShape;
+        else
+            insideRegion.Vertices = insideRegion.Vertices(indicatorRow+1:end,:);
+        end
     end
 
 %     % If keep out zones exist, 
