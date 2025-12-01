@@ -54,6 +54,9 @@ function [orderedVisitSequence] = ...
 %     options. (Not coded yet)
 %     * Exit if infeasible goals
 %
+%     keepOutZones: a cell array containing (x,y) vertices of keep out
+%     zones
+%
 %     figNum: a figure number to plot results. If set to -1, skips any
 %     input checking or debugging, no figures will be generated, and sets
 %     up code to maximize speed. As well, if given, this forces the
@@ -112,7 +115,7 @@ function [orderedVisitSequence] = ...
 % Check if flag_max_speed set. This occurs if the figNum variable input
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
-MAX_NARGIN = 9; % The largest Number of argument inputs to the function
+MAX_NARGIN = 10; % The largest Number of argument inputs to the function
 flag_max_speed = 0;
 if (nargin==MAX_NARGIN && isequal(varargin{end},-1))
     flag_do_debug = 0; %     % Flag to plot the results for debugging
@@ -183,6 +186,15 @@ Nsteps = cellArrayOfSearchOptions{1};
 % toleranceToStopIfSameResult = cellArrayOfSearchOptions{3};
 % temp = cellArrayOfSearchOptions{4};
 % flagStopIfHitOneGoalPoint = cellArrayOfSearchOptions{5};
+
+% Does user want to specify keep out zones?
+keepOutZones = [];
+if 9 <= nargin
+    temp = varargin{2};
+    if ~isempty(temp)
+        keepOutZones = temp;
+    end
+end
 
 % Does user want to show the plots?
 flag_do_plots = 0; % Default is to NOT show plots
@@ -270,7 +282,7 @@ end
 [costsFromTo, pathsFromTo, reachableSet] = fcn_INTERNAL_findCostsFromTo(...
     NUniqueGoals, allPoints, pointNumbers, Nsteps,...
     radius, windFieldU, windFieldV, windFieldX, windFieldY,...
-    flag_do_debug, debug_figNum);
+    keepOutZones, flag_do_debug, debug_figNum);
 
 %%%%%
 % Remove infeasible (unreachable) goal points
@@ -788,6 +800,26 @@ if flag_do_plots
         end
     end
 
+    % Plot keep out zones, if specified
+    % Define keep-out zones as regions, if they are specified
+    if ~isempty(keepOutZones)
+        nZones = numel(keepOutZones);
+        keepOutRegions = cell(nZones, 1);
+        for ith_zone = 1:nZones
+            theseVertices = keepOutZones{ith_zone};
+            thisKeepOut = fcn_INTERNAL_makeRegion(theseVertices);
+            keepOutRegions{ith_zone} = thisKeepOut;
+        end
+    else
+        keepOutRegions = [];
+    end
+
+    if ~isempty(keepOutRegions)
+        for i = 1:numel(keepOutRegions)
+            plot(keepOutRegions{i}, 'FaceColor', 'black', 'FaceAlpha', 0.5, 'HandleVisibility', 'off');
+        end
+    end
+
     % Number the unique points
     for ith_fromPoint = 1:NUniqueGoals
         text(allPoints(ith_fromPoint,1)+nudge,allPoints(ith_fromPoint,2),sprintf('%.0f',pointNumbers(ith_fromPoint)));
@@ -864,7 +896,7 @@ end % Ends fcn_INTERNAL_flagAllTrueButIth
 function [costsFromTo, pathsFromTo, reachableSet] = fcn_INTERNAL_findCostsFromTo(...
     NUniqueGoals, allPoints, pointNumbers, Nsteps,...
     radius, windFieldU, windFieldV, windFieldX, windFieldY,...
-    flag_do_debug, debug_figNum)
+    keepOutZones, flag_do_debug, debug_figNum)
 %%%%
 % For each point, find costs to go from that point to the others
 % Costs are saved as "from" as rows, and "to" as columns. Note: self costs
@@ -906,7 +938,7 @@ for ith_fromPoint = 1:NUniqueGoals
     [reachableSet, exitCondition, cellArrayOfExitInfo, ...
         reachableSetExactCosts, cellArrayOfReachableSetPaths] = fcn_BoundedAStar_expandReachabilityWithWind(...
         radius, windFieldU, windFieldV, windFieldX, windFieldY,...
-        (startPoint), (flagWindRoundingType), (cellArrayOfWindExitConditions), (-1));
+        (startPoint), (flagWindRoundingType), (cellArrayOfWindExitConditions), 0, (keepOutZones), (-1));
 
     if 4~=exitCondition
         warning('Not all goal points are reachable from other goal points');
@@ -960,3 +992,10 @@ for ith_fromPoint = 1:NUniqueGoals
 
 end % Ends looping through "from" points to generate entire matrix of costs
 end % Ends fcn_INTERNAL_findCostsFromTo
+
+%% fcn_INTERNAL_makeRegion
+function region = fcn_INTERNAL_makeRegion(regionBoundary)
+uniquePoints = flipud(regionBoundary); % for some silly reason, polyshape takes points "backwards" (?!)
+uniquePoints = unique(uniquePoints,'rows','stable');
+region = polyshape(uniquePoints,'KeepCollinearPoints', true,'Simplify', false);
+end % Ends fcn_INTERNAL_makeRegion

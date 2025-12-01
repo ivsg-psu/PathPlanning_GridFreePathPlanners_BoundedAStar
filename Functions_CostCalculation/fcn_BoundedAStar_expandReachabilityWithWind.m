@@ -183,6 +183,10 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo, varargout] = ..
 % 2025_08_27 by S. Brennan
 % - In fcn_BoundedAStar_expandReachabilityWithWind
 %   % * functionalized fractional path calc: fcn_INTERNAL_findStepFraction
+%
+% 2025_12_01 by K. Hayes
+% - In fcn_BoundedAStar_expandReachabilityWithWind
+%   % * added support for single keep out zones 
 
 % TO-DO
 % -- when wind is VERY high, higher than self speed, the set pushes away
@@ -1053,6 +1057,10 @@ function [newStartPoints] = fcn_INTERNAL_checkBoundaries(startPointsSparse, boun
         % Fix edge case where outer boundaries get flipped into the first
         % 'boundary' because they are equal size in the final expansion
         if intShape(1,:) == boundingRegion.Vertices(1,:)
+            insideRegion.Vertices = intShape;
+        % Fix edge case where boundary gets flipped and we keep the wrong
+        % shape
+        elseif insideRegion.Vertices(indicatorRow+1,:) == keepOutRegions{1}.Vertices(1,:)
             insideRegion.Vertices = intShape;
         else
             insideRegion.Vertices = insideRegion.Vertices(indicatorRow+1:end,:);
