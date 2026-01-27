@@ -67,7 +67,7 @@ for Halton_seed = 1:20:101
             % starting (A) and finish (B) coordinates
             A.x = 0; A.y = 0.5; B.x = 1; B.y = 0.5;
 
-            [path,cost,err] = fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes(shrunk_polytopes,A,B,'through at vertices');
+            [path,cost,err] = fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes(shrunk_polytopes,A,B,'through at vertices');
 
             x = path(:,1);
             y = path(:,2);

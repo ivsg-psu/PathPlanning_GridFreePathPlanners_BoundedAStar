@@ -4,7 +4,7 @@
 % -- fixed calls to fcn_MapGen_polytopesStatistics, replaced with fcn_MapGen_statsPolytopes
 % 2025_11_05 - S. Brennan
 % -- removed calls to fcn_algorithm_setup_bound_Astar_for_tiled_polytopes
-%    % * Replaced with fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes
+%    % * Replaced with fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes
 
 % clear
 % clc
@@ -87,7 +87,7 @@ for Halton_seed = 1%:20:101
                 % starting (A) and finish (B) coordinates
                 A.x = 0; A.y = 0.5; B.x = 1; B.y = 0.5;
 
-                [path,cost,err] = fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes(shrunk_polytopes,A,B,'through or around');
+                [path,cost,err] = fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes(shrunk_polytopes,A,B,'through or around');
                 % array is gap_idx, cost_idx, r_lc_straight_through_predicted
                 straight_path_costs = [straight_path_costs; Halton_seed, gap_idx, cost_idx, field_avg_r_D, cost];
                 % predict straight path cost

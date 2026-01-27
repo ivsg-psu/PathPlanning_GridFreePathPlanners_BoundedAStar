@@ -64,7 +64,7 @@ est_d_eff7 = [];
         for height_of_path = 0.1:0.2:0.9
             %% plan path
             A.x = 0; A.y = height_of_path; B.x = 1; B.y = height_of_path;
-            [path,cost,err] = fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes(shrunk_polytopes_known_cost,A,B,"straight through");
+            [path,cost,err] = fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes(shrunk_polytopes_known_cost,A,B,"straight through");
             % total_path_cost = dist_outside + dist_inside * (1+traversal_cost)
             % => total_path_cost = (path_length - dist_inside) + dist_inside * (1+traversal_cost)
             % => if path_length = 1: (total_path_cost - 1)/traversal_cost = dist_inside

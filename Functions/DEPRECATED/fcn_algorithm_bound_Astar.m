@@ -2,7 +2,7 @@ function [cost,route] = fcn_algorithm_bound_Astar(start,finish,polytopes,all_pts
 
 warning('on','backtrace');
 warning(['fcn_algorithm_bound_Astar is being deprecated. ' ...
-    'Use fcn_BoundedAStar_AstarBounded instead.']);
+    'Use fcn_BoundedAStar_AStarBounded instead.']);
 
 % FCN_ALGORITHM_BOUND_ASTAR performs Astar path planning algorithm from
 % start to finish around polytopes while constantly reducing boundaries

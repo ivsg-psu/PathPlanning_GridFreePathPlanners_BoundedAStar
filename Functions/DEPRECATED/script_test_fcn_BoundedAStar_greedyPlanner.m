@@ -1,0 +1,306 @@
+% script_test_fcn_BoundedAStar_greedyPlanner
+
+% a basic test of the greedy planner algorithm implementation
+
+% Revision History:
+% As: script_test_fcn_algorithm_greedy_planner
+% 2025_07_08 - K. Hayes, kxh1031@psu.edu
+% -- Replaced fcn_general_calculation_euclidean_point_to_point_distance
+%    with vector sum method 
+%
+% As: script_test_fcn_BoundedAStar_greedyPlanner
+% 2025_08_07 - K. Hayes
+% -- copied script_test_fcn_algorithm_greedy_planner into new script file
+%    to follow library naming conventions
+% 2025_11_02 - S. Brennan
+% -- changed fcn_BoundedAStar_polytopesGenerateAllPtsTable 
+%    % to fcn_Visibility_polytopesGenerateAllPtsTable
+%    % WARNING: inputs/outputs to this changed slightly. Function needs to 
+%    % be rechecked
+% 2025_11_14 - S. Brennan
+% -- changed fcn_Visibility_clearAndBlockedPointsGlobal 
+%    % to fcn_VGraph_clearAndBlockedPointsGlobal
+% -- changed fcn_Visibility_polytopesGenerateAllPtsTable 
+%    % to fcn_VGraph_polytopesGenerateAllPtsTable
+
+
+%% Set up the workspace
+close all
+
+%% Code demos start here
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%   _____                              ____   __    _____          _
+%  |  __ \                            / __ \ / _|  / ____|        | |
+%  | |  | | ___ _ __ ___   ___  ___  | |  | | |_  | |     ___   __| | ___
+%  | |  | |/ _ \ '_ ` _ \ / _ \/ __| | |  | |  _| | |    / _ \ / _` |/ _ \
+%  | |__| |  __/ | | | | | (_) \__ \ | |__| | |   | |___| (_) | (_| |  __/
+%  |_____/ \___|_| |_| |_|\___/|___/  \____/|_|    \_____\___/ \__,_|\___|
+%
+%
+% See: https://patorjk.com/software/taag/#p=display&f=Big&t=Demos%20Of%20Code
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Figures start with 1
+
+close all;
+fprintf(1,'Figure: 1XXXXXX: DEMO cases\n');
+
+%% DEMO case: plan path through field with greedy planner
+figNum = 10001;
+titleString = sprintf('DEMO case: plan path through field with greedy planner');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+
+repetitions = 1;
+rep = 1;
+% final information can be stored in one variable (not suggested to save
+% variables of the structure type, as it will take a lot of memory)
+final_info(repetitions) = struct('polytopes',[],'start',[],'finish',[],'path_x',[],'path_y',[],'appex1_x',[],'appex1_y',[],'appex2_x',[],'appex2_y',[]);
+
+% generate Voronoi tiling from Halton points
+pt_density = 100; % point density used for generation
+low_pts = 1:pt_density:(pt_density*(repetitions-1)+1); % lower bound of Halton set range
+high_pts = pt_density:pt_density:pt_density*repetitions; % upper bound of Halton set range
+% remove the edge polytope that extend past the high and low points
+xlow = 0; xhigh = 1; ylow = 0; yhigh = 1;
+
+% shink the polytopes so that they are no longer fully tiled
+des_radius = 0.05; % desired average maximum radius
+sigma_radius = 0.002; % desired standard deviation in maximum radii
+min_rad = 0.0001; % minimum possible maximum radius for any obstacle
+shrink_seed = 1111; % seed used for randomizing the shrinking process
+des_cost = 0; % polytope traversal cost
+
+% start and finish (x,y) coordinates
+start_xy = [0.0, 0.5];
+finish_xy = [1, 0.5];
+
+%%%% plotting control
+flag_do_plot = 1; % 1 if you would like to see plots, anything else if not
+
+% generate map
+% generate Voronoi tiling from Halton points
+low_pt = low_pts(rep); high_pt = high_pts(rep)-50; % range of Halton points to use to generate the tiling
+fullyTiledPolytopes = fcn_MapGen_generatePolysFromSeedGeneratorNames('haltonset', [low_pt,high_pt],[],[],-1);
+% remove the edge polytope that extend past the high and low points    
+trimmedPolytopes = fcn_MapGen_polytopesDeleteByAABB( fullyTiledPolytopes, [xlow ylow xhigh yhigh], (-1));
+
+% shink the polytopes so that they are no longer tiled
+rng(shrink_seed) % set the random number generator with the shrink seed    
+polytopes = fcn_MapGen_polytopesShrinkToRadius(trimmedPolytopes,des_radius,sigma_radius,min_rad, -1);
+polytopes = fcn_MapGen_polytopesSetCosts(polytopes, des_cost, (-1));
+
+% info needed for further work
+% gather data on all the points
+
+if 1==1
+    warning('backtrace','on');
+    warning('The function fcn_VGraph_polytopesGenerateAllPtsTable is not a direct replacement for the BoundedAStar version. The function needs to be updated from this point onward.')
+    [pointsWithData, startPointData, finishPointData] = fcn_VGraph_polytopesGenerateAllPtsTable(polytopes,start_xy,finish_xy,-1);
+else
+    % % OLD:
+    % [all_pts,start,finish] = fcn_BoundedAStar_polytopesGenerateAllPtsTable(shrunk_polytopes,start_xy,finish_xy,-1);
+end
+
+
+% Generate visibility graph
+% finishes = [all_pts; start; finish];
+% starts = [all_pts; start; finish];
+
+visibilityMatrix = fcn_VGraph_clearAndBlockedPointsGlobal(polytopes, pointsWithData, pointsWithData, [], -1);
+
+% Plan path through field using greedy planner
+[cost, route] = fcn_BoundedAStar_greedyPlanner(visibilityMatrix, pointsWithData(1:end-2,:), startPointData, finishPointData, (polytopes), (figNum));
+
+% axes_limits = [0 1 0 1]; % x and y axes limits
+% axis_style = 'square'; % plot axes style
+plotFormat.Color = 'Blue'; % edge line plotting
+plotFormat.LineStyle = '-';
+plotFormat.LineWidth = 2; % linewidth of the edge
+fillFormat = [1 0 0 1 0.4];
+% FORMAT: fcn_MapGen_plotPolytopes(polytopes,figNum,line_spec,line_width,axes_limits,axis_style);
+fcn_MapGen_plotPolytopes(polytopes,(plotFormat),(fillFormat),(figNum));
+hold on
+box on
+% axis([-0.1 1.1 -0.1 1.1]);
+xlabel('x [m]');
+ylabel('y [m]');
+
+plot(route(:,1),route(:,2),'.-','Color',[1 0 0],'LineWidth',3,'MarkerSize',20);
+
+
+% appex_x = [appex_x1 closer_x1 farther_x1; appex_x2 closer_x2 farther_x2; .... appex_xn closer_xn farther_xn]
+% appex_y = [appex_y1 closer_y1 farther_y1; appex_y2 closer_y2 farther_y2; .... appex_yn closer_yn farther_yn]
+% 
+% if flag_do_plot
+%     plot(appex_x,appex_y,'o','linewidth',2)
+%     my_title = sprintf('Path length [m]: %.4f',cost)
+%     title(my_title)
+%     box on
+%     return
+%     pause(2)
+%     close 99
+% end
+
+% Final Info
+% A, B, appex_x, appex_y
+final_info(rep).polytopes = polytopes;
+final_info(rep).start = start_xy;
+final_info(rep).finish = finish_xy;
+% final_info(rep).path_x = appex_x(:,1);
+% final_info(rep).path_y = appex_y(:,1);
+% final_info(rep).appex1_x = appex_x(:,2);
+% final_info(rep).appex1_y = appex_y(:,2);
+% final_info(rep).appex2_x = appex_x(:,3);
+% final_info(rep).appex2_y = appex_y(:,3);
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(cost));
+assert(isnumeric(route));
+
+% Check variable sizes
+Nsteps = 12;
+assert(isequal(Nsteps,length(route))); 
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
+
+
+%% Test cases start here. These are very simple, usually trivial
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  _______ ______  _____ _______ _____
+% |__   __|  ____|/ ____|__   __/ ____|
+%    | |  | |__  | (___    | | | (___
+%    | |  |  __|  \___ \   | |  \___ \
+%    | |  | |____ ____) |  | |  ____) |
+%    |_|  |______|_____/   |_| |_____/
+%
+%
+%
+% See: https://patorjk.com/software/taag/#p=display&f=Big&t=TESTS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Figures start with 2
+
+close all;
+fprintf(1,'Figure: 2XXXXXX: TEST mode cases\n');
+
+%% TEST case: zero gap between polytopes
+figNum = 20001;
+titleString = sprintf('TEST case: zero gap between polytopes');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+%% Fast Mode Tests
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  ______        _     __  __           _        _______        _
+% |  ____|      | |   |  \/  |         | |      |__   __|      | |
+% | |__ __ _ ___| |_  | \  / | ___   __| | ___     | | ___  ___| |_ ___
+% |  __/ _` / __| __| | |\/| |/ _ \ / _` |/ _ \    | |/ _ \/ __| __/ __|
+% | | | (_| \__ \ |_  | |  | | (_) | (_| |  __/    | |  __/\__ \ |_\__ \
+% |_|  \__,_|___/\__| |_|  |_|\___/ \__,_|\___|    |_|\___||___/\__|___/
+%
+%
+% See: http://patorjk.com/software/taag/#p=display&f=Big&t=Fast%20Mode%20Tests
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Figures start with 8
+
+close all;
+fprintf(1,'Figure: 8XXXXXX: FAST mode cases\n');
+
+%% Basic example - NO FIGURE
+figNum = 80001;
+fprintf(1,'Figure: %.0f: FAST mode, empty fig_num\n',figNum);
+figure(figNum); close(figNum);
+
+%% Compare speeds of pre-calculation versus post-calculation versus a fast variant
+figNum = 80003;
+fprintf(1,'Figure: %.0f: FAST mode comparisons\n',figNum);
+figure(figNum);
+close(figNum);
+
+% map_name = "HST 1 100 SQT 0 1 0 1 SMV 0.01 0.001 1e-6 1111";
+% plot_flag = 1; 
+% disp_name = 0; 
+% 
+% line_style = 'r-';
+% line_width = 2;
+% 
+% Niterations = 10;
+% 
+% % Do calculation without pre-calculation
+% tic;
+% for ith_test = 1:Niterations
+%     % Call the function
+%     [polytopes, h_fig] = fcn_MapGen_generatePolysFromName(map_name, plot_flag, disp_name, ([]), (line_style), (line_width));
+% end
+% slow_method = toc;
+% 
+% % Do calculation with pre-calculation, FAST_MODE on
+% tic;
+% for ith_test = 1:Niterations
+%     % Call the function
+%     [polytopes, h_fig] = fcn_MapGen_generatePolysFromName(map_name, plot_flag, disp_name, (-1), (line_style), (line_width));
+% end
+% fast_method = toc;
+% 
+% % Make sure plot did NOT open up
+% figHandles = get(groot, 'Children');
+% assert(~any(figHandles==fig_num));
+% 
+% % Plot results as bar chart
+% figure(373737);
+% clf;
+% hold on;
+% 
+% X = categorical({'Normal mode','Fast mode'});
+% X = reordercats(X,{'Normal mode','Fast mode'}); % Forces bars to appear in this exact order, not alphabetized
+% Y = [slow_method fast_method ]*1000/Niterations;
+% bar(X,Y)
+% ylabel('Execution time (Milliseconds)')
+% 
+% 
+% % Make sure plot did NOT open up
+% figHandles = get(groot, 'Children');
+% assert(~any(figHandles==fig_num));
+
+%% BUG cases
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  ____  _    _  _____
+% |  _ \| |  | |/ ____|
+% | |_) | |  | | |  __    ___ __ _ ___  ___  ___
+% |  _ <| |  | | | |_ |  / __/ _` / __|/ _ \/ __|
+% | |_) | |__| | |__| | | (_| (_| \__ \  __/\__ \
+% |____/ \____/ \_____|  \___\__,_|___/\___||___/
+%
+% See: http://patorjk.com/software/taag/#p=display&v=0&f=Big&t=BUG%20cases
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% All bug case figures start with the number 9
+
+% close all;
+
+%% BUG
+
+%% Fail conditions
+if 1==0
+
+end
+
+
+%% Functions follow
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%   ______                _   _
+%  |  ____|              | | (_)
+%  | |__ _   _ _ __   ___| |_ _  ___  _ __  ___
+%  |  __| | | | '_ \ / __| __| |/ _ \| '_ \/ __|
+%  | |  | |_| | | | | (__| |_| | (_) | | | \__ \
+%  |_|   \__,_|_| |_|\___|\__|_|\___/|_| |_|___/
+%
+% See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§

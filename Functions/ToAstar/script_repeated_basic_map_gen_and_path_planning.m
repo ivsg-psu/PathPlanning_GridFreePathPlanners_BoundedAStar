@@ -6,7 +6,7 @@
 % -- removed addpath calls
 % 2025_11_05 - S. Brennan
 % -- removed calls to fcn_algorithm_setup_bound_Astar_for_tiled_polytopes
-%    % * Replaced with fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes
+%    % * Replaced with fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes
 % -- removed calls to fcn_plot_polytopes
 %    % * Replaced with fcn_MapGen_plotPolytopes(polytopes,'b',[1 0 0 0 0.5],figNum);
 
@@ -66,7 +66,7 @@ for rep = 1:repetitions
         fcn_MapGen_plotPolytopes(polytopes,'b',[1 0 0 0 0.5],figNum);
     end
     %% plan path
-    [path,cost,err] = fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes(shrunk_polytopes,A,B,'legacy');
+    [path,cost,err] = fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes(shrunk_polytopes,A,B,'legacy');
     % path: series of points [x y point_id obs_id beg_end]
     % cost: path length
     % err: marker indicating if there was an error in setup (1) or not (0)

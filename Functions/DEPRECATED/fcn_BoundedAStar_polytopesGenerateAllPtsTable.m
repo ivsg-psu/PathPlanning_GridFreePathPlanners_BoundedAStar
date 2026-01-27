@@ -9,7 +9,7 @@ warning(['fcn_BoundedAStar_polytopesGenerateAllPtsTable is being deprecated. ' .
 %
 % A short function to turn polytope vertices into an nx5 table of points of
 % the form used by:
-%   % -fcn_BoundedAStar_AstarBounded 
+%   % -fcn_BoundedAStar_AStarBounded 
 %   % -fcn_Visibility_clearAndBlockedPointsGlobal
 %   % -fcn_Visibility_clearAndBlockedPoints
 %

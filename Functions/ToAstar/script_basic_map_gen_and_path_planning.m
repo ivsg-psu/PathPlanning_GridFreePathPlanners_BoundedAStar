@@ -41,7 +41,7 @@ fcn_MapGen_plotPolytopes(polytopes,'b',[1 0 0 0 0.5],figNum);
 %% plan path
 % starting (A) and finish (B) coordinates
 A.x = 0; A.y = 0.5; B.x = 1; B.y = 0.5;
-[path,cost,err] = fcn_BoundedAStar_AstarBoundedSetupForTiledPolytopes(shrunk_polytopes,A,B,'legacy');
+[path,cost,err] = fcn_BoundedAStar_AStarBoundedSetupForTiledPolytopes(shrunk_polytopes,A,B,'legacy');
 % path: series of points [x y point_id obs_id beg_end]
 % cost: path length
 % err: marker indicating if there was an error in setup (1) or not (0)
