@@ -121,6 +121,91 @@ assert(size(pathXYAndControlUV,2)==4);
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),figNum));
 
+%% DEMO case: example with keep out zones
+figNum = 10001;
+titleString = sprintf('DEMO case: basic example of calculation back to start');
+fprintf(1,'Figure %.0f: %s\n',figNum, titleString);
+figure(figNum); clf;
+
+% Load starting data
+[normalizedEastWind, normalizedNorthWind, windFieldX, windFieldY] = fcn_INTERNAL_loadExampleData;
+
+% Call graph generation function
+radius = 1;
+maxWindSpeed = 0.01;
+
+windFieldU = normalizedEastWind*maxWindSpeed;
+windFieldV = normalizedNorthWind*maxWindSpeed;
+
+startPoints = [0 0];
+flagWindRoundingType = 0;
+
+Nsteps = 8;
+cellArrayOfExpansions = cell(Nsteps,1);
+cellArrayOfIntermediateCalculations = cell(Nsteps,5);
+cellArrayOfExpansions{1,1} = startPoints;
+% figure(234); clf;
+
+for ith_step = 2:Nsteps
+    % Call function to find reachable set on this time step
+    % FORMAT:
+    % [reachableSet, thisCellArrayOfIntermediateCalculations] =  fcn_BoundedAStar_reachabilityWithInputs(...
+    %     radius, windFieldU, windFieldV, windFieldX, windFieldY, (startPoints), (flagWindRoundingType), (figNum));
+    [reachableSet, thisCellArrayOfIntermediateCalculations] = ...
+        fcn_BoundedAStar_reachabilityWithInputs(...
+        radius, windFieldU, windFieldV, windFieldX, windFieldY, ...
+        (cellArrayOfExpansions{ith_step-1,1}), (flagWindRoundingType), (2223));
+    title(sprintf('Step: %.0f of %.0f',ith_step,Nsteps))
+
+    cellArrayOfExpansions{ith_step,1} = reachableSet;
+    for ith_cell = 1:5
+        cellArrayOfIntermediateCalculations{ith_step,ith_cell} = thisCellArrayOfIntermediateCalculations{ith_cell,1};
+    end
+
+end
+
+endPoint = [-3 6];
+% endPoint = [0.5 .98];
+% endPoint = [-2 0];
+
+% Call function to find "backward" path
+pathXYAndControlUV =  ...
+    fcn_BoundedAStar_pathCalculationBackToStart(...
+    endPoint, cellArrayOfExpansions, cellArrayOfIntermediateCalculations, (figNum));
+
+% Do forward simlation (to test)
+pathXY = ...
+    fcn_BoundedAStar_pathCalculation(...
+    startPoints, pathXYAndControlUV(:,3:4), ...
+    windFieldU,  ...
+    windFieldV,  ...
+    windFieldX,  ...
+    windFieldY,  ...
+    (figNum));
+
+figure(figNum);
+hold on;
+% Plot the final XY path in blue
+plot(pathXYAndControlUV(:,1),pathXYAndControlUV(:,2),'LineWidth',3,...
+    'MarkerSize',30,...
+    'Color',[0 0 1],'DisplayName','Expected: XY path')
+
+% Plot the endPoint
+plot(endPoint(:,1),endPoint(:,2),'.','Color',[1 0 0],'MarkerSize',30,'LineWidth', 2, 'DisplayName','Expected: endPoint');
+
+
+sgtitle(titleString, 'Interpreter','none');
+
+% Check variable types
+assert(isnumeric(pathXYAndControlUV));
+
+% Check variable sizes
+assert(size(pathXYAndControlUV,1)>=2); 
+assert(size(pathXYAndControlUV,2)==4);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),figNum));
+
 %% Test cases start here. These are very simple, usually trivial
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
