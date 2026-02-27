@@ -1,5 +1,5 @@
 # PathPlanning_GridFreePathPlanners_BoundedAStar
-The repo for grid-free path planning using Bounded A-star algorithm, first started by Seth Tau (2019+) and currently maintained by Dr. Brennan (sbrennan@psu.edu) and Steve Harnett (sjharnett@psu.edu).  This repo contains the bounded A* grid free path planner, variations of this path planner, and supporting infrastructure such as visibility graph (vgraph) creation tools.
+The repo for grid-free path planning using Bounded A-star algorithm, first started by Seth Tau (2019+), developed by Steve Harnett, and currently maintained by Dr. Brennan (sbrennan@psu.edu) and Kaelea Hayes (kaeleahayes@psu.edu).  This repo contains the bounded A* grid free path planner, variations of this path planner, and supporting infrastructure such as visibility graph (vgraph) creation tools.
 
 
 ## General Architecture
