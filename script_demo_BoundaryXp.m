@@ -26,6 +26,17 @@
 %       % * script_test_fcn_BoundedAStar_generateWindGraph
 %       % * fcn_BoundedAStar_fillWindField
 %       % * script_test_fcn_BoundedAStar_fillWindField
+%
+% 2026_04_01 - K. Hayes
+% - Imported BoundaryXP functions developed in private repository
+% - ADDED:
+%       % * fcn_BoundaryXP_expandVerticesOutward
+%       % * fcn_BoundaryXP_prepareStartPoints
+%       % * fcn_BoundaryXP_processExpandedPoints
+%       % * fcn_BoundaryXP_resamplePointsToMatchMapDiscretization
+% - In fcn_BoundedAStar_reachabilityWithInputs
+%       % * replaced internal functions with separated versions
+
 
 %
 % TO DO:

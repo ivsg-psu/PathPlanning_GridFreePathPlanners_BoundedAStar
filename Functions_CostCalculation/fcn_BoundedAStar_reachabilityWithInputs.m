@@ -140,6 +140,9 @@ function [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_
 % - In fcn_BoundedAStar_reachabilityWithInputs
 %   % * Fixed bug with NaN values produced due to typo on isequal 
 %   %   % (line 926)
+%
+% 2026_04_01 by K. Hayes
+% - Functionalized some pieces of the expansion process
 
 % TO-DO
 % -- update header
@@ -275,7 +278,7 @@ end
 % prepares the points for this format. In particular, it fixes the special
 % case where there are only 1 or 2 non-repeated points in the startPoints
 [densePreExpansionPoints, flagPointsFilledArtificially] = ...
-    fcn_INTERNAL_prepareStartPoints(startPoints, radius);
+    fcn_BoundaryXP_prepareStartPoints(startPoints, radius);
 
 uniqueDensePreExpansionPoints = unique(densePreExpansionPoints(1:end-1,:),'rows','stable');
 if numel(uniqueDensePreExpansionPoints) ~= numel(densePreExpansionPoints(1:end-1,:))
@@ -300,7 +303,7 @@ end
 % the wind field. So here, the boundary is re-sampled to be at least as
 % large as the wind field discretization distance.
 stepSize = windFieldX(2)-windFieldX(1);
-preExpansionPoints = fcn_INTERNAL_resamplePointsToMatchWindDiscretization(...
+preExpansionPoints = fcn_BoundaryXP_resamplePointsToMatchMapDiscretization(...
     densePreExpansionPoints,stepSize);
 
 uniquePreExpansionPoints = unique(preExpansionPoints(1:end-1,:),'rows','stable');
@@ -347,7 +350,7 @@ end
 % wherever they are. Note: this operation sometimes requires conditioning
 % of the points, changing which startPoints are used. Thus, it passes out
 % indicesKept so this can be fixed.
-[~, xKPlusOne_BMatrixPoints, indicesKept] = fcn_INTERNAL_expandVerticesOutward(preExpansionPoints, radius);
+[~, xKPlusOne_BMatrixPoints, indicesKept] = fcn_BoundaryXP_expandVerticesOutward(preExpansionPoints, radius);
 preExpansionPoints = preExpansionPoints(indicesKept,:);
 if ~isequal(preExpansionPoints(1,:),preExpansionPoints(end,:))
     error('First and last preExpansionPoints points must be same');
@@ -828,261 +831,4 @@ if 1==flag_do_debug
 end
 end % Ends fcn_INTERNAL_hardCodedFilter
 
-%% fcn_INTERNAL_expandVerticesOutward
-function [pointsMovedOutward, movementsOutward, indicesKept] = fcn_INTERNAL_expandVerticesOutward(startingPoints, radius)
 
-% URHERE - need to externally functionalize this, and test it repeatedly
-
-%%%%
-% Need to expand all vertices outward. A method to do this is to
-% calculate the projection vector at each vertex that bisects the
-% angle, and thus projects straight "outward". The distance of this
-% vector can be calculated such that both edges move outward by the
-% same radius. The code below implements this method.
-
-% Make sure first and last points repeat
-if ~isequal(startingPoints(1,:),startingPoints(end,:))
-    startingPoints = [startingPoints; startingPoints(1,:)];
-end
-
-% for debugging
-if 1==0
-    startingPoints = [0 0; 1 0; 2 0; 3 0; 4 0; 3 0; 2 0; 2 1];
-end
-
-% Find unit edge vectors, and ortho projections. Note: if there are N
-% vertices, there will be N-1 edges. So that the angles match with the
-% end of each point, we repeat the 1st edge vector onto the end so the
-% number of edge vectors is equal to the number of points.
-edgeVectors = startingPoints(2:end,:)-startingPoints(1:end-1,:);
-edgeLengths = sum(edgeVectors.^2,2).^0.5;
-unitEdgeVectors = edgeVectors./edgeLengths;
-allUnitEdgeVectors = [unitEdgeVectors(end,:); unitEdgeVectors; unitEdgeVectors(1,:)];
-
-if any(isnan(allUnitEdgeVectors),'all')
-    error('Unexpected error in calculating allUnitEdgeVectors: NaN value encountered - this should not happen.');
-end
-
-%%%
-% Remove "jogs"
-
-% Sometimes vectors are created that point exactly opposite each other.
-% Remove these
-flagKeepGoing = 1;
-count = 0;
-NStartingPoints = length(startingPoints(:,1));
-fixedVectors = [allUnitEdgeVectors, [NStartingPoints; (1:NStartingPoints)']];
-
-indicesRemoved = [];
-while 1==flagKeepGoing
-    temp = fixedVectors(1:end-1,1:2)+fixedVectors(2:end,1:2);
-    tempMag = sum(temp.^2,2);
-    tol = 1E-8;
-    badElement = find(tempMag<tol,1);
-    if ~isempty(badElement)
-        indicesRemoved = [indicesRemoved; fixedVectors(badElement:(badElement+1),3)]; %#ok<AGROW>
-        fixedVectors(badElement:(badElement+1),:) = [];
-    else
-        flagKeepGoing = 0;
-    end
-    count = count+1;
-    if count>=NStartingPoints
-        error('Unable to clean vectors - seem to be trapped while removing forward/backward pairs.');
-    end
-end
-indicesKept = fixedVectors(2:end,3);
-fixedStartingPoints = startingPoints(indicesKept,:);
-if ~isequal(fixedStartingPoints(1,:),fixedStartingPoints(end,:))
-    indicesKept = [indicesKept; indicesKept(1)];
-    fixedStartingPoints = startingPoints(indicesKept,:);
-    fixedVectors = [fixedVectors; fixedVectors(1,:)];
-end
-indicesRemoved = sort(indicesRemoved);
-
-% For debugging. Should see any forward/backward jogs removed. NOTE:
-% because the analysis is done on UNIT edge vectors, it may seem like some
-% of the points prior to the "jog" in/out are removed. This is normal.
-if 1==0
-    figure(44444);
-    clf;
-    plot(startingPoints(:,1),startingPoints(:,2),'b.-','MarkerSize',40, 'LineWidth',5);
-    hold on;
-    plot(startingPoints(indicesRemoved,1),startingPoints(indicesRemoved,2),'r.','MarkerSize',30, 'LineWidth',5);
-    plot(fixedStartingPoints(:,1),fixedStartingPoints(:,2),'g.-','MarkerSize',20, 'LineWidth',2);
-end
-
-%%%
-% Find offsets
-
-% The following method avoids the use of sines, cosines, and tangents
-% as those are slow to calculate. To find the vector projection from
-% each point, the average of the projection vector tips at each vertex
-% angle is calculated. The projection scaling distance, D, is
-% calculated by using the relationship that the sin(theta) = x/D = a/x,
-% then solving for D and noting that x=1. Here, theta is the half angle
-% formed by the "kite" apex, created by the before/after projection of
-% the orthogonal vectors from each startPoint.
-
-% Perform a -90 degree rotation
-orthoEdgeVectors = fixedVectors(:,1:2)*[0 -1; 1 0];
-positionsIncomingVector = fixedStartingPoints+orthoEdgeVectors(1:end-1,:);
-positionsOutgoingVector = fixedStartingPoints+orthoEdgeVectors(2:end,:);
-averagePositions = (positionsIncomingVector + positionsOutgoingVector)/2;
-
-% Remove values where average positions are zero
-averagePositionsMagnitude = sum(averagePositions.^2,2);
-badPoints = find(averagePositionsMagnitude<1E-6);
-if ~isempty(badPoints)
-    averagePositions(badPoints,:) = [];
-    fixedStartingPoints(badPoints,:) = [];
-    indicesKept(badPoints,:) = [];
-end
-
-averagePositionVectors = averagePositions - fixedStartingPoints;
-averagePositionVectorLengths = sum(averagePositionVectors.^2,2).^0.5;
-
-% Remove values where vector lengths are zero
-badPoints2 = find(averagePositionVectorLengths<1E-6);
-if ~isempty(badPoints2)
-    averagePositionVectors(badPoints2,:) = [];
-    averagePositionVectorLengths(badPoints2,:) = [];
-    fixedStartingPoints(badPoints2,:) = [];
-    indicesKept(badPoints2,:) = [];
-end
-unitProjectionVectors = averagePositionVectors./averagePositionVectorLengths;
-
-if any(isnan(unitProjectionVectors),'all')
-    error('Unexpected error in calculating unitProjectionVectors: NaN value encountered - this should not happen.');
-end
-
-
-% Use the sin(theta) method to calculate D
-D = 1./averagePositionVectorLengths;
-movementsOutward = radius*D.*unitProjectionVectors;
-RawPointsMovedOutward = fixedStartingPoints + movementsOutward;
-
-% Make sure first and last points repeat
-if ~isequal(RawPointsMovedOutward(1,:),RawPointsMovedOutward(end,:))
-    RawPointsMovedOutward(end,:) = RawPointsMovedOutward(1,:);
-    indicesKept(end) = indicesKept(1);
-end
-
-% Save output
-pointsMovedOutward = RawPointsMovedOutward;
-
-% For debugging. Should see all the edges move outward by radius amount,
-% equally
-if 1==0
-    figure(3773);
-    clf;
-    plot(startingPoints(:,1),startingPoints(:,2),'.-','MarkerSize',20);
-    hold on;
-    plot(pointsMovedOutward(:,1),pointsMovedOutward(:,2),'.-','MarkerSize',20,'LineWidth',2);
-    axis equal
-    grid on;
-
-end
-
-if any(isnan(pointsMovedOutward),'all')
-    error('Unexpected error in calculating pointsMovedOutward: NaN value encountered - this should not happen.');
-end
-
-end % Ends fcn_INTERNAL_expandVerticesOutward
-
-%% fcn_INTERNAL_prepareStartPoints
-function [preExpansionPoints, flagPointsFilledArtificially] = ...
-    fcn_INTERNAL_prepareStartPoints(startPoints, radius)
-
-% Keep only the unique (non-repeating) points. Do not resort them.
-uniqueStartPoints = unique(startPoints,'rows','stable');
-
-% Fill in some variables that are used for calculations that follow, for
-% cases with 1 or 2 points
-Npoints = length(uniqueStartPoints(:,1));
-if Npoints==1 || Npoints==2
-    % Define the number of directions to be considered from each value
-    % of the x0 initial set, if the initial set contains only 1 or 2 points
-    % Number of directions for initial expansion. Note that the first and last
-    % points are the same, so effectively this divides 360 degrees by
-    % (Ndirections-1)
-    Ndirections = 7;
-    angles = linspace(0,2*pi,Ndirections)';
-    preExpansionRadius  = (0.0001*radius); 
-    flagPointsFilledArtificially = 1;
-else
-    flagPointsFilledArtificially = 0;
-end
-
-%%%%
-% Make sure that the points form an enclosed area.
-% The following takes small perturbations away from the uniqueStartPoints.
-% There are three cases:
-% 1) There is 1 point - in this case, a very small expansion is made in all
-%    directions to create an enclosed space
-% 2) There are 2 points - in this case, the expansion is away from both
-%    ends, creating an enclosed space that goes around both ends
-% 3) There are 3+ points - in this case, the uniqueStartPoints are assumed
-%    to make an enclosed space and these are used.
-if Npoints==1
-    preExpansionPoints  = uniqueStartPoints(1,:) + preExpansionRadius*[cos(angles) sin(angles)];
-elseif Npoints==2 
-    directionVector1to2 = uniqueStartPoints(2,:)-uniqueStartPoints(1,:);
-    lineAngle = atan2(directionVector1to2(2),directionVector1to2(1));
-    positiveOrNegative = sin(angles);
-    positiveAngles = angles(positiveOrNegative>=0);
-    nPositive = sum(positiveOrNegative>=0);
-
-    preExpansionPoints = [...
-        ones(nPositive,1)*uniqueStartPoints(2,:) + preExpansionRadius*[cos(positiveAngles+lineAngle-pi/2) sin(positiveAngles+lineAngle-pi/2)];
-        ones(nPositive,1)*uniqueStartPoints(1,:) + preExpansionRadius*[cos(positiveAngles+lineAngle+pi/2) sin(positiveAngles+lineAngle+pi/2)];
-        ];
-    preExpansionPoints = [preExpansionPoints; preExpansionPoints(1,:)];
-
-else
-    %%%%
-    % Points are already an enclosed space
-    preExpansionPoints  = uniqueStartPoints;
-end
-end % Ends fcn_INTERNAL_prepareStartPoints
-
-%% fcn_INTERNAL_resamplePointsToMatchWindDiscretization
-function resampledPolyPoints = fcn_INTERNAL_resamplePointsToMatchWindDiscretization(inputPoints,stepSize)
-
-% Make sure points circle back on each other. Otherwise, final edge never
-% gets filled
-if ~isequal(inputPoints(1,:),inputPoints(end,:))
-    densePreExpansionPoints = [inputPoints; inputPoints(1,:)];
-else
-    densePreExpansionPoints = inputPoints;
-end
-
-edgeVectors = densePreExpansionPoints(2:end,:)-densePreExpansionPoints(1:end-1,:);
-edgeLengths = sum(edgeVectors.^2,2).^0.5;
-unitEdgeVectors = edgeVectors./edgeLengths;
-
-resampledPolyPoints = [];
-% For each vector, break vector up into stepSize chunks. If last part is
-% "small", delete last point to keep stepSize chunk, or larger, in the
-% segment.
-for ith_edge = 1:length(unitEdgeVectors(:,1))
-    thisStartPoint = densePreExpansionPoints(ith_edge,:);
-    thisLength = edgeLengths(ith_edge);
-    thisUnitVector = unitEdgeVectors(ith_edge,:);
-
-    % Count how many stepSizes fit inside thisLength
-    Nresamples = floor(thisLength/stepSize);
-
-    % Make sure remainder is not "small". If it is, just reduce the cuts by
-    % one so last cut is longer than others.
-    remainingDistance = thisLength - Nresamples*stepSize;
-    if remainingDistance < 0.5*stepSize && thisLength>stepSize
-        Nresamples = Nresamples-1;
-    end
-    morePoints = (0:Nresamples)'*stepSize*thisUnitVector + thisStartPoint;
-    resampledPolyPoints = [resampledPolyPoints; morePoints]; %#ok<AGROW>
-end
-
-% Circle back to first point
-uniqueResampledPolyPoints = unique(resampledPolyPoints(1:end-1,:),'rows','stable');
-resampledPolyPoints = [uniqueResampledPolyPoints; resampledPolyPoints(1,:)];
-end % Ends fcn_INTERNAL_resamplePointsToMatchWindDiscretization
