@@ -143,6 +143,7 @@ function [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_
 %
 % 2026_04_01 by K. Hayes
 % - Functionalized some pieces of the expansion process
+% - Removed internal functions replaced by new BoundaryXP functions
 
 % TO-DO
 % -- update header
@@ -368,36 +369,6 @@ if flag_do_debug
     plot(summedPoints(:,1),summedPoints(:,2),'.-',...
         'Color',[1 0 1],'MarkerSize',20,'DisplayName','xKPlusOne_BMatrixPoints');
 end
-
-%%%%
-% OLD METHOD using polyshape operations: (slow)
-% boundingPolytope = polyshape(startPoints);
-% 
-% 
-% if flag_do_debug
-%     figure(debug_figNum);
-%     h_allPoly = plot(boundingPolytope);
-% end
-% 
-% % Merge the polytopes created by the expansion of each of the start points
-% for ith_start = firstIndex:NstartPoints
-%     polyPoints = repmat(movedPoints(ith_start,:),Ndirections-1,1) + controlInputPerturbations;
-%     thisPoly = polyshape(polyPoints);
-%     boundingPolytope = union(boundingPolytope,thisPoly);
-% 
-%     if flag_do_debug
-%         figure(debug_figNum);
-%         set(h_allPoly,'Visible','off');
-%         plot(boundingPolytope);
-%     end
-% 
-% end
-% 
-% % Pull the polytope vertices
-% boundingPolytopeVerticesRaw = boundingPolytope.Vertices;
-% % Repeat last point to close off the boundary
-% boundingPolytopeVertices = [boundingPolytopeVerticesRaw; boundingPolytopeVerticesRaw(1,:)];
-
 
 %% Calculate wind disturbance
 

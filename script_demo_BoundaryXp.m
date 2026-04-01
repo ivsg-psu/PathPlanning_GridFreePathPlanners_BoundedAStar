@@ -36,6 +36,9 @@
 %       % * fcn_BoundaryXP_resamplePointsToMatchMapDiscretization
 % - In fcn_BoundedAStar_reachabilityWithInputs
 %       % * replaced internal functions with separated versions
+% - ADDED: 
+%       % * fcn_BoundaryXP_makeRegion
+%       % * fcn_BoundaryXP_checkBoundaries
 
 
 %

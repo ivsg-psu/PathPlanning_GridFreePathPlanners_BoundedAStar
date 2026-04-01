@@ -1,18 +1,16 @@
-function processedBoundary = fcn_BoundaryXP_processExpandedPoints(reachableSet, varargin)
-% fcn_BoundaryXP_processExpandedPoints
-% does point processing steps following an expansion, including removal of
-% 'pinch points,' 'jog points,' and downsampling
+function region = fcn_BoundaryXP_makeRegion(boundaryPoints, varargin)
+% fcn_BoundaryXP_makeRegion
+% replaces an internal function which converts a set of vertices of a
+% region into a polyshape for boundary checking operations
 %
 % FORMAT:
-% processedBoundary = fcn_BoundaryXP_processExpandedPoints(reachableSet, figNum)
+%
+% region = fcn_BoundaryXP_makeRegion(boundaryPoints, (figNum))
 %
 % INPUTS:
-%
-%     reachableSet: the Nx2 matrix containing the coordinates of each point
-%     in the current boundary, prior to any pinch point or jog point
-%     removal
-%
-%     (optional inputs)
+%     
+%     boundaryPoints: the Nx2 matrix containing the vertices in the
+%     boundary to be converted to a region
 %
 %     figNum: a figure number to plot results. If set to -1, skips any
 %     input checking or debugging, no figures will be generated, and sets
@@ -22,36 +20,29 @@ function processedBoundary = fcn_BoundaryXP_processExpandedPoints(reachableSet, 
 %
 % OUTPUTS:
 %
-%     processedBoundary: a matrix containing the coordinate of the
-%     post-processed boundary
+%     region: a polyshape representing the region outlined by the vertices
+%     in boundaryPoints
 %
 % DEPENDENCIES:
 %
 %     fcn_DebugTools_checkInputsToFunctions
-%     fcn_Path_calcDiffAnglesBetweenPathSegments
-%     fcn_Path_cleanPathFromForwardBackwardJogs
-%     fcn_Path_removePinchPointInPath
 %
 % EXAMPLES:
 %
-% See the script: script_test_fcn_BoundedAStar_altRangeVariableRadius
+% See the script: script_test_fcn_BoundaryXP_makeRegion
 % for a full test suite.
 %
-% This function was written on 2026_03_19 by K. Hayes
+% This function was written on 2026_04_01 by K. Hayes 
 % Questions or comments? contact S. Brennan sbrennan@psu.edu
 % or K. Hayes, kaeleahayes@psu.edu
 
 % REVISION HISTORY:
-% 2026_03_19 by K. Hayes
-% -- first write of script using fcn_BoundedAStar_altRangeDoExpansion as
+% 2026_04_01 - K. Hayes
+% -- First write of function using fcn_BoundaryXP_checkBoundaries as a
 %    starter
 %
-% 2026_04_01 by K. Hayes
-% -- updated dependencies in header
-%
 % TO-DO
-% -- fix plotting
-
+%
 
 %% Debugging and Input checks
 % Check if flag_max_speed set. This occurs if the figNum variable input
@@ -104,8 +95,8 @@ if 0==flag_max_speed
 
 		% Check the radii input, make sure it is '1column_of_numbers'
 		% type, 1 row
-		fcn_DebugTools_checkInputsToFunctions(...
-			radii, '1column_of_numbers');
+		%fcn_DebugTools_checkInputsToFunctions(...
+			%radii, '1column_of_numbers');
 	end
 end
 
@@ -132,42 +123,10 @@ end
 %
 %See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
-% Remove "pinch" points?
-    Nreachable = length(reachableSet(:,1));
-    reachableSetNotPinched = fcn_Path_removePinchPointInPath(reachableSet(1:end-1,:),-1);
-    % If more than half the points show up in the "pinch", then the pinch is
-    % inverted. We want to keep the points NOT in the pinch. Use the "setdiff"
-    % command to do this.
-    if length(reachableSetNotPinched(:,1))< (Nreachable/2)
-        reachableSetNotPinched = setdiff(reachableSet,reachableSetNotPinched,'rows','stable');
-    end
-    % The removePinchPointInPath removes repeated points, so need to add
-    % start/end back in
-    reachableSetNotPinched = [reachableSetNotPinched; reachableSetNotPinched(1,:)]; %#ok<AGROW>
 
-    % Clean up set boundary from "jogs"?
-    diff_angles = fcn_Path_calcDiffAnglesBetweenPathSegments(reachableSetNotPinched, -1);
-    jogAngleThreshold = 120*pi/180;
-    if any(abs(diff_angles)>jogAngleThreshold)
-        noJogPoints = fcn_Path_cleanPathFromForwardBackwardJogs(reachableSetNotPinched, (jogAngleThreshold) , (-1));
-    else
-        noJogPoints = reachableSetNotPinched;
-    end
-
-
-    if length(reachableSet) > length(noJogPoints)
-        removedInd = find(any(~ismember(reachableSet, noJogPoints),2)==1);
-        keptInd = find(~ismember(1:length(reachableSet), removedInd)==1)';
-        
-    end
-
-    %reachableSet = noJogPoints;
-
-    if any(noJogPoints(1,:) ~= noJogPoints(end,:))
-        noJogPoints = [noJogPoints; noJogPoints(end,:)];
-    end
-
-    processedBoundary = noJogPoints;
+uniquePoints = flipud(regionBoundary); % for some silly reason, polyshape takes points "backwards" (?!)
+uniquePoints = unique(uniquePoints,'rows','stable');
+region = polyshape(uniquePoints,'KeepCollinearPoints', true,'Simplify', false);
 
 
 %% Plot the results (for debugging)?
@@ -196,7 +155,15 @@ if flag_do_plots
 	% Turn on legend
 	legend('Interpreter','none','Location','best');
 
-	
+	plot(boundaryPoints(:,1), boundaryPoints(:,2), '.', 'MarkerSize', 10)
+    plot(region)
+
+    axis equal
+	grid on;
+	% Shut the hold off?
+	if flag_shut_hold_off
+		hold off;
+	end
 
 end % Ends the flag_do_plot if statement
 
@@ -220,5 +187,4 @@ end % Ends the main function
 %
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
-
 
