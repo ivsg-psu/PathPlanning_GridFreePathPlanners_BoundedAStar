@@ -115,11 +115,11 @@ if 0==flag_max_speed
 end
 
 % Does user want to specify states?
-keepOutZones = [];
+keepOutRegions = [];
 if 4 <= nargin
 	temp = varargin{1};
 	if ~isempty(temp) % Did the user NOT give an empty figure number?
-		keepOutZones = temp;
+		keepOutRegions = temp;
 	end
 end
 

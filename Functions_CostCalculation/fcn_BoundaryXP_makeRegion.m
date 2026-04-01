@@ -124,7 +124,7 @@ end
 %See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
-uniquePoints = flipud(regionBoundary); % for some silly reason, polyshape takes points "backwards" (?!)
+uniquePoints = flipud(boundaryPoints); % for some silly reason, polyshape takes points "backwards" (?!)
 uniquePoints = unique(uniquePoints,'rows','stable');
 region = polyshape(uniquePoints,'KeepCollinearPoints', true,'Simplify', false);
 

@@ -101,11 +101,6 @@ if 0==flag_max_speed
 	if flag_check_inputs
 		% Are there the right number of inputs?
 		narginchk(1,MAX_NARGIN);
-
-		% Check the radii input, make sure it is '1column_of_numbers'
-		% type, 1 row
-		fcn_DebugTools_checkInputsToFunctions(...
-			radii, '1column_of_numbers');
 	end
 end
 
