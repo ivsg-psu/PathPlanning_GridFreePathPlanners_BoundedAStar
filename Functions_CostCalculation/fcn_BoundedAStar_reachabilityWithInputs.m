@@ -144,6 +144,9 @@ function [reachableSet, cellArrayOfIntermediateCalculations] = fcn_BoundedAStar_
 % 2026_04_01 by K. Hayes
 % - Functionalized some pieces of the expansion process
 % - Removed internal functions replaced by new BoundaryXP functions
+%
+% 2026_04_06 by K. Hayes
+% - Moved boundary checking step into this function from wrapper function
 
 % TO-DO
 % -- update header
@@ -244,6 +247,17 @@ end
 %
 %See: http://patorjk.com/software/taag/#p=display&f=Big&t=Main
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+minX = windFieldX(1);
+maxX = windFieldX(end);
+minY = windFieldY(1);
+maxY = windFieldY(end);
+axisRange = [minX minY maxX maxY];
+deltaX = windFieldX(2) - windFieldX(1);
+
+% Define the bounding region
+regionBoundaryPoints = [minX minY; maxX minY; maxX maxY; minX maxY; minX minY];
+boundingRegion = fcn_BoundaryXP_makeRegion(regionBoundaryPoints);
+
 
 % For debugging, plot the wind field. The remaining debug plots will be
 % overlaid on top of this
@@ -390,6 +404,9 @@ reachableSet = ...
     xKPlusOne_AMatrixPoints + ...
     xKPlusOne_BMatrixPoints + ...
     xKPlusOne_WindDisturbance;
+
+boundedPoints = fcn_BoundaryXP_checkBoundaries(reachableSet, boundingRegion, axisRange);
+reachableSet = boundedPoints;
 
 if flag_do_debug
     figure(debug_figNum);

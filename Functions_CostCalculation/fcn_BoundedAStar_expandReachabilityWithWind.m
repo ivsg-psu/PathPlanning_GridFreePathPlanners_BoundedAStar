@@ -183,6 +183,9 @@ function [finalReachableSet, exitCondition, cellArrayOfExitInfo, varargout] = ..
 %
 % 2026_04_01 by K. Hayes
 % -- Changed internal function calls to match new external function names
+%
+% 2026_04_06 by K. Hayes
+% -- Moved boundary checking step out of wrapper function
 
 % TO-DO
 % -- when wind is VERY high, higher than self speed, the set pushes away
@@ -481,9 +484,10 @@ while 1==flagContinueExpansion
         drawnow
     end
 
-    newStartPoints = fcn_BoundaryXP_checkBoundaries(startPointsSparse, boundingRegion, axisRange, []);
+    %newStartPoints = fcn_BoundaryXP_checkBoundaries(startPointsSparse, boundingRegion, axisRange, []);
 
     % Save results for next loop
+    newStartPoints = startPointsSparse;
     startPoints = newStartPoints;
 
     if any(isnan(startPoints),'all')

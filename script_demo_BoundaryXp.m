@@ -39,6 +39,11 @@
 % - ADDED: 
 %       % * fcn_BoundaryXP_makeRegion
 %       % * fcn_BoundaryXP_checkBoundaries
+%
+% 2026_04_06 - K. Hayes
+% - In fcn_BoundedAStar_reachabilityWithInputs
+%       % * moved boundary checking step into this function and out of
+%           wrapper function fcn_BoundedAStar_expandReachabilityWithWind
 
 
 %
