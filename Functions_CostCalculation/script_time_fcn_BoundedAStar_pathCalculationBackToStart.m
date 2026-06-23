@@ -1,6 +1,0 @@
-
-for ith_iteration = 1:10
-    pathXYAndControlUV =  ...
-        fcn_BoundedAStar_pathCalculationBackToStart(...
-        endPoint, allExpansions, allIntermediateCalculations, (-1));
-end
